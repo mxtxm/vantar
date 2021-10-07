@@ -1,0 +1,4 @@
+/target/
+web/META-INF/
+/.idea/
+*.iml

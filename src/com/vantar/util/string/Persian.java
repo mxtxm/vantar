@@ -1,0 +1,132 @@
+package com.vantar.util.string;
+
+
+public class Persian {
+
+    public static boolean containsLatin(String word) {
+        for (char c : word.toCharArray()) {
+            if (c >= 65 && c <= 90 || c >= 97 && c <= 122) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public static boolean containsPersian(String word) {
+        for (int i = 0; i < Character.codePointCount(word, 0, word.length()); ++i) {
+            int c = word.codePointAt(i);
+            if ((c >= 0x0600 && c <= 0x06FF) || (c >= 0xFB50 && c <= 0xFDFF) || (c >= 0xFE70 && c <= 0xFEFF)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+
+    public static class Number {
+
+        public static String toLatin(String string) {
+            if (StringUtil.isEmpty(string)) {
+                return string;
+            }
+
+            StringBuilder sb = new StringBuilder();
+            char[] charArr = string.toCharArray();
+
+            for (char c : charArr) {
+                switch (c) {
+                    case '۰':
+                        sb.append('0');
+                        break;
+                    case '۱':
+                        sb.append('1');
+                        break;
+                    case '۲':
+                        sb.append('2');
+                        break;
+                    case '۳':
+                        sb.append('3');
+                        break;
+                    case '۴':
+                        sb.append('4');
+                        break;
+                    case '۵':
+                        sb.append('5');
+                        break;
+                    case '۶':
+                        sb.append('6');
+                        break;
+                    case '۷':
+                        sb.append('7');
+                        break;
+                    case '۸':
+                        sb.append('8');
+                        break;
+                    case '۹':
+                        sb.append('9');
+                        break;
+                    default:
+                        sb.append(c);
+                }
+            }
+
+            return sb.toString();
+        }
+
+        public static String toPersian(String string) {
+            if (StringUtil.isEmpty(string)) {
+                return "";
+            }
+
+            StringBuilder sb = new StringBuilder();
+            char[] charArr = string.toCharArray();
+
+            for (char c : charArr) {
+                switch (c) {
+                    case '0':
+                        sb.append('۰');
+                        break;
+                    case '1':
+                        sb.append('۱');
+                        break;
+                    case '2':
+                        sb.append('۲');
+                        break;
+                    case '3':
+                        sb.append('۳');
+                        break;
+                    case '4':
+                        sb.append('۴');
+                        break;
+                    case '5':
+                        sb.append('۵');
+                        break;
+                    case '6':
+                        sb.append('۶');
+                        break;
+                    case '7':
+                        sb.append('۷');
+                        break;
+                    case '8':
+                        sb.append('۸');
+                        break;
+                    case '9':
+                        sb.append('۹');
+                        break;
+                    default:
+                        sb.append(c);
+                }
+            }
+
+            return sb.toString();
+        }
+    }
+
+    public static String normalize(String string) {
+        return StringUtil.replace(
+            string,
+            new char[] {'•', '·', '●', '·', '・', '∙', '｡', 'ⴰ', ',', '٬', '٫', '‚', '，', '¬', 'ۀ', 'ە', 'ة', 'ہ', 'ވ', 'ﯙ', 'ۈ', 'ۋ', 'ۊ', 'ۇ', 'ۏ', 'ۅ', 'ۉ', 'ؤ', 'ﮚ', 'ڤ', 'ۼ', 'ڠ', 'ﻋ', 'ݭ', 'ݜ', 'ښ', 'ڙ', 'ڗ', 'ڒ', 'ڑ', 'ڏ', 'ډ', 'ٲ', 'ٱ', 'إ', 'ﺍ', 'أ', '٦', '٥', '٤', 'ء', 'ڭ', 'ګ', 'ڪ', 'ك', 'ں', 'ێ', 'ے', 'ي', },
+            new char[] {'.', '.', '.', '.', '.', '.', '.', '.', '،', '،', '،', '،', '،', ' ', 'ه', 'ه', 'ه', 'ه', 'و', 'و', 'و', 'و', 'و', 'و', 'و', 'و', 'و', 'و', 'گ', 'ق', 'غ', 'ع', 'ع', 'س', 'س', 'س', 'ر', 'ر', 'ر', 'ر', 'د', 'د', 'ا', 'ا', 'ا', 'ا', 'ا', '۶', '۵', '۴', 'ئ', 'ک', 'ک', 'ک', 'ک', 'ی', 'ی', 'ی', 'ی', }
+        );
+    }
+}

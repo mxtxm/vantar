@@ -1,0 +1,11 @@
+Options +FollowSymlinks
+RewriteEngine on
+
+RewriteRule robots.txt robots.txt [L]
+
+RewriteRule ^images/(.+)$ browser/resources/images/$1 [L]
+RewriteRule ^css/(.+)$ browser/resources/css/$1 [L]
+RewriteRule ^js/(.+)$ browser/resources/js/$1 [L]
+
+RewriteCond %{REQUEST_FILENAME} !^(.*)\.(ico|jpg|png|gif|js|css|class)$
+RewriteRule ^ start.php [L]

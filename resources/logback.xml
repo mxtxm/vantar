@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+    <logger name="com.gargoylesoftware" level="error" additivity="false"/>
+    <logger name="org.apache" level="error" additivity="false"/>
+    <logger name="httpclient" level="error" additivity="false"/>
+    <logger name="org.mongodb.driver" level="error" additivity="false"/>
+    <logger name="org.apache.catalina.startup.VersionLoggerListener.log" level="error" additivity="false"/>
+
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%-5level %d{HH:mm:ss} %file:%line %msg%n</pattern>
+        </encoder>
+    </appender>
+    <root level="debug">
+        <appender-ref ref="STDOUT" />
+    </root>
+
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>/opt/stock-shop-api/logs/api.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
+            <fileNamePattern>/opt/stock-shop-api/logs/api.%i.log.zip</fileNamePattern>
+            <minIndex>1</minIndex>
+            <maxIndex>20</maxIndex>
+        </rollingPolicy>
+        <triggeringPolicy class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
+            <maxFileSize>5MB</maxFileSize>
+        </triggeringPolicy>
+        <encoder>
+            <pattern>%-5level %d{MM-dd HH:mm:ss} %file:%line %msg%n</pattern>
+        </encoder>
+    </appender>
+    <root level="debug">
+        <appender-ref ref="FILE" />
+    </root>
+
+</configuration>
