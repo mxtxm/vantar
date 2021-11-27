@@ -9,6 +9,7 @@ import com.vantar.database.query.*;
 import com.vantar.database.sql.*;
 import com.vantar.exception.*;
 import com.vantar.locale.*;
+import com.vantar.locale.Locale;
 import com.vantar.service.Services;
 import com.vantar.service.auth.*;
 import com.vantar.util.object.ObjectUtil;
@@ -16,13 +17,15 @@ import com.vantar.util.string.*;
 import com.vantar.web.*;
 import org.slf4j.*;
 import javax.servlet.http.HttpServletResponse;
+import java.lang.reflect.Field;
+import java.util.*;
 
 
 public class AdminData {
 
     private static final Logger log = LoggerFactory.getLogger(AdminData.class);
-    private static final int N_PER_PAGE = 30;
     private static final String PARAM_DELETE_ALL = "deleteall";
+    public static final int N_PER_PAGE = 30;
 
     public static Event event;
 
@@ -33,24 +36,57 @@ public class AdminData {
             return;
         }
 
+        List<DtoDictionary.Info> noStores = new ArrayList<>();
+
         DtoDictionary.getStructure().forEach((groupName, groupDtos) -> {
             ui.beginBox(groupName);
             groupDtos.forEach((dtoName, info) -> {
                 if (info.dbms == null) {
-                    log.warn("! {} missing dbms", info.getDtoClass());
+                    log.warn("! {} missing dbms", info.getDtoClassName());
                     return;
                 }
-                ui.beginFloatBox("db-box", info.getDtoClass(), info.title)
+
+                if (info.dbms.equals(DtoDictionary.Dbms.NOSTORE)) {
+                    noStores.add(info);
+                    return;
+                }
+
+                ui.beginFloatBox("db-box", info.getDtoClassName(), info.title)
                     .addTag(info.dbms.toString())
-                    .addBlockLink(Locale.getString(VantarKey.ADMIN_DATA_LIST), "/admin/data/list?" + VantarParam.DTO + "=" + dtoName)
-                    .addBlockLink(Locale.getString(VantarKey.ADMIN_NEW_RECORD), "/admin/data/insert?" + VantarParam.DTO + "=" + dtoName)
-                    .addBlockLink(Locale.getString(VantarKey.ADMIN_IMPORT), "/admin/data/import?" + VantarParam.DTO + "=" + dtoName)
-                    .addBlockLink(Locale.getString(VantarKey.ADMIN_DATABASE_DELETE_ALL), "/admin/data/purge?" + VantarParam.DTO + "=" + dtoName)
+                    .addBlockLink(
+                        Locale.getString(VantarKey.ADMIN_DATA_LIST),
+                        "/admin/data/list?" + VantarParam.DTO + "=" + dtoName
+                    )
+                    .addBlockLink(
+                        Locale.getString(VantarKey.ADMIN_NEW_RECORD),
+                        "/admin/data/insert?" + VantarParam.DTO + "=" + dtoName
+                    )
+                    .addBlockLink(
+                        Locale.getString(VantarKey.ADMIN_IMPORT),
+                        "/admin/data/import?" + VantarParam.DTO + "=" + dtoName
+                    )
+                    .addBlockLink(
+                        Locale.getString(VantarKey.ADMIN_DATABASE_DELETE_ALL),
+                        "/admin/data/purge?" + VantarParam.DTO + "=" + dtoName
+                    )
                     .containerEnd();
             });
 
             ui.containerEnd();
         });
+
+        ui.beginBox("NOSTORE");
+//        DtoDictionary.getNoStoreDtos().forEach((dtoName, info) -> {
+        noStores.forEach(info -> {
+            ui.beginFloatBox("db-box-nostore", info.getDtoClassName(), info.title)
+                .addTag("")
+                .addBlockLink(
+                    Locale.getString(VantarKey.ADMIN_DATA_FIELDS),
+                    "/admin/data/fields?" + VantarParam.DTO + "=" + info.getDtoClassName()
+                )
+                .containerEnd();
+        });
+        ui.containerEnd();
 
         // > > >
         ui.beginBox(Locale.getString(VantarKey.ADMIN_DATABASE_TITLE));
@@ -63,6 +99,43 @@ public class AdminData {
         ui.addBlockLink("Indexes", "/admin/database/mongo/indexes");
         ui.addBlockLink("Sequences", "/admin/database/mongo/sequences");
         ui.containerEnd();
+
+        ui.finish();
+    }
+
+    public static void fields(Params params, HttpServletResponse response, DtoDictionary.Info dtoInfo) {
+        if (dtoInfo == null) {
+            return;
+        }
+        WebUi ui = Admin.getUiDto(Locale.getString(VantarKey.ADMIN_DATA_FIELDS), params, response, dtoInfo);
+        if (ui == null) {
+            return;
+        }
+
+        ui.addHeading(dtoInfo.dtoClass.getName() + " (" + dtoInfo.title + ")");
+
+        Dto dto = dtoInfo.getDtoInstance();
+
+        for (Field field : dto.getFields()) {
+            StringBuilder t = new StringBuilder();
+
+            Class<?> type = field.getType();
+            t.append(type.getSimpleName());
+
+            if (type.equals(List.class) || type.equals(ArrayList.class) || type.equals(Set.class)) {
+                t.append("&lt;").append(dto.getPropertyGenericTypes(field.getName())[0].getSimpleName()).append("&gt;");
+
+            } else if (type.equals(Map.class)) {
+                Class<?>[] genericTypes = dto.getPropertyGenericTypes(field.getName());
+                t.append("&lt;").append(genericTypes[0].getSimpleName()).append(", ")
+                    .append(genericTypes[1].getSimpleName()).append("&gt;");
+
+            } else if (type.isEnum()) {
+                t.append(" (enum)");
+            }
+
+            ui.addKeyValue(field.getName(), t.toString());
+        }
 
         ui.finish();
     }
@@ -118,7 +191,7 @@ public class AdminData {
             params.isChecked(VantarParam.LOGICAL_DELETED) ? Dto.QueryDeleted.SHOW_DELETED : Dto.QueryDeleted.SHOW_NOT_DELETED
         );
 
-        if (dtoInfo.getDtoClass().equals("User") && !Services.get(ServiceAuth.class).hasAccess(params, AdminUserRole.ROOT)) {
+        if (dtoInfo.getDtoClassName().equals("User") && !Services.get(ServiceAuth.class).hasAccess(params, RootRole.rootRole)) {
             q.condition().notEqual("isRoot", true);
         }
 
@@ -435,7 +508,10 @@ public class AdminData {
         Dto dto = dtoInfo.getDtoInstance();
 
         if (!params.isChecked("f")) {
-            ui.addDtoAddForm(dto, params.getString("root") == null ? dto.getProperties(dtoInfo.getInsertExclude()) : dto.getProperties());
+            ui.addDtoAddForm(
+                dto,
+                params.getString("root") == null ? dto.getProperties(dtoInfo.getInsertExclude()) : dto.getProperties()
+            );
             ui.finish();
             return;
         }

@@ -594,10 +594,18 @@ public abstract class DtoBase implements Dto {
     }
 
     public List<ValidationError> set(String json, Dto.Action action) {
+        if (StringUtil.isEmpty(json)) {
+            return validate(action);
+        }
+        json = json.trim();
+        if (!json.startsWith("{") && !json.endsWith("}")) {
+            return validate(action);
+        }
+
         Dto dto = Json.fromJson(json, getClass());
 
         if (dto == null) {
-            log.error("!!! ignore the above error !!!");
+            log.error("^^^ ignore the above error ^^^");
             return set(Json.mapFromJson(json, String.class, Object.class), action);
         }
 
@@ -628,7 +636,7 @@ public abstract class DtoBase implements Dto {
     public List<ValidationError> set(Map<String, Object> map, Dto.Action action, String prefix, String suffix) {
         List<ValidationError> errors = new ArrayList<>();
         if (map == null) {
-            return errors;
+            return validate(action);
         }
 
         Object nulls = map.get(VantarParam.NULLS);
@@ -933,6 +941,7 @@ public abstract class DtoBase implements Dto {
 
 
     private static class NullProperties {
+
         public String[] nullProperties;
 
         public String toString() {

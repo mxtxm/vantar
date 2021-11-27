@@ -4,20 +4,24 @@ import com.vantar.common.*;
 import com.vantar.database.query.QueryBuilder;
 import com.vantar.util.file.FileUtil;
 import com.vantar.util.string.StringUtil;
+import org.slf4j.*;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 
 
 public class DtoDictionary {
 
+    private static final Logger log = LoggerFactory.getLogger(DtoDictionary.class);
+
     public enum Dbms {
         SQL,
         MONGO,
         ELASTIC,
+        NOSTORE,
     }
 
     private static final Map<String, Map<String, Info>> index = new LinkedHashMap<>();
-    private static final Map<String, Info> indexWithoutStorage = new LinkedHashMap<>();
+//    private static final Map<String, Info> indexWithoutStorage = new LinkedHashMap<>();
     private static String tempCategory;
 
 
@@ -31,10 +35,11 @@ public class DtoDictionary {
     public static void add(String title, Class<? extends Dto> dtoClass, Integer onUpdateBroadcastMessage
         , String command, QueryBuilder queryCache) {
 
-        boolean noStore = dtoClass.isAnnotationPresent(NoStore.class);
+        //boolean noStore = dtoClass.isAnnotationPresent(NoStore.class);
 
         Map<String, Info> catInfo = index.get(tempCategory);
-        if (catInfo == null && !noStore) {
+        //if (catInfo == null && !noStore) {
+        if (catInfo == null) {
             catInfo = new LinkedHashMap<>();
         }
 
@@ -51,6 +56,8 @@ public class DtoDictionary {
             info.dbms = Dbms.SQL;
         } else if (dtoClass.isAnnotationPresent(Elastic.class)) {
             info.dbms = Dbms.ELASTIC;
+        } else {
+            info.dbms = Dbms.NOSTORE;
         }
 
         info.insertExclude = new ArrayList<>();
@@ -108,10 +115,10 @@ public class DtoDictionary {
             }
         }
 
-        if (noStore) {
-            indexWithoutStorage.put(dtoClass.getSimpleName(), info);
-            return;
-        }
+//        if (noStore) {
+//            indexWithoutStorage.put(dtoClass.getSimpleName(), info);
+//            return;
+//        }
 
         catInfo.put(dtoClass.getSimpleName(), info);
         index.put(tempCategory, catInfo);
@@ -141,9 +148,9 @@ public class DtoDictionary {
         return index;
     }
 
-    public static Map<String, Info> getNoStoreDtos() {
-        return indexWithoutStorage;
-    }
+//    public static Map<String, Info> getNoStoreDtos() {
+//        return indexWithoutStorage;
+//    }
 
     public static List<Info> getAll(Dbms dbms) {
         List<Info> info = new ArrayList<>(100);
@@ -180,8 +187,9 @@ public class DtoDictionary {
      */
     public static Info get(String name) {
         for (Map<String, Info> bucket : index.values()) {
-            if (bucket.containsKey(name)) {
-                return bucket.get(name);
+            Info i = bucket.get(name);
+            if (i != null) {
+                return i;
             }
             for (Info info : bucket.values()) {
                 if (info.getDtoInstance().getStorage().equals(name)) {
@@ -189,8 +197,18 @@ public class DtoDictionary {
                 }
             }
         }
+
         return null;
+//        return indexWithoutStorage.get(name);
     }
+
+    public static Info get(Class<?> type) {
+        return get(type.getSimpleName());
+    }
+
+//    public static Info getNoStore(String name) {
+//        return indexWithoutStorage.get(name);
+//    }
 
 
     public static class Info {
@@ -218,24 +236,24 @@ public class DtoDictionary {
             try {
                 return dtoClass.getConstructor().newInstance();
             } catch (NoSuchMethodException | InstantiationException | IllegalAccessException | InvocationTargetException e) {
-                //
+                log.error("! failed to create dto instance ({})", dtoClass, e);
             }
             return null;
         }
 
-        public String getDtoClass() {
+        public String getDtoClassName() {
             return dtoClass.getSimpleName();
         }
 
         public String getImportData() {
             String data;
             if (Settings.isLocal()) {
-                data = FileUtil.getFileContentFromClassPath("/data/import/" + StringUtil.toKababCase(getDtoClass()) + "-local");
+                data = FileUtil.getFileContentFromClassPath("/data/import/" + StringUtil.toKababCase(getDtoClassName()) + "-local");
                 if (StringUtil.isNotEmpty(data)) {
                     return data;
                 }
             }
-            return FileUtil.getFileContentFromClassPath("/data/import/" + StringUtil.toKababCase(getDtoClass()));
+            return FileUtil.getFileContentFromClassPath("/data/import/" + StringUtil.toKababCase(getDtoClassName()));
         }
     }
 }

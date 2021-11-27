@@ -4,46 +4,41 @@ import com.vantar.common.VantarParam;
 import com.vantar.exception.*;
 import com.vantar.locale.VantarKey;
 import com.vantar.service.Services;
-import com.vantar.util.datetime.DateTime;
 import com.vantar.util.file.FileUtil;
 import com.vantar.util.json.Json;
-import com.vantar.util.object.ObjectUtil;
 import com.vantar.util.string.StringUtil;
 import com.vantar.web.Params;
+import com.vantar.web.dto.Permission;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.slf4j.*;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.*;
 
 
-public class ServiceAuth implements Services.Service {
+public class ServiceAuth extends Permit implements Services.Service {
 
     private static final Logger log = LoggerFactory.getLogger(ServiceAuth.class);
 
-    private static final int MAX_SIGNED_USERS = 200;
-    private static final int MAX_VERIFY_TOKENS = 20;
-    private static final int DEFAULT_VERIFY_TOKEN_LENGTH = 4;
-    private static final boolean DEFAULT_VERIFY_TOKEN_NUMBER_ONLY = true;
+    protected static final int MAX_VERIFY_TOKENS = 20;
+    protected static final int DEFAULT_VERIFY_TOKEN_LENGTH = 5;
+    protected static final boolean DEFAULT_VERIFY_TOKEN_NUMBER_ONLY = true;
+    protected static final int MAX_SIGNED_USERS = 500;
+    protected static String startupAuthToken;
 
     private ScheduledExecutorService schedule;
-    private final Map<String, TokenData> onlineUsers = new ConcurrentHashMap<>(MAX_SIGNED_USERS);
+    private Event event;
     private final Map<String, TokenData> signupVerifyTokens = new ConcurrentHashMap<>(MAX_VERIFY_TOKENS);
     private final Map<String, TokenData> oneTimeTokens = new ConcurrentHashMap<>(MAX_VERIFY_TOKENS);
     private final Map<String, TokenData> verifyTokens = new ConcurrentHashMap<>(MAX_VERIFY_TOKENS);
-    private static String startupAuthToken;
-    private Event event;
 
-    public Integer tokenExpireMin;
-    public Integer tokenCheckIntervalMin;
     public Boolean onEndSetNull;
-    public Boolean debug;
+    /* parent class: public Integer tokenExpireMin; */
+    public Integer tokenCheckIntervalMin;
     public String tokenStorePath;
     public int signUpVerifyTokenLength = DEFAULT_VERIFY_TOKEN_LENGTH;
     public int signInVerifyTokenLength = DEFAULT_VERIFY_TOKEN_LENGTH;
     public boolean signUpVerifyTokenNumberOnly = DEFAULT_VERIFY_TOKEN_NUMBER_ONLY;
     public boolean signInVerifyTokenNumberOnly = DEFAULT_VERIFY_TOKEN_NUMBER_ONLY;
-    private CommonUser dummyUser;
-
 
     public void start() {
         schedule = Executors.newSingleThreadScheduledExecutor();
@@ -60,7 +55,7 @@ public class ServiceAuth implements Services.Service {
                 Json.toJson(oneTimeTokens) + VantarParam.SEPARATOR_BLOCK_COMPLEX +
                 Json.toJson(verifyTokens)
             );
-            log.info("Auth tokens are backed up.");
+            log.info("> > > Auth-tokens are backed-up.");
         }
         schedule.shutdown();
     }
@@ -102,7 +97,7 @@ public class ServiceAuth implements Services.Service {
                     verifyTokens.putAll(x);
                 }
             }
-            log.info("Auth tokens are loaded.");
+            log.info("> > > Backed-up auth-tokens are loaded.");
         }
         return this;
     }
@@ -202,7 +197,9 @@ public class ServiceAuth implements Services.Service {
         permitAccess(tokenData, allowed);
 
         CommonUser u = Json.fromJson(Json.toJson(user), user.getClass());
-        u.nullPassword();
+        if (u != null) {
+            u.nullPassword();
+        }
         return u;
     }
 
@@ -215,159 +212,16 @@ public class ServiceAuth implements Services.Service {
         }
     }
 
-    // > > > checking
-
-    public boolean hasAccess(Params params, CommonUserRole... allowed) {
-        try {
-            return permitAccess(params, allowed) != null;
-        } catch (AuthException e) {
-
-            if (debug && dummyUser != null) {
-                try {
-                    limitAccess(dummyUser.getRole(), allowed);
-                    return true;
-                } catch (AuthException ignore) {
-
-                }
-            }
-
-            return false;
-        }
-    }
-
-    public CommonUser permitAccess(Params params, CommonUserRole... allowed) throws AuthException {
-        TokenData token;
-        try {
-            token = validateToken(params, onlineUsers);
-        } catch (AuthException e) {
-            if (debug && dummyUser != null) {
-                limitAccess(dummyUser.getRole(), allowed);
-                return dummyUser;
-            }
-            throw e;
-        }
-
-        return permitAccess(token, allowed);
-    }
-
-    public CommonUser permitAccessStr(Params params, String... allowed) throws AuthException {
-        TokenData token;
-        try {
-            token = validateToken(params, onlineUsers);
-        } catch (AuthException e) {
-            if (debug && dummyUser != null) {
-                limitAccess(dummyUser.getRole(), allowed);
-                return dummyUser;
-            }
-            throw e;
-        }
-
-        return permitAccess(token, allowed);
-    }
-
-    public synchronized CommonUser permitAccess(TokenData tokenData, CommonUserRole... allowed) throws AuthException {
-        CommonUserRole role = tokenData.user.getRole();
-        String roleTitle = role.toString();
-
-        if (allowed.length == 0 || roleTitle.equals(AdminUserRole.ROOT.toString())) {
-            tokenData.lastInteraction.setToNow();
-            return tokenData.user;
-        }
-
-        if (roleTitle.equals(AdminUserRole.ADMIN.toString())) {
-            if (allowed[0].toString().equals(AdminUserRole.ROOT.toString())) {
-                throw new AuthException(VantarKey.NO_ACCESS);
-            }
-            tokenData.lastInteraction.setToNow();
-            return tokenData.user;
-        }
-
-        for (CommonUserRole access : allowed) {
-            if (tokenData.user.getRole().equals(access)) {
-                tokenData.lastInteraction.setToNow();
-                return tokenData.user;
-            }
-        }
-
-        if (debug && dummyUser != null) {
-            limitAccess(dummyUser.getRole(), allowed);
-            return dummyUser;
-        }
-
-        throw new AuthException(VantarKey.NO_ACCESS);
-    }
-
-    public synchronized CommonUser permitAccess(TokenData tokenData, String... allowed) throws AuthException {
-        CommonUserRole role = tokenData.user.getRole();
-        String roleTitle = role.toString();
-
-        if (allowed.length == 0 || roleTitle.equals(AdminUserRole.ROOT.toString())) {
-            tokenData.lastInteraction.setToNow();
-            return tokenData.user;
-        }
-
-        if (roleTitle.equals(AdminUserRole.ADMIN.toString())) {
-            if (allowed[0].toString().equals(AdminUserRole.ROOT.toString())) {
-                throw new AuthException(VantarKey.NO_ACCESS);
-            }
-            tokenData.lastInteraction.setToNow();
-            return tokenData.user;
-        }
-
-        String roleStr = tokenData.user.getRole().toString();
-        for (String access : allowed) {
-            if (roleStr.equals(access)) {
-                tokenData.lastInteraction.setToNow();
-                return tokenData.user;
-            }
-        }
-
-        if (debug && dummyUser != null) {
-            limitAccess(dummyUser.getRole(), allowed);
-            return dummyUser;
-        }
-
-        throw new AuthException(VantarKey.NO_ACCESS);
-    }
-
-    private synchronized void limitAccess(CommonUserRole role, CommonUserRole... allowed) throws AuthException {
-        if (role.equals(AdminUserRole.ROOT) || role.equals(AdminUserRole.ADMIN)) {
-            return;
-        }
-
-        for (CommonUserRole access : allowed) {
-            if (role.equals(access)) {
-                return;
-            }
-        }
-
-        throw new AuthException(VantarKey.NO_ACCESS);
-    }
-
-    private synchronized void limitAccess(CommonUserRole role, String... allowed) throws AuthException {
-        if (role.equals(AdminUserRole.ROOT) || role.equals(AdminUserRole.ADMIN)) {
-            return;
-        }
-
-        String roleStr = role.toString();
-        for (String access : allowed) {
-            if (roleStr.equals(access)) {
-                return;
-            }
-        }
-
-        throw new AuthException(VantarKey.NO_ACCESS);
-    }
 
     // > > > verify email/mobile
 
-    public String getVerifyToken(CommonUser user, TokenDataType type) {
+    public String getVerifyToken(CommonUser user, TokenData.Type type) {
         user.setToken(StringUtil.getRandomString(DEFAULT_VERIFY_TOKEN_LENGTH));
         verifyTokens.put(user.getToken(), new TokenData(user, type));
         return user.getToken();
     }
 
-    public boolean verifyTokenExists(CommonUser user, TokenDataType type) {
+    public boolean verifyTokenExists(CommonUser user, TokenData.Type type) {
         TokenData tokenData = verifyTokens.get(user.getToken());
 
         if (tokenData == null) {
@@ -390,31 +244,6 @@ public class ServiceAuth implements Services.Service {
     public ServiceAuth startupSignin(CommonUser temporaryRoot) {
         startupAuthToken = makeUserOnline(new TokenData(temporaryRoot));
         return this;
-    }
-
-    private TokenData validateToken(Params params, Map<String, TokenData> map) throws AuthException {
-        String token = params.getHeader(VantarParam.HEADER_AUTH_TOKEN);
-        if (StringUtil.isEmpty(token)) {
-            token = params.getString(VantarParam.AUTH_TOKEN);
-        }
-        if (StringUtil.isEmpty(token)) {
-            token = startupAuthToken;
-        }
-        if (StringUtil.isEmpty(token)) {
-            throw new AuthException(VantarKey.MISSING_AUTH_TOKEN);
-        }
-
-        TokenData tokenData = map.get(token);
-        if (tokenData == null) {
-            throw new AuthException(VantarKey.INVALID_AUTH_TOKEN);
-        }
-
-        if (-tokenData.lastInteraction.secondsFromNow() > (tokenExpireMin * 60)) {
-            map.remove(token);
-            throw new AuthException(VantarKey.EXPIRED_AUTH_TOKEN);
-        }
-
-        return tokenData;
     }
 
     private String makeUserOnline(TokenData info) {
@@ -478,17 +307,11 @@ public class ServiceAuth implements Services.Service {
     }
 
     public CommonUser getCurrentUser(Params params) {
-        if (debug && dummyUser != null) {
-            return dummyUser;
-        }
-
-        TokenData tokenData;
         try {
-            tokenData = validateToken(params, onlineUsers);
+            return validateToken(params, onlineUsers).user;
         } catch (AuthException e) {
             return null;
         }
-        return tokenData.user;
     }
 
     public Map<String, TokenData> getOnlineUsers() {
@@ -514,47 +337,9 @@ public class ServiceAuth implements Services.Service {
         verifyTokens.remove(token);
     }
 
-    public ServiceAuth setDummyUser(CommonUser dummyUser) {
-        this.dummyUser = dummyUser;
-        return this;
-    }
-
-    public CommonUser getDummyUser() {
-        return dummyUser;
-    }
-
-
-    public static class TokenData {
-
-        public CommonUser user;
-        public DateTime lastInteraction;
-        public TokenDataType type;
-
-        public TokenData(CommonUser user) {
-            this.user = user;
-            lastInteraction = new DateTime();
-        }
-
-        public TokenData(CommonUser user, TokenDataType type) {
-            this.user = user;
-            lastInteraction = new DateTime();
-            this.type = type;
-        }
-
-        public String toString() {
-            return ObjectUtil.toString(this);
-        }
-    }
-
 
     public interface Event {
 
         CommonUser getUser(String username) throws NoContentException, DatabaseException;
-    }
-
-
-    public enum  TokenDataType {
-        VERIFY_EMAIL,
-        VERIFY_MOBILE,
     }
 }

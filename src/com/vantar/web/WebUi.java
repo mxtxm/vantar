@@ -1,5 +1,6 @@
 package com.vantar.web;
 
+import com.vantar.admin.model.AdminData;
 import com.vantar.common.VantarParam;
 import com.vantar.database.dto.*;
 import com.vantar.database.query.PageData;
@@ -466,7 +467,7 @@ public class WebUi {
         html.append("<h1>")
             .append(dtoInfo.category)
             .append(" &gt; ")
-            .append("<a href='").append(getCompleteLink("/admin/data/list?dto=" + dtoInfo.getDtoClass()))
+            .append("<a href='").append(getCompleteLink("/admin/data/list?dto=" + dtoInfo.getDtoClassName()))
             .append("'>").append(dtoInfo.title).append("</a>")
             .append(" &gt; ")
             .append(title)
@@ -824,7 +825,10 @@ public class WebUi {
             setAdditive(dto, name, Unique.class, "<span class='unique'>unique</span>");
             Default a = dto.getAnnotation(name, Default.class);
             if (a != null) {
-                setAdditive(dto, name, Default.class, "<span class='unique'>" + dto.getAnnotation(name, Default.class).value() + "</span>");
+                setAdditive(
+                    dto,
+                    name, Default.class, "<span class='unique'>" + dto.getAnnotation(name, Default.class).value() + "</span>"
+                );
             }
 
             Class<?> type = dto.getPropertyType(name);
@@ -838,7 +842,8 @@ public class WebUi {
             } else if (type == Boolean.class) {
                 addSelect(name, name, new String[] {"Yes", "No"}, value == null ? null : ((Boolean) value ? "Yes" : "No"));
             } else if (
-                (type.equals(Set.class) || type.equals(Collection.class) || type.equals(List.class) || type.equals(ArrayList.class))
+                (type.equals(Set.class)
+                    || type.equals(Collection.class) || type.equals(List.class) || type.equals(ArrayList.class))
                     && dto.getPropertyGenericTypes(name)[0].isEnum()
             ) {
                 final Class<? extends Enum<?>> enumType = (Class<? extends Enum<?>>) dto.getPropertyGenericTypes(name)[0];
@@ -911,7 +916,9 @@ public class WebUi {
                 StringBuilder images = new StringBuilder();
                 for (String v : StringUtil.split(value, '|')) {
                     if (StringUtil.isNotEmpty(v)) {
-                        images.append("<img src='").append(v).append("' alt='").append(v).append("' title='").append(v).append("'/> ");
+                        images
+                            .append("<img src='").append(v).append("' alt='").append(v)
+                            .append("' title='").append(v).append("'/> ");
                     }
                 }
                 value = images.toString();
@@ -957,16 +964,21 @@ public class WebUi {
                 "}\n" +
                 "}\n")
             .append("</script>")
-            .append("<div id='toggle' onclick='toggle()'>").append(Locale.getString(VantarKey.ADMIN_JSON_OPTION)).append("</div>")
+            .append("<div id='toggle' onclick='toggle()'>").append(Locale.getString(VantarKey.ADMIN_JSON_OPTION))
+            .append("</div>")
             .append("<form id='dto-list-form' method='post'>");
 
         String jsonSearch = params.getString(VantarParam.JSON_SEARCH, "");
 
-        html.append("<div id='container-search-json' style='display:").append(jsonSearch.isEmpty() ? "none" : "block").append("'>");
+        html.append("<div id='container-search-json' style='display:")
+            .append(jsonSearch.isEmpty() ? "none" : "block").append("'>");
 
         addTextArea("JSON", VantarParam.JSON_SEARCH, jsonSearch);
         html.append(" &nbsp;");
-        addLinkNewPage(Locale.getString(VantarKey.ADMIN_HELP), "/admin/document/show?document=document--webservice--common--search.md");
+        addLinkNewPage(
+            Locale.getString(VantarKey.ADMIN_HELP),
+            "/admin/document/show?document=document--webservice--common--search.md"
+        );
         addSubmit("&gt;&gt;");
 
         html.append("</div>");
@@ -989,11 +1001,24 @@ public class WebUi {
         // SORT
         // PAGE
         // PAGE
-        html.append("<table id='container-search-options' style='display:").append(jsonSearch.isEmpty() ? "block" : "none").append("'>")
+        html.append("<table id='container-search-options' style='display:")
+            .append(jsonSearch.isEmpty() ? "block" : "none").append("'>")
+
+            // N PER PAGE
+            .append("<tr>")
+            .append("<td class='dto-list-form-title'>").append(Locale.getString(VantarKey.ADMIN_N_PER_PAGE))
+            .append("</td>")
+            .append("<td class='dto-list-form-option'><input id='dto-list-form-page' type='text' name='"
+                + VantarParam.COUNT + "' value='")
+            .append(params.getString(VantarParam.COUNT, Integer.toString(AdminData.N_PER_PAGE))).append("'/>")
+            .append("</td>")
+            .append("</tr>")
 
             // PAGE
-            .append("<tr>").append("<td class='dto-list-form-title'>").append(Locale.getString(VantarKey.ADMIN_PAGE)).append("</td>")
-            .append("<td class='dto-list-form-option'><input id='dto-list-form-page' type='text' name='" + VantarParam.PAGE + "' value='")
+            .append("<tr>")
+            .append("<td class='dto-list-form-title'>").append(Locale.getString(VantarKey.ADMIN_PAGE)).append("</td>")
+            .append("<td class='dto-list-form-option'><input id='dto-list-form-page' type='text' name='"
+                + VantarParam.PAGE + "' value='")
             .append(params.getString(VantarParam.PAGE, "1")).append("'/>").append("<input id='total-pages' value='")
             .append(Locale.getString(VantarKey.ADMIN_FROM)).append(" ")
             .append(data == null ? "" : (long) Math.ceil((double) data.total / (double) data.length))
@@ -1002,7 +1027,8 @@ public class WebUi {
             .append("</tr>")
 
             // SORT
-            .append("<tr>").append("<td class='dto-list-form-title'>").append(Locale.getString(VantarKey.ADMIN_SORT)).append("</td>")
+            .append("<tr>").append("<td class='dto-list-form-title'>")
+            .append(Locale.getString(VantarKey.ADMIN_SORT)).append("</td>")
             .append("<td class='dto-list-form-option'>");
 
         String sortField = params.getString(VantarParam.SORT_FIELD, "id");
@@ -1028,7 +1054,8 @@ public class WebUi {
 
         String searchCol = params.getString(VantarParam.SEARCH_FIELD);
         String searchValue = params.getString(VantarParam.SEARCH_VALUE);
-        html.append("<tr>").append("<td class='dto-list-form-title'>").append(Locale.getString(VantarKey.ADMIN_SEARCH)).append("</td>")
+        html.append("<tr>")
+            .append("<td class='dto-list-form-title'>").append(Locale.getString(VantarKey.ADMIN_SEARCH)).append("</td>")
             .append("<td class='dto-list-form-option'>")
             .append("<select name='" + VantarParam.SEARCH_FIELD + "'><option value='all'>all</option>");
         for (String name : dto.getProperties()) {
@@ -1100,7 +1127,8 @@ public class WebUi {
 
                     Tags actions = dto.getField(name).getAnnotation(Tags.class);
                     if (actions != null
-                        && (!CollectionUtil.contains(actions.value(), "list") || CollectionUtil.contains(actions.value(), "none"))) {
+                        && (!CollectionUtil.contains(actions.value(), "list")
+                        || CollectionUtil.contains(actions.value(), "none"))) {
                         continue;
                     }
 

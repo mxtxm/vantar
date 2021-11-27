@@ -1,6 +1,5 @@
 package com.vantar.service.auth;
 
-
 public enum AccessStatus {
     // customer is enabled after signup
     ENABLED,

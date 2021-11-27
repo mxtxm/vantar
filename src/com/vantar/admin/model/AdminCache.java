@@ -78,4 +78,14 @@ public class AdminCache {
 
         ui.finish();
     }
+
+    public static void refresh(Params params, HttpServletResponse response) {
+        WebUi ui = Admin.getUiAdminAccess(Locale.getString(Locale.getString(VantarKey.ADMIN_CACHE)), params, response);
+        if (ui == null) {
+            return;
+        }
+
+
+        ui.finish();
+    }
 }

@@ -167,8 +167,9 @@ public class MongoQueryResult extends QueryResultBase implements QueryResult, Au
 
                 try {
                     if (field.isAnnotationPresent(FetchCache.class)) {
-                        fetchFromCache(document, dto, field, type);
-                        continue;
+                        if (fetchFromCache(document, dto, field, type)) {
+                            continue;
+                        }
                     }
 
                     if (field.isAnnotationPresent(Fetch.class)) {
@@ -348,45 +349,90 @@ public class MongoQueryResult extends QueryResultBase implements QueryResult, Au
         fieldX.set(dtoX, v == null ? null : CollectionUtil.getStringFromMap(v, getLocales()));
     }
 
-    private void fetchFromCache(Document document, Dto dtoX, Field fieldX, Class<?> type) throws IllegalAccessException {
-        String fk = fieldX.getAnnotation(FetchCache.class).value();
-        Class<? extends Dto> rClass;
-        if (fk.isEmpty()) {
-            fk = fieldX.getAnnotation(FetchCache.class).field();
-            rClass = fieldX.getAnnotation(FetchCache.class).dto();
-        } else {
-            rClass = null;
+    private boolean fetchFromCache(Document document, Dto dtoX, Field fieldX, Class<?> type) throws IllegalAccessException {
+        ServiceDtoCache cache = Services.get(ServiceDtoCache.class);
+        if (cache == null) {
+            log.warn("! cache service is off");
+            return false;
         }
 
-        if (type == List.class || type == Set.class) {
+        String fk = fieldX.getAnnotation(FetchCache.class).value();
+        Class<? extends Dto> cachedClass;
+        boolean straightFromCache;
+        if (fk.isEmpty()) {
+            straightFromCache = false;
+            FetchCache cacheInfo = fieldX.getAnnotation(FetchCache.class);
+            fk = cacheInfo.field();
+            cachedClass = cacheInfo.dto();
+        } else {
+            straightFromCache = true;
+            cachedClass = (Class<? extends Dto>) fieldX.getType();
+        }
+
+        boolean isListSet = type == List.class || type == Set.class;
+        if (isListSet) {
+            Class<?>[] types = ObjectUtil.getFieldGenericTypes(fieldX);
+            if (types == null || types.length == 0) {
+                log.warn("! can not get generic type to fetch d={} dto={} f={} t={}", document, dtoX, fieldX, type);
+                return true;
+            }
+            if (straightFromCache) {
+                cachedClass = (Class<? extends Dto>) types[0];
+            } else {
+                type = types[0];
+            }
+        }
+
+        if (!cachedClass.isAnnotationPresent(Cache.class)) {
+            log.warn("! ({}) is not cached", cachedClass);
+            return false;
+        }
+
+        if (isListSet) {
             List<Long> ids = document.getList(StringUtil.toSnakeCase(fk), Long.class);
             if (ids == null) {
                 ids = document.getList(fk, Long.class);
             }
             if (ids == null) {
-                return;
+                return true;
             }
-            ServiceDtoCache cache = Services.get(ServiceDtoCache.class);
-            if (cache == null) {
-                return;
-            }
+
             List<Object> dtos = new ArrayList<>(ids.size());
             for (Long id : ids) {
-                if (rClass == null) {
-                    dtos.add(cache.getDto((Class<? extends Dto>) fieldX.getType(), id));
-                    return;
+                if (straightFromCache) {
+                    dtos.add(cache.getDto(cachedClass, id));
+                    continue;
                 }
 
-                Dto baseDto = (Dto) ObjectUtil.getInstance(fieldX.getType());
+                Dto baseDto = (Dto) ObjectUtil.getInstance(type);
                 if (baseDto == null) {
-                    return;
+                    log.warn("! can not create object ({})", type);
+                    return true;
                 }
-                Dto targetClass = cache.getDto(rClass, id);
-                baseDto.set(targetClass, getLocales());
+                Dto targetDto = cache.getDto(cachedClass, id);
+                if (targetDto == null) {
+                    log.warn("! data missing ({}, id={})", cachedClass, id);
+                    return true;
+                }
+
+                baseDto.set(targetDto, getLocales());
+                for (Field f : baseDto.getFields()) {
+                    if (f.isAnnotationPresent(FetchCache.class)) {
+                        String fk2 = f.getAnnotation(FetchCache.class).field();
+                        Document d = new Document(fk2, targetDto.getPropertyValue(fk2));
+                        fetchFromCache(d, baseDto, f, f.getType());
+                    }
+
+                    if (f.isAnnotationPresent(Fetch.class)) {
+                        String fk2 = f.getAnnotation(FetchCache.class).field();
+                        Document d = new Document(fk2, targetDto.getPropertyValue(fk2));
+                        fetchFromDatabase(d, baseDto, f, f.getType());
+                    }
+                }
                 dtos.add(baseDto);
             }
             fieldX.set(dtoX, dtos);
-            return;
+            return true;
         }
 
         Long id = document.getLong(StringUtil.toSnakeCase(fk));
@@ -394,29 +440,56 @@ public class MongoQueryResult extends QueryResultBase implements QueryResult, Au
             id = document.getLong(fk);
         }
         if (id == null) {
-            return;
-        }
-        ServiceDtoCache cache = Services.get(ServiceDtoCache.class);
-        if (cache == null) {
-            return;
+            return true;
         }
 
-        if (rClass == null) {
-            fieldX.set(dtoX, cache.getDto((Class<? extends Dto>) fieldX.getType(), id));
-            return;
+        if (straightFromCache) {
+            fieldX.set(dtoX, cache.getDto(cachedClass, id));
+            return true;
         }
 
         Dto baseDto = (Dto) ObjectUtil.getInstance(fieldX.getType());
         if (baseDto == null) {
-            return;
+            log.warn("! can not create object ({})", type);
+            return true;
         }
-        Dto targetClass = cache.getDto(rClass, id);
-        baseDto.set(targetClass, getLocales());
+        Dto targetDto = cache.getDto(cachedClass, id);
+
+        if (targetDto == null) {
+            log.warn("! data missing ({}, id={})", cachedClass, id);
+            return true;
+        }
+
+        baseDto.set(targetDto, getLocales());
+
+        for (Field f : baseDto.getFields()) {
+            if (f.isAnnotationPresent(FetchCache.class)) {
+                String fk2 = f.getAnnotation(FetchCache.class).field();
+                Document d = new Document(fk2, targetDto.getPropertyValue(fk2));
+                fetchFromCache(d, baseDto, f, f.getType());
+            }
+
+            if (f.isAnnotationPresent(Fetch.class)) {
+                String fk2 = f.getAnnotation(FetchCache.class).field();
+                Document d = new Document(fk2, targetDto.getPropertyValue(fk2));
+                fetchFromDatabase(d, baseDto, f, f.getType());
+            }
+        }
+
         fieldX.set(dtoX, baseDto);
+
+        return true;
     }
 
     private void fetchFromDatabase(Document document, Dto dtoX, Field fieldX, Class<?> type) throws IllegalAccessException {
         if (type == List.class || type == Set.class) {
+            Class<?>[] types = ObjectUtil.getFieldGenericTypes(fieldX);
+            if (types == null || types.length == 0) {
+                log.warn("! can not get generic type to fetch d={} dto={} f={} t={}", document, dtoX, fieldX, type);
+                return;
+            }
+            type = types[0];
+
             List<Long> ids = document.getList(
                 StringUtil.toSnakeCase(fieldX.getAnnotation(Fetch.class).value()),
                 Long.class
@@ -427,14 +500,11 @@ public class MongoQueryResult extends QueryResultBase implements QueryResult, Au
             if (ids == null) {
                 return;
             }
-            ServiceDtoCache cache = Services.get(ServiceDtoCache.class);
-            if (cache == null) {
-                return;
-            }
+
             List<Object> dtos = new ArrayList<>(ids.size());
             for (Long id : ids) {
                 try {
-                    dtos.add(MongoSearch.getDto((Class<? extends Dto>) fieldX.getType(), id, getLocales()));
+                    dtos.add(MongoSearch.getDto((Class<? extends Dto>) type, id, getLocales()));
                 } catch (NoContentException ignore) {
 
                 }
@@ -447,10 +517,10 @@ public class MongoQueryResult extends QueryResultBase implements QueryResult, Au
         if (id == null) {
             id = document.getLong(fieldX.getAnnotation(Fetch.class).value());
         }
-
         if (id == null) {
             return;
         }
+
         try {
             fieldX.set(dtoX, MongoSearch.getDto((Class<? extends Dto>) fieldX.getType(), id, getLocales()));
         } catch (NoContentException e) {

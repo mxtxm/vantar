@@ -10,6 +10,7 @@ import javax.servlet.http.HttpServletResponse;
 @WebServlet({
     "/admin/data",
 
+    "/admin/data/fields",
     "/admin/data/list",
     "/admin/data/update",
     "/admin/data/delete",
@@ -26,6 +27,10 @@ public class AdminDataController extends RouteToMethod {
 
     public void data(Params params, HttpServletResponse response) {
         AdminData.index(params, response);
+    }
+
+    public void dataFields(Params params, HttpServletResponse response) {
+        AdminData.fields(params, response, DtoDictionary.get(params.getString("dto")));
     }
 
     public void dataList(Params params, HttpServletResponse response) {

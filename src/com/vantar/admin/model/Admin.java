@@ -40,7 +40,7 @@ public class Admin {
         }
 
         menu.put(Locale.getString(VantarKey.ADMIN_MENU_HOME), "/admin");
-        if (AdminAuth.hasAccess(params, AdminUserRole.ADMIN)) {
+        if (AdminAuth.hasAccess(params, RootRole.rootRole)) {
             menu.put(Locale.getString(VantarKey.ADMIN_MENU_MONITORING), "/admin/monitoring");
             menu.put(Locale.getString(VantarKey.ADMIN_MENU_DATA), "/admin/data");
             menu.put(Locale.getString(VantarKey.ADMIN_MENU_ADVANCED), "/admin/advanced");
@@ -60,7 +60,7 @@ public class Admin {
         }
 
         List<String> items = new ArrayList<>(1);
-        if (AdminAuth.hasAccess(params, AdminUserRole.ADMIN)) {
+        if (AdminAuth.hasAccess(params, RootRole.rootRole)) {
             items.add("");
             items.add(Locale.getString(VantarKey.ADMIN_USERS) + ":/admin/data/list?dto=User");
             items.add("");
@@ -90,7 +90,7 @@ public class Admin {
     }
 
     public static WebUi getUiAdminAccess(String title, Params params, HttpServletResponse response) {
-        return getUi(title, params, response, AdminUserRole.ADMIN);
+        return getUi(title, params, response, RootRole.rootRole);
     }
 
     public static WebUi getUi(String title, Params params, HttpServletResponse response, CommonUserRole role) {
@@ -113,7 +113,7 @@ public class Admin {
         ui  .addMenu(menu, getOnlineUserTitle(params))
             .setBreadcrumb(appTitle + " : " + title, dtoInfo).beginMain();
 
-        if (!AdminAuth.hasAccess(params, AdminUserRole.ADMIN)) {
+        if (!AdminAuth.hasAccess(params, RootRole.rootRole)) {
             ui.redirect("/admin/signin");
             return null;
         }
@@ -138,7 +138,7 @@ public class Admin {
             return;
         }
 
-        if (AdminAuth.hasAccess(params, AdminUserRole.ADMIN)) {
+        if (AdminAuth.hasAccess(params, RootRole.rootRole)) {
             shortcuts.forEach((cat, items) -> {
                 ui.addHeading(cat);
                 for (String item : items) {

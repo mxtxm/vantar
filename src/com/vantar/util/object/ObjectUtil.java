@@ -2,7 +2,6 @@ package com.vantar.util.object;
 
 import com.google.gson.JsonSyntaxException;
 import com.vantar.common.VantarParam;
-import com.vantar.database.dto.Dto;
 import com.vantar.exception.DateTimeException;
 import com.vantar.util.datetime.DateTime;
 import com.vantar.util.json.Json;
@@ -366,6 +365,13 @@ public class ObjectUtil {
         }
 
         return false;
+    }
+
+    public static boolean extendsClass(Class<?> type, Class<?> c) {
+        if (type == c) {
+            return true;
+        }
+        return c.isAssignableFrom(type);
     }
 
     @SuppressWarnings({"unchecked"})

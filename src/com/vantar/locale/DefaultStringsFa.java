@@ -53,6 +53,7 @@ public class DefaultStringsFa {
         tokens.put(VantarKey.NO_CONTENT, "بدون محتوا");
 
         // data write
+        tokens.put(VantarKey.UPLOAD_SUCCESS, "فایل با موفقیت آپلود شذ");
         tokens.put(VantarKey.INSERT_SUCCESS, "داده ها با موفقیت وارد گردید");
         tokens.put(VantarKey.INSERT_MANY_SUCCESS, "{0} رکورد با موفقیت وارد گردید");
         tokens.put(VantarKey.INSERT_FAIL, "ورود اطلاعات دچار خطا شد");
@@ -139,6 +140,7 @@ public class DefaultStringsFa {
         tokens.put(VantarKey.ADMIN_REMOVE_BACKUP_FILE, " نابود کردن فایل کپی پشتیبان ");
         tokens.put(VantarKey.ADMIN_DELETE_DO, "پاک شود");
 
+        tokens.put(VantarKey.ADMIN_DATA_FIELDS, "فیلدها");
         tokens.put(VantarKey.ADMIN_DATA_LIST, "لیست داده ها");
         tokens.put(VantarKey.ADMIN_NEW_RECORD, "رکورد جدید");
         tokens.put(VantarKey.ADMIN_IMPORT, "ایمپورت");
@@ -262,6 +264,11 @@ public class DefaultStringsFa {
         tokens.put(VantarKey.LOGICAL_DELETED, "حذف نرم (رکورد تنها نشانه زده شود)");
         tokens.put(VantarKey.LOGICAL_DELETED_UNDO, "برگرداندن");
         tokens.put(VantarKey.ADMIN_ACTION_LOG, "لاگ");
+
+        tokens.put(VantarKey.ADMIN_N_PER_PAGE, "رکورد در صفحه");
+
+        tokens.put(VantarKey.DELETE_FAIL_HAS_DEPENDENCIES, "بعلت وجود وابستگی امکان حذف وجود ندارد");
+
     }
 
     public static String getString(LangKey key) {

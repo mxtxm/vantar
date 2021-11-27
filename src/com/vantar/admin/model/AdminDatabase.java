@@ -129,7 +129,7 @@ public class AdminDatabase {
             CommonRepoSql repo = new CommonRepoSql(connection);
 
             for (DtoDictionary.Info info : DtoDictionary.getAll(DtoDictionary.Dbms.SQL)) {
-                ui  .beginBox(info.getDtoClass())
+                ui  .beginBox(info.getDtoClassName())
                     .addPre(CollectionUtil.join(repo.getIndexes(info.getDtoInstance()), '\n'))
                     .containerEnd()
                     .write();
@@ -177,8 +177,8 @@ public class AdminDatabase {
 
             for (DtoDictionary.Info info : DtoDictionary.getAll(DtoDictionary.Dbms.SQL)) {
                 Dto dto = info.getDtoInstance();
-                if (exclude != null && (exclude.contains(dto.getStorage()) || exclude.contains(info.getDtoClass()))) {
-                    ui.addKeyValue(info.getDtoClass(), Locale.getString(VantarKey.ADMIN_IGNORE)).write();
+                if (exclude != null && (exclude.contains(dto.getStorage()) || exclude.contains(info.getDtoClassName()))) {
+                    ui.addKeyValue(info.getDtoClassName(), Locale.getString(VantarKey.ADMIN_IGNORE)).write();
                     continue;
                 }
 
@@ -199,7 +199,7 @@ public class AdminDatabase {
                     msg = Locale.getString(VantarKey.DELETE_FAIL);
                 }
 
-                ui.addKeyValue(info.getDtoClass(), msg + " : " + total + " > " + count).write();
+                ui.addKeyValue(info.getDtoClassName(), msg + " : " + total + " > " + count).write();
 
                 for (Field field : dto.getFields()) {
                     if (field.isAnnotationPresent(ManyToManyStore.class)) {
@@ -271,8 +271,8 @@ public class AdminDatabase {
             }
 
             Dto dto = info.getDtoInstance();
-            if (exclude != null && (exclude.contains(dto.getStorage()) || exclude.contains(info.getDtoClass()))) {
-                ui.addMessage(info.getDtoClass() + " " + Locale.getString(VantarKey.ADMIN_IGNORE)).write();
+            if (exclude != null && (exclude.contains(dto.getStorage()) || exclude.contains(info.getDtoClassName()))) {
+                ui.addMessage(info.getDtoClassName() + " " + Locale.getString(VantarKey.ADMIN_IGNORE)).write();
                 continue;
             }
 
@@ -348,7 +348,7 @@ public class AdminDatabase {
         try {
             for (DtoDictionary.Info info : DtoDictionary.getAll(DtoDictionary.Dbms.MONGO)) {
                 List<String> indexes = Mongo.Index.getIndexes(info.getDtoInstance());
-                ui  .beginBox(info.getDtoClass())
+                ui  .beginBox(info.getDtoClassName())
                     .addPre(CollectionUtil.join(indexes, '\n'))
                     .containerEnd()
                     .write();
@@ -391,8 +391,8 @@ public class AdminDatabase {
 
         for (DtoDictionary.Info info : DtoDictionary.getAll(DtoDictionary.Dbms.MONGO)) {
             Dto dto = info.getDtoInstance();
-            if (exclude != null && (exclude.contains(dto.getStorage()) || exclude.contains(info.getDtoClass()))) {
-                ui.addKeyValue(info.getDtoClass(), Locale.getString(VantarKey.ADMIN_IGNORE)).write();
+            if (exclude != null && (exclude.contains(dto.getStorage()) || exclude.contains(info.getDtoClassName()))) {
+                ui.addKeyValue(info.getDtoClassName(), Locale.getString(VantarKey.ADMIN_IGNORE)).write();
                 continue;
             }
 
@@ -412,7 +412,7 @@ public class AdminDatabase {
                 msg = Locale.getString(VantarKey.DELETE_FAIL);
             }
 
-            ui.addKeyValue(info.getDtoClass(), msg + " : " + total + " > " + count).write();
+            ui.addKeyValue(info.getDtoClassName(), msg + " : " + total + " > " + count).write();
         }
 
         ui.containerEnd().containerEnd().write();
@@ -474,8 +474,8 @@ public class AdminDatabase {
             }
 
             Dto dto = info.getDtoInstance();
-            if (exclude != null && (exclude.contains(dto.getStorage()) || exclude.contains(info.getDtoClass()))) {
-                ui.addMessage(info.getDtoClass() + " " + Locale.getString(VantarKey.ADMIN_IGNORE)).write();
+            if (exclude != null && (exclude.contains(dto.getStorage()) || exclude.contains(info.getDtoClassName()))) {
+                ui.addMessage(info.getDtoClassName() + " " + Locale.getString(VantarKey.ADMIN_IGNORE)).write();
                 continue;
             }
 
@@ -564,8 +564,8 @@ public class AdminDatabase {
 
         for (DtoDictionary.Info info : DtoDictionary.getAll(DtoDictionary.Dbms.ELASTIC)) {
             Dto dto = info.getDtoInstance();
-            if (exclude != null && (exclude.contains(dto.getStorage()) || exclude.contains(info.getDtoClass()))) {
-                ui.addKeyValue(info.getDtoClass(), Locale.getString(VantarKey.ADMIN_IGNORE)).write();
+            if (exclude != null && (exclude.contains(dto.getStorage()) || exclude.contains(info.getDtoClassName()))) {
+                ui.addKeyValue(info.getDtoClassName(), Locale.getString(VantarKey.ADMIN_IGNORE)).write();
                 continue;
             }
 
@@ -588,7 +588,7 @@ public class AdminDatabase {
                 msg = Locale.getString(VantarKey.DELETE_FAIL);
             }
 
-            ui.addKeyValue(info.getDtoClass(), msg + " : " + total + " > " + count).write();
+            ui.addKeyValue(info.getDtoClassName(), msg + " : " + total + " > " + count).write();
         }
 
         ui.containerEnd().containerEnd().write();
@@ -631,8 +631,8 @@ public class AdminDatabase {
             }
 
             Dto dto = info.getDtoInstance();
-            if (exclude != null && (exclude.contains(dto.getStorage()) || exclude.contains(info.getDtoClass()))) {
-                ui.addMessage(info.getDtoClass() + " " + Locale.getString(VantarKey.ADMIN_IGNORE)).write();
+            if (exclude != null && (exclude.contains(dto.getStorage()) || exclude.contains(info.getDtoClassName()))) {
+                ui.addMessage(info.getDtoClassName() + " " + Locale.getString(VantarKey.ADMIN_IGNORE)).write();
                 continue;
             }
 
@@ -660,7 +660,7 @@ public class AdminDatabase {
 
         for (DtoDictionary.Info info : DtoDictionary.getAll(DtoDictionary.Dbms.ELASTIC)) {
             Dto dto = info.getDtoInstance();
-            ui.beginBox(info.getDtoClass());
+            ui.beginBox(info.getDtoClassName());
             try {
                 ElasticIndexes.getMapping(dto).forEach((k, v) -> {
                     if (v instanceof Map) {

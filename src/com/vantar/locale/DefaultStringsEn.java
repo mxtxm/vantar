@@ -53,6 +53,7 @@ public class DefaultStringsEn {
         tokens.put(VantarKey.NO_CONTENT, "No content");
 
         // data write
+        tokens.put(VantarKey.UPLOAD_SUCCESS, "File uploaded successfully");
         tokens.put(VantarKey.INSERT_SUCCESS, "Data inserted successfully");
         tokens.put(VantarKey.INSERT_MANY_SUCCESS, "{0} items inserted successfully");
         tokens.put(VantarKey.INSERT_FAIL, "Insert failed");
@@ -138,7 +139,7 @@ public class DefaultStringsEn {
         tokens.put(VantarKey.ADMIN_DOWNLOAD, " Download backup file ");
         tokens.put(VantarKey.ADMIN_REMOVE_BACKUP_FILE, " Delete backup files ");
         tokens.put(VantarKey.ADMIN_DELETE_DO, "Delete");
-
+        tokens.put(VantarKey.ADMIN_DATA_FIELDS, "Fields");
         tokens.put(VantarKey.ADMIN_DATA_LIST, "List");
         tokens.put(VantarKey.ADMIN_NEW_RECORD, "New");
         tokens.put(VantarKey.ADMIN_IMPORT, "Import");
@@ -262,6 +263,10 @@ public class DefaultStringsEn {
         tokens.put(VantarKey.LOGICAL_DELETED, "Soft delete (mark record as deleted)");
         tokens.put(VantarKey.LOGICAL_DELETED_UNDO, "Undelete");
         tokens.put(VantarKey.ADMIN_ACTION_LOG, "Log");
+
+        tokens.put(VantarKey.ADMIN_N_PER_PAGE, "n per page");
+
+        tokens.put(VantarKey.DELETE_FAIL_HAS_DEPENDENCIES, "Not deleted because of dependencies");
     }
 
     public static String getString(LangKey key) {

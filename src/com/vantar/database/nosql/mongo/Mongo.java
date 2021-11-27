@@ -388,7 +388,7 @@ public class Mongo {
     /* UPDATE < < < */
 
 
-    /* UPSET > > > */
+    /* UNSET > > > */
 
     public static void unset(String collection, Long id, String... fields) throws DatabaseException {
         Document fieldsToUnset = new Document();
@@ -410,7 +410,7 @@ public class Mongo {
         unset(dto.getStorage(), dto.getId(), fields);
     }
 
-    /* UPSET < < < */
+    /* UNSET < < < */
 
 
     /* DELETE > > > */

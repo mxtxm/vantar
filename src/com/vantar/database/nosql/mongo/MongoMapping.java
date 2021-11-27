@@ -175,7 +175,15 @@ public class MongoMapping {
             Document document = new Document();
             for (QueryGroup group : q.getGroup()) {
                 for (int i = 0, l = group.columns.length; i < l; ++i) {
-                    group.columns[i] = "id".equals(group.columns[i]) ? Mongo.ID : group.columns[i];
+                    String fieldName = group.columns[i];
+                    if (fieldName == null) {
+                        continue;
+                    }
+                    if (fieldName.equals("id")) {
+                        group.columns[i] = Mongo.ID;
+                    } else if (fieldName.endsWith(".id")) {
+                        group.columns[i] = StringUtil.replace(fieldName, ".id", "." + Mongo.ID);
+                    }
                 }
 
                 switch (group.groupType) {

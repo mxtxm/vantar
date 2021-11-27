@@ -43,10 +43,9 @@ public class ResponseMessage {
         code = 200;
         successful = true;
         this.message = Locale.getString(message);
+        this.value = value;
         if (value instanceof Dto) {
             this.dto = (Dto) value;
-        } else {
-            this.value = value;
         }
     }
 

@@ -90,6 +90,10 @@ public class Json {
     }
 
     public static <T> List<T> listFromJson(String value, Class<T> typeClass) {
+        if (StringUtil.isNotEmpty(value) && !value.trim().startsWith("[")) {
+            log.warn("! ({}, {}) > invalid json list", value, typeClass);
+            return null;
+        }
         try {
             return gson().fromJson(value, new ListOfJson<>(typeClass));
         } catch (JsonParseException e) {
@@ -99,6 +103,10 @@ public class Json {
     }
 
     public static <K, V> Map<K, V> mapFromJson(String value, Class<K> typeClassKey, Class<V> typeClassValue) {
+        if (StringUtil.isNotEmpty(value) && !value.trim().startsWith("{")) {
+            log.warn("! ({}, {}, {}) > ", value, typeClassKey, typeClassValue);
+            return null;
+        }
         try {
             return gson().fromJson(value, new MapOfJson<>(typeClassKey, typeClassValue));
         } catch (JsonParseException e) {

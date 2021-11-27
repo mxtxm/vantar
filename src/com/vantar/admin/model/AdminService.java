@@ -156,6 +156,7 @@ public class AdminService {
         } else {
             Services.stopServicesOnly();
         }
+
         // on other servers
         if (allServers) {
             Services.messaging.broadcast(VantarParam.MESSAGE_SERVICES_STOP, Boolean.toString(runEvents));

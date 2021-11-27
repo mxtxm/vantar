@@ -1,6 +1,9 @@
 package com.vantar.service.auth;
 
 
+import java.util.List;
+
+
 public interface CommonUser {
 
     void setToken(String token);
@@ -22,6 +25,7 @@ public interface CommonUser {
     String getUsername();
 
     CommonUserRole getRole();
+    List<CommonUserRole> getRoles();
 
     void setSigningIn();
 

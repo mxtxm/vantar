@@ -1,14 +1,17 @@
 package com.vantar.admin.model;
 
+import com.mongodb.util.JSON;
 import com.vantar.common.Settings;
 import com.vantar.database.datatype.Location;
 import com.vantar.database.dto.*;
 import com.vantar.locale.Locale;
 import com.vantar.locale.*;
-import com.vantar.util.datetime.DateTime;
+import com.vantar.util.collection.CollectionUtil;
+import com.vantar.util.datetime.*;
 import com.vantar.util.file.FileUtil;
 import com.vantar.util.json.Json;
-import com.vantar.util.object.ObjectUtil;
+import com.vantar.util.number.NumberUtil;
+import com.vantar.util.object.*;
 import com.vantar.util.string.*;
 import com.vantar.web.*;
 import com.vladsch.flexmark.html.HtmlRenderer;
@@ -125,7 +128,7 @@ public class AdminDocument {
 
         List<DtoDictionary.Info> dtos = new ArrayList<>();
         dtos.addAll(DtoDictionary.getAll());
-        dtos.addAll(DtoDictionary.getNoStoreDtos().values());
+        //dtos.addAll(DtoDictionary.getNoStoreDtos().values());
 
         for (DtoDictionary.Info info : dtos) {
             Dto dto = info.getDtoInstance();
@@ -133,7 +136,19 @@ public class AdminDocument {
             document.append("\n<label id='").append(info.dtoClass.getSimpleName()).append("'></label>\n## ")
                 .append(info.dtoClass.getSimpleName()).append(" ##\n");
 
-            for (Field field : dto.getFields()) {
+            List<Field> fields = new ArrayList<>();
+            for (Field f : dto.getClass().getFields()) {
+                int m = f.getModifiers();
+                if (Modifier.isFinal(m) || Modifier.isStatic(m)) {
+                    continue;
+                }
+                if (f.isAnnotationPresent(NoStore.class)) {
+                    continue;
+                }
+                fields.add(f);
+            }
+
+            for (Field field : fields) {
                 Class<?> type = field.getType();
                 document.append("* ").append(type.getSimpleName());
 
@@ -244,6 +259,28 @@ public class AdminDocument {
             }
         }
 
+        content = StringUtil.replace(content, "<<<insert>>>", "    JSON\n" +
+            "    {\n" +
+            "        \"code\": (int) status code 200/4xx/5xx,\n" +
+            "        \"message\": (String) \"message, i.e. success or user validation errors\",\n" +
+            "        \"dto\": (Object) { inserted-object },\n" +
+            "        \"value\": (long) inserted-id,\n" +
+            "        \"successful\": (boolean) true/false\n" +
+            "    }\n");
+        content = StringUtil.replace(content, "<<<update>>>", "    JSON\n" +
+            "    {\n" +
+            "        \"code\": (int) status code 200/4xx/5xx,\n" +
+            "        \"message\": (String) \"message, i.e. success or user validation errors\",\n" +
+            "        \"dto\": (Object) { updated-object },\n" +
+            "        \"successful\": (boolean) true/false\n" +
+            "    }\n");
+        content = StringUtil.replace(content, "<<<delete>>>", "    JSON\n" +
+            "    {\n" +
+            "        \"code\": (int) status code 200/4xx/5xx,\n" +
+            "        \"message\": (String) \"message, i.e. success or user validation errors\",\n" +
+            "        \"successful\": (boolean) true/false\n" +
+            "    }\n");
+
         content = StringUtil.replace(content, "<<<access>>>", "PUBLIC", 1);
         return content;
     }
@@ -332,6 +369,7 @@ public class AdminDocument {
         public String action;
         public String controllerClass;
         public String controllerMethod;
+        public boolean ignoreNoStore = true;
 
 
         public String get() {
@@ -412,15 +450,13 @@ public class AdminDocument {
                             String name = StringUtil.replace(obj.getClass().getSimpleName(), '$', '.');
                             sb  .append("[ { <a href='/admin/document/show/dtos#").append(name).append("'>")
                                 .append(name).append("</a> } ]")
-                                .append(" (the JSON list may contain fields of object <a href='/admin/document/show/dtos#")
+                                .append(" (JSON list may contain fields of object <a href='/admin/document/show/dtos#")
                                 .append(name).append("'>").append(name).append("</a>").append(" as described bellow)\n");
                         }
                     } else if (format.equalsIgnoreCase("object")) {
                         if (dto != null) {
                             String name = StringUtil.replace(obj.getClass().getSimpleName(), '$', '.');
-                            sb  .append("{ <a href='/admin/document/show/dtos#").append(name).append("'>").append(name)
-                                .append("</a> }")
-                                .append(" (the JSON may contain fields of object <a href='/admin/document/show/dtos#")
+                            sb  .append(" (may contain fields of object <a href='/admin/document/show/dtos#")
                                 .append(name).append("'>").append(name).append("</a>").append(" as described bellow)\n");
                         }
                     } else {
@@ -428,7 +464,8 @@ public class AdminDocument {
                     }
                 }
 
-                for (String prop : obj.getProperties(exclude)) {
+
+                for (String prop : getProperties(obj, exclude, ignoreNoStore)) {
                     Class<?> propType = obj.getPropertyType(prop);
                     boolean isRequired = obj.hasAnnotation(prop, Required.class);
                     boolean isKey = false;
@@ -444,7 +481,6 @@ public class AdminDocument {
                     if (!includeFields.isEmpty() && !includeFields.contains(prop) && !isKey) {
                         continue;
                     }
-
                     if (excludeAll && !isKey) {
                         continue;
                     }
@@ -459,7 +495,6 @@ public class AdminDocument {
                     }
 
                     sb.append(propType.getSimpleName());
-
                     List<String> genericComments = null;
                     if (propType == List.class || propType == Map.class || propType == Collection.class) {
                         genericComments = new ArrayList<>();
@@ -483,6 +518,7 @@ public class AdminDocument {
                     if (isRequired) {
                         sb.append("**");
                     }
+
 
                     // > > > comments
 
@@ -529,9 +565,218 @@ public class AdminDocument {
 
                     sb.append("\n");
                 }
+
+                sb.append("##### sample #####\n");
+                try {
+                    sb.append("<pre>").append(Json.makePretty(getAsJsonExampleDto(obj.getClass()))).append("</pre>\n");
+                } catch (Exception e) {
+                    log.warn("! JSON error", e);
+                    sb.append("<pre><br/>").append(getAsJsonExampleDto(obj.getClass())).append("</pre>\n");
+
+                }
             }
+
             return sb.toString();
         }
+
+        private String getAsJsonExampleList(Field f) {
+            StringBuilder json = new StringBuilder();
+            json.append('[');
+            Class<?>[] g = ObjectUtil.getFieldGenericTypes(f);
+            if (g.length == 1) {
+                Class<?> genericType = g[0];
+
+                if (ObjectUtil.implementsInterface(genericType, Dto.class)) {
+                    json.append(getAsJsonExampleDto(genericType));
+                } else if (ObjectUtil.extendsClass(genericType, Number.class)) {
+                    json.append("000");
+                } else if (genericType == String.class) {
+                    json.append("\"STRING\"");
+                } else if (genericType == Boolean.class) {
+                    json.append("true,");
+                } else if (genericType == Location.class) {
+                    json.append("{\"latitude\":000,\"longitude\":000}");
+                } else if(genericType == List.class || genericType == Set.class || genericType == Collection.class) {
+                    json.append("[]");
+                } else if(genericType == Map.class) {
+                    json.append("{}");
+                } else {
+                    json.append(genericType.getName());
+                }
+            }
+            json.append("]");
+            return json.toString();
+        }
+
+        private String getAsJsonExampleMap(Field f) {
+            StringBuilder json = new StringBuilder();
+            json.append('{');
+            Class<?>[] g = ObjectUtil.getFieldGenericTypes(f);
+            if (g.length == 2) {
+                Class<?> genericTypeK = g[0];
+                if (ObjectUtil.extendsClass(genericTypeK, Number.class)) {
+                    json.append("000:");
+                } else if (genericTypeK == String.class) {
+                    json.append("\"STRING\":");
+                }
+
+                Class<?> genericType = g[1];
+
+                if (ObjectUtil.implementsInterface(genericType, Dto.class)) {
+                    json.append(getAsJsonExampleDto(genericType));
+                } else if (ObjectUtil.extendsClass(genericType, Number.class)) {
+                    json.append("000");
+                } else if (genericType == String.class) {
+                    json.append("\"STRING\"");
+                } else if (genericType == Boolean.class) {
+                    json.append("true,");
+                } else if (genericType == Location.class) {
+                    json.append("{\"latitude\":000,\"longitude\":000}");
+                } else if(genericType == List.class || genericType == Set.class || genericType == Collection.class) {
+                    json.append("[]");
+                } else if(genericType == Map.class) {
+                    json.append("{}");
+                }
+            }
+            json.append("}");
+            return json.toString();
+        }
+
+        public String getAsJsonExampleDto(Class<?> obj) {
+            boolean excludeAll = false;
+            if (exclude != null) {
+                for (String x: exclude) {
+                    if (x.equals("all")) {
+                        excludeAll = true;
+                        break;
+                    }
+                }
+            }
+
+            if (includeFields == null) {
+                includeFields = new HashSet<>();
+            }
+
+            StringBuilder json = new StringBuilder();
+            json.append("{");
+
+            for (Field f : getProperties(obj, exclude, ignoreNoStore)) {
+                Class<?> propType = f.getType();
+                String prop = f.getName();
+                boolean isKey = false;
+                if (key != null) {
+                    for (String k: key) {
+                        if (k.equals(prop)) {
+                            isKey = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (!includeFields.isEmpty() && !includeFields.contains(prop) && !isKey) {
+                    continue;
+                }
+                if (excludeAll && !isKey) {
+                    continue;
+                }
+
+                json.append('"').append(prop).append("\":");
+
+                if (propType.isEnum()) {
+                    json.append('"');
+                    for (Object x : propType.getEnumConstants()) {
+                        json.append(x.toString()).append(" | ");
+                    }
+                    json.setLength(json.length() - 3);
+                    json.append("\",");
+                    continue;
+                }
+
+                if (ObjectUtil.extendsClass(propType, Number.class)) {
+                    json.append("000").append(',');
+                    continue;
+                }
+                if (propType == Boolean.class) {
+                    json.append("true,");
+                    continue;
+                }
+                if (propType == String.class) {
+                    json.append("\"STRING\",");
+                    continue;
+                }
+                if (propType == Location.class) {
+                    json.append("{\"latitude\":000,\"longitude\":000,\"countryCode\":\"en\"},");
+                    continue;
+                }
+                if (f.isAnnotationPresent(Localized.class)) {
+                    json.append("{\"en\":\"STRING\",\"fa\":\"STRING\"},");
+                    continue;
+                }
+                if (propType == DateTime.class) {
+                    json.append("\"Y-M-D h:m:s\",");
+                    continue;
+                }
+                if (propType == DateTimeRange.class) {
+                    json.append("{\"dateMin\":\"Y-M-D h:m:s\",\"dateMax\":\"Y-M-D h:m:s\"},");
+                    continue;
+                }
+
+                if (propType == List.class || propType == Set.class || propType == Collection.class) {
+                    json.append(getAsJsonExampleList(f)).append(',');
+                    continue;
+                }
+                if (propType == Map.class) {
+                    json.append(getAsJsonExampleMap(f)).append(',');
+                    continue;
+                }
+                if (ObjectUtil.implementsInterface(propType, Dto.class)) {
+                    json.append(getAsJsonExampleDto(propType)).append(',');
+                    continue;
+                }
+
+                json.append("\"???\",");
+            }
+
+            json.setLength(json.length() - 1);
+            json.append('}');
+            return json.toString();
+        }
+    }
+
+    private static List<Field> getProperties(Class<?> cls, String[] exclude, boolean ignoreNoStore) {
+        List<Field> properties = new ArrayList<>();
+        for (Field field : cls.getFields()) {
+            int m = field.getModifiers();
+            if (Modifier.isFinal(m) || Modifier.isStatic(m)) {
+                continue;
+            }
+            if (ignoreNoStore && field.isAnnotationPresent(NoStore.class)) {
+                continue;
+            }
+            if (CollectionUtil.contains(exclude, field.getName())) {
+                continue;
+            }
+            properties.add(field);
+        }
+        return properties;
+    }
+
+    private static List<String> getProperties(Dto dto, String[] exclude, boolean ignoreNoStore) {
+        List<String> properties = new ArrayList<>();
+        for (Field field : dto.getClass().getFields()) {
+            int m = field.getModifiers();
+            if (Modifier.isFinal(m) || Modifier.isStatic(m)) {
+                continue;
+            }
+            if (ignoreNoStore && field.isAnnotationPresent(NoStore.class)) {
+                continue;
+            }
+            if (CollectionUtil.contains(exclude, field.getName())) {
+                continue;
+            }
+            properties.add(field.getName());
+        }
+        return properties;
     }
 
     @SuppressWarnings({"unchecked"})

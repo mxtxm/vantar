@@ -63,6 +63,10 @@ public class ServiceDtoCache implements Services.Service {
         update(DtoDictionary.get(dtoName));
     }
 
+    public void update(Class<?> dtoClass) {
+        update(DtoDictionary.get(dtoClass.getSimpleName()));
+    }
+
     private void update(DtoDictionary.Info info) {
         if (info == null || !info.dtoClass.isAnnotationPresent(Cache.class)) {
             return;

@@ -45,6 +45,7 @@ public enum VantarKey implements LangKey {
     NO_CONTENT,
 
     // data write
+    UPLOAD_SUCCESS,
     INSERT_SUCCESS,
     INSERT_MANY_SUCCESS,
     INSERT_FAIL,
@@ -123,6 +124,7 @@ public enum VantarKey implements LangKey {
     ADMIN_DELETE_DO,
     ADMIN_IMPORT,
     ADMIN_NEW_RECORD,
+    ADMIN_DATA_FIELDS,
     ADMIN_DATA_LIST,
     ADMIN_DATABASE_TITLE,
     ADMIN_DELETE,
@@ -247,4 +249,8 @@ public enum VantarKey implements LangKey {
     LOGICAL_DELETED,
     LOGICAL_DELETED_UNDO,
     ADMIN_ACTION_LOG,
+
+    ADMIN_N_PER_PAGE,
+
+    DELETE_FAIL_HAS_DEPENDENCIES,
 }

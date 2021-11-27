@@ -4,10 +4,13 @@ import com.vantar.exception.*;
 import com.vantar.locale.*;
 import com.vantar.service.Services;
 import com.vantar.service.auth.ServiceAuth;
+import com.vantar.service.cache.ServiceDtoCache;
 import com.vantar.util.string.StringUtil;
 import org.slf4j.*;
 import javax.servlet.http.*;
 import java.io.IOException;
+import java.rmi.ServerError;
+
 
 /**
  * /p1/p2/p3/p4/p5
@@ -45,15 +48,28 @@ public class RouteToMethod extends HttpServlet {
 
             Locale.setSelectedLocale(params);
             java.lang.reflect.Method method;
+            String m = methodName.toString();
             try {
-                method = this.getClass().getMethod(methodName.toString(), Params.class, HttpServletResponse.class);
+                method = this.getClass().getMethod(m, Params.class, HttpServletResponse.class);
 
-                if (method.isAnnotationPresent(Access.class)) {
+                if (method.isAnnotationPresent(VerifyPermission.class)) {
                     ServiceAuth auth = Services.get(ServiceAuth.class);
                     if (auth == null) {
                         throw new ServiceException(ServiceAuth.class);
                     }
-                    auth.permitAccessStr(params, method.getAnnotation(Access.class).value());
+                    auth.permitController(params, m);
+                } else if (method.isAnnotationPresent(Access.class)) {
+                    ServiceAuth auth = Services.get(ServiceAuth.class);
+                    if (auth == null) {
+                        throw new ServiceException(ServiceAuth.class);
+                    }
+                    auth.permitAccessString(params, method.getAnnotation(Access.class).value());
+                } else if (method.isAnnotationPresent(Feature.class)) {
+                    ServiceAuth auth = Services.get(ServiceAuth.class);
+                    if (auth == null) {
+                        throw new ServiceException(ServiceAuth.class);
+                    }
+                    auth.permitFeature(params, method.getAnnotation(Feature.class).value());
                 }
 
                 method.invoke(this, params, response);
