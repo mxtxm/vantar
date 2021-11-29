@@ -656,10 +656,18 @@ public class CommonModelMongo extends CommonModel {
     /* > > > GET DATA */
 
     public static Object search(Params params, Dto dto) throws ServerException, NoContentException, InputException {
-        return search(params, dto, dto);
+        return search(params, dto, dto, null);
+    }
+
+    public static Object search(Params params, Dto dto, QueryEvent event) throws ServerException, NoContentException, InputException {
+        return search(params, dto, dto, event);
     }
 
     public static Object search(Params params, Dto dto, Dto dtoView) throws ServerException, NoContentException, InputException {
+        return search(params, dto, dtoView, null);
+    }
+
+    public static Object search(Params params, Dto dto, Dto dtoView, QueryEvent event) throws ServerException, NoContentException, InputException {
         QueryData queryData = params.getQueryData();
         if (queryData == null) {
             throw new InputException(VantarKey.NO_SEARCH_COMMAND);
@@ -667,7 +675,7 @@ public class CommonModelMongo extends CommonModel {
         queryData.setDto(dto, dtoView);
 
         try {
-            return CommonRepoMongo.search(queryData, params.getLang());
+            return CommonRepoMongo.search(queryData, event, params.getLang());
         } catch (DatabaseException e) {
             throw new ServerException(VantarKey.FETCH_FAIL);
         }

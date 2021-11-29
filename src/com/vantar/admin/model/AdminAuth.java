@@ -15,16 +15,7 @@ public class AdminAuth {
         if (auth == null) {
             return false;
         }
-        try {
-            if (role == null) {
-                auth.permitAccess(params);
-            } else {
-                auth.permitAccess(params, role);
-            }
-            return true;
-        } catch (AuthException e) {
-            return false;
-        }
+        return auth.hasAccess(params, role);
     }
 
     public static void onlineUsers(Params params, HttpServletResponse response) {

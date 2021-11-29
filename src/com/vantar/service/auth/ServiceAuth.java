@@ -8,10 +8,9 @@ import com.vantar.util.file.FileUtil;
 import com.vantar.util.json.Json;
 import com.vantar.util.string.StringUtil;
 import com.vantar.web.Params;
-import com.vantar.web.dto.Permission;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.slf4j.*;
-import java.util.*;
+import java.util.Map;
 import java.util.concurrent.*;
 
 
@@ -151,7 +150,7 @@ public class ServiceAuth extends Permit implements Services.Service {
         return user.getToken();
     }
 
-    public synchronized CommonUser signin(Params params, CommonUserRole... allowed) throws ServerException, AuthException {
+    public synchronized CommonUser signin(Params params) throws ServerException, AuthException {
         String username = params.getString(VantarParam.USER_NAME);
         String password = params.getString(VantarParam.PASSWORD);
         if (StringUtil.isEmpty(username) || StringUtil.isEmpty(password)) {
@@ -162,9 +161,6 @@ public class ServiceAuth extends Permit implements Services.Service {
         if (tokenData != null) {
             tokenData = new TokenData(tokenData.user);
             oneTimeTokens.remove(password);
-            if (allowed.length > 0) {
-                permitAccess(tokenData, allowed);
-            }
             makeUserOnline(tokenData);
             return tokenData.user;
         }
@@ -177,7 +173,7 @@ public class ServiceAuth extends Permit implements Services.Service {
             user = event.getUser(username);
         } catch (NoContentException e) {
             throw new AuthException(VantarKey.USER_NOT_EXISTS);
-        } catch (DatabaseException e) {
+        } catch (Exception e) {
             throw new ServerException(VantarKey.FETCH_FAIL);
         }
 
@@ -187,14 +183,12 @@ public class ServiceAuth extends Permit implements Services.Service {
         if (user.getAccessStatus().equals(AccessStatus.UNSUBSCRIBED)) {
             throw new AuthException(VantarKey.USER_NOT_EXISTS);
         }
-
         if (!user.passwordEquals(password)) {
             throw new AuthException(VantarKey.WRONG_PASSWORD);
         }
 
         tokenData = new TokenData(user);
         makeUserOnline(tokenData);
-        permitAccess(tokenData, allowed);
 
         CommonUser u = Json.fromJson(Json.toJson(user), user.getClass());
         if (u != null) {

@@ -3,6 +3,7 @@ package com.vantar.business;
 import com.vantar.common.VantarParam;
 import com.vantar.database.common.ValidationError;
 import com.vantar.database.dto.Dto;
+import com.vantar.database.query.QueryBuilder;
 import com.vantar.exception.*;
 import com.vantar.service.Services;
 import com.vantar.service.cache.ServiceDtoCache;
@@ -164,6 +165,13 @@ public abstract class CommonModel {
         void beforeWrite(Dto dto) throws InputException, ServerException;
 
         void afterWrite(Dto dto) throws InputException, ServerException;
+    }
+
+
+    public interface QueryEvent {
+
+        void beforeQuery(QueryBuilder q);
+
     }
 
 

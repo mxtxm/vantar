@@ -174,7 +174,9 @@ public class CommonRepoMongo extends Mongo {
         return result.asList();
     }
 
-    public static Map<String, String> getAsKeyValue(Dto dto, String key, String value, String... locales) throws NoContentException, DatabaseException {
+    public static Map<String, String> getAsKeyValue(Dto dto, String key, String value, String... locales)
+        throws NoContentException, DatabaseException {
+
         return MongoSearch.getAllData(dto).setLocale(locales).asKeyValue(key, value);
     }
 
@@ -197,7 +199,17 @@ public class CommonRepoMongo extends Mongo {
     }
 
     public static Object search(QueryData queryData, String... locales) throws DatabaseException, NoContentException, InputException {
-        return search(new QueryBuilder(queryData), locales);
+        return search(queryData, null, locales);
+    }
+
+    public static Object search(QueryData queryData, CommonModel.QueryEvent event, String... locales)
+        throws DatabaseException, NoContentException, InputException {
+
+        QueryBuilder q = new QueryBuilder(queryData);
+        if (event != null) {
+            event.beforeQuery(q);
+        }
+        return search(q, locales);
     }
 
     public static Object search(QueryBuilder q, String... locales) throws DatabaseException, NoContentException {

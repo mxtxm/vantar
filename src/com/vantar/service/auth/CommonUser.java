@@ -25,7 +25,7 @@ public interface CommonUser {
     String getUsername();
 
     CommonUserRole getRole();
-    List<CommonUserRole> getRoles();
+    List<? extends CommonUserRole> getRoles();
 
     void setSigningIn();
 

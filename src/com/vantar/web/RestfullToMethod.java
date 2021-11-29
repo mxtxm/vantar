@@ -58,7 +58,7 @@ public class RestfullToMethod extends HttpServlet {
                 if (auth == null) {
                     throw new ServiceException(ServiceAuth.class);
                 }
-                auth.permitAccessString(params, method.getAnnotation(Access.class).value());
+                auth.permitAccess(params, method.getAnnotation(Access.class).value());
             } else if (method.isAnnotationPresent(Feature.class)) {
                 ServiceAuth auth = Services.get(ServiceAuth.class);
                 if (auth == null) {

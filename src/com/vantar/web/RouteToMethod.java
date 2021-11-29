@@ -4,12 +4,10 @@ import com.vantar.exception.*;
 import com.vantar.locale.*;
 import com.vantar.service.Services;
 import com.vantar.service.auth.ServiceAuth;
-import com.vantar.service.cache.ServiceDtoCache;
 import com.vantar.util.string.StringUtil;
 import org.slf4j.*;
 import javax.servlet.http.*;
 import java.io.IOException;
-import java.rmi.ServerError;
 
 
 /**
@@ -63,7 +61,7 @@ public class RouteToMethod extends HttpServlet {
                     if (auth == null) {
                         throw new ServiceException(ServiceAuth.class);
                     }
-                    auth.permitAccessString(params, method.getAnnotation(Access.class).value());
+                    auth.permitAccess(params, method.getAnnotation(Access.class).value());
                 } else if (method.isAnnotationPresent(Feature.class)) {
                     ServiceAuth auth = Services.get(ServiceAuth.class);
                     if (auth == null) {

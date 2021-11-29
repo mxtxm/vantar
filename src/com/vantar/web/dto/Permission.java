@@ -5,7 +5,10 @@ import com.vantar.service.Services;
 import com.vantar.service.auth.ServiceAuth;
 import java.util.Set;
 
-
+/**
+ * if user.role(s) and allowedRoles have at least one match then permit
+ * [OR] if user.role(s).features contains allowedFeature then permit
+ */
 @Cache
 @Mongo
 public class Permission extends DtoBase {

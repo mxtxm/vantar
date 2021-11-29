@@ -94,6 +94,10 @@ public class DataDependency {
         if (d != null) {
             dependencies.add(d);
         }
+
+        /*
+         * (7) field is Dto and is a copy of a record
+         */
     }
 
     private static void putNotAnnotatedDependencies(

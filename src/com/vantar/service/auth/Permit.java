@@ -5,10 +5,10 @@ import com.vantar.exception.*;
 import com.vantar.locale.VantarKey;
 import com.vantar.service.Services;
 import com.vantar.service.cache.ServiceDtoCache;
+import com.vantar.util.collection.CollectionUtil;
 import com.vantar.util.string.StringUtil;
 import com.vantar.web.Params;
 import com.vantar.web.dto.Permission;
-import org.elasticsearch.client.security.user.User;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -23,107 +23,95 @@ public class Permit {
     public Integer tokenExpireMin;
 
 
+    // PERMIT ROLE > > >
+
+
     public boolean hasAccess(Params params, CommonUserRole... allowed) {
         try {
             return permitAccess(params, allowed) != null;
-        } catch (AuthException ignore) {
-
+        } catch (AuthException e) {
+            return false;
         }
-        return false;
     }
 
     public CommonUser permitAccess(Params params, CommonUserRole... allowed) throws AuthException {
         TokenData token = validateToken(params, onlineUsers);
-        return permitAccess(token, allowed);
+
+        // single role
+        CommonUserRole role = token.user.getRole();
+        if (role != null) {
+            CommonUser user = getUserByMatchedRoles(role, token, allowed);
+            if (user != null) {
+                return user;
+            }
+            throw new AuthException(VantarKey.NO_ACCESS);
+        }
+
+        // multi role
+        List<? extends CommonUserRole> roles = token.user.getRoles();
+        if (CollectionUtil.isEmpty(roles)) {
+            throw new AuthException(VantarKey.NO_ACCESS);
+        }
+        for (CommonUserRole r : roles) {
+            CommonUser user = getUserByMatchedRoles(r, token, allowed);
+            if (user != null) {
+                return user;
+            }
+        }
+        throw new AuthException(VantarKey.NO_ACCESS);
     }
 
-    public CommonUser permitAccessString(Params params, String... allowed) throws AuthException {
+    public boolean hasAccess(Params params, String... allowed) {
+        try {
+            return permitAccess(params, allowed) != null;
+        } catch (AuthException e) {
+            return false;
+        }
+    }
+
+    public CommonUser permitAccess(Params params, String... allowed) throws AuthException {
         TokenData token = validateToken(params, onlineUsers);
-        return permitAccess(token, allowed);
-    }
-
-    public synchronized CommonUser permitAccess(TokenData token, CommonUserRole... allowed) throws AuthException {
         CommonUserRole role = token.user.getRole();
-        if (role == null) {
-            return permitAccessMultiRole(token, allowed);
+
+        // single role
+        if (role != null) {
+            CommonUser user = getUserByMatchedRolesString(role, token, allowed);
+            if (user != null) {
+                return user;
+            }
+            throw new AuthException(VantarKey.NO_ACCESS);
         }
-        return permitAccessSingleRole(role, token, allowed);
+
+        // multi role
+        List<? extends CommonUserRole> roles = token.user.getRoles();
+        if (CollectionUtil.isEmpty(roles)) {
+            throw new AuthException(VantarKey.NO_ACCESS);
+        }
+        for (CommonUserRole r : roles) {
+            CommonUser user = getUserByMatchedRolesString(r, token, allowed);
+            if (user != null) {
+                return user;
+            }
+        }
+        throw new AuthException(VantarKey.NO_ACCESS);
     }
 
-    private synchronized CommonUser permitAccessSingleRole(
-        CommonUserRole role, TokenData token, CommonUserRole... allowed) throws AuthException {
-
+    private CommonUser getUserByMatchedRoles(CommonUserRole role, TokenData token, CommonUserRole... allowed) {
         // user is root or no roles requested
         if (allowed.length == 0 || role.isRoot()) {
             token.lastInteraction.setToNow();
             return token.user;
         }
-
         for (CommonUserRole access : allowed) {
             if (role.equals(access)) {
                 token.lastInteraction.setToNow();
                 return token.user;
             }
         }
-
-        throw new AuthException(VantarKey.NO_ACCESS);
+        return null;
     }
 
-    private synchronized CommonUser permitAccessMultiRole(TokenData token, CommonUserRole... allowed) throws AuthException {
-        List<CommonUserRole> roles = token.user.getRoles();
-
-        if (allowed.length == 0) {
-            token.lastInteraction.setToNow();
-            return token.user;
-        }
-        if (roles == null || roles.isEmpty()) {
-            throw new AuthException(VantarKey.NO_ACCESS);
-        }
-
-        for (CommonUserRole role : roles) {
-            // user is root or no roles requested
-            if (role.isRoot()) {
-                token.lastInteraction.setToNow();
-                return token.user;
-            }
-
-            for (CommonUserRole access : allowed) {
-                if (role.equals(access)) {
-                    token.lastInteraction.setToNow();
-                    return token.user;
-                }
-            }
-
-        }
-
-        throw new AuthException(VantarKey.NO_ACCESS);
-    }
-
-    private synchronized void limitAccess(CommonUserRole role, CommonUserRole... allowed) throws AuthException {
-        if (role.equals(RootRole.rootRole)) {
-            return;
-        }
-
-        for (CommonUserRole access : allowed) {
-            if (role.equals(access)) {
-                return;
-            }
-        }
-
-        throw new AuthException(VantarKey.NO_ACCESS);
-    }
-
-    public synchronized CommonUser permitAccess(TokenData token, String... allowed) throws AuthException {
-        CommonUserRole role = token.user.getRole();
-        if (role == null) {
-            return permitAccessMultiRoleString(token, allowed);
-        }
-        return permitAccessSingleRoleString(role, token, allowed);
-    }
-
-    private synchronized CommonUser permitAccessSingleRoleString(
-        CommonUserRole role, TokenData token, String... allowed) throws AuthException {
-
+    private CommonUser getUserByMatchedRolesString(CommonUserRole role, TokenData token, String... allowed) {
         // user is root or no roles requested
         if (allowed.length == 0 || role.isRoot()) {
             token.lastInteraction.setToNow();
@@ -137,54 +125,167 @@ public class Permit {
                 return token.user;
             }
         }
-
-        throw new AuthException(VantarKey.NO_ACCESS);
+        return null;
     }
 
-    private synchronized CommonUser permitAccessMultiRoleString(TokenData tokenData, String... allowed) throws AuthException {
-        List<CommonUserRole> roles = tokenData.user.getRoles();
 
-        if (allowed.length == 0) {
-            tokenData.lastInteraction.setToNow();
-            return tokenData.user;
-        }
-        if (roles == null || roles.isEmpty()) {
+    // < < < PERMIT ROLE
+
+
+    // PERMIT FEATURE > > >
+
+
+    public CommonUser permitFeature(Params params, String feature) throws AuthException {
+        TokenData token = validateToken(params, onlineUsers);
+        CommonUserRole role = token.user.getRole();
+
+        // single role
+        if (role != null) {
+            CommonUser user = getUserByMatchedFeature(role, token, feature);
+            if (user != null) {
+                return user;
+            }
             throw new AuthException(VantarKey.NO_ACCESS);
         }
 
-        for (CommonUserRole role : roles) {
-            // user is root or no roles requested
-            if (role.isRoot()) {
-                tokenData.lastInteraction.setToNow();
-                return tokenData.user;
-            }
-
-            String roleTitle = role.getName();
-            for (String access : allowed) {
-                if (roleTitle.equals(access)) {
-                    tokenData.lastInteraction.setToNow();
-                    return tokenData.user;
-                }
+        // multi role
+        List<? extends CommonUserRole> roles = token.user.getRoles();
+        if (CollectionUtil.isEmpty(roles)) {
+            throw new AuthException(VantarKey.NO_ACCESS);
+        }
+        for (CommonUserRole r : roles) {
+            CommonUser user = getUserByMatchedFeature(r, token, feature);
+            if (user != null) {
+                return user;
             }
         }
-
         throw new AuthException(VantarKey.NO_ACCESS);
     }
 
-    private synchronized void limitAccessString(CommonUserRole role, String... allowed) throws AuthException {
-        if (role.equals(RootRole.rootRole)) {
+    private CommonUser getUserByMatchedFeature(CommonUserRole role, TokenData token, String feature) {
+        // user is root or no feature requested
+        if (StringUtil.isEmpty(feature) || role.isRoot()) {
+            token.lastInteraction.setToNow();
+            return token.user;
+        }
+
+        Set<String> features = role.getAllowedFeatures();
+        if (features != null && features.contains(feature)) {
+            token.lastInteraction.setToNow();
+            return token.user;
+        }
+        return null;
+    }
+
+    //  < < < PERMIT FEATURE
+
+
+    // PERMIT CONTROLLER > > >
+
+
+    public void flushControllerCache() {
+        controllerPermissionTable = null;
+    }
+
+    /**
+     * Throws AuthException when not permitted
+     */
+    public void permitController(Params params, String methodName) throws AuthException, ServiceException {
+        if (controllerPermissionTable == null) {
+            controllerPermissionTable = new ConcurrentHashMap<>(MAX_CONTROLLER_SIZE);
+            ServiceDtoCache cache = Services.get(ServiceDtoCache.class);
+            if (cache == null) {
+                throw new ServiceException(ServiceDtoCache.class);
+            }
+            for (Permission p : cache.getList(Permission.class)) {
+                controllerPermissionTable.put(p.method, p);
+            }
+        }
+
+        Permission methodPermissionRules = controllerPermissionTable.get(methodName);
+        if (methodPermissionRules == null) {
             return;
         }
 
-        String roleTitle = role.getName();
-        for (String access : allowed) {
-            if (roleTitle.equals(access)) {
-                return;
+        TokenData token = validateToken(params, onlineUsers);
+        CommonUserRole role = token.user.getRole();
+
+        if (CollectionUtil.isNotEmpty(methodPermissionRules.allowedRoles)) {
+            // single role
+            if (role != null) {
+                if (getUserByMatchedRolesSet(role, token, methodPermissionRules.allowedRoles)) {
+                    return;
+                }
+                throw new AuthException(VantarKey.NO_ACCESS);
             }
+
+            // multi role
+            List<? extends CommonUserRole> roles = token.user.getRoles();
+            if (CollectionUtil.isEmpty(roles)) {
+                throw new AuthException(VantarKey.NO_ACCESS);
+            }
+            for (CommonUserRole r : roles) {
+                if (getUserByMatchedRolesSet(r, token, methodPermissionRules.allowedRoles)) {
+                    return;
+                }
+            }
+            throw new AuthException(VantarKey.NO_ACCESS);
         }
 
-        throw new AuthException(VantarKey.NO_ACCESS);
+        if (StringUtil.isNotEmpty(methodPermissionRules.allowedFeature)) {
+            // single role
+            if (role != null) {
+                if (getUserByMatchedFeatureSet(role, token, methodPermissionRules.allowedFeature)) {
+                    return;
+                }
+                throw new AuthException(VantarKey.NO_ACCESS);
+            }
+
+            // multi role
+            List<? extends CommonUserRole> roles = token.user.getRoles();
+            if (CollectionUtil.isEmpty(roles)) {
+                throw new AuthException(VantarKey.NO_ACCESS);
+            }
+            for (CommonUserRole r : roles) {
+                if (getUserByMatchedFeatureSet(r, token, methodPermissionRules.allowedFeature)) {
+                    return;
+                }
+            }
+            throw new AuthException(VantarKey.NO_ACCESS);
+        }
     }
+
+    private boolean getUserByMatchedRolesSet(CommonUserRole role, TokenData token, Set<String> allowed) {
+        // user is root or no roles requested
+        if (allowed.size() == 0 || role.isRoot()) {
+            token.lastInteraction.setToNow();
+            return true;
+        }
+
+        if (allowed.contains(token.user.getRole().getName())) {
+            token.lastInteraction.setToNow();
+            return true;
+        }
+        return false;
+    }
+
+    private boolean getUserByMatchedFeatureSet(CommonUserRole role, TokenData token, String feature) {
+        // user is root or no feature requested
+        if (StringUtil.isEmpty(feature) || role.isRoot()) {
+            token.lastInteraction.setToNow();
+            return true;
+        }
+
+        Set<String> features = role.getAllowedFeatures();
+        if (features != null && features.contains(feature)) {
+            token.lastInteraction.setToNow();
+            return true;
+        }
+        return false;
+    }
+
+    // < < < PERMIT CONTROLLER
+
 
     protected TokenData validateToken(Params params, Map<String, TokenData> map) throws AuthException {
         String token = params.getHeader(VantarParam.HEADER_AUTH_TOKEN);
@@ -210,131 +311,4 @@ public class Permit {
 
         return tokenData;
     }
-
-    public CommonUser permitFeature(Params params, String feature) throws AuthException {
-        TokenData token = validateToken(params, onlineUsers);
-        CommonUserRole role = token.user.getRole();
-        if (role == null) {
-            return permitFeatureMultiRole(token, feature);
-        }
-        return permitFeatureSingleRole(role, token, feature);
-    }
-
-    private synchronized CommonUser permitFeatureSingleRole(
-        CommonUserRole role, TokenData token, String feature) throws AuthException {
-
-        // user is root or no feature requested
-        if (StringUtil.isEmpty(feature) || role.isRoot()) {
-            token.lastInteraction.setToNow();
-            return token.user;
-        }
-
-        Set<String> features = role.getAllowedFeatures();
-        if (features != null && features.contains(feature)) {
-            token.lastInteraction.setToNow();
-            return token.user;
-        }
-
-        throw new AuthException(VantarKey.NO_ACCESS);
-    }
-
-    private synchronized CommonUser permitFeatureMultiRole(TokenData token, String feature) throws AuthException {
-        List<CommonUserRole> roles = token.user.getRoles();
-
-        if (StringUtil.isEmpty(feature)) {
-            token.lastInteraction.setToNow();
-            return token.user;
-        }
-        if (roles == null || roles.isEmpty()) {
-            throw new AuthException(VantarKey.NO_ACCESS);
-        }
-
-        for (CommonUserRole role : roles) {
-            // user is root or no roles requested
-            if (role.isRoot()) {
-                token.lastInteraction.setToNow();
-                return token.user;
-            }
-
-            Set<String> features = role.getAllowedFeatures();
-            if (features != null && features.contains(feature)) {
-                token.lastInteraction.setToNow();
-                return token.user;
-            }
-        }
-
-        throw new AuthException(VantarKey.NO_ACCESS);
-    }
-
-
-
-
-
-    public void flushControllerCache() {
-        controllerPermissionTable = null;
-    }
-
-    public void permitController(Params params, String methodName) throws AuthException, ServiceException {
-        TokenData token = validateToken(params, onlineUsers);
-
-        if (controllerPermissionTable == null) {
-            controllerPermissionTable = new ConcurrentHashMap<>(MAX_CONTROLLER_SIZE);
-            ServiceDtoCache cache = Services.get(ServiceDtoCache.class);
-            if (cache == null) {
-                throw new ServiceException(ServiceDtoCache.class);
-            }
-            for (Permission p : cache.getList(Permission.class)) {
-                controllerPermissionTable.put(p.method, p);
-            }
-        }
-
-        Permission item = controllerPermissionTable.get(methodName);
-        if (item == null) {
-            return;
-        }
-
-        if (item.allowedRoles != null && !item.allowedRoles.isEmpty()) {
-            if (token.user.getRole() != null) {
-                if (token.user.getRole().isRoot()) {
-                    token.lastInteraction.setToNow();
-                    return;
-                }
-
-                String roleTitle = token.user.getRole().getName();
-                if (item.allowedRoles.contains(roleTitle)) {
-                    return;
-                }
-            }
-
-            if (token.user.getRoles() == null || token.user.getRoles().isEmpty()) {
-                throw new AuthException(VantarKey.NO_ACCESS);
-            }
-
-            for (CommonUserRole r : token.user.getRoles()) {
-                if (r.isRoot()) {
-                    token.lastInteraction.setToNow();
-                    return;
-                }
-
-                String roleTitle = r.getName();
-                if (item.allowedRoles.contains(roleTitle)) {
-                    return;
-                }
-            }
-            throw new AuthException(VantarKey.NO_ACCESS);
-        }
-
-        if (StringUtil.isNotEmpty(item.allowedFeature)) {
-            if (token.user.getRole() != null) {
-                if (token.user.getRole().getAllowedFeatures().contains(item.allowedFeature)) {
-                    token.lastInteraction.setToNow();
-                    return;
-                }
-            }
-
-        }
-
-        throw new AuthException(VantarKey.NO_ACCESS);
-    }
-
 }
