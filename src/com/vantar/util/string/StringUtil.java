@@ -205,6 +205,7 @@ public class StringUtil {
         if (string == null) {
             return null;
         }
+        string = StringUtil.trim(string, '/', '_', '.', '_', '/');
 
         StringBuilder stringBuilder = new StringBuilder();
         char value;
@@ -212,7 +213,7 @@ public class StringUtil {
 
         for (int i = 0; i < input.length(); ++i) {
             value = input.charAt(i);
-            if (value == '_' || value == '.' || value == '-') {
+            if (value == '_' || value == '.' || value == '-' || value == '/') {
                 capitalize = true;
             } else if (capitalize) {
                 stringBuilder.append(Character.toUpperCase(value));
