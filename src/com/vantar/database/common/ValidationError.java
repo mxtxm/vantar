@@ -13,7 +13,7 @@ public class ValidationError {
 
     public ValidationError(String name, LangKey error) {
         this.error = error;
-        params = new String[] {name == null ? "" : name};
+        params = new String[] { name == null ? "" : name };
     }
 
     public ValidationError(String name, LangKey error, Object... params) {
@@ -23,6 +23,11 @@ public class ValidationError {
         for (int i = 0, paramsLength = params.length; i < paramsLength; i++) {
             this.params[i+1] = params[i];
         }
+    }
+
+    public ValidationError(LangKey error, Object... params) {
+        this.error = error;
+        this.params = params;
     }
 
     public String toString() {

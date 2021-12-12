@@ -1,6 +1,6 @@
 package com.vantar.admin.model;
 
-import com.vantar.exception.AuthException;
+import com.vantar.exception.*;
 import com.vantar.locale.*;
 import com.vantar.service.Services;
 import com.vantar.service.auth.*;
@@ -11,11 +11,11 @@ import javax.servlet.http.HttpServletResponse;
 public class AdminAuth {
 
     public static boolean hasAccess(Params params, CommonUserRole role) {
-        ServiceAuth auth = Services.get(ServiceAuth.class);
-        if (auth == null) {
+        try {
+            return Services.get(ServiceAuth.class).hasAccess(params, role);
+        } catch (ServiceException e) {
             return false;
         }
-        return auth.hasAccess(params, role);
     }
 
     public static void onlineUsers(Params params, HttpServletResponse response) {
@@ -23,9 +23,11 @@ public class AdminAuth {
         if (ui == null) {
             return;
         }
-        ServiceAuth auth = Services.get(ServiceAuth.class);
-        if (auth == null) {
-            ui.addErrorMessage(Locale.getString(VantarKey.ADMIN_AUTH_IS_DISABLED)).finish();
+        ServiceAuth auth;
+        try {
+            auth = Services.get(ServiceAuth.class);
+        } catch (ServiceException e) {
+            ui.addErrorMessage(e).finish();
             return;
         }
 
@@ -49,8 +51,9 @@ public class AdminAuth {
                 long pending = -info.lastInteraction.secondsFromNow();
                 long remaining = (auth.tokenExpireMin * 60) - pending;
                 ui.addKeyValue(
-                    info.user.getFullName() + " (" + info.user.getId() + ")\n" + info.user.getRole().toString(),
-                    info.lastInteraction.toString() + " -> " + info.user.getToken() + " [pending=" + pending + "s, remaining=" + remaining + "s]"
+                    info.user.getFullName() + " (" + info.user.getId() + ")\n" + getRoleDescription(info.user),
+                    info.lastInteraction.toString() + " -> " + info.user.getToken()
+                        + " [pending=" + pending + "s, remaining=" + remaining + "s]"
                 );
             });
 
@@ -58,24 +61,41 @@ public class AdminAuth {
 
         ui.beginBox(Locale.getString(VantarKey.ADMIN_SIGNUP_TOKEN_TEMP));
         auth.getSignupVerifyTokens().forEach((code, info) -> ui.addKeyValue(
-            info.user.getFullName() + " (" + info.user.getId() + ") - " + info.user.getRole().toString(),
+            info.user.getFullName() + " (" + info.user.getId() + ") - " + getRoleDescription(info.user),
             info.lastInteraction.toString() + " -> " + info.user.getToken()
         ));
         ui.containerEnd();
 
         ui.beginBox(Locale.getString(VantarKey.ADMIN_SIGNIN_TOKEN_TEMP));
         auth.getOneTimeTokens().forEach((code, info) -> ui.addKeyValue(
-            info.user.getFullName() + " (" + info.user.getId() + ") - " + info.user.getRole().toString(),
+            info.user.getFullName() + " (" + info.user.getId() + ") - " + getRoleDescription(info.user),
             info.lastInteraction.toString() + " -> " + info.user.getToken()
         ));
         ui.containerEnd();
 
         ui.beginBox(Locale.getString(VantarKey.ADMIN_RECOVER_TOKEN_TEMP));
         auth.getVerifyTokens().forEach((code, info) -> ui.addKeyValue(
-            info.user.getFullName() + " (" + info.user.getId() + ") - " + info.user.getRole().toString(),
+            info.user.getFullName() + " (" + info.user.getId() + ") - " + getRoleDescription(info.user),
             info.lastInteraction.toString() + " -> " + info.user.getToken()
         ));
 
         ui.finish();
+    }
+
+    private static String getRoleDescription(CommonUser user) {
+        if (user.getRole() != null) {
+            return user.getRole().getName() + (user.getRole().isRoot() ? " *root*" : "");
+        }
+        if (user.getRoles() == null) {
+            return "!!NO ROLE!!";
+        }
+        StringBuilder sb = new StringBuilder();
+        for (CommonUserRole role : user.getRoles()) {
+            sb.append(role.getName()).append(role.isRoot() ? " *root*" : "").append(", ");
+        }
+        if (sb.length() > 2) {
+            sb.setLength(sb.length() - 2);
+        }
+        return sb.toString();
     }
 }

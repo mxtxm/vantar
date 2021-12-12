@@ -76,7 +76,6 @@ public class AdminData {
         });
 
         ui.beginBox("NOSTORE");
-//        DtoDictionary.getNoStoreDtos().forEach((dtoName, info) -> {
         noStores.forEach(info -> {
             ui.beginFloatBox("db-box-nostore", info.getDtoClassName(), info.title)
                 .addTag("")
@@ -191,8 +190,13 @@ public class AdminData {
             params.isChecked(VantarParam.LOGICAL_DELETED) ? Dto.QueryDeleted.SHOW_DELETED : Dto.QueryDeleted.SHOW_NOT_DELETED
         );
 
-        if (dtoInfo.getDtoClassName().equals("User") && !Services.get(ServiceAuth.class).hasAccess(params, RootRole.rootRole)) {
-            q.condition().notEqual("isRoot", true);
+        try {
+            if (dtoInfo.getDtoClassName().equals("User") && !Services.get(ServiceAuth.class).hasAccess(params, RootRole.rootRole)) {
+                q.condition().notEqual("isRoot", true);
+            }
+        } catch (ServiceException e) {
+            ui.addErrorMessage(e).write();
+            return;
         }
 
         PageData data = null;

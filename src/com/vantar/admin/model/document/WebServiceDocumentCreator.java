@@ -12,19 +12,61 @@ import java.util.*;
 
 public class WebServiceDocumentCreator {
 
-    public static String getParsedMd(String content) {
+    public static String getParsedMd(String content, String tag) {
+        if (tag != null) {
+            tag = "* " + tag;
+        }
         StringBuilder parsed = new StringBuilder();
         StringBuilder block = new StringBuilder();
-        for (String line : StringUtil.split(content, '\n')) {
-            if (line.startsWith("## ")) {
-                parsed.append(getParsedMdX(block.toString()));
-                block = new StringBuilder();
+
+        String[] lines = StringUtil.split(content, '\n');
+        for (int i = 0, j = 0, linesLength = lines.length; j < linesLength; j++) {
+            String line = lines[j];
+            if (line.startsWith("## ") || j == linesLength - 1) {
+                if (i > 0) {
+                    String docBlock = block.toString();
+                    if (tag != null && !StringUtil.contains(docBlock, tag)) {
+                        block = new StringBuilder();
+                        block.append(line).append('\n');
+                        ++i;
+                        continue;
+                    }
+                    parsed.append(getParsedMdX(docBlock));
+                    block = new StringBuilder();
+                } else {
+                    parsed.append(getParsedMdX(block.toString()));
+                    block = new StringBuilder();
+                }
+                ++i;
             }
             block.append(line).append('\n');
         }
+
         return parsed.toString();
     }
 
+    public static Set<String> getTags(String content) {
+        Set<String> tags = new HashSet<>();
+
+        boolean inBlock = false;
+        for (String line : StringUtil.split(content, '\n')) {
+            line = line.trim();
+            if (line.equals("### tags ###")) {
+                inBlock = true;
+                continue;
+            }
+
+            if (inBlock) {
+                if (line.startsWith("#")) {
+                    inBlock = false;
+                    continue;
+                }
+                tags.add(StringUtil.remove(line, '*').trim());
+            }
+        }
+
+        return tags;
+    }
 
     private static String getParsedMdX(String content) {
         StringBuilder sb = new StringBuilder();

@@ -288,24 +288,20 @@ public class ServiceAuth extends Permit implements Services.Service {
         });
     }
 
-    public static CommonUser getCurrentSignedInUser(Params params) throws NoContentException, ServiceException {
-        ServiceAuth auth = Services.get(ServiceAuth.class);
-        if (auth == null) {
-            throw new ServiceException(ServiceAuth.class);
-        }
-        CommonUser user = auth.getCurrentUser(params);
-        if (user == null) {
-            throw new NoContentException();
-        }
-        return user;
+    public static CommonUser getCurrentSignedInUser(Params params) throws ServiceException, AuthException {
+        return Services.get(ServiceAuth.class).getCurrentUser(params);
     }
 
-    public CommonUser getCurrentUser(Params params) {
-        try {
-            return validateToken(params, onlineUsers).user;
-        } catch (AuthException e) {
-            return null;
-        }
+    public CommonUser getCurrentUser(Params params) throws AuthException {
+        return validateToken(params, onlineUsers).user;
+    }
+
+    public static void assumeSignedIn(Params params) throws ServiceException, AuthException {
+        Services.get(ServiceAuth.class).getCurrentUser(params);
+    }
+
+    public void isSignedIn(Params params) throws AuthException {
+        validateToken(params, onlineUsers);
     }
 
     public Map<String, TokenData> getOnlineUsers() {

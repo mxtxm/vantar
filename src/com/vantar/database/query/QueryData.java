@@ -17,6 +17,7 @@ public class QueryData {
     protected static final Logger log = LoggerFactory.getLogger(QueryResultBase.class);
 
     public final List<ValidationError> errors = new ArrayList<>();
+    public Boolean all;
     public String dto;
     public String dtoResult;
     public String lang;
@@ -47,6 +48,38 @@ public class QueryData {
         cachedDto = dto;
         cachedDtoResult = dtoResult;
         return this;
+    }
+
+    public boolean isEmpty() {
+        if (condition != null && !condition.isEmpty()) {
+            return false;
+        }
+        if (page != null) {
+            return false;
+        }
+        if (offset != null) {
+            return false;
+        }
+        if (limit != null) {
+            return false;
+        }
+        if (sort != null && sort.length > 0) {
+            return false;
+        }
+        if (conditionGroup != null) {
+            return false;
+        }
+        if (columns != null && !columns.isEmpty()) {
+            return false;
+        }
+        if (group != null && !group.isEmpty()) {
+            return false;
+        }
+        return all == null || !all;
+    }
+
+    public boolean isNotEmpty() {
+        return !isEmpty();
     }
 
     public Dto getDto() {
@@ -320,6 +353,11 @@ public class QueryData {
         public String toString() {
             return ObjectUtil.toString(this);
         }
+
+        public boolean isEmpty () {
+            return items == null || items.isEmpty();
+        }
+
 
         public class Item {
 

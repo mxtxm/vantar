@@ -2,6 +2,7 @@ package com.vantar.service.messaging;
 
 import com.vantar.admin.model.*;
 import com.vantar.common.*;
+import com.vantar.exception.ServiceException;
 import com.vantar.queue.*;
 import com.vantar.service.Services;
 import com.vantar.service.cache.ServiceDtoCache;
@@ -130,9 +131,10 @@ public class ServiceMessaging {
 
                     case VantarParam.MESSAGE_DATABASE_UPDATED:
                         if (!Services.ID.equals(message.serverId)) {
-                            ServiceDtoCache dtoCache = Services.get(ServiceDtoCache.class);
-                            if (dtoCache != null) {
-                                dtoCache.update(message.getString());
+                            try {
+                                Services.get(ServiceDtoCache.class).update(message.getString());
+                            } catch (ServiceException e) {
+                                log.error("! cache not updated", e);
                             }
                         }
                         break;

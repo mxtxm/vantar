@@ -4,7 +4,7 @@ import com.google.gson.reflect.TypeToken;
 import com.mongodb.*;
 import com.mongodb.client.*;
 import com.vantar.common.VantarParam;
-import com.vantar.database.common.KeyValueData;
+import com.vantar.database.common.*;
 import com.vantar.database.datatype.Location;
 import com.vantar.database.dto.Date;
 import com.vantar.database.dto.*;
@@ -207,7 +207,7 @@ public class MongoQueryResult extends QueryResultBase implements QueryResult, Au
                     if (type == List.class || type == Set.class) {
                         Class<?>[] g = ObjectUtil.getFieldGenericTypes(field);
                         if (g == null || g.length != 1) {
-                            log.warn("! type/value miss-match ({}.{}, {})", dto.getClass().getName(), field.getName(), value);
+                            log.warn("! type/value miss-match ({}.{})", dto.getClass().getName(), field.getName());
                             continue;
                         }
                         Class<?> listType = g[0];
@@ -258,7 +258,7 @@ public class MongoQueryResult extends QueryResultBase implements QueryResult, Au
                         } else {
                             Class<?>[] g = ObjectUtil.getFieldGenericTypes(field);
                             if (g == null || g.length != 2) {
-                                log.warn("! type/value miss-match ({}.{}, {})", dto.getClass().getName(), field.getName(), value);
+                                log.warn("! type/value miss-match ({}.{})", dto.getClass().getName(), field.getName());
                                 continue;
                             }
                             field.set(dto, documentToMap(v, g[0], g[1]));
@@ -324,6 +324,9 @@ public class MongoQueryResult extends QueryResultBase implements QueryResult, Au
         for (Map.Entry<String, Object> entry : document.entrySet()) {
             if (ObjectUtil.implementsInterface(vClass, Dto.class)) {
                 V vDto = ObjectUtil.getInstance(vClass);
+                if (vDto == null) {
+                    continue;
+                }
                 mapRecordToObject((Document) entry.getValue(), (Dto) vDto, ((Dto) vDto).getFields());
                 map.put(
                     (K) ObjectUtil.convert(entry.getKey(), kClass),
@@ -350,8 +353,10 @@ public class MongoQueryResult extends QueryResultBase implements QueryResult, Au
     }
 
     private boolean fetchFromCache(Document document, Dto dtoX, Field fieldX, Class<?> type) throws IllegalAccessException {
-        ServiceDtoCache cache = Services.get(ServiceDtoCache.class);
-        if (cache == null) {
+        ServiceDtoCache cache;
+        try {
+            cache = Services.get(ServiceDtoCache.class);
+        } catch (ServiceException e) {
             log.warn("! cache service is off");
             return false;
         }

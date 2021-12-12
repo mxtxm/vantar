@@ -29,12 +29,14 @@ public class Params {
     public final HttpServletRequest request;
     public final Type type;
 
+
     public enum Type {
         FORM_DATA,
         JSON,
         MULTI_PART,
         MAP,
     }
+
 
     private Map<String, Object> map;
     private boolean typeMisMatch;
@@ -713,8 +715,8 @@ public class Params {
 
             try {
                 Files.delete(p);
-            } catch (Exception e) {
-                log.error("!", e);
+            } catch (Exception ignore) {
+
             }
             try {
                 Files.copy(filePart.getInputStream(), p);

@@ -54,7 +54,11 @@ public class AdminSigninController extends RouteToMethod {
     }
 
     public void signout(Params params, HttpServletResponse response) {
-        Services.get(ServiceAuth.class).signout(params);
+        try {
+            Services.get(ServiceAuth.class).signout(params);
+        } catch (ServiceException ignore) {
+
+        }
         try {
             response.sendRedirect("/admin/signin");
         } catch (IOException e) {

@@ -1,6 +1,7 @@
 package com.vantar.web.dto;
 
 import com.vantar.database.dto.*;
+import com.vantar.exception.ServiceException;
 import com.vantar.service.Services;
 import com.vantar.service.auth.ServiceAuth;
 import java.util.Set;
@@ -22,9 +23,10 @@ public class Permission extends DtoBase {
 
     @Override
     public void afterFetchData() {
-        ServiceAuth auth = Services.get(ServiceAuth.class);
-        if (auth != null) {
-            auth.flushControllerCache();
+        try {
+            Services.get(ServiceAuth.class).flushControllerCache();
+        } catch (ServiceException ignore) {
+
         }
     }
 }

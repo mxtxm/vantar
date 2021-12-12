@@ -16,9 +16,7 @@ public class DtoDocumentCreator {
         StringBuilder document = new StringBuilder();
         document.append("# Dto objects #\n\n");
 
-        List<DtoDictionary.Info> dtos = new ArrayList<>();
-        dtos.addAll(DtoDictionary.getAll());
-        //dtos.addAll(DtoDictionary.getNoStoreDtos().values());
+        List<DtoDictionary.Info> dtos = new ArrayList<>(DtoDictionary.getAll());
 
         for (DtoDictionary.Info info : dtos) {
             Dto dto = info.getDtoInstance();

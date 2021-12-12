@@ -1,18 +1,17 @@
 package com.vantar.business;
 
 import com.vantar.common.VantarParam;
-import com.vantar.database.common.ValidationError;
+import com.vantar.database.common.*;
 import com.vantar.database.dependency.DataDependency;
 import com.vantar.database.dto.*;
-import com.vantar.database.nosql.mongo.*;
 import com.vantar.database.nosql.mongo.Mongo;
+import com.vantar.database.nosql.mongo.*;
 import com.vantar.database.query.*;
 import com.vantar.exception.*;
 import com.vantar.locale.Locale;
 import com.vantar.locale.*;
 import com.vantar.service.Services;
 import com.vantar.service.cache.ServiceDtoCache;
-import com.vantar.service.log.LogEvent;
 import com.vantar.util.object.ObjectUtil;
 import com.vantar.util.string.StringUtil;
 import com.vantar.web.*;
@@ -61,12 +60,6 @@ public class CommonModelMongo extends CommonModel {
             errors = dto.set((String) params, Dto.Action.INSERT);
         } else {
             errors = dto.set((Params) params, Dto.Action.INSERT);
-        }
-        // todo: this must be impossible
-        if (errors == null) {
-            log.error(">>>>>>>> {}\n{}\n\n ", params, dto);
-            LogEvent.error("DEBUG", params, dto);
-            errors = new ArrayList<>();
         }
 
         if (event != null) {
@@ -248,7 +241,7 @@ public class CommonModelMongo extends CommonModel {
         } catch (DatabaseException e) {
             log.error("! {}", dto, e);
         } catch (NoContentException e) {
-            throw new ServerException(VantarKey.INSERT_FAIL);
+            throw new ServerException(VantarKey.UPDATE_FAIL);
         }
 
         logAction(requestParams == null ? params : requestParams, dto, Dto.Action.UPDATE);
@@ -669,7 +662,7 @@ public class CommonModelMongo extends CommonModel {
 
     public static Object search(Params params, Dto dto, Dto dtoView, QueryEvent event) throws ServerException, NoContentException, InputException {
         QueryData queryData = params.getQueryData();
-        if (queryData == null) {
+        if (queryData == null || queryData.isEmpty()) {
             throw new InputException(VantarKey.NO_SEARCH_COMMAND);
         }
         queryData.setDto(dto, dtoView);
@@ -681,9 +674,33 @@ public class CommonModelMongo extends CommonModel {
         }
     }
 
+    public static <D extends Dto> List<D> getData(QueryBuilder q) throws ServerException, NoContentException {
+        try {
+            return CommonRepoMongo.getData(q);
+        } catch (DatabaseException e) {
+            throw new ServerException(VantarKey.FETCH_FAIL);
+        }
+    }
+
     public static <D extends Dto> List<D> getData(Params params, QueryBuilder q) throws ServerException, NoContentException {
         try {
             return CommonRepoMongo.getData(q, params.getLang());
+        } catch (DatabaseException e) {
+            throw new ServerException(VantarKey.FETCH_FAIL);
+        }
+    }
+
+    public static <D extends Dto> D getFirst(QueryBuilder q) throws ServerException, NoContentException {
+        try {
+            return CommonRepoMongo.getFirst(q);
+        } catch (DatabaseException e) {
+            throw new ServerException(VantarKey.FETCH_FAIL);
+        }
+    }
+
+    public static <D extends Dto> D getFirst(Params params, QueryBuilder q) throws ServerException, NoContentException {
+        try {
+            return CommonRepoMongo.getFirst(q, params.getLang());
         } catch (DatabaseException e) {
             throw new ServerException(VantarKey.FETCH_FAIL);
         }
@@ -710,6 +727,19 @@ public class CommonModelMongo extends CommonModel {
         }
     }
 
+    public static <D extends Dto> D getById(D dto) throws InputException, ServerException, NoContentException {
+        if (!ObjectUtil.isIdValid(dto.getId())) {
+            throw new InputException(VantarKey.INVALID_ID, dto.getClass().getSimpleName() + ".id");
+        }
+
+        try {
+            return CommonRepoMongo.getById(dto);
+        } catch (DatabaseException e) {
+            log.error("! {}>{}", dto.getClass().getSimpleName(), dto, e);
+            throw new ServerException(VantarKey.FETCH_FAIL);
+        }
+    }
+
     /**
      * Automatically fetches: cache
      * lang only for database
@@ -717,11 +747,7 @@ public class CommonModelMongo extends CommonModel {
     public static <T extends Dto> List<T> getAll(Params params, T dto) throws NoContentException, ServerException {
         String lang = params.getLang();
         if (dto.hasAnnotation(Cache.class)) {
-            ServiceDtoCache cache = Services.get(ServiceDtoCache.class);
-            if (cache == null) {
-                throw new ServiceException(ServiceDtoCache.class);
-            }
-            return (List<T>) cache.getList(dto.getClass());
+            return (List<T>) Services.get(ServiceDtoCache.class).getList(dto.getClass());
         } else {
             try {
                 QueryResult result = MongoSearch.getAllData(dto);
@@ -742,9 +768,6 @@ public class CommonModelMongo extends CommonModel {
         throws NoContentException, ServerException {
 
         ServiceDtoCache cache = Services.get(ServiceDtoCache.class);
-        if (cache == null) {
-            throw new ServiceException(ServiceDtoCache.class);
-        }
 
         String lang = params.getLang();
         List<L> localized = new ArrayList<>();
@@ -774,12 +797,8 @@ public class CommonModelMongo extends CommonModel {
 
         String lang = params.getLangNoDefault();
         if (dto.hasAnnotation(Cache.class)) {
-            ServiceDtoCache cache = Services.get(ServiceDtoCache.class);
-            if (cache == null) {
-                throw new ServiceException(ServiceDtoCache.class);
-            }
             Map<String, String> result = new LinkedHashMap<>();
-            for (Dto d : cache.getList(dto.getClass())) {
+            for (Dto d : Services.get(ServiceDtoCache.class).getList(dto.getClass())) {
                 Object k = d.getPropertyValue(keyProperty);
                 if (k == null) {
                     continue;

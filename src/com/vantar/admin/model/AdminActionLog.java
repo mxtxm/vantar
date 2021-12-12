@@ -48,7 +48,13 @@ public class AdminActionLog {
             return;
         }
 
-        ServiceDtoCache cache = Services.get(ServiceDtoCache.class);
+        ServiceDtoCache cache;
+        try {
+            cache = Services.get(ServiceDtoCache.class);
+        } catch (ServiceException e) {
+            ui.addErrorMessage(e).write();
+            return;
+        }
 
         for (UserLog dto : data) {
             CommonUser user;

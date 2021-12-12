@@ -27,14 +27,14 @@ public class DataDependency {
             return dependencies;
         }
 
-        for (DtoDictionary.Info hostDtoInfo : DtoDictionary.getAll(dbms)) {
+        for (DtoDictionary.Info hostDtoInfo : DtoDictionary.getAll(dbms, DtoDictionary.Dbms.NOSTORE)) {
             for (Field hostField : hostDtoInfo.dtoClass.getFields()) {
                 if (!DtoBase.isDataField(hostField)) {
                     continue;
                 }
 
-                if (hostField.isAnnotationPresent(Depends.class)
-                    && hostField.getAnnotation(Depends.class).value().equals(dto.getClass())) {
+                Depends depends = hostField.getAnnotation(Depends.class);
+                if (depends != null && depends.value().equals(dto.getClass())) {
                     putAnnotatedDependencies(
                         dbms,
                         dto, id,
@@ -45,13 +45,15 @@ public class DataDependency {
                     continue;
                 }
 
-                if (!ObjectUtil.implementsInterface(hostField.getType(), Dto.class)) {
-                    continue;
-                }
+                // todo: recursive fields?
+                //if (!ObjectUtil.implementsInterface(hostField.getType(), Dto.class)) {
+                  //  continue;
+                //}
 
                 putNotAnnotatedDependencies(
                     dbms,
                     dto, id,
+                    hostDtoInfo,
                     hostDtoInfo, hostField,
                     dependencies,
                     "",
@@ -64,7 +66,9 @@ public class DataDependency {
     }
 
     /**
-     * with @depends annotation: can only be used on Long or Collection<Long> (fkId fields)
+     * with @depends annotation:
+     *      Long or Collection<Long> (fkId fields)
+     *      Dto or Collection<Dto>   (fkId fields based on Dto.id)
      */
     private static void putAnnotatedDependencies(
         DtoDictionary.Dbms dbms,
@@ -73,36 +77,126 @@ public class DataDependency {
         List<Dependants> dependencies,
         String prefix) {
 
-        /*
-         * (3) field is Collection<Long> and items are fks to dto
-         */
-        if (ObjectUtil.implementsInterface(hostField.getType(), Collection.class)) {
+        Class<?> hostFieldType = hostField.getType();
+        String hostFieldName = prefix + hostField.getName();
+
+        if (ObjectUtil.implementsInterface(hostFieldType, Collection.class)) {
+
+            /*
+             * (3) field is Collection<Long> and items are fks to "target dto"
+             */
             Class<?> gClass = ObjectUtil.getFieldGenericTypes(hostField)[0];
             if (gClass.equals(Long.class)) {
-                Dependants d = getDependantDataIn(dbms, hostDtoInfo.getDtoInstance(), prefix + hostField.getName(), + id);
+                Dependants d = getDependantDataIn(dbms, hostDtoInfo.getDtoInstance(), hostFieldName, id);
                 if (d != null) {
                     dependencies.add(d);
                 }
+                return;
+            }
+
+            /*
+             * (8) field is Collection<Dto> where
+             *     Dto-class="target dto".class and the objects are copies of some "target dto" records
+             */
+            if (gClass.equals(dto.getClass())) {
+                Dependants d = getDependantDataIn(dbms, hostDtoInfo.getDtoInstance(), hostFieldName + id, id);
+                if (d != null) {
+                    dependencies.add(d);
+                }
+                return;
+            }
+        }
+
+        /*
+         * (1) field is Long and is a fk to "target dto"
+         */
+        if (hostFieldType.equals(Long.class)) {
+            Dependants d = getDependantDataEquals(dbms, hostDtoInfo.getDtoInstance(), hostFieldName, id);
+            if (d != null) {
+                dependencies.add(d);
             }
             return;
         }
-
         /*
-         * (1) field is Long and is a fk to dto
+         * (8) field is Dto where
+         *     Dto-class="target dto".class and the object is a copy of a "target dto" record
          */
-        Dependants d = getDependantDataEquals(dbms, hostDtoInfo.getDtoInstance(), prefix + hostField.getName(), id);
-        if (d != null) {
-            dependencies.add(d);
+        if (ObjectUtil.implementsInterface(hostFieldType, Dto.class)) {
+            Dependants d = getDependantDataEquals(dbms, hostDtoInfo.getDtoInstance(), hostFieldName + ".id", id);
+            if (d != null) {
+                dependencies.add(d);
+            }
+        }
+    }
+
+    /**
+     * with @depends annotation:
+     *      Long or Collection<Long> (fkId fields)
+     *      Dto or Collection<Dto>   (fkId fields based on Dto.id)
+     */
+    private static void putAnnotatedDependenciesX(
+        DtoDictionary.Dbms dbms,
+        Dto dto, Long id,
+        DtoDictionary.Info hostDtoInfo, Field hostField,
+        List<Dependants> dependencies,
+        String prefix) {
+
+        Class<?> hostFieldType = hostField.getType();
+        String hostFieldName = prefix + hostField.getName();
+
+        if (ObjectUtil.implementsInterface(hostFieldType, Collection.class)) {
+
+            /*
+             * (3) field is Collection<Long> and items are fks to "target dto"
+             */
+            Class<?> gClass = ObjectUtil.getFieldGenericTypes(hostField)[0];
+            if (gClass.equals(Long.class)) {
+                Dependants d = getDependantDataIn(dbms, hostDtoInfo.getDtoInstance(), hostFieldName, id);
+                if (d != null) {
+                    dependencies.add(d);
+                }
+                return;
+            }
+
+            /*
+             * (8) field is Collection<Dto> where
+             *     Dto-class="target dto".class and the objects are copies of some "target dto" records
+             */
+            if (gClass.equals(dto.getClass())) {
+                Dependants d = getDependantDataIn(dbms, hostDtoInfo.getDtoInstance(), hostFieldName + id, id);
+                if (d != null) {
+                    dependencies.add(d);
+                }
+                return;
+            }
         }
 
         /*
-         * (7) field is Dto and is a copy of a record
+         * (1) field is Long and is a fk to "target dto"
          */
+        if (hostFieldType.equals(Long.class)) {
+            Dependants d = getDependantDataEquals(dbms, hostDtoInfo.getDtoInstance(), hostFieldName, id);
+            if (d != null) {
+                dependencies.add(d);
+            }
+            return;
+        }
+        /*
+         * (8) field is Dto where
+         *     Dto-class="target dto".class and the object is a copy of a "target dto" record
+         */
+        if (ObjectUtil.implementsInterface(hostFieldType, Dto.class)) {
+            Dependants d = getDependantDataEquals(dbms, hostDtoInfo.getDtoInstance(), hostFieldName + ".id", id);
+            if (d != null) {
+                dependencies.add(d);
+            }
+        }
     }
 
     private static void putNotAnnotatedDependencies(
         DtoDictionary.Dbms dbms,
         Dto dto, Long id,
+        DtoDictionary.Info firstHostDtoInfo,
         DtoDictionary.Info hostDtoInfo, Field hostField,
         List<Dependants> dependencies,
         String prefix,
@@ -117,13 +211,10 @@ public class DataDependency {
             if (ObjectUtil.implementsInterface(gClass, Dto.class)) {
 
                 /*
-                 * (5) field is Collection<Dto> and is the same generic type as the dto
+                 * (5) field is Collection<Dto> where generic type is "target dto".class
                  */
                 if (hostFieldType.equals(dto.getClass())) {
-                    Dependants d = getDependantDataIn(dbms, hostDtoInfo.getDtoInstance(), prefix + hostFieldName + "._id", id);
-                    if (d != null) {
-                        dependencies.add(d);
-                    }
+                    // do nothing because the object is embedded (require explicit @Dependency)
                     return;
                 }
 
@@ -131,6 +222,12 @@ public class DataDependency {
                  * (6) field is Collection<Dto>
                  */
                 if (ObjectUtil.implementsInterface(hostFieldType, Dto.class)) {
+//                    Dependants d = getDependantDataIn(dbms, hostDtoInfo.getDtoInstance(), prefix + hostFieldName + "._id", id);
+//                    if (d != null) {
+//                        dependencies.add(d);
+//                    }
+//                    return;
+
 //                  for (host)
 //                    putCrawlDependencies(
 //                        dbms,
@@ -147,19 +244,21 @@ public class DataDependency {
         }
 
         /*
-         * (2) field is a Dto and is the same type as the dto
+         * (2) field is a Dto and is the same type as the "target dto".class
          */
         if (hostFieldType.equals(dto.getClass())) {
-            // do nothing because the object is embedded
+            // do nothing because the object is embedded (require explicit @Dependency)
+            return;
         }
 
         /*
-         * (4) field is a Dto
+         * (4) field is a Dto > crawl inside it until a "target dto" dependency or object is found
          */
         if (ObjectUtil.implementsInterface(hostFieldType, Dto.class)) {
             putCrawlDependencies(
                 dbms,
                 dto, id,
+                firstHostDtoInfo,
                 hostDtoInfo, hostField,
                 dependencies,
                 prefix + hostFieldName + '.',
@@ -171,6 +270,7 @@ public class DataDependency {
     private static void putCrawlDependencies(
         DtoDictionary.Dbms dbms,
         Dto dto, Long id,
+        DtoDictionary.Info firstHostDtoInfo,
         DtoDictionary.Info hostDtoInfo, Field hostField,
         List<Dependants> dependencies,
         String queryFieldName,
@@ -181,49 +281,29 @@ public class DataDependency {
         }
         breadCrumb.add(hostField.getType());
 
-        for (Field innerField : hostDtoInfo.getDtoInstance().getFields()) {
+        for (Field innerField : DtoDictionary.get(hostField.getType()).getDtoInstance().getFields()) {
 
-            if (innerField.isAnnotationPresent(Depends.class)
-                && innerField.getAnnotation(Depends.class).value().equals(dto.getClass())) {
-
-                DtoDictionary.Info innerDtoInfo = DtoDictionary.get(innerField.getAnnotation(Depends.class).value());
-                log.error(">>>>>>>>>>{}", innerDtoInfo);
-
-                log.error(">>>>{} {}\n {}\n{}\n{}\n{}", innerField.getAnnotation(Depends.class).value(), dto.getClass(),
-                    innerDtoInfo.title, innerField,
-                    dependencies,
-                    queryFieldName
-                );
-
+            Depends depends = innerField.getAnnotation(Depends.class);
+            if (depends != null && depends.value().equals(dto.getClass())) {
                 putAnnotatedDependencies(
                     dbms,
                     dto, id,
-                    innerDtoInfo, innerField,
+                    firstHostDtoInfo, innerField,
                     dependencies,
                     queryFieldName
                 );
                 continue;
             }
 
-            if (!ObjectUtil.implementsInterface(hostField.getType(), Dto.class)) {
+            if (!ObjectUtil.implementsInterface(innerField.getType(), Dto.class)) {
                 continue;
             }
 
-            DtoDictionary.Info innerDtoInfo = DtoDictionary.get(hostField.getType());
-log.error(">>>>{}\n{}\n{}\n{}\n{}\n{}\n{}\n{}  a",
-
-    dbms,
-    dto, id,
-    innerDtoInfo, innerField,
-    dependencies,
-    queryFieldName,
-    breadCrumb
-
-);
             putNotAnnotatedDependencies(
                 dbms,
                 dto, id,
-                innerDtoInfo, innerField,
+                firstHostDtoInfo,
+                hostDtoInfo, innerField,
                 dependencies,
                 queryFieldName,
                 breadCrumb
@@ -241,6 +321,7 @@ log.error(">>>>{}\n{}\n{}\n{}\n{}\n{}\n{}\n{}  a",
 
     // todo: if cached maybe use cache instead of db
     private static Dependants getDependantData(DtoDictionary.Dbms dbms, Dto dto, String fieldName, long fk, boolean in) {
+log.error("\n\nQUEYYY\n\n{} {} {} {}", dto.getClass().getSimpleName(), fieldName, fk, in);
         QueryBuilder q = new QueryBuilder(dto);
         if (in) {
             q.condition().in(fieldName, fk);

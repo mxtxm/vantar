@@ -1,11 +1,11 @@
 package com.vantar.service;
 
+import com.vantar.exception.*;
 import com.vantar.service.log.LogEvent;
 import com.vantar.common.*;
 import com.vantar.database.nosql.elasticsearch.ElasticConnection;
 import com.vantar.database.nosql.mongo.MongoConnection;
 import com.vantar.database.sql.SqlConnection;
-import com.vantar.exception.DateTimeException;
 import com.vantar.queue.Queue;
 import com.vantar.service.messaging.ServiceMessaging;
 import com.vantar.util.datetime.DateTime;
@@ -40,16 +40,20 @@ public class Services {
         return service.isRunningOnThisServer;
     }
 
-    public static Service get(String name) {
-        ServiceInfo service = upServices.get(name);
-        return service == null ? null : service.instance;
+    public static Service get(String serviceClass) throws ServiceException {
+        ServiceInfo service = upServices.get(serviceClass);
+        if (service == null) {
+            log.error("! service '{}' not registered", serviceClass);
+            throw new ServiceException(serviceClass);
+        }
+        return service.instance;
     }
 
-    public static <T extends Service> T get(Class<T> name) {
-        ServiceInfo service = upServices.get(name.getSimpleName());
+    public static <T extends Service> T get(Class<T> serviceClass) throws ServiceException {
+        ServiceInfo service = upServices.get(serviceClass.getSimpleName());
         if (service == null) {
-            log.error("! service '{}' not registered", name.getSimpleName());
-            return null;
+            log.error("! service '{}' not registered", serviceClass.getSimpleName());
+            throw new ServiceException(serviceClass);
         }
         return (T) service.instance;
     }

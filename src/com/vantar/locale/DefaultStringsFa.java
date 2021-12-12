@@ -177,7 +177,6 @@ public class DefaultStringsFa {
         tokens.put(VantarKey.ADMIN_QUEUE_STATUS, "وضعیت صف ها");
         tokens.put(VantarKey.ADMIN_SERVICES, "سرویس ها");
         tokens.put(VantarKey.ADMIN_ONLINE_USERS, "کاربران آنلاین");
-        tokens.put(VantarKey.ADMIN_AUTH_IS_DISABLED, "سرویس اهراز هویت کاربران خاموش است!");
         tokens.put(VantarKey.ADMIN_DELETE_TOKEN, "حذف توکن اهراز هویت");
         tokens.put(VantarKey.ADMIN_DELETE_TOKEN_DESCRIPTION, "با حذف توکن کاربر از سیستم خارج خواهد شد.");
         tokens.put(VantarKey.ADMIN_AUTH_TOKEN, "توکن");

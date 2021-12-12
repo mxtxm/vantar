@@ -4,7 +4,7 @@ import com.vantar.business.CommonRepoMongo;
 import com.vantar.common.VantarParam;
 import com.vantar.database.dto.*;
 import com.vantar.database.nosql.elasticsearch.ElasticWrite;
-import com.vantar.exception.DatabaseException;
+import com.vantar.exception.*;
 import com.vantar.queue.Queue;
 import com.vantar.queue.*;
 import com.vantar.service.Services;
@@ -81,11 +81,13 @@ public class ServiceUserActionLog implements Services.Service {
         }
 
         UserLog userLog = new UserLog();
-        ServiceAuth auth = Services.get(ServiceAuth.class);
 
-        if (params != null && auth != null) {
-            CommonUser user = auth.getCurrentUser(params);
-            userLog.userId = user == null ? null : user.getId();
+        if (params != null) {
+            try {
+                userLog.userId = Services.get(ServiceAuth.class).getCurrentUser(params).getId();
+            } catch (ServiceException | AuthException e) {
+                userLog.userId = null;
+            }
         }
 
         userLog.action = action;
@@ -111,9 +113,12 @@ public class ServiceUserActionLog implements Services.Service {
             Queue.add(VantarParam.QUEUE_NAME_USER_ACTION_LOG, new Packet(userLog));
             log.debug("userLog > queue({})", VantarParam.QUEUE_NAME_USER_ACTION_LOG);
         } else {
-            ServiceUserActionLog serviceUserActionLog = Services.get(ServiceUserActionLog.class);
-            if (serviceUserActionLog == null) {
-                log.error("! ServiceUserActionLog is off");
+
+            ServiceUserActionLog serviceUserActionLog;
+            try {
+                serviceUserActionLog = Services.get(ServiceUserActionLog.class);
+            } catch (ServiceException e) {
+                log.error("! action not logged", e);
                 return;
             }
 

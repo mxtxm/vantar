@@ -1,5 +1,6 @@
 package com.vantar.admin.model;
 
+import com.vantar.exception.ServiceException;
 import com.vantar.locale.*;
 import com.vantar.service.Services;
 import com.vantar.service.log.LogEvent;
@@ -20,7 +21,14 @@ public class AdminSchedule {
             return;
         }
 
-        ServiceScheduler service = Services.get(ServiceScheduler.class);
+        ServiceScheduler service;
+        try {
+            service = Services.get(ServiceScheduler.class);
+        } catch (ServiceException e) {
+            ui.addErrorMessage(e).write();
+            return;
+        }
+
         if (!Services.isUp(ServiceScheduler.class) || service == null) {
             ui.addErrorMessage(Locale.getString(VantarKey.ADMIN_SERVICE_IS_OFF)).write();
             return;

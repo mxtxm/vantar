@@ -24,6 +24,8 @@ public class InputException extends VantarException {
 
     public InputException(LangKey messageKey, Object... messageParams) {
         super(messageKey, messageParams);
+        errors = new ArrayList<>(1);
+        errors.add(new ValidationError(messageKey, messageParams));
     }
 
     public InputException(List<ValidationError> errors) {

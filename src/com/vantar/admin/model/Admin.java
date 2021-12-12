@@ -5,6 +5,7 @@ import com.vantar.database.dto.DtoDictionary;
 import com.vantar.database.nosql.elasticsearch.ElasticConnection;
 import com.vantar.database.nosql.mongo.MongoConnection;
 import com.vantar.database.sql.SqlConnection;
+import com.vantar.exception.*;
 import com.vantar.locale.Locale;
 import com.vantar.locale.*;
 import com.vantar.queue.Queue;
@@ -122,12 +123,14 @@ public class Admin {
     }
 
     private static String getOnlineUserTitle(Params params) {
-        ServiceAuth auth = Services.get(ServiceAuth.class);
-        if (auth != null) {
-            CommonUser user = auth.getCurrentUser(params);
-            if (user != null) {
-                return user.getFullName();
+        try {
+            try {
+                return Services.get(ServiceAuth.class).getCurrentUser(params).getFullName();
+            } catch (AuthException ignore) {
+
             }
+        } catch (ServiceException ignore) {
+
         }
         return "";
     }

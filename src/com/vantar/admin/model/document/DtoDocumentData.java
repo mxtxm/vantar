@@ -234,7 +234,7 @@ public class DtoDocumentData {
         return sb.toString();
     }
 
-    private String getAsJsonExampleList(Field f) {
+    private String getAsJsonExampleList(Field f, Class<?> dto) {
         StringBuilder json = new StringBuilder();
         json.append('[');
         Class<?>[] g = ObjectUtil.getFieldGenericTypes(f);
@@ -242,7 +242,11 @@ public class DtoDocumentData {
             Class<?> genericType = g[0];
 
             if (ObjectUtil.implementsInterface(genericType, Dto.class)) {
-                json.append(getAsJsonExampleDto(genericType));
+                if (genericType.equals(dto)) {
+                    json.append("\"{RECURSIVE}\"");
+                } else {
+                    json.append(getAsJsonExampleDto(genericType));
+                }
             } else if (ObjectUtil.extendsClass(genericType, Number.class)) {
                 json.append("000");
             } else if (genericType == String.class) {
@@ -377,7 +381,7 @@ public class DtoDocumentData {
             }
 
             if (propType == List.class || propType == Set.class || propType == Collection.class) {
-                json.append(getAsJsonExampleList(f)).append(',');
+                json.append(getAsJsonExampleList(f, obj)).append(',');
                 continue;
             }
             if (propType == Map.class) {

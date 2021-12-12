@@ -46,7 +46,7 @@ public class QueryBuilder {
     }
 
     public QueryBuilder(QueryData queryData) throws InputException {
-        if (queryData == null) {
+        if (queryData == null || queryData.isEmpty()) {
             throw new InputException(VantarKey.NO_SEARCH_COMMAND);
         }
 

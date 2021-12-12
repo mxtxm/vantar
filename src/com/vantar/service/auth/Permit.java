@@ -193,22 +193,18 @@ public class Permit {
     public void permitController(Params params, String methodName) throws AuthException, ServiceException {
         if (controllerPermissionTable == null) {
             controllerPermissionTable = new ConcurrentHashMap<>(MAX_CONTROLLER_SIZE);
-            ServiceDtoCache cache = Services.get(ServiceDtoCache.class);
-            if (cache == null) {
-                throw new ServiceException(ServiceDtoCache.class);
-            }
-            for (Permission p : cache.getList(Permission.class)) {
+            for (Permission p : Services.get(ServiceDtoCache.class).getList(Permission.class)) {
                 controllerPermissionTable.put(p.method, p);
             }
         }
+
+        TokenData token = validateToken(params, onlineUsers);
+        CommonUserRole role = token.user.getRole();
 
         Permission methodPermissionRules = controllerPermissionTable.get(methodName);
         if (methodPermissionRules == null) {
             return;
         }
-
-        TokenData token = validateToken(params, onlineUsers);
-        CommonUserRole role = token.user.getRole();
 
         if (CollectionUtil.isNotEmpty(methodPermissionRules.allowedRoles)) {
             // single role

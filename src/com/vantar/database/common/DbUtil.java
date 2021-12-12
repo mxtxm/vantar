@@ -1,4 +1,4 @@
-package com.vantar.exception;
+package com.vantar.database.common;
 
 import com.vantar.util.string.StringUtil;
 import java.util.Map;

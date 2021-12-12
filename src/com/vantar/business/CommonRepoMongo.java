@@ -198,12 +198,14 @@ public class CommonRepoMongo extends Mongo {
         return result.asList();
     }
 
-    public static Object search(QueryData queryData, String... locales) throws DatabaseException, NoContentException, InputException {
+    public static Object search(QueryData queryData, String... locales) throws DatabaseException, NoContentException,
+        InputException, ServerException {
+
         return search(queryData, null, locales);
     }
 
     public static Object search(QueryData queryData, CommonModel.QueryEvent event, String... locales)
-        throws DatabaseException, NoContentException, InputException {
+        throws DatabaseException, NoContentException, InputException, ServerException {
 
         QueryBuilder q = new QueryBuilder(queryData);
         if (event != null) {

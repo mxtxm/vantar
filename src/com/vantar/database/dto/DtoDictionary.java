@@ -14,14 +14,13 @@ public class DtoDictionary {
     private static final Logger log = LoggerFactory.getLogger(DtoDictionary.class);
 
     public enum Dbms {
-        SQL,
         MONGO,
+        SQL,
         ELASTIC,
         NOSTORE,
     }
 
     private static final Map<String, Map<String, Info>> index = new LinkedHashMap<>();
-//    private static final Map<String, Info> indexWithoutStorage = new LinkedHashMap<>();
     private static String tempCategory;
 
 
@@ -35,10 +34,7 @@ public class DtoDictionary {
     public static void add(String title, Class<? extends Dto> dtoClass, Integer onUpdateBroadcastMessage
         , String command, QueryBuilder queryCache) {
 
-        //boolean noStore = dtoClass.isAnnotationPresent(NoStore.class);
-
         Map<String, Info> catInfo = index.get(tempCategory);
-        //if (catInfo == null && !noStore) {
         if (catInfo == null) {
             catInfo = new LinkedHashMap<>();
         }
@@ -115,11 +111,6 @@ public class DtoDictionary {
             }
         }
 
-//        if (noStore) {
-//            indexWithoutStorage.put(dtoClass.getSimpleName(), info);
-//            return;
-//        }
-
         catInfo.put(dtoClass.getSimpleName(), info);
         index.put(tempCategory, catInfo);
     }
@@ -148,18 +139,20 @@ public class DtoDictionary {
         return index;
     }
 
-//    public static Map<String, Info> getNoStoreDtos() {
-//        return indexWithoutStorage;
-//    }
-
-    public static List<Info> getAll(Dbms dbms) {
+    public static List<Info> getAll(Dbms... dbmses) {
         List<Info> info = new ArrayList<>(100);
         for (Map<String, Info> bucket : index.values()) {
             for (Info item : bucket.values()) {
-                if (!item.dbms.equals(dbms)) {
+                if (dbmses.length == 0) {
+                    info.add(item);
                     continue;
                 }
-                info.add(item);
+                for (Dbms dbms : dbmses){
+                    if (item.dbms.equals(dbms)) {
+                        info.add(item);
+                        break;
+                    }
+                }
             }
         }
         return info;
@@ -197,18 +190,12 @@ public class DtoDictionary {
                 }
             }
         }
-
         return null;
-//        return indexWithoutStorage.get(name);
     }
 
     public static Info get(Class<?> type) {
         return get(type.getSimpleName());
     }
-
-//    public static Info getNoStore(String name) {
-//        return indexWithoutStorage.get(name);
-//    }
 
 
     public static class Info {

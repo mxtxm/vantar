@@ -1,6 +1,7 @@
 package com.vantar.admin.model;
 
 import com.vantar.database.dto.Dto;
+import com.vantar.exception.ServiceException;
 import com.vantar.locale.Locale;
 import com.vantar.locale.*;
 import com.vantar.service.Services;
@@ -19,9 +20,11 @@ public class AdminCache {
             return;
         }
 
-        ServiceDtoCache serviceDtoCache = Services.get(ServiceDtoCache.class);
-        if (serviceDtoCache == null) {
-            ui.addErrorMessage(Locale.getString(VantarKey.NO_CONTENT)).finish();
+        ServiceDtoCache serviceDtoCache;
+        try {
+            serviceDtoCache = Services.get(ServiceDtoCache.class);
+        } catch (ServiceException e) {
+            ui.addErrorMessage(e).finish();
             return;
         }
 
@@ -57,7 +60,13 @@ public class AdminCache {
         ui.addHeading(3, className);
 
         Object object = ObjectUtil.getInstance(className);
-        ServiceDtoCache serviceDtoCache = Services.get(ServiceDtoCache.class);
+        ServiceDtoCache serviceDtoCache;
+        try {
+            serviceDtoCache = Services.get(ServiceDtoCache.class);
+        } catch (ServiceException e) {
+            ui.addErrorMessage(e).finish();
+            return;
+        }
         if (object == null || serviceDtoCache == null) {
             ui.addErrorMessage(Locale.getString(VantarKey.NO_CONTENT)).finish();
             return;

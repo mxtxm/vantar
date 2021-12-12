@@ -8,7 +8,6 @@ import org.slf4j.*;
 import java.lang.reflect.*;
 import java.util.*;
 
-
 @SuppressWarnings({"unchecked"})
 abstract public class QueryResultBase {
 

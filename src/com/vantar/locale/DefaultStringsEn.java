@@ -176,7 +176,6 @@ public class DefaultStringsEn {
         tokens.put(VantarKey.ADMIN_QUEUE_STATUS, "Queue status");
         tokens.put(VantarKey.ADMIN_SERVICES, "Services");
         tokens.put(VantarKey.ADMIN_ONLINE_USERS, "Online users");
-        tokens.put(VantarKey.ADMIN_AUTH_IS_DISABLED, "Authentication service is disabled");
         tokens.put(VantarKey.ADMIN_DELETE_TOKEN, "Delete authentication token");
         tokens.put(VantarKey.ADMIN_DELETE_TOKEN_DESCRIPTION, "Delete authentication token description");
         tokens.put(VantarKey.ADMIN_AUTH_TOKEN, "Authentication token");

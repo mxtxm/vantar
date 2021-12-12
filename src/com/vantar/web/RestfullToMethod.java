@@ -48,23 +48,11 @@ public class RestfullToMethod extends HttpServlet {
             method = this.getClass().getMethod(m, Params.class, HttpServletResponse.class);
 
             if (method.isAnnotationPresent(VerifyPermission.class)) {
-                ServiceAuth auth = Services.get(ServiceAuth.class);
-                if (auth == null) {
-                    throw new ServiceException(ServiceAuth.class);
-                }
-                auth.permitController(params, m);
+                Services.get(ServiceAuth.class).permitController(params, m);
             } else if (method.isAnnotationPresent(Access.class)) {
-                ServiceAuth auth = Services.get(ServiceAuth.class);
-                if (auth == null) {
-                    throw new ServiceException(ServiceAuth.class);
-                }
-                auth.permitAccess(params, method.getAnnotation(Access.class).value());
+                Services.get(ServiceAuth.class).permitAccess(params, method.getAnnotation(Access.class).value());
             } else if (method.isAnnotationPresent(Feature.class)) {
-                ServiceAuth auth = Services.get(ServiceAuth.class);
-                if (auth == null) {
-                    throw new ServiceException(ServiceAuth.class);
-                }
-                auth.permitFeature(params, method.getAnnotation(Feature.class).value());
+                Services.get(ServiceAuth.class).permitFeature(params, method.getAnnotation(Feature.class).value());
             }
 
             method.invoke(this, params, response);

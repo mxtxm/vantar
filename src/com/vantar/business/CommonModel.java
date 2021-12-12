@@ -20,8 +20,10 @@ public abstract class CommonModel {
 
 
     public static void afterDataChange(Dto dto) {
-        ServiceDtoCache service = Services.get(ServiceDtoCache.class);
-        if (service == null) {
+        ServiceDtoCache service;
+        try {
+            service = Services.get(ServiceDtoCache.class);
+        } catch (ServiceException e) {
             return;
         }
         String dtoName = dto.getClass().getSimpleName();
@@ -170,7 +172,7 @@ public abstract class CommonModel {
 
     public interface QueryEvent {
 
-        void beforeQuery(QueryBuilder q);
+        void beforeQuery(QueryBuilder q) throws InputException, ServerException;
 
     }
 
