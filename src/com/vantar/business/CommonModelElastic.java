@@ -7,6 +7,7 @@ import com.vantar.database.nosql.elasticsearch.*;
 import com.vantar.exception.*;
 import com.vantar.locale.Locale;
 import com.vantar.locale.*;
+import com.vantar.util.number.NumberUtil;
 import com.vantar.util.object.ObjectUtil;
 import com.vantar.web.*;
 import org.slf4j.*;
@@ -386,7 +387,7 @@ public class CommonModelElastic extends CommonModel {
                 throw new ServerException(VantarKey.DELETE_FAIL);
             }
 
-            if (ObjectUtil.isIdInvalid(id)) {
+            if (NumberUtil.isIdInvalid(id)) {
                 throw new InputException(new ValidationError(VantarParam.ID, VantarKey.INVALID_ID));
             }
 

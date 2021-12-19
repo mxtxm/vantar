@@ -12,6 +12,7 @@ import com.vantar.locale.Locale;
 import com.vantar.locale.*;
 import com.vantar.service.Services;
 import com.vantar.service.cache.ServiceDtoCache;
+import com.vantar.util.number.NumberUtil;
 import com.vantar.util.object.ObjectUtil;
 import com.vantar.util.string.StringUtil;
 import com.vantar.web.*;
@@ -100,6 +101,49 @@ public class CommonModelMongo extends CommonModel {
             log.error("! {}", dto, e);
             throw new ServerException(VantarKey.INSERT_FAIL);
         }
+    }
+
+    public static ResponseMessage insert(Dto dto) throws ServerException, InputException {
+        return insert(dto, null);
+    }
+
+    public static ResponseMessage insert(Dto dto, WriteEvent event) throws ServerException, InputException {
+        List<ValidationError> errors = dto.validate(Dto.Action.INSERT);
+        if (errors != null) {
+            throw new InputException(errors);
+        }
+
+        if (event != null) {
+            event.beforeWrite(dto);
+        }
+
+        try {
+            errors = CommonRepoMongo.getUniqueViolation(dto);
+            if (errors != null) {
+                throw new InputException(errors);
+            }
+
+            CommonRepoMongo.insert(dto);
+        } catch (DatabaseException | InputException e) {
+            log.error("! {}", dto, e);
+            throw new ServerException(VantarKey.INSERT_FAIL);
+        }
+
+        if (event != null) {
+            event.afterWrite(dto);
+        }
+
+        try {
+            dto = CommonRepoMongo.getById(dto);
+        } catch (DatabaseException e) {
+            log.error("! {}", dto, e);
+        } catch (NoContentException e) {
+            throw new ServerException(VantarKey.INSERT_FAIL);
+        }
+
+        logAction(null, dto, Dto.Action.INSERT);
+
+        return new ResponseMessage(VantarKey.INSERT_SUCCESS, dto.getId(), dto);
     }
 
     public static <T extends Dto> ResponseMessage insertBatch(Params params, Class<T> tClass)
@@ -249,6 +293,44 @@ public class CommonModelMongo extends CommonModel {
         return new ResponseMessage(VantarKey.UPDATE_SUCCESS, dto);
     }
 
+    public static ResponseMessage update(Dto dto) throws ServerException, InputException {
+        return update(dto, null);
+    }
+
+    public static ResponseMessage update(Dto dto, WriteEvent event) throws ServerException, InputException {
+        if (event != null) {
+            event.beforeWrite(dto);
+        }
+
+        try {
+            List<ValidationError> errors = CommonRepoMongo.getUniqueViolation(dto);
+            if (errors != null) {
+                throw new InputException(errors);
+            }
+
+            CommonRepoMongo.update(dto);
+        } catch (DatabaseException | InputException e) {
+            log.error("! {}", dto, e);
+            throw new ServerException(VantarKey.UPDATE_FAIL);
+        }
+
+        if (event != null) {
+            event.afterWrite(dto);
+        }
+
+        try {
+            dto = CommonRepoMongo.getById(dto);
+        } catch (DatabaseException e) {
+            log.error("! {}", dto, e);
+        } catch (NoContentException e) {
+            throw new ServerException(VantarKey.UPDATE_FAIL);
+        }
+
+        logAction(null, dto, Dto.Action.UPDATE);
+
+        return new ResponseMessage(VantarKey.UPDATE_SUCCESS, dto);
+    }
+
     public static <T extends Dto> ResponseMessage updateBatch(Params params, Class<T> tClass)
         throws InputException, ServerException {
 
@@ -310,7 +392,7 @@ public class CommonModelMongo extends CommonModel {
         }
 
         Long id = dto.getId();
-        if (ObjectUtil.isIdValid(id)) {
+        if (NumberUtil.isIdValid(id)) {
             List<DataDependency.Dependants> items = DataDependency.getDependencies(dto, id);
             if (!items.isEmpty()) {
                 return new ResponseMessage(VantarKey.DELETE_FAIL_HAS_DEPENDENCIES, items);
@@ -358,7 +440,7 @@ public class CommonModelMongo extends CommonModel {
             for (Long id : ids) {
                 dto.setId(id);
 
-                if (ObjectUtil.isIdValid(id)) {
+                if (NumberUtil.isIdValid(id)) {
                     List<DataDependency.Dependants> items = DataDependency.getDependencies(dto, id);
                     if (!items.isEmpty()) {
                         return new ResponseMessage(VantarKey.DELETE_FAIL_HAS_DEPENDENCIES, items);
@@ -412,7 +494,7 @@ public class CommonModelMongo extends CommonModel {
             for (Long id : ids) {
                 dto.setId(id);
 
-                if (ObjectUtil.isIdValid(id)) {
+                if (NumberUtil.isIdValid(id)) {
                     List<DataDependency.Dependants> items = DataDependency.getDependencies(dto, id);
                     if (!items.isEmpty()) {
                         return new ResponseMessage(VantarKey.DELETE_FAIL_HAS_DEPENDENCIES, items);
@@ -542,7 +624,7 @@ public class CommonModelMongo extends CommonModel {
                 throw new ServerException(VantarKey.DELETE_FAIL);
             }
 
-            if (ObjectUtil.isIdInvalid(id)) {
+            if (NumberUtil.isIdInvalid(id)) {
                 throw new InputException(new ValidationError(VantarParam.ID, VantarKey.INVALID_ID));
             }
 
@@ -708,7 +790,7 @@ public class CommonModelMongo extends CommonModel {
 
     public static <D extends Dto> D getById(Params params, D dto) throws InputException, ServerException, NoContentException {
         Long id = params.getLong("id");
-        if (!ObjectUtil.isIdValid(id)) {
+        if (!NumberUtil.isIdValid(id)) {
             throw new InputException(VantarKey.INVALID_ID, dto.getClass().getSimpleName() + ".id");
         }
 
@@ -728,7 +810,7 @@ public class CommonModelMongo extends CommonModel {
     }
 
     public static <D extends Dto> D getById(D dto) throws InputException, ServerException, NoContentException {
-        if (!ObjectUtil.isIdValid(dto.getId())) {
+        if (!NumberUtil.isIdValid(dto.getId())) {
             throw new InputException(VantarKey.INVALID_ID, dto.getClass().getSimpleName() + ".id");
         }
 

@@ -77,6 +77,18 @@ public class FileUtil {
         return "";
     }
 
+    public static String getClassPathAbsolutePath(String path) {
+        URL url = FileUtil.class.getResource(path);
+        if (url == null) {
+            return null;
+        }
+        try {
+            return url.toURI().getRawPath();
+        } catch (URISyntaxException e) {
+            return null;
+        }
+    }
+
     public static String getFileContent(String path) {
         try {
             return new String(Files.readAllBytes(Paths.get(path)), StandardCharsets.UTF_8);

@@ -13,6 +13,7 @@ public class MongoSearch {
 
     /**
      * Check by property value
+     * if dto.id is set, it will be taken into account thus (id, property) must be unique
      */
     public static boolean isUnique(Dto dto, String property) throws DatabaseException {
         try {

@@ -41,10 +41,11 @@ public class Params {
     private Map<String, Object> map;
     private boolean typeMisMatch;
     private String json;
+    private Set<String> ignoreParams;
 
 
     public Params(HttpServletRequest request) {
-       this.request = request;
+        this.request = request;
 
         String contentType = getHeader("content-type");
         if (contentType == null) {
@@ -62,6 +63,10 @@ public class Params {
         request = null;
         this.map = map;
         type = Type.MAP;
+    }
+
+    public void removeParams(String... params) {
+        ignoreParams = new HashSet<>(Arrays.asList(params));
     }
 
     public void set(String key, Object value) {
@@ -164,6 +169,11 @@ public class Params {
         Enumeration<String> parameterNames = request.getParameterNames();
         while (parameterNames.hasMoreElements()) {
             String key = parameterNames.nextElement();
+
+            if (ignoreParams != null && ignoreParams.contains(key)) {
+                continue;
+            }
+
             String[] values = request.getParameterValues(key);
             params.putIfAbsent(key, values != null && values.length > 1 ? values : request.getParameter(key));
         }
@@ -181,6 +191,10 @@ public class Params {
 
 
     public String getParameter(String key) {
+        if (ignoreParams != null && ignoreParams.contains(key)) {
+            return null;
+        }
+
         String v = request == null ? null : request.getParameter(key);
         if (v != null) {
             return StringUtil.remove(v, '\r');
@@ -335,6 +349,10 @@ public class Params {
 
 
     public <T> List<T> getList(String key, Class<T> type) {
+        if (ignoreParams != null && ignoreParams.contains(key)) {
+            return null;
+        }
+
         Object object = request == null ? null : request.getParameterValues(key);
         boolean isEmpty = object == null || ((String[]) object).length <= 1;
         if (isEmpty) {

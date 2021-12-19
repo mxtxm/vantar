@@ -322,4 +322,22 @@ public class CollectionUtil {
     public static boolean isNotEmpty(Collection<?> collection) {
         return collection != null && !collection.isEmpty();
     }
+
+    public static boolean containsAtLeastOneElement(Collection<?> collectionA, Collection<?> collectionB) {
+        for (Object objectB : collectionB) {
+            if (collectionA.contains(objectB)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public static boolean containsAllElement(Collection<?> collectionA, Collection<?> collectionB) {
+        for (Object objectB : collectionB) {
+            if (!collectionA.contains(objectB)) {
+                return false;
+            }
+        }
+        return true;
+    }
 }

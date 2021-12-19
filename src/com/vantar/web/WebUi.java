@@ -166,7 +166,7 @@ public class WebUi {
     }
 
     private String getCompleteLink(String url) {
-        if (url.startsWith("?") || StringUtil.contains(url, "://")) {
+        if (StringUtil.contains(url, "://")) {
             return url;
         }
 

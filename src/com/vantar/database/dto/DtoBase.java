@@ -8,6 +8,7 @@ import com.vantar.locale.VantarKey;
 import com.vantar.util.collection.CollectionUtil;
 import com.vantar.util.datetime.DateTime;
 import com.vantar.util.json.Json;
+import com.vantar.util.number.NumberUtil;
 import com.vantar.util.object.*;
 import com.vantar.util.string.*;
 import com.vantar.web.Params;
@@ -827,7 +828,7 @@ public abstract class DtoBase implements Dto {
         String name = field.getName();
 
         if ((action.equals(Action.UPDATE) || action.equals(Action.DELETE)) && name.equals(ID)) {
-            if (ObjectUtil.isIdInvalid(getId())) {
+            if (NumberUtil.isIdInvalid(getId())) {
                 errors.add(new ValidationError(VantarParam.ID, VantarKey.EMPTY_ID));
             }
             return;

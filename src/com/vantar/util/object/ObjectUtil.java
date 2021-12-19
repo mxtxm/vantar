@@ -152,14 +152,6 @@ public class ObjectUtil {
         return sb.toString();
     }
 
-    public static boolean isIdValid(Long id) {
-        return id != null && id > VantarParam.INVALID_ID;
-    }
-
-    public static boolean isIdInvalid(Long id) {
-        return id == null || id <= VantarParam.INVALID_ID;
-    }
-
     public static Object convert(Object object, Type classType) {
         if (object.getClass() == classType || !(classType instanceof Class<?>)) {
             return object;

@@ -1,5 +1,6 @@
 package com.vantar.util.number;
 
+import com.vantar.common.VantarParam;
 import java.util.Random;
 
 
@@ -22,5 +23,13 @@ public class NumberUtil {
 
     public static double random(double min, double max) {
         return min + (max - min) * new Random().nextDouble();
+    }
+
+    public static boolean isIdValid(Long id) {
+        return id != null && id > VantarParam.INVALID_ID;
+    }
+
+    public static boolean isIdInvalid(Long id) {
+        return id == null || id <= VantarParam.INVALID_ID;
     }
 }

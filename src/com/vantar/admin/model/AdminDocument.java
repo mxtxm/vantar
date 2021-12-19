@@ -112,11 +112,11 @@ public class AdminDocument {
         show('/' + StringUtil.replace(params.getString("document"), "--", "/"), response, true, params.getString("tag"));
     }
 
-    public static void show(String documentPath, HttpServletResponse response, boolean fromClasspath) {
-        show(documentPath, response, fromClasspath, null);
+    public static void showFromFile(String documentPath, HttpServletResponse response) {
+        show(documentPath, response, false, null);
     }
 
-    public static void show(String documentPath, HttpServletResponse response, boolean fromClasspath, String tag) {
+    private static void show(String documentPath, HttpServletResponse response, boolean fromClasspath, String tag) {
         MutableDataSet options = new MutableDataSet();
         Parser parser = Parser.builder(options).build();
         HtmlRenderer renderer = HtmlRenderer.builder(options).build();
@@ -155,14 +155,9 @@ public class AdminDocument {
     public static Set<String> getTags() {
         Set<String> tags = new HashSet<>();
         DirUtil.browseByExtensionRecursive(
-            Settings.config.getProperty("documents.dir.raw"),
+            FileUtil.getClassPathAbsolutePath("/document"),
             "md",
-            new DirUtil.Callback() {
-                @Override
-                public void found(File file) {
-                    tags.addAll(WebServiceDocumentCreator.getTags(FileUtil.getFileContent(file.getAbsolutePath())));
-                }
-            }
+            file -> tags.addAll(WebServiceDocumentCreator.getTags(FileUtil.getFileContent(file.getAbsolutePath())))
         );
         return tags;
     }
@@ -174,10 +169,11 @@ public class AdminDocument {
 
         try {
             DirUtil.copy(
-                Settings.config.getProperty("documents.dir.raw"),
+                FileUtil.getClassPathAbsolutePath("/document"),
                 Settings.config.getProperty("documents.dir.release")
             );
-        } catch (IOException e) {
+        } catch (Exception e) {
+            log.info("< !!! failed to released all documents");
             return;
         }
 
