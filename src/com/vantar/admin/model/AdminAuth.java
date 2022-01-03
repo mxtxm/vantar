@@ -10,19 +10,18 @@ import javax.servlet.http.HttpServletResponse;
 
 public class AdminAuth {
 
-    public static boolean hasAccess(Params params, CommonUserRole role) {
+    public static boolean isRoot(WebUi ui) throws FinishException {
         try {
-            return Services.get(ServiceAuth.class).hasAccess(params, role);
-        } catch (ServiceException e) {
-            return false;
+            return Services.get(ServiceAuth.class).isRoot(ui.params);
+        } catch (ServiceException | AuthException e) {
+            ui.addErrorMessage(e).finish();
+            throw new FinishException();
         }
     }
 
-    public static void onlineUsers(Params params, HttpServletResponse response) {
-        WebUi ui = Admin.getUiAdminAccess(Locale.getString(VantarKey.ADMIN_ONLINE_USERS), params, response);
-        if (ui == null) {
-            return;
-        }
+    public static void onlineUsers(Params params, HttpServletResponse response) throws FinishException {
+        WebUi ui = Admin.getUi(Locale.getString(VantarKey.ADMIN_ONLINE_USERS), params, response, true);
+
         ServiceAuth auth;
         try {
             auth = Services.get(ServiceAuth.class);

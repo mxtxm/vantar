@@ -700,10 +700,15 @@ public class Params {
             return fileType != null && fileType.isType(type);
         }
 
+        public String getMimeType() {
+            setFileType();
+            return fileType == null ? "" : fileType.getMimeType();
+        }
+
         private void setFileType() {
             if (fileType == null) {
                 try {
-                    fileType = new FileType(filePart.getInputStream());
+                    fileType = new FileType(filePart.getInputStream(), filePart.getSubmittedFileName());
                 } catch (IOException ignore) {
 
                 }

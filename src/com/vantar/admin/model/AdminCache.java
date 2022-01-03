@@ -1,7 +1,7 @@
 package com.vantar.admin.model;
 
 import com.vantar.database.dto.Dto;
-import com.vantar.exception.ServiceException;
+import com.vantar.exception.*;
 import com.vantar.locale.Locale;
 import com.vantar.locale.*;
 import com.vantar.service.Services;
@@ -14,11 +14,8 @@ import java.util.*;
 
 public class AdminCache {
 
-    public static void index(Params params, HttpServletResponse response) {
-        WebUi ui = Admin.getUiAdminAccess(Locale.getString(Locale.getString(VantarKey.ADMIN_CACHE)), params, response);
-        if (ui == null) {
-            return;
-        }
+    public static void index(Params params, HttpServletResponse response) throws FinishException {
+        WebUi ui = Admin.getUi(Locale.getString(Locale.getString(VantarKey.ADMIN_CACHE)), params, response, true);
 
         ServiceDtoCache serviceDtoCache;
         try {
@@ -45,11 +42,8 @@ public class AdminCache {
         ui.finish();
     }
 
-    public static void view(Params params, HttpServletResponse response) {
-        WebUi ui = Admin.getUiAdminAccess(Locale.getString(Locale.getString(VantarKey.ADMIN_CACHE)), params, response);
-        if (ui == null) {
-            return;
-        }
+    public static void view(Params params, HttpServletResponse response) throws FinishException {
+        WebUi ui = Admin.getUi(Locale.getString(Locale.getString(VantarKey.ADMIN_CACHE)), params, response, true);
 
         String className = params.getString("c");
         if (className == null) {
@@ -88,13 +82,8 @@ public class AdminCache {
         ui.finish();
     }
 
-    public static void refresh(Params params, HttpServletResponse response) {
-        WebUi ui = Admin.getUiAdminAccess(Locale.getString(Locale.getString(VantarKey.ADMIN_CACHE)), params, response);
-        if (ui == null) {
-            return;
-        }
-
-
+    public static void refresh(Params params, HttpServletResponse response) throws FinishException {
+        WebUi ui = Admin.getUi(Locale.getString(Locale.getString(VantarKey.ADMIN_CACHE)), params, response, true);
         ui.finish();
     }
 }

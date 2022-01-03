@@ -30,11 +30,8 @@ public class AdminDatabase {
 
     // > > > SQL
 
-    public static void synchSql(Params params, HttpServletResponse response) {
-        WebUi ui = Admin.getUiAdminAccess(Locale.getString(VantarKey.ADMIN_DATABASE_SYNCH_TITLE, "SQL"), params, response);
-        if (ui == null) {
-            return;
-        }
+    public static void synchSql(Params params, HttpServletResponse response) throws FinishException {
+        WebUi ui = Admin.getUi(Locale.getString(VantarKey.ADMIN_DATABASE_SYNCH_TITLE, "SQL"), params, response, true);
 
         if (params.isChecked("f") || !params.isChecked(WebUi.PARAM_CONFIRM)) {
             ui  .beginFormPost()
@@ -67,17 +64,14 @@ public class AdminDatabase {
         ui.containerEnd().write();
     }
 
-    public static void createSqlIndex(Params params, HttpServletResponse response) {
+    public static void createSqlIndex(Params params, HttpServletResponse response) throws FinishException {
         if (!SqlConnection.isUp) {
             return;
         }
 
-        WebUi ui = Admin.getUiAdminAccess(Locale.getString(VantarKey.ADMIN_DATABASE_INDEX_CREATE, "SQL"), params, response);
-        if (ui == null) {
-            return;
-        }
+        WebUi ui = Admin.getUi(Locale.getString(VantarKey.ADMIN_DATABASE_INDEX_CREATE, "SQL"), params, response, true);
 
-        ui.addBlockLink(Locale.getString(VantarKey.ADMIN_DATABASE_INDEX_VIEW), "/admin/database/sql/indexes").addEmptyLine().addEmptyLine();
+        ui.addBlockLink(Locale.getString(VantarKey.ADMIN_DATABASE_INDEX_VIEW), "/admin/database/sql/indexes").addEmptyLine(2);
 
         if (!params.isChecked("f")) {
             ui  .beginFormPost()
@@ -112,18 +106,19 @@ public class AdminDatabase {
         ui.containerEnd().write();
     }
 
-    public static void listSqlIndexes(Params params, HttpServletResponse response) {
+    public static void listSqlIndexes(Params params, HttpServletResponse response) throws FinishException {
         if (!SqlConnection.isUp) {
             return;
         }
 
-        WebUi ui = Admin.getUiAdminAccess(Locale.getString(VantarKey.ADMIN_INDEX_TITLE, "SQL"), params, response);
-        if (ui == null) {
-            return;
-        }
+        WebUi ui = Admin.getUi(Locale.getString(VantarKey.ADMIN_INDEX_TITLE, "SQL"), params, response, true);
 
-        ui.addBlockLink(Locale.getString(VantarKey.ADMIN_DATABASE_INDEX_CREATE, "SQL..."),
-            "/admin/database/sql/index/create").addEmptyLine().addEmptyLine().write();
+        ui.addBlockLink(
+                Locale.getString(VantarKey.ADMIN_DATABASE_INDEX_CREATE, "SQL..."),
+                "/admin/database/sql/index/create"
+            )
+            .addEmptyLine(2)
+            .write();
 
         try (SqlConnection connection = new SqlConnection()) {
             CommonRepoSql repo = new CommonRepoSql(connection);
@@ -141,15 +136,12 @@ public class AdminDatabase {
         ui.finish();
     }
 
-    public static void purgeSql(Params params, HttpServletResponse response) {
+    public static void purgeSql(Params params, HttpServletResponse response) throws FinishException {
         if (!SqlConnection.isUp) {
             return;
         }
 
-        WebUi ui = Admin.getUiAdminAccess(Locale.getString(VantarKey.ADMIN_DATABASE_REMOVE, "SQL"), params, response);
-        if (ui == null) {
-            return;
-        }
+        WebUi ui = Admin.getUi(Locale.getString(VantarKey.ADMIN_DATABASE_REMOVE, "SQL"), params, response, true);
 
         if (!params.isChecked("f")) {
             ui  .beginFormPost()
@@ -234,15 +226,12 @@ public class AdminDatabase {
         ui.containerEnd().containerEnd().write();
     }
 
-    public static void importSql(Params params, HttpServletResponse response) {
+    public static void importSql(Params params, HttpServletResponse response) throws FinishException {
         if (!SqlConnection.isUp) {
             return;
         }
 
-        WebUi ui = Admin.getUiAdminAccess(Locale.getString(VantarKey.ADMIN_IMPORT_TITLE, "SQL"), params, response);
-        if (ui == null) {
-            return;
-        }
+        WebUi ui = Admin.getUi(Locale.getString(VantarKey.ADMIN_IMPORT_TITLE, "SQL"), params, response, true);
 
         if (!params.isChecked("f")) {
             ui  .beginFormPost()
@@ -290,17 +279,14 @@ public class AdminDatabase {
 
     // > > > MONGO
 
-    public static void createMongoIndex(Params params, HttpServletResponse response) {
+    public static void createMongoIndex(Params params, HttpServletResponse response) throws FinishException {
         if (!MongoConnection.isUp) {
             return;
         }
 
-        WebUi ui = Admin.getUiAdminAccess(Locale.getString(VantarKey.ADMIN_DATABASE_INDEX_CREATE, "MONGO"), params, response);
-        if (ui == null) {
-            return;
-        }
+        WebUi ui = Admin.getUi(Locale.getString(VantarKey.ADMIN_DATABASE_INDEX_CREATE, "MONGO"), params, response, true);
 
-        ui.addBlockLink(Locale.getString(VantarKey.ADMIN_DATABASE_INDEX_VIEW), "/admin/database/mongo/indexes").addEmptyLine().addEmptyLine();
+        ui.addBlockLink(Locale.getString(VantarKey.ADMIN_DATABASE_INDEX_VIEW), "/admin/database/mongo/indexes").addEmptyLine(2).addEmptyLine();
 
         if (!params.isChecked("f")) {
             ui  .beginFormPost()
@@ -332,15 +318,12 @@ public class AdminDatabase {
         ui.containerEnd().write();
     }
 
-    public static void listMongoIndexes(Params params, HttpServletResponse response) {
+    public static void listMongoIndexes(Params params, HttpServletResponse response) throws FinishException {
         if (!MongoConnection.isUp) {
             return;
         }
 
-        WebUi ui = Admin.getUiAdminAccess(Locale.getString(VantarKey.ADMIN_INDEX_TITLE, "MONGO"), params, response);
-        if (ui == null) {
-            return;
-        }
+        WebUi ui = Admin.getUi(Locale.getString(VantarKey.ADMIN_INDEX_TITLE, "MONGO"), params, response, true);
 
         ui.addBlockLink(Locale.getString(VantarKey.ADMIN_DATABASE_INDEX_CREATE, "MONGO..."),
             "/admin/database/mongo/index/create").addEmptyLine().addEmptyLine().write();
@@ -360,15 +343,12 @@ public class AdminDatabase {
         ui.finish();
     }
 
-    public static void purgeMongo(Params params, HttpServletResponse response) {
+    public static void purgeMongo(Params params, HttpServletResponse response) throws FinishException {
         if (!MongoConnection.isUp) {
             return;
         }
 
-        WebUi ui = Admin.getUiAdminAccess(Locale.getString(VantarKey.ADMIN_DATABASE_REMOVE, "MONGO"), params, response);
-        if (ui == null) {
-            return;
-        }
+        WebUi ui = Admin.getUi(Locale.getString(VantarKey.ADMIN_DATABASE_REMOVE, "MONGO"), params, response, true);
 
         if (!params.isChecked("f")) {
             ui  .beginFormPost()
@@ -418,15 +398,12 @@ public class AdminDatabase {
         ui.containerEnd().containerEnd().write();
     }
 
-    public static void listMongoSequences(Params params, HttpServletResponse response) {
+    public static void listMongoSequences(Params params, HttpServletResponse response) throws FinishException {
         if (!MongoConnection.isUp) {
             return;
         }
 
-        WebUi ui = Admin.getUiAdminAccess("MONGO sequences", params, response);
-        if (ui == null) {
-            return;
-        }
+        WebUi ui = Admin.getUi("MONGO sequences", params, response, true);
 
         try {
             Mongo.Sequence.getAll().forEach((key, value) -> ui.addKeyValue(key, value));
@@ -437,15 +414,12 @@ public class AdminDatabase {
         ui.finish();
     }
 
-    public static void importMongo(Params params, HttpServletResponse response) {
+    public static void importMongo(Params params, HttpServletResponse response) throws FinishException {
         if (!MongoConnection.isUp) {
             return;
         }
 
-        WebUi ui = Admin.getUiAdminAccess(Locale.getString(VantarKey.ADMIN_IMPORT_TITLE, "MONGO"), params, response);
-        if (ui == null) {
-            return;
-        }
+        WebUi ui = Admin.getUi(Locale.getString(VantarKey.ADMIN_IMPORT_TITLE, "MONGO"), params, response, true);
 
         if (!params.isChecked("f")) {
             ui  .beginFormPost()
@@ -493,15 +467,12 @@ public class AdminDatabase {
 
     // > > > ELASTIC
 
-    public static void synchElastic(Params params, HttpServletResponse response) {
+    public static void synchElastic(Params params, HttpServletResponse response) throws FinishException {
         if (!ElasticConnection.isUp) {
             return;
         }
 
-        WebUi ui = Admin.getUiAdminAccess(Locale.getString(VantarKey.ADMIN_DATABASE_SYNCH_TITLE, "Elastic"), params, response);
-        if (ui == null) {
-            return;
-        }
+        WebUi ui = Admin.getUi(Locale.getString(VantarKey.ADMIN_DATABASE_SYNCH_TITLE, "Elastic"), params, response, true);
 
         if (!params.isChecked("f") || !params.isChecked(WebUi.PARAM_CONFIRM)) {
             ui  .beginFormPost()
@@ -532,15 +503,12 @@ public class AdminDatabase {
         ui.containerEnd().write();
     }
 
-    public static void purgeElastic(Params params, HttpServletResponse response) {
+    public static void purgeElastic(Params params, HttpServletResponse response) throws FinishException {
         if (!ElasticConnection.isUp) {
             return;
         }
 
-        WebUi ui = Admin.getUiAdminAccess(Locale.getString(VantarKey.ADMIN_DATABASE_REMOVE, "Elastic"), params, response);
-        if (ui == null) {
-            return;
-        }
+        WebUi ui = Admin.getUi(Locale.getString(VantarKey.ADMIN_DATABASE_REMOVE, "Elastic"), params, response, true);
 
         if (!params.isChecked("f")) {
             ui  .beginFormPost()
@@ -594,15 +562,12 @@ public class AdminDatabase {
         ui.containerEnd().containerEnd().write();
     }
 
-    public static void importElastic(Params params, HttpServletResponse response) {
+    public static void importElastic(Params params, HttpServletResponse response) throws FinishException {
         if (!ElasticConnection.isUp) {
             return;
         }
 
-        WebUi ui = Admin.getUiAdminAccess(Locale.getString(VantarKey.ADMIN_IMPORT_TITLE, "Elastic"), params, response);
-        if (ui == null) {
-            return;
-        }
+        WebUi ui = Admin.getUi(Locale.getString(VantarKey.ADMIN_IMPORT_TITLE, "Elastic"), params, response, true);
 
         if (!params.isChecked("f")) {
             ui  .beginFormPost()
@@ -648,15 +613,12 @@ public class AdminDatabase {
         ui.containerEnd().containerEnd().write();
     }
 
-    public static void getMappingElastic(Params params, HttpServletResponse response) {
+    public static void getMappingElastic(Params params, HttpServletResponse response) throws FinishException {
         if (!ElasticConnection.isUp) {
             return;
         }
 
-        WebUi ui = Admin.getUiAdminAccess(Locale.getString(VantarKey.ADMIN_ELASTIC_INDEX_DEF), params, response);
-        if (ui == null) {
-            return;
-        }
+        WebUi ui = Admin.getUi(Locale.getString(VantarKey.ADMIN_ELASTIC_INDEX_DEF), params, response, true);
 
         for (DtoDictionary.Info info : DtoDictionary.getAll(DtoDictionary.Dbms.ELASTIC)) {
             Dto dto = info.getDtoInstance();
@@ -681,15 +643,12 @@ public class AdminDatabase {
         ui.finish();
     }
 
-    public static void actionsElastic(Params params, HttpServletResponse response) {
+    public static void actionsElastic(Params params, HttpServletResponse response) throws FinishException {
         if (!ElasticConnection.isUp) {
             return;
         }
 
-        WebUi ui = Admin.getUiAdminAccess(Locale.getString(VantarKey.ADMIN_ELASTIC_SETTINGS), params, response);
-        if (ui == null) {
-            return;
-        }
+        WebUi ui = Admin.getUi(Locale.getString(VantarKey.ADMIN_ELASTIC_SETTINGS), params, response, true);
 
         String target = params.getString("target", "");
         String destination = params.getString("destination", "");
@@ -699,8 +658,18 @@ public class AdminDatabase {
         ui  .addMessage(Locale.getString(VantarKey.ADMIN_ELASTIC_SETTINGS_MSG1))
             .addEmptyLine()
             .beginFormPost()
-            .addSelect(Locale.getString(VantarKey.ADMIN_ELASTIC_SETTINGS_CLASS_NAME), "target", DtoDictionary.getNames(DtoDictionary.Dbms.ELASTIC), target)
-            .addInput(Locale.getString(VantarKey.ADMIN_ELASTIC_SETTINGS_DESTINATION), "destination", destination, "ltr")
+            .addSelect(
+                Locale.getString(VantarKey.ADMIN_ELASTIC_SETTINGS_CLASS_NAME),
+                "target",
+                DtoDictionary.getNames(DtoDictionary.Dbms.ELASTIC),
+                target
+            )
+            .addInput(
+                Locale.getString(VantarKey.ADMIN_ELASTIC_SETTINGS_DESTINATION),
+                "destination",
+                destination,
+                "ltr"
+            )
             .addCheckbox("Shrink", "shrink", shrink)
             .addCheckbox("Refresh", "refresh", refresh)
             .addSubmit("Clone")

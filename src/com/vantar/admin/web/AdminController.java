@@ -1,6 +1,7 @@
 package com.vantar.admin.web;
 
 import com.vantar.admin.model.Admin;
+import com.vantar.exception.FinishException;
 import com.vantar.web.*;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServletResponse;
@@ -13,7 +14,7 @@ import javax.servlet.http.HttpServletResponse;
 })
 public class AdminController extends RouteToMethod {
 
-    public void index(Params params, HttpServletResponse response) {
+    public void index(Params params, HttpServletResponse response) throws FinishException {
         Admin.index(params, response);
     }
 }

@@ -90,6 +90,13 @@ public class WebUi {
         return this;
     }
 
+    public WebUi addEmptyLine(int count) {
+        for (int i = 0 ; i < count ; ++i) {
+            html.append("<br/>");
+        }
+        return this;
+    }
+
     public WebUi addLine() {
         html.append("<div class='line'></div>\n");
         return this;

@@ -1,5 +1,6 @@
 package com.vantar.admin.model;
 
+import com.vantar.exception.FinishException;
 import com.vantar.locale.*;
 import com.vantar.web.*;
 import javax.servlet.http.HttpServletResponse;
@@ -7,12 +8,8 @@ import javax.servlet.http.HttpServletResponse;
 
 public class AdminAdvanced {
 
-    public static void index(Params params, HttpServletResponse response) {
-        WebUi ui = Admin.getUiAdminAccess(Locale.getString(VantarKey.ADMIN_MENU_ADVANCED), params, response);
-        if (ui == null) {
-            return;
-        }
-
+    public static void index(Params params, HttpServletResponse response) throws FinishException {
+        WebUi ui = Admin.getUi(Locale.getString(VantarKey.ADMIN_MENU_ADVANCED), params, response, true);
 
         // > > >
         ui.beginBox(Locale.getString(VantarKey.ADMIN_BACKUP));

@@ -5,6 +5,7 @@ import com.vantar.database.dto.DtoDictionary;
 import com.vantar.database.nosql.elasticsearch.ElasticBackup;
 import com.vantar.database.nosql.mongo.MongoBackup;
 import com.vantar.database.sql.SqlBackup;
+import com.vantar.exception.FinishException;
 import com.vantar.locale.Locale;
 import com.vantar.locale.*;
 import com.vantar.util.datetime.*;
@@ -25,11 +26,8 @@ public class AdminBackup {
     private static final String PARAM_FILE = "file";
 
 
-    public static void backup(Params params, HttpServletResponse response, DtoDictionary.Dbms dbms) {
-        WebUi ui = Admin.getUiAdminAccess(Locale.getString(VantarKey.ADMIN_BACKUP_CREATE), params, response);
-        if (ui == null) {
-            return;
-        }
+    public static void backup(Params params, HttpServletResponse response, DtoDictionary.Dbms dbms) throws FinishException {
+        WebUi ui = Admin.getUi(Locale.getString(VantarKey.ADMIN_BACKUP_CREATE), params, response, true);
         ui.beginBox(dbms.toString());
 
         DateTimeRange dateRange = params.getDateRange(DATE_TIME_MIN, DATE_TIME_MAX);
@@ -67,11 +65,9 @@ public class AdminBackup {
         ui.finish();
     }
 
-    public static void restore(Params params, HttpServletResponse response, DtoDictionary.Dbms dbms) {
-        WebUi ui = Admin.getUiAdminAccess(Locale.getString(VantarKey.ADMIN_BACKUP_RESTORE), params, response);
-        if (ui == null) {
-            return;
-        }
+    public static void restore(Params params, HttpServletResponse response, DtoDictionary.Dbms dbms) throws FinishException {
+        WebUi ui = Admin.getUi(Locale.getString(VantarKey.ADMIN_BACKUP_RESTORE), params, response, true);
+
         ui.beginBox(dbms.toString());
 
         String dbDumpFilename = params.getString(DUMP_FILE);
@@ -108,11 +104,9 @@ public class AdminBackup {
         ui.finish();
     }
 
-    public static void backupFiles(Params params, HttpServletResponse response, DtoDictionary.Dbms dbms) {
-        WebUi ui = Admin.getUiAdminAccess(Locale.getString(VantarKey.ADMIN_BACKUP_FILES), params, response);
-        if (ui == null) {
-            return;
-        }
+    public static void backupFiles(Params params, HttpServletResponse response, DtoDictionary.Dbms dbms) throws FinishException {
+        WebUi ui = Admin.getUi(Locale.getString(VantarKey.ADMIN_BACKUP_FILES), params, response, true);
+
         ui.beginBox(dbms.toString() + Locale.getString(VantarKey.ADMIN_DOWNLOAD));
         String dbmsName = dbms.toString().toLowerCase();
 
@@ -141,11 +135,9 @@ public class AdminBackup {
         ui.finish();
     }
 
-    public static void deleteFile(Params params, HttpServletResponse response) {
-        WebUi ui = Admin.getUiAdminAccess(Locale.getString(VantarKey.ADMIN_REMOVE_BACKUP_FILE), params, response);
-        if (ui == null) {
-            return;
-        }
+    public static void deleteFile(Params params, HttpServletResponse response) throws FinishException {
+        WebUi ui = Admin.getUi(Locale.getString(VantarKey.ADMIN_REMOVE_BACKUP_FILE), params, response, true);
+
         String filepath = params.getString(PARAM_FILE);
         ui.beginBox(filepath);
 

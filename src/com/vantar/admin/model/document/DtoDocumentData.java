@@ -1,6 +1,6 @@
 package com.vantar.admin.model.document;
 
-import com.vantar.admin.model.AdminDocument;
+import com.vantar.admin.model.*;
 import com.vantar.database.datatype.Location;
 import com.vantar.database.dto.*;
 import com.vantar.util.collection.CollectionUtil;
@@ -241,7 +241,14 @@ public class DtoDocumentData {
         if (g.length == 1) {
             Class<?> genericType = g[0];
 
-            if (ObjectUtil.implementsInterface(genericType, Dto.class)) {
+            if (genericType.isEnum()) {
+                Class<? extends Enum<?>> enumType = (Class<? extends Enum<?>>) genericType;
+                for (Enum<?> x : enumType.getEnumConstants()) {
+                    json.append('"').append(x.name()).append("\", ");
+                }
+                json.setLength(json.length() - 2);
+
+            } else if (ObjectUtil.implementsInterface(genericType, Dto.class)) {
                 if (genericType.equals(dto)) {
                     json.append("\"{RECURSIVE}\"");
                 } else {
@@ -281,7 +288,14 @@ public class DtoDocumentData {
 
             Class<?> genericType = g[1];
 
-            if (ObjectUtil.implementsInterface(genericType, Dto.class)) {
+            if (genericType.isEnum()) {
+                Class<? extends Enum<?>> enumType = (Class<? extends Enum<?>>) genericType;
+                for (Enum<?> x : enumType.getEnumConstants()) {
+                    json.append('"').append(x.name()).append("\", ");
+                }
+                json.setLength(json.length() - 2);
+
+            } else if (ObjectUtil.implementsInterface(genericType, Dto.class)) {
                 json.append(getAsJsonExampleDto(genericType));
             } else if (ObjectUtil.extendsClass(genericType, Number.class)) {
                 json.append("000");
@@ -301,7 +315,7 @@ public class DtoDocumentData {
         return json.toString();
     }
 
-    public String getAsJsonExampleDto(Class<?> obj) {
+    public String getAsJsonExampleDto(Class<?> gType) {
         boolean excludeAll = false;
         if (exclude != null) {
             for (String x : exclude) {
@@ -319,7 +333,7 @@ public class DtoDocumentData {
         StringBuilder json = new StringBuilder();
         json.append("{");
 
-        for (Field f : getProperties(obj, exclude, ignoreNoStore)) {
+        for (Field f : getProperties(gType, exclude, ignoreNoStore)) {
             Class<?> propType = f.getType();
             String prop = f.getName();
             boolean isKey = false;
@@ -381,7 +395,7 @@ public class DtoDocumentData {
             }
 
             if (propType == List.class || propType == Set.class || propType == Collection.class) {
-                json.append(getAsJsonExampleList(f, obj)).append(',');
+                json.append(getAsJsonExampleList(f, gType)).append(',');
                 continue;
             }
             if (propType == Map.class) {
@@ -448,6 +462,10 @@ public class DtoDocumentData {
         String name = StringUtil.replace(className, '$', '.');
         String hash = StringUtil.replace(className, '$', '-');
 
+        if (classType.isEnum()) {
+            hash =  containerClassType.getSimpleName() + '-' + hash;
+        }
+
         if (obj instanceof StringBuilder) {
             ((StringBuilder) obj).append(" <a href='/admin/document/show/dtos#")
                 .append(hash).append("'>{").append(name).append("} (see object reference document)</a>");
@@ -455,5 +473,4 @@ public class DtoDocumentData {
             ((ArrayList<String>) obj).add(" <a href='/admin/document/show/dtos#" + hash + "'>{" + name + "} (see object reference document)</a>");
         }
     }
-
 }

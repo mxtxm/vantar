@@ -297,7 +297,9 @@ public abstract class DtoBase implements Dto {
             }
             for (Field field : getClass().getFields()) {
                 if (field.getName().equals("name") || field.getName().equals("title")) {
-                    return field.get(this).toString();
+                    return field.isAnnotationPresent(Localized.class) && lang != null ?
+                        ((Map<String, String>) field.get(this)).get(lang) :
+                        field.get(this).toString();
                 }
             }
             return getId().toString();

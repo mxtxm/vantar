@@ -1,10 +1,9 @@
 package com.vantar.util.file;
 
 import org.apache.tika.config.TikaConfig;
-import org.apache.tika.detect.Detector;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.io.TikaInputStream;
-import org.apache.tika.metadata.Metadata;
+import org.apache.tika.metadata.*;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.*;
 import org.apache.tika.sax.BodyContentHandler;
@@ -20,32 +19,45 @@ public class FileType {
     private static final Logger log = LoggerFactory.getLogger(FileType.class);
     private MediaType mediaType;
     private final TikaInputStream stream;
+    private String filepath;
 
 
     public FileType(String filepath) throws FileNotFoundException {
+        this.filepath = filepath;
         stream = TikaInputStream.get(new FileInputStream(filepath));
-        detect(stream);
+        detect();
     }
 
     public FileType(Path filepath) throws IOException {
+        this.filepath = filepath.toAbsolutePath().toString();
         stream = TikaInputStream.get(Files.newInputStream(filepath));
-        detect(stream);
+        detect();
+    }
+
+    public FileType(InputStream inputStream, String filepath) {
+        this.filepath = filepath;
+        stream = TikaInputStream.get(inputStream);
+        detect();
     }
 
     public FileType(InputStream inputStream) {
         stream = TikaInputStream.get(inputStream);
-        detect(stream);
+        detect();
     }
 
     public FileType(byte[] bytes) {
         stream = TikaInputStream.get(bytes);
-        detect(stream);
+        detect();
     }
 
-    private void detect(InputStream inputStream) {
-        Detector detector = TikaConfig.getDefaultConfig().getDetector();
+    private void detect() {
         try {
-            mediaType = detector.detect(inputStream, new Metadata());
+            Metadata metadata = new Metadata();
+            if (filepath != null) {
+                metadata.set(TikaCoreProperties.RESOURCE_NAME_KEY, filepath);
+            }
+            mediaType = TikaConfig.getDefaultConfig().getDetector().detect(stream, metadata);
+
         } catch (IOException e) {
             log.error("! io error", e);
         }
@@ -66,6 +78,9 @@ public class FileType {
     public Map<String,String> getMeta() {
         Parser parser = new AutoDetectParser();
         Metadata metadata = new Metadata();
+        if (filepath != null) {
+            metadata.set(TikaCoreProperties.RESOURCE_NAME_KEY, filepath);
+        }
         BodyContentHandler handler = new BodyContentHandler();
         ParseContext context = new ParseContext();
         try {
@@ -82,12 +97,17 @@ public class FileType {
         return meta;
     }
 
+    public String getMimeType() {
+        return mediaType == null ? null : mediaType.getType() + '/' + mediaType.getSubtype();
+    }
+
     public boolean isType(String... type) {
         if (mediaType == null) {
             return false;
         }
         for (String t : type) {
-            if (mediaType.getSubtype().equals(t) || mediaType.getType().equals(t)) {
+            if (mediaType.getSubtype().equalsIgnoreCase(t) || mediaType.getType().equalsIgnoreCase(t)
+                || getMimeType().equalsIgnoreCase(t)) {
                 return true;
             }
         }

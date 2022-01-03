@@ -307,4 +307,20 @@ public class Permit {
 
         return tokenData;
     }
+
+    public boolean isRoot(Params params) throws ServiceException, AuthException {
+        CommonUserRole role = validateToken(params, onlineUsers).user.getRole();
+        if (role != null) {
+            return role.isRoot();
+        }
+        List<? extends CommonUserRole> roles = Services.get(ServiceAuth.class).getCurrentUser(params).getRoles();
+        if (roles != null) {
+            for (CommonUserRole roleC : roles) {
+                if (roleC.isRoot()) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
 }

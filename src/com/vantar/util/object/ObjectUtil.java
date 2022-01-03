@@ -348,6 +348,9 @@ public class ObjectUtil {
 
         Class<?> c = type.getSuperclass();
         while (c != null) {
+            if (c == i) {
+                return true;
+            }
             for (Class<?> t : c.getInterfaces()) {
                 if (t == i) {
                     return true;

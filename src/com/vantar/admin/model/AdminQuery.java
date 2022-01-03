@@ -25,11 +25,8 @@ public class AdminQuery {
     private static final String PARAM_QUERY = "q";
 
 
-    public static void index(Params params, HttpServletResponse response) {
-        WebUi ui = Admin.getUiAdminAccess(Locale.getString(VantarKey.ADMIN_MENU_QUERY_TITLE), params, response);
-        if (ui == null) {
-            return;
-        }
+    public static void index(Params params, HttpServletResponse response) throws FinishException {
+        WebUi ui = Admin.getUi(Locale.getString(VantarKey.ADMIN_MENU_QUERY_TITLE), params, response, true);
 
         ui.addBlockLink(Locale.getString(VantarKey.ADMIN_QUERY_NEW), "/admin/query/write").addEmptyLine().addEmptyLine().addEmptyLine();
 
@@ -57,11 +54,8 @@ public class AdminQuery {
         ui.finish();
     }
 
-    public static void write(Params params, HttpServletResponse response) {
-        WebUi ui = Admin.getUiAdminAccess(Locale.getString(VantarKey.ADMIN_QUERY_WRITE), params, response);
-        if (ui == null) {
-            return;
-        }
+    public static void write(Params params, HttpServletResponse response) throws FinishException {
+        WebUi ui = Admin.getUi(Locale.getString(VantarKey.ADMIN_QUERY_WRITE), params, response, true);
 
         QueryDictionary item = getQueryDictionary(ui, true);
         if (item == null) {
@@ -79,8 +73,7 @@ public class AdminQuery {
             }
 
             ui  .addSubmit()
-                .addEmptyLine()
-                .addEmptyLine()
+                .addEmptyLine(2)
                 .addBlockLinkNewPage(Locale.getString(VantarKey.ADMIN_HELP), "/admin/document/show?document=document--webservice--search.md")
                 .finish();
 
@@ -104,11 +97,8 @@ public class AdminQuery {
         ui.finish();
     }
 
-    public static void delete(Params params, HttpServletResponse response) {
-        WebUi ui = Admin.getUiAdminAccess(Locale.getString(VantarKey.ADMIN_QUERY_DELETE_TITLE), params, response);
-        if (ui == null) {
-            return;
-        }
+    public static void delete(Params params, HttpServletResponse response) throws FinishException {
+        WebUi ui = Admin.getUi(Locale.getString(VantarKey.ADMIN_QUERY_DELETE_TITLE), params, response, true);
 
         QueryDictionary item = getQueryDictionary(ui, false);
         if (item == null) {
@@ -141,11 +131,8 @@ public class AdminQuery {
         ui.finish();
     }
 
-    public static void get(Params params, HttpServletResponse response) {
-        WebUi ui = Admin.getUiAdminAccess(Locale.getString(VantarKey.ADMIN_QUERY), params, response);
-        if (ui == null) {
-            return;
-        }
+    public static void get(Params params, HttpServletResponse response) throws FinishException {
+        WebUi ui = Admin.getUi(Locale.getString(VantarKey.ADMIN_QUERY), params, response, true);
 
         QueryDictionary item = getQueryDictionary(ui, false);
         if (item == null) {
@@ -162,13 +149,12 @@ public class AdminQuery {
             .beginFormPost()
             .addTextArea("Query JSON", PARAM_QUERY, params.getString(PARAM_QUERY, item.q), "small")
             .addSubmit()
-            .addEmptyLine()
-            .addEmptyLine()
+            .addEmptyLine(2)
             .addBlockLinkNewPage(Locale.getString(VantarKey.ADMIN_HELP), "/admin/document/show?document=document--webservice--search.md")
             .containerEnd().containerEnd().write();
 
         if (params.isChecked("f")) {
-            QueryBuilder q = null;
+            QueryBuilder q;
             try {
                 q = new QueryBuilder(params.getQueryData(PARAM_QUERY));
             } catch (InputException e) {

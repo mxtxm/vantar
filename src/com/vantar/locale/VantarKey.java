@@ -46,6 +46,7 @@ public enum VantarKey implements LangKey {
 
     // data write
     UPLOAD_SUCCESS,
+    UPLOAD_FAIL,
     INSERT_SUCCESS,
     INSERT_MANY_SUCCESS,
     INSERT_FAIL,
@@ -236,6 +237,8 @@ public enum VantarKey implements LangKey {
     ADMIN_SIGNIN_TOKEN_TEMP,
     ADMIN_RECOVER_TOKEN_TEMP,
 
+    ADMIN_REQUIRES_ROOT,
+
     ADMIN_DATA,
 
     ADMIN_SCHEDULE_REPEAT_AT,
@@ -252,4 +255,6 @@ public enum VantarKey implements LangKey {
     ADMIN_N_PER_PAGE,
 
     DELETE_FAIL_HAS_DEPENDENCIES,
+
+    ADMIN_AUTH_FAILED,
 }

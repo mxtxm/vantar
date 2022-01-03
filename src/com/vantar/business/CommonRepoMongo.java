@@ -9,6 +9,7 @@ import com.vantar.database.query.*;
 import com.vantar.exception.*;
 import com.vantar.locale.VantarKey;
 import com.vantar.util.collection.CollectionUtil;
+import com.vantar.util.string.StringUtil;
 import com.vantar.web.ResponseMessage;
 import java.util.*;
 
@@ -119,6 +120,18 @@ public class CommonRepoMongo extends Mongo {
                 errors.add(new ValidationError(fieldName, VantarKey.UNIQUE));
             }
         }
+
+        if (dto.getClass().isAnnotationPresent(UniqueGroup.class)) {
+            for (String group : dto.getClass().getAnnotation(UniqueGroup.class).value()) {
+                if (!MongoSearch.isUnique(dto, StringUtil.split(group, ','))) {
+                    if (errors == null) {
+                        errors = new ArrayList<>();
+                    }
+                    errors.add(new ValidationError("(" + group + ")", VantarKey.UNIQUE));
+                }
+            }
+        }
+
         return errors;
     }
 

@@ -1,6 +1,7 @@
 package com.vantar.admin.model;
 
 import com.vantar.common.*;
+import com.vantar.exception.FinishException;
 import com.vantar.locale.Locale;
 import com.vantar.locale.*;
 import com.vantar.service.Services;
@@ -17,11 +18,8 @@ public class AdminSettings {
     private static final int DELAY = 1000;
 
 
-    public static void settingsReload(Params params, HttpServletResponse response) {
-        WebUi ui = Admin.getUiAdminAccess(Locale.getString(VantarKey.ADMIN_SETTINGS_RELOAD), params, response);
-        if (ui == null) {
-            return;
-        }
+    public static void settingsReload(Params params, HttpServletResponse response) throws FinishException {
+        WebUi ui = Admin.getUi(Locale.getString(VantarKey.ADMIN_SETTINGS_RELOAD), params, response, true);
 
         reloadSettings();
         Services.messaging.broadcast(VantarParam.MESSAGE_SETTINGS_UPDATED);
@@ -58,11 +56,8 @@ public class AdminSettings {
         Settings.tune.reload();
     }
 
-    public static void settingsEdit(Params params, HttpServletResponse response, Class<?> configInterface) {
-        WebUi ui = Admin.getUiAdminAccess(Locale.getString(VantarKey.ADMIN_SETTINGS_EDIT), params, response);
-        if (ui == null) {
-            return;
-        }
+    public static void settingsEdit(Params params, HttpServletResponse response, Class<?> configInterface) throws FinishException {
+        WebUi ui = Admin.getUi(Locale.getString(VantarKey.ADMIN_SETTINGS_EDIT), params, response, true);
 
         String filename = getPropertiesFilename(configInterface);
         if (filename == null) {

@@ -46,8 +46,9 @@ public class QueryBuilder {
     }
 
     public QueryBuilder(QueryData queryData) throws InputException {
-        if (queryData == null || queryData.isEmpty()) {
-            throw new InputException(VantarKey.NO_SEARCH_COMMAND);
+        if (queryData == null /*|| queryData.isEmpty()*/) {
+            //throw new InputException(VantarKey.NO_SEARCH_COMMAND);
+            queryData = new QueryData();
         }
 
         dto = queryData.getDto();

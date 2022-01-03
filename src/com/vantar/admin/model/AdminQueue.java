@@ -1,6 +1,7 @@
 package com.vantar.admin.model;
 
 import com.vantar.common.*;
+import com.vantar.exception.FinishException;
 import com.vantar.locale.*;
 import com.vantar.locale.Locale;
 import com.vantar.queue.Queue;
@@ -19,15 +20,12 @@ public class AdminQueue {
     private static final int DELAY = 1000;
 
 
-    public static void purge(Params params, HttpServletResponse response) {
+    public static void purge(Params params, HttpServletResponse response) throws FinishException {
         if (!Queue.isUp) {
             return;
         }
 
-        WebUi ui = Admin.getUiAdminAccess(Locale.getString(VantarKey.ADMIN_DELETE_QUEUE), params, response);
-        if (ui == null) {
-            return;
-        }
+        WebUi ui = Admin.getUi(Locale.getString(VantarKey.ADMIN_DELETE_QUEUE), params, response, true);
 
         if (!params.isChecked("f")) {
             ui  .beginFormPost()
@@ -42,15 +40,13 @@ public class AdminQueue {
         purge(ui, params.getInteger(PARAM_DELAY), params.getInteger(PARAM_TRIES), params.getStringSet(PARAM_EXCLUDE));
     }
 
-    public static void purgeSelective(Params params, HttpServletResponse response) {
+    public static void purgeSelective(Params params, HttpServletResponse response) throws FinishException {
         if (!Queue.isUp) {
             return;
         }
 
-        WebUi ui = Admin.getUiAdminAccess(Locale.getString(VantarKey.ADMIN_DELETE_QUEUE), params, response);
-        if (ui == null) {
-            return;
-        }
+        WebUi ui = Admin.getUi(Locale.getString(VantarKey.ADMIN_DELETE_QUEUE), params, response, true);
+
         if (!params.isChecked("f")) {
             ui  .beginFormPost()
                 .addInput(Locale.getString(VantarKey.ADMIN_DELAY), PARAM_DELAY, Integer.toString(DELAY), "ltr")
@@ -136,11 +132,8 @@ public class AdminQueue {
         ui.containerEnd().containerEnd().write();
     }
 
-    public static void status(Params params, HttpServletResponse response) {
-        WebUi ui = Admin.getUiAdminAccess(Locale.getString(VantarKey.ADMIN_QUEUE_STATUS), params, response);
-        if (ui == null) {
-            return;
-        }
+    public static void status(Params params, HttpServletResponse response) throws FinishException {
+        WebUi ui = Admin.getUi(Locale.getString(VantarKey.ADMIN_QUEUE_STATUS), params, response, true);
 
         if (Queue.isUp) {
             ui.addMessage(Locale.getString(VantarKey.ADMIN_RABBIT_IS_ON));

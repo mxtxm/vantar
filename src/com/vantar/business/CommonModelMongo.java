@@ -12,6 +12,7 @@ import com.vantar.locale.Locale;
 import com.vantar.locale.*;
 import com.vantar.service.Services;
 import com.vantar.service.cache.ServiceDtoCache;
+import com.vantar.util.collection.CollectionUtil;
 import com.vantar.util.number.NumberUtil;
 import com.vantar.util.object.ObjectUtil;
 import com.vantar.util.string.StringUtil;
@@ -56,23 +57,18 @@ public class CommonModelMongo extends CommonModel {
     }
 
     private static ResponseMessage insertX(Object params, Dto dto, WriteEvent event, Params requestParams) throws InputException, ServerException {
-        List<ValidationError> errors;
-        if (params instanceof String) {
-            errors = dto.set((String) params, Dto.Action.INSERT);
-        } else {
-            errors = dto.set((Params) params, Dto.Action.INSERT);
+        if (event != null) {
+            event.beforeSet(dto);
+        }
+
+        List<ValidationError> errors = params instanceof String ?
+            dto.set((String) params, Dto.Action.INSERT) : dto.set((Params) params, Dto.Action.INSERT);
+        if (CollectionUtil.isNotEmpty(errors)) {
+            throw new InputException(errors);
         }
 
         if (event != null) {
-            try {
-                event.beforeWrite(dto);
-            } catch (InputException e) {
-                errors.addAll(e.getErrors());
-            }
-        }
-
-        if (!errors.isEmpty()) {
-            throw new InputException(errors);
+            event.beforeWrite(dto);
         }
 
         try {
@@ -108,8 +104,12 @@ public class CommonModelMongo extends CommonModel {
     }
 
     public static ResponseMessage insert(Dto dto, WriteEvent event) throws ServerException, InputException {
+        if (event != null) {
+            event.beforeSet(dto);
+        }
+
         List<ValidationError> errors = dto.validate(Dto.Action.INSERT);
-        if (errors != null) {
+        if (CollectionUtil.isNotEmpty(errors)) {
             throw new InputException(errors);
         }
 
@@ -124,7 +124,7 @@ public class CommonModelMongo extends CommonModel {
             }
 
             CommonRepoMongo.insert(dto);
-        } catch (DatabaseException | InputException e) {
+        } catch (DatabaseException e) {
             log.error("! {}", dto, e);
             throw new ServerException(VantarKey.INSERT_FAIL);
         }
@@ -144,48 +144,6 @@ public class CommonModelMongo extends CommonModel {
         logAction(null, dto, Dto.Action.INSERT);
 
         return new ResponseMessage(VantarKey.INSERT_SUCCESS, dto.getId(), dto);
-    }
-
-    public static <T extends Dto> ResponseMessage insertBatch(Params params, Class<T> tClass)
-        throws InputException, ServerException {
-
-        return insertBatch(params, tClass, null);
-    }
-
-    public static <T extends Dto> ResponseMessage insertBatch(Params params, Class<T> tClass, WriteEvent event)
-        throws InputException, ServerException {
-
-        List<T> dtos = params.getJsonList(tClass);
-        if (dtos == null || dtos.isEmpty()) {
-            throw new InputException(VantarKey.INVALID_JSON_DATA);
-        }
-
-        for (Dto dto : dtos) {
-            if (event != null) {
-                event.beforeWrite(dto);
-            }
-
-            List<ValidationError> errors = dto.validate(Dto.Action.INSERT);
-            if (!errors.isEmpty()) {
-                throw new InputException(errors);
-            }
-        }
-
-        try {
-            CommonRepoMongo.insert(dtos);
-        } catch (DatabaseException e) {
-            log.error("! {}", dtos, e);
-            throw new ServerException(VantarKey.INSERT_FAIL);
-        }
-
-        if (event != null) {
-            for (Dto dto : dtos) {
-                logAction(params, dto, Dto.Action.INSERT);
-                event.afterWrite(dto);
-            }
-        }
-
-        return new ResponseMessage(VantarKey.INSERT_SUCCESS, dtos.size());
     }
 
     public static ResponseMessage update(Params params, Dto dto) throws InputException, ServerException {
@@ -243,25 +201,18 @@ public class CommonModelMongo extends CommonModel {
     private static ResponseMessage updateX(Object params, Dto dto, WriteEvent event, Dto.Action action, Params requestParams)
         throws InputException, ServerException {
 
-        List<ValidationError> errors;
-        if (params instanceof String) {
-            errors = dto.set((String) params, action);
-        } else {
-            errors = dto.set((Params) params, action);
+        if (event != null) {
+            event.beforeSet(dto);
+        }
+
+        List<ValidationError> errors = params instanceof String ?
+            dto.set((String) params, action) : dto.set((Params) params, action);
+        if (CollectionUtil.isNotEmpty(errors)) {
+            throw new InputException(errors);
         }
 
         if (event != null) {
-            try {
-                event.beforeWrite(dto);
-            } catch (InputException e) {
-                List<ValidationError> ee = e.getErrors();
-                if (ee != null) {
-                    errors.addAll(e.getErrors());
-                }
-            }
-        }
-        if (!errors.isEmpty()) {
-            throw new InputException(errors);
+            event.beforeWrite(dto);
         }
 
         try {
@@ -309,7 +260,7 @@ public class CommonModelMongo extends CommonModel {
             }
 
             CommonRepoMongo.update(dto);
-        } catch (DatabaseException | InputException e) {
+        } catch (DatabaseException e) {
             log.error("! {}", dto, e);
             throw new ServerException(VantarKey.UPDATE_FAIL);
         }
@@ -331,59 +282,17 @@ public class CommonModelMongo extends CommonModel {
         return new ResponseMessage(VantarKey.UPDATE_SUCCESS, dto);
     }
 
-    public static <T extends Dto> ResponseMessage updateBatch(Params params, Class<T> tClass)
-        throws InputException, ServerException {
-
-        return updateBatch(params, tClass, null);
-    }
-
-    public static <T extends Dto> ResponseMessage updateBatch(Params params, Class<T> tClass, WriteEvent event)
-        throws InputException, ServerException {
-
-        List<T> dtos = params.getJsonList(tClass);
-        if (dtos == null || dtos.isEmpty()) {
-            throw new InputException(VantarKey.INVALID_JSON_DATA);
-        }
-
-        try {
-            for (Dto dto : dtos) {
-                if (event != null) {
-                    event.beforeWrite(dto);
-                }
-
-                List<ValidationError> errors = dto.validate(Dto.Action.UPDATE);
-                if (!errors.isEmpty()) {
-                    throw new InputException(errors);
-                }
-
-                CommonRepoMongo.update(dto);
-
-                if (event != null) {
-                    event.afterWrite(dto);
-                }
-
-                logAction(params, dto, Dto.Action.UPDATE);
-            }
-
-            if (!dtos.isEmpty()) {
-                afterDataChange(dtos.get(0));
-            }
-
-            return new ResponseMessage(VantarKey.UPDATE_SUCCESS, dtos.size());
-
-        } catch (DatabaseException e) {
-            log.error("! {}", e.getMessage());
-            throw new ServerException(VantarKey.UPDATE_FAIL);
-        }
-    }
-
     public static ResponseMessage delete(Params params, Dto dto) throws InputException, ServerException {
         return delete(params, dto, null);
     }
 
     public static ResponseMessage delete(Params params, Dto dto, WriteEvent event) throws InputException, ServerException {
+        if (event != null) {
+            event.beforeSet(dto);
+        }
+
         List<ValidationError> errors = dto.set(params, Dto.Action.DELETE);
-        if (!errors.isEmpty()) {
+        if (CollectionUtil.isNotEmpty(errors)) {
             throw new InputException(errors);
         }
 
@@ -438,6 +347,10 @@ public class CommonModelMongo extends CommonModel {
 
         try {
             for (Long id : ids) {
+                if (event != null) {
+                    event.beforeSet(dto);
+                }
+
                 dto.setId(id);
 
                 if (NumberUtil.isIdValid(id)) {
@@ -492,6 +405,10 @@ public class CommonModelMongo extends CommonModel {
 
         try {
             for (Long id : ids) {
+                if (event != null) {
+                    event.beforeSet(dto);
+                }
+
                 dto.setId(id);
 
                 if (NumberUtil.isIdValid(id)) {
@@ -521,124 +438,6 @@ public class CommonModelMongo extends CommonModel {
         }
 
         return new ResponseMessage(VantarKey.UPDATE_MANY_SUCCESS, ids.size());
-    }
-
-
-
-
-    public static ResponseMessage batch(Params params, Dto dto) throws InputException, ServerException {
-        return batch(params, dto, null);
-    }
-
-    public static ResponseMessage batch(Params params, Dto dto, BatchEvent event) throws InputException, ServerException {
-        Batch update = params.getJson(Batch.class);
-        String msg =
-            deleteMany(params, update.delete, dto, event) + "\n\n" +
-            insertMany(params, update.insert, dto.getClass(), event) + "\n\n" +
-            updateMany(params, update.update, dto, event) + "\n\n";
-
-        afterDataChange(dto);
-        return new ResponseMessage(msg);
-    }
-
-    private static String insertMany(Params params, List<Map<String, Object>> records, Class<? extends Dto> tClass, BatchEvent event)
-        throws InputException, ServerException {
-
-        List<Dto> dtos = new ArrayList<>();
-        for (Map<String, Object> record : records) {
-            Dto dto = ObjectUtil.getInstance(tClass);
-            if (dto == null) {
-                throw new ServerException(VantarKey.CAN_NOT_CREATE_DTO);
-            }
-
-            if (event != null && event.beforeInsert(dto)) {
-                throw new ServerException(VantarKey.INSERT_FAIL);
-            }
-
-            List<ValidationError> errors = dto.set(record, Dto.Action.INSERT);
-            if (!errors.isEmpty()) {
-                throw new InputException(errors);
-            }
-
-            try {
-                errors = CommonRepoMongo.getUniqueViolation(dto);
-                if (errors != null) {
-                    throw new InputException(errors);
-                }
-            } catch (DatabaseException e) {
-                log.error("! {}", e.getMessage());
-                throw new ServerException(VantarKey.INSERT_FAIL);
-            }
-
-            dtos.add(dto);
-        }
-
-        try {
-            CommonRepoMongo.insert(dtos);
-        } catch (DatabaseException e) {
-            log.error("! {}", e.getMessage());
-            throw new ServerException(VantarKey.INSERT_FAIL);
-        }
-
-        logAction(params, dtos, Dto.Action.INSERT);
-
-        return Locale.getString(VantarKey.INSERT_MANY_SUCCESS, dtos.size());
-    }
-
-    private static String updateMany(Params params, List<Map<String, Object>> records, Dto dto, BatchEvent event)
-        throws InputException, ServerException {
-
-        for (Map<String, Object> record : records) {
-            if (event != null && event.beforeUpdate(dto)) {
-                throw new ServerException(VantarKey.UPDATE_FAIL);
-            }
-
-            List<ValidationError> errors = dto.set(record, Dto.Action.UPDATE);
-            if (!errors.isEmpty()) {
-                throw new InputException(errors);
-            }
-
-            try {
-                errors = CommonRepoMongo.getUniqueViolation(dto);
-                if (errors != null) {
-                    throw new InputException(errors);
-                }
-
-                CommonRepoMongo.update(dto);
-            } catch (DatabaseException e) {
-                log.error("! {}", e.getMessage());
-                throw new ServerException(VantarKey.UPDATE_FAIL);
-            }
-
-            logAction(params, dto, Dto.Action.UPDATE);
-        }
-
-        return Locale.getString(VantarKey.UPDATE_MANY_SUCCESS, records.size());
-    }
-
-    private static String deleteMany(Params params, List<Long> ids, Dto dto, BatchEvent event) throws InputException, ServerException {
-        for (Long id : ids) {
-            dto.setId(id);
-
-            if (event != null && event.beforeDelete(dto)) {
-                throw new ServerException(VantarKey.DELETE_FAIL);
-            }
-
-            if (NumberUtil.isIdInvalid(id)) {
-                throw new InputException(new ValidationError(VantarParam.ID, VantarKey.INVALID_ID));
-            }
-
-            try {
-                CommonRepoMongo.delete(dto);
-            } catch (DatabaseException e) {
-                log.error("! {}", e.getMessage());
-                throw new ServerException(VantarKey.DELETE_FAIL);
-            }
-
-            logAction(params, dto, Dto.Action.DELETE);
-        }
-
-        return Locale.getString(VantarKey.DELETE_MANY_SUCCESS, ids.size());
     }
 
     public static ResponseMessage purge(Params params, String collection) throws ServerException {
@@ -744,8 +543,9 @@ public class CommonModelMongo extends CommonModel {
 
     public static Object search(Params params, Dto dto, Dto dtoView, QueryEvent event) throws ServerException, NoContentException, InputException {
         QueryData queryData = params.getQueryData();
-        if (queryData == null || queryData.isEmpty()) {
-            throw new InputException(VantarKey.NO_SEARCH_COMMAND);
+        if (queryData == null /*|| queryData.isEmpty()*/) {
+//            throw new InputException(VantarKey.NO_SEARCH_COMMAND);
+            queryData = new QueryData();
         }
         queryData.setDto(dto, dtoView);
 
@@ -822,12 +622,16 @@ public class CommonModelMongo extends CommonModel {
         }
     }
 
+    public static <T extends Dto> List<T> getAll(T dto) throws NoContentException, ServerException {
+        return getAll(null, dto);
+    }
+
     /**
      * Automatically fetches: cache
      * lang only for database
      */
     public static <T extends Dto> List<T> getAll(Params params, T dto) throws NoContentException, ServerException {
-        String lang = params.getLang();
+        String lang = params == null ? null : params.getLang();
         if (dto.hasAnnotation(Cache.class)) {
             return (List<T>) Services.get(ServiceDtoCache.class).getList(dto.getClass());
         } else {

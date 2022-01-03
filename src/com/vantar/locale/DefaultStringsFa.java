@@ -54,6 +54,7 @@ public class DefaultStringsFa {
 
         // data write
         tokens.put(VantarKey.UPLOAD_SUCCESS, "فایل با موفقیت آپلود شذ");
+        tokens.put(VantarKey.UPLOAD_FAIL, "فایل با موفقیت آپلود نشذ");
         tokens.put(VantarKey.INSERT_SUCCESS, "داده ها با موفقیت وارد گردید");
         tokens.put(VantarKey.INSERT_MANY_SUCCESS, "{0} رکورد با موفقیت وارد گردید");
         tokens.put(VantarKey.INSERT_FAIL, "ورود اطلاعات دچار خطا شد");
@@ -177,12 +178,14 @@ public class DefaultStringsFa {
         tokens.put(VantarKey.ADMIN_QUEUE_STATUS, "وضعیت صف ها");
         tokens.put(VantarKey.ADMIN_SERVICES, "سرویس ها");
         tokens.put(VantarKey.ADMIN_ONLINE_USERS, "کاربران آنلاین");
-        tokens.put(VantarKey.ADMIN_DELETE_TOKEN, "حذف توکن اهراز هویت");
+        tokens.put(VantarKey.ADMIN_DELETE_TOKEN, "حذف توکن احراز هویت");
         tokens.put(VantarKey.ADMIN_DELETE_TOKEN_DESCRIPTION, "با حذف توکن کاربر از سیستم خارج خواهد شد.");
         tokens.put(VantarKey.ADMIN_AUTH_TOKEN, "توکن");
         tokens.put(VantarKey.ADMIN_SIGNUP_TOKEN_TEMP, "کدهای موقت ثبتنام");
         tokens.put(VantarKey.ADMIN_SIGNIN_TOKEN_TEMP, "کدهای موقت ورود به سیستم");
         tokens.put(VantarKey.ADMIN_RECOVER_TOKEN_TEMP, "کدهای موقت بازیابی و شناسایی");
+
+        tokens.put(VantarKey.ADMIN_REQUIRES_ROOT, "ممتوع! این درخواست نیاز به دسترسی root دارد.");
 
         tokens.put(VantarKey.ADMIN_ENABLED_SERVICES_THIS, "سرویس های فعال شده بر روی این سرور");
         tokens.put(VantarKey.ADMIN_SERVICE, "سرویس");
@@ -268,6 +271,7 @@ public class DefaultStringsFa {
 
         tokens.put(VantarKey.DELETE_FAIL_HAS_DEPENDENCIES, "بعلت وجود وابستگی امکان حذف وجود ندارد");
 
+        tokens.put(VantarKey.ADMIN_AUTH_FAILED, "خظای احراز هویت کاربر: session فاسد شده یا وارد داشبورد نشدید یا دسترسی ندارید");
     }
 
     public static String getString(LangKey key) {

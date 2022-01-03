@@ -3,6 +3,7 @@ package com.vantar.admin.web;
 import com.vantar.admin.model.AdminBackup;
 import com.vantar.common.Settings;
 import com.vantar.database.dto.DtoDictionary;
+import com.vantar.exception.FinishException;
 import com.vantar.web.*;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServletResponse;
@@ -28,43 +29,43 @@ public class AdminBackupController extends RouteToMethod {
 
     // > > > SQL
 
-    public void dataBackupSql(Params params, HttpServletResponse response) {
+    public void dataBackupSql(Params params, HttpServletResponse response) throws FinishException {
         AdminBackup.backup(params, response, DtoDictionary.Dbms.SQL);
     }
 
-    public void dataRestoreSql(Params params, HttpServletResponse response) {
+    public void dataRestoreSql(Params params, HttpServletResponse response) throws FinishException {
         AdminBackup.restore(params, response, DtoDictionary.Dbms.SQL);
     }
 
-    public void dataBackupFilesSql(Params params, HttpServletResponse response) {
+    public void dataBackupFilesSql(Params params, HttpServletResponse response) throws FinishException {
         AdminBackup.backupFiles(params, response, DtoDictionary.Dbms.SQL);
     }
 
     // > > > MONGO
 
-    public void dataBackupMongo(Params params, HttpServletResponse response) {
+    public void dataBackupMongo(Params params, HttpServletResponse response) throws FinishException {
         AdminBackup.backup(params, response, DtoDictionary.Dbms.MONGO);
     }
 
-    public void dataRestoreMongo(Params params, HttpServletResponse response) {
+    public void dataRestoreMongo(Params params, HttpServletResponse response) throws FinishException {
         AdminBackup.restore(params, response, DtoDictionary.Dbms.MONGO);
     }
 
-    public void dataBackupFilesMongo(Params params, HttpServletResponse response) {
+    public void dataBackupFilesMongo(Params params, HttpServletResponse response) throws FinishException {
         AdminBackup.backupFiles(params, response, DtoDictionary.Dbms.MONGO);
     }
 
     // > > > ELASTIC
 
-    public void dataBackupElastic(Params params, HttpServletResponse response) {
+    public void dataBackupElastic(Params params, HttpServletResponse response) throws FinishException {
         AdminBackup.backup(params, response, DtoDictionary.Dbms.ELASTIC);
     }
 
-    public void dataRestoreElastic(Params params, HttpServletResponse response) {
+    public void dataRestoreElastic(Params params, HttpServletResponse response) throws FinishException {
         AdminBackup.restore(params, response, DtoDictionary.Dbms.ELASTIC);
     }
 
-    public void dataBackupFilesElastic(Params params, HttpServletResponse response) {
+    public void dataBackupFilesElastic(Params params, HttpServletResponse response) throws FinishException {
         AdminBackup.backupFiles(params, response, DtoDictionary.Dbms.ELASTIC);
     }
 
@@ -75,7 +76,7 @@ public class AdminBackupController extends RouteToMethod {
         Response.download(response, Settings.backup().getBackupDir() + filename, filename + ".zip");
     }
 
-    public void dataBackupDelete(Params params, HttpServletResponse response) {
+    public void dataBackupDelete(Params params, HttpServletResponse response) throws FinishException {
         AdminBackup.deleteFile(params, response);
     }
 }

@@ -8,10 +8,9 @@ import com.vantar.database.nosql.mongo.*;
 import com.vantar.database.query.*;
 import com.vantar.database.sql.*;
 import com.vantar.exception.*;
-import com.vantar.locale.*;
 import com.vantar.locale.Locale;
+import com.vantar.locale.*;
 import com.vantar.service.Services;
-import com.vantar.service.auth.*;
 import com.vantar.util.object.ObjectUtil;
 import com.vantar.util.string.*;
 import com.vantar.web.*;
@@ -30,11 +29,8 @@ public class AdminData {
     public static Event event;
 
 
-    public static void index(Params params, HttpServletResponse response) {
-        WebUi ui = Admin.getUiAdminAccess(Locale.getString(VantarKey.ADMIN_MENU_DATA), params, response);
-        if (ui == null) {
-            return;
-        }
+    public static void index(Params params, HttpServletResponse response) throws FinishException {
+        WebUi ui = Admin.getUi(Locale.getString(VantarKey.ADMIN_MENU_DATA), params, response, true);
 
         List<DtoDictionary.Info> noStores = new ArrayList<>();
 
@@ -102,14 +98,11 @@ public class AdminData {
         ui.finish();
     }
 
-    public static void fields(Params params, HttpServletResponse response, DtoDictionary.Info dtoInfo) {
+    public static void fields(Params params, HttpServletResponse response, DtoDictionary.Info dtoInfo) throws FinishException {
         if (dtoInfo == null) {
             return;
         }
         WebUi ui = Admin.getUiDto(Locale.getString(VantarKey.ADMIN_DATA_FIELDS), params, response, dtoInfo);
-        if (ui == null) {
-            return;
-        }
 
         ui.addHeading(dtoInfo.dtoClass.getName() + " (" + dtoInfo.title + ")");
 
@@ -139,14 +132,11 @@ public class AdminData {
         ui.finish();
     }
 
-    public static void list(Params params, HttpServletResponse response, DtoDictionary.Info dtoInfo) {
+    public static void list(Params params, HttpServletResponse response, DtoDictionary.Info dtoInfo) throws FinishException {
         if (dtoInfo == null) {
             return;
         }
         WebUi ui = Admin.getUiDto(Locale.getString(VantarKey.ADMIN_DATA_LIST), params, response, dtoInfo);
-        if (ui == null) {
-            return;
-        }
 
         Dto dto = dtoInfo.getDtoInstance();
         QueryData queryData = params.getQueryData(VantarParam.JSON_SEARCH);
@@ -190,15 +180,6 @@ public class AdminData {
             params.isChecked(VantarParam.LOGICAL_DELETED) ? Dto.QueryDeleted.SHOW_DELETED : Dto.QueryDeleted.SHOW_NOT_DELETED
         );
 
-        try {
-            if (dtoInfo.getDtoClassName().equals("User") && !Services.get(ServiceAuth.class).hasAccess(params, RootRole.rootRole)) {
-                q.condition().notEqual("isRoot", true);
-            }
-        } catch (ServiceException e) {
-            ui.addErrorMessage(e).write();
-            return;
-        }
-
         PageData data = null;
         try {
             if (dtoInfo.dbms.equals(DtoDictionary.Dbms.SQL)) {
@@ -235,14 +216,11 @@ public class AdminData {
         ui.finish();
     }
 
-    public static void delete(Params params, HttpServletResponse response, DtoDictionary.Info dtoInfo) {
+    public static void delete(Params params, HttpServletResponse response, DtoDictionary.Info dtoInfo) throws FinishException {
         if (dtoInfo == null) {
             return;
         }
         WebUi ui = Admin.getUiDto(Locale.getString(VantarKey.ADMIN_DELETE), params, response, dtoInfo);
-        if (ui == null) {
-            return;
-        }
 
         Dto dto = dtoInfo.getDtoInstance();
         dto.setQueryDeleted(Dto.QueryDeleted.SHOW_ALL);
@@ -269,10 +247,10 @@ public class AdminData {
             } else if (dtoInfo.dbms.equals(DtoDictionary.Dbms.MONGO)) {
                 if (MongoConnection.isUp) {
                     try {
-                        ui.addDeleteForm(CommonRepoMongo.getData(q), dtoInfo.present);
+                        ui.addDeleteForm(CommonModelMongo.getData(q), dtoInfo.present);
                     } catch (NoContentException x) {
                         ui.addMessage(Locale.getString(VantarKey.NO_CONTENT));
-                    } catch (DatabaseException e) {
+                    } catch (ServerException e) {
                         ui.addErrorMessage(e);
                         log.error("! {}", dto, e);
                     }
@@ -344,14 +322,12 @@ public class AdminData {
         ui.finish();
     }
 
-    public static void purge(Params params, HttpServletResponse response, DtoDictionary.Info dtoInfo) {
+    public static void purge(Params params, HttpServletResponse response, DtoDictionary.Info dtoInfo) throws FinishException {
         if (dtoInfo == null) {
             return;
         }
         WebUi ui = Admin.getUiDto(Locale.getString(VantarKey.ADMIN_DATABASE_DELETE_ALL), params, response, dtoInfo);
-        if (ui == null) {
-            return;
-        }
+
         Dto dto = dtoInfo.getDtoInstance();
 
         if (!params.isChecked("f") || !params.isChecked(WebUi.PARAM_CONFIRM)) {
@@ -390,14 +366,11 @@ public class AdminData {
         ui.finish();
     }
 
-    public static void update(Params params, HttpServletResponse response, DtoDictionary.Info dtoInfo) {
+    public static void update(Params params, HttpServletResponse response, DtoDictionary.Info dtoInfo) throws FinishException {
         if (dtoInfo == null) {
             return;
         }
         WebUi ui = Admin.getUiDto(Locale.getString(VantarKey.ADMIN_UPDATE), params, response, dtoInfo);
-        if (ui == null) {
-            return;
-        }
 
         Dto dto = dtoInfo.getDtoInstance();
 
@@ -424,14 +397,14 @@ public class AdminData {
                 if (MongoConnection.isUp) {
                     try {
                         ui.addDtoUpdateForm(
-                            CommonRepoMongo.getById(dto),
+                            CommonModelMongo.getById(dto),
                             params.getString("root") == null ? dto.getProperties(dtoInfo.getUpdateExclude()) : dto.getProperties()
                         );
-                    } catch (DatabaseException e) {
-                        ui.addErrorMessage(e);
-                        log.error("! {}", dto, e);
                     } catch (NoContentException e) {
                         ui.addMessage(Locale.getString(VantarKey.NO_CONTENT));
+                    } catch (ServerException | InputException e) {
+                        ui.addErrorMessage(e);
+                        log.error("! {}", dto, e);
                     }
                 } else {
                     ui.addMessage(Locale.getString(VantarKey.ADMIN_SERVICE_IS_OFF, "Mongo"));
@@ -501,14 +474,12 @@ public class AdminData {
         ui.finish();
     }
 
-    public static void insert(Params params, HttpServletResponse response, DtoDictionary.Info dtoInfo) {
+    public static void insert(Params params, HttpServletResponse response, DtoDictionary.Info dtoInfo) throws FinishException {
         if (dtoInfo == null) {
             return;
         }
         WebUi ui = Admin.getUiDto(Locale.getString(VantarKey.ADMIN_NEW_RECORD), params, response, dtoInfo);
-        if (ui == null) {
-            return;
-        }
+
         Dto dto = dtoInfo.getDtoInstance();
 
         if (!params.isChecked("f")) {
@@ -563,14 +534,12 @@ public class AdminData {
         ui.finish();
     }
 
-    public static void importData(Params params, HttpServletResponse response, DtoDictionary.Info dtoIndex) {
+    public static void importData(Params params, HttpServletResponse response, DtoDictionary.Info dtoIndex) throws FinishException {
         if (dtoIndex == null) {
             return;
         }
         WebUi ui = Admin.getUiDto(Locale.getString(VantarKey.ADMIN_IMPORT), params, response, dtoIndex);
-        if (ui == null) {
-            return;
-        }
+
         Dto dto = dtoIndex.getDtoInstance();
 
         if (!params.isChecked("f")) {
@@ -623,11 +592,8 @@ public class AdminData {
         ui.finish();
     }
 
-    public static void statusSql(Params params, HttpServletResponse response) {
-        WebUi ui = Admin.getUiAdminAccess(Locale.getString(VantarKey.ADMIN_STATUS, "SQL"), params, response);
-        if (ui == null) {
-            return;
-        }
+    public static void statusSql(Params params, HttpServletResponse response) throws FinishException {
+        WebUi ui = Admin.getUi(Locale.getString(VantarKey.ADMIN_STATUS, "SQL"), params, response, true);
         statusSql(ui);
         ui.finish();
     }
@@ -652,11 +618,8 @@ public class AdminData {
         ui.containerEnd().containerEnd().write();
     }
 
-    public static void statusMongo(Params params, HttpServletResponse response) {
-        WebUi ui = Admin.getUiAdminAccess(Locale.getString(VantarKey.ADMIN_STATUS, "Mongo"), params, response);
-        if (ui == null) {
-            return;
-        }
+    public static void statusMongo(Params params, HttpServletResponse response) throws FinishException {
+        WebUi ui = Admin.getUi(Locale.getString(VantarKey.ADMIN_STATUS, "Mongo"), params, response, true);
         statusMongo(ui);
         ui.finish();
     }
@@ -680,11 +643,8 @@ public class AdminData {
         ui.containerEnd().containerEnd().write();
     }
 
-    public static void statusElastic(Params params, HttpServletResponse response) {
-        WebUi ui = Admin.getUiAdminAccess(Locale.getString(VantarKey.ADMIN_STATUS, "Elastic"), params, response);
-        if (ui == null) {
-            return;
-        }
+    public static void statusElastic(Params params, HttpServletResponse response) throws FinishException {
+        WebUi ui = Admin.getUi(Locale.getString(VantarKey.ADMIN_STATUS, "Elastic"), params, response, true);
         statusElastic(ui);
         ui.finish();
     }

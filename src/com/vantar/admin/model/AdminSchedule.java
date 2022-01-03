@@ -1,6 +1,6 @@
 package com.vantar.admin.model;
 
-import com.vantar.exception.ServiceException;
+import com.vantar.exception.*;
 import com.vantar.locale.*;
 import com.vantar.service.Services;
 import com.vantar.service.log.LogEvent;
@@ -15,11 +15,8 @@ import java.lang.reflect.*;
 
 public class AdminSchedule {
 
-    public static void index(Params params, HttpServletResponse response) {
-        WebUi ui = Admin.getUiAdminAccess(Locale.getString(VantarKey.ADMIN_MENU_SCHEDULE), params, response);
-        if (ui == null) {
-            return;
-        }
+    public static void index(Params params, HttpServletResponse response) throws FinishException {
+        WebUi ui = Admin.getUi(Locale.getString(VantarKey.ADMIN_MENU_SCHEDULE), params, response, true);
 
         ServiceScheduler service;
         try {
@@ -80,17 +77,14 @@ public class AdminSchedule {
         ui.finish();
     }
 
-    public static void run(Params params, HttpServletResponse response) {
+    public static void run(Params params, HttpServletResponse response) throws FinishException {
         String classNameMethodName = params.getString("cm");
         if (classNameMethodName == null) {
             Response.notFound(response, "cm missing");
             return;
         }
 
-        WebUi ui = Admin.getUiAdminAccess(Locale.getString(VantarKey.ADMIN_MENU_SCHEDULE), params, response);
-        if (ui == null) {
-            return;
-        }
+        WebUi ui = Admin.getUi(Locale.getString(VantarKey.ADMIN_MENU_SCHEDULE), params, response, true);
 
         ui.beginBox(classNameMethodName);
 

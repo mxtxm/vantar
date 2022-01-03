@@ -19,6 +19,8 @@ public class DefaultStringsEn {
         tokens.put(VantarKey.NO_ACCESS, "No access");
         tokens.put(VantarKey.USER_REPO_NOT_SET, "User repo event not set, authentication requires repo to access database");
 
+        tokens.put(VantarKey.ADMIN_REQUIRES_ROOT, "Unauthorized! This request requires 'root' access.");
+
         // datetime
         tokens.put(VantarKey.INVALID_DATETIME, "Invalid datetime");
         tokens.put(VantarKey.INVALID_DATE, "Invalid date");
@@ -54,6 +56,7 @@ public class DefaultStringsEn {
 
         // data write
         tokens.put(VantarKey.UPLOAD_SUCCESS, "File uploaded successfully");
+        tokens.put(VantarKey.UPLOAD_FAIL, "File uploaded failed");
         tokens.put(VantarKey.INSERT_SUCCESS, "Data inserted successfully");
         tokens.put(VantarKey.INSERT_MANY_SUCCESS, "{0} items inserted successfully");
         tokens.put(VantarKey.INSERT_FAIL, "Insert failed");
@@ -266,6 +269,8 @@ public class DefaultStringsEn {
         tokens.put(VantarKey.ADMIN_N_PER_PAGE, "n per page");
 
         tokens.put(VantarKey.DELETE_FAIL_HAS_DEPENDENCIES, "Not deleted because of dependencies");
+
+        tokens.put(VantarKey.ADMIN_AUTH_FAILED, "Authentication failed: Session expired or not signed-in or not unauthorized");
     }
 
     public static String getString(LangKey key) {

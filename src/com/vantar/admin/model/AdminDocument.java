@@ -2,6 +2,7 @@ package com.vantar.admin.model;
 
 import com.vantar.admin.model.document.*;
 import com.vantar.common.Settings;
+import com.vantar.exception.FinishException;
 import com.vantar.locale.Locale;
 import com.vantar.locale.*;
 import com.vantar.util.file.*;
@@ -13,7 +14,6 @@ import com.vladsch.flexmark.util.ast.Node;
 import com.vladsch.flexmark.util.data.MutableDataSet;
 import org.slf4j.*;
 import javax.servlet.http.HttpServletResponse;
-import java.io.*;
 import java.util.*;
 
 
@@ -23,11 +23,8 @@ public class AdminDocument {
     private static Set<String> tags;
 
 
-    public static void index(Params params, HttpServletResponse response) {
-        WebUi ui = Admin.getUi(Locale.getString(VantarKey.ADMIN_MENU_DOCUMENTS), params, response);
-        if (ui == null) {
-            return;
-        }
+    public static void index(Params params, HttpServletResponse response) throws FinishException {
+        WebUi ui = Admin.getUi(Locale.getString(VantarKey.ADMIN_MENU_DOCUMENTS), params, response, false);
 
         String lang = params.getLang();
 

@@ -2,6 +2,7 @@ package com.vantar.admin.model;
 
 import com.vantar.common.*;
 import com.vantar.database.dto.DtoDictionary;
+import com.vantar.exception.FinishException;
 import com.vantar.locale.*;
 import com.vantar.locale.Locale;
 import com.vantar.service.Services;
@@ -25,11 +26,8 @@ public class AdminService {
     private static final int DEFAULT_MAX_TRIES = 20;
 
 
-    public static void stopServices(Params params, HttpServletResponse response) {
-        WebUi ui = Admin.getUiAdminAccess(Locale.getString(Locale.getString(VantarKey.ADMIN_SERVICE_STOP)), params, response);
-        if (ui == null) {
-            return;
-        }
+    public static void stopServices(Params params, HttpServletResponse response) throws FinishException {
+        WebUi ui = Admin.getUi(Locale.getString(Locale.getString(VantarKey.ADMIN_SERVICE_STOP)), params, response, true);
 
         if (!params.isChecked("f") || !params.isChecked(WebUi.PARAM_CONFIRM)) {
             ui  .beginFormPost()
@@ -45,11 +43,8 @@ public class AdminService {
         stopServices(ui, params.isChecked(PARAM_EVENTS), params.isChecked(PARAM_ALL), params.getInteger(PARAM_DELAY), params.getInteger(PARAM_TRIES));
     }
 
-    public static void startServices(Params params, HttpServletResponse response) {
-        WebUi ui = Admin.getUiAdminAccess(Locale.getString(Locale.getString(VantarKey.ADMIN_SERVICE_START)), params, response);
-        if (ui == null) {
-            return;
-        }
+    public static void startServices(Params params, HttpServletResponse response) throws FinishException {
+        WebUi ui = Admin.getUi(Locale.getString(Locale.getString(VantarKey.ADMIN_SERVICE_START)), params, response, true);
 
         if (!params.isChecked("f") || !params.isChecked(WebUi.PARAM_CONFIRM)) {
             ui  .beginFormPost()
@@ -65,11 +60,8 @@ public class AdminService {
         startServices(ui, params.isChecked(PARAM_EVENTS), params.isChecked(PARAM_ALL), params.getInteger(PARAM_DELAY), params.getInteger(PARAM_TRIES));
     }
 
-    public static void factoryReset(Params params, HttpServletResponse response) {
-        WebUi ui = Admin.getUiAdminAccess(Locale.getString(VantarKey.ADMIN_FACTORY_RESET), params, response);
-        if (ui == null) {
-            return;
-        }
+    public static void factoryReset(Params params, HttpServletResponse response) throws FinishException {
+        WebUi ui = Admin.getUi(Locale.getString(VantarKey.ADMIN_FACTORY_RESET), params, response, true);
 
         if (!params.isChecked("f") || !params.isChecked(WebUi.PARAM_CONFIRM)) {
             ui  .beginFormPost()
@@ -206,7 +198,6 @@ public class AdminService {
             Services.startServicesOnly();
         }
         // on other servers
-        //Services.resetTotalServiceCount();
         if (allServers) {
             Services.messaging.broadcast(VantarParam.MESSAGE_SERVICES_START, Boolean.toString(runEvents));
         }

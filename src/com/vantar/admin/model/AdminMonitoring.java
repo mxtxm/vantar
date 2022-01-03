@@ -1,6 +1,7 @@
 package com.vantar.admin.model;
 
 import com.vantar.common.Settings;
+import com.vantar.exception.FinishException;
 import com.vantar.locale.Locale;
 import com.vantar.locale.*;
 import com.vantar.service.Services;
@@ -18,11 +19,8 @@ public class AdminMonitoring {
     public static final Map<String, List<String>> links = new LinkedHashMap<>();
 
 
-    public static void index(Params params, HttpServletResponse response) {
-        WebUi ui = Admin.getUiAdminAccess(Locale.getString(VantarKey.ADMIN_MENU_MONITORING), params, response);
-        if (ui == null) {
-            return;
-        }
+    public static void index(Params params, HttpServletResponse response) throws FinishException {
+        WebUi ui = Admin.getUi(Locale.getString(VantarKey.ADMIN_MENU_MONITORING), params, response, true);
 
         List<String> items = new ArrayList<>(1);
         items.add(Locale.getString(VantarKey.ADMIN_SYSTEM_ERRORS) + ":/admin/system/errors");
@@ -74,11 +72,8 @@ public class AdminMonitoring {
         ui.finish();
     }
 
-    public static void servicesLastRun(Params params, HttpServletResponse response) {
-        WebUi ui = Admin.getUiAdminAccess(Locale.getString(VantarKey.ADMIN_SERVICES_LAST_RUN), params, response);
-        if (ui == null) {
-            return;
-        }
+    public static void servicesLastRun(Params params, HttpServletResponse response) throws FinishException {
+        WebUi ui = Admin.getUi(Locale.getString(VantarKey.ADMIN_SERVICES_LAST_RUN), params, response, true);
 
         LogEvent.getBeats().forEach((service, logs) -> {
             ui.beginBox(service);
@@ -92,11 +87,8 @@ public class AdminMonitoring {
         ui.finish();
     }
 
-    public static void servicesStatus(Params params, HttpServletResponse response) {
-        WebUi ui = Admin.getUiAdminAccess(Locale.getString(VantarKey.ADMIN_SERVICES_STATUS), params, response);
-        if (ui == null) {
-            return;
-        }
+    public static void servicesStatus(Params params, HttpServletResponse response) throws FinishException {
+        WebUi ui = Admin.getUi(Locale.getString(VantarKey.ADMIN_SERVICES_STATUS), params, response, true);
 
         ui  .beginBox(Locale.getString(VantarKey.ADMIN_ENABLED_SERVICES_THIS))
             .addKeyValue(Locale.getString(VantarKey.ADMIN_SERVICE), Locale.getString(VantarKey.ADMIN_IS_ON));

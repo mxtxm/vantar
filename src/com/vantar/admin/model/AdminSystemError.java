@@ -1,8 +1,8 @@
 package com.vantar.admin.model;
 
+import com.vantar.exception.*;
 import com.vantar.service.log.dto.Log;
 import com.vantar.business.CommonRepoMongo;
-import com.vantar.exception.DatabaseException;
 import com.vantar.locale.*;
 import com.vantar.service.log.LogEvent;
 import com.vantar.web.*;
@@ -15,11 +15,8 @@ public class AdminSystemError {
     private static final String PARAM_TAG = "tag";
 
 
-    public static void systemErrors(Params params, HttpServletResponse response) {
-        WebUi ui = Admin.getUiAdminAccess(Locale.getString(VantarKey.ADMIN_SYSTEM_ERRORS), params, response);
-        if (ui == null) {
-            return;
-        }
+    public static void systemErrors(Params params, HttpServletResponse response) throws FinishException {
+        WebUi ui = Admin.getUi(Locale.getString(VantarKey.ADMIN_SYSTEM_ERRORS), params, response, true);
         ui.write();
 
         List<String> tags = LogEvent.getErrorTags();
@@ -41,11 +38,8 @@ public class AdminSystemError {
         ui.finish();
     }
 
-    public static void systemErrorsDelete(Params params, HttpServletResponse response) {
-        WebUi ui = Admin.getUiAdminAccess(Locale.getString(VantarKey.ADMIN_ERRORS_DELETE), params, response);
-        if (ui == null) {
-            return;
-        }
+    public static void systemErrorsDelete(Params params, HttpServletResponse response) throws FinishException {
+        WebUi ui = Admin.getUi(Locale.getString(VantarKey.ADMIN_ERRORS_DELETE), params, response, true);
 
         Log dto = new Log();
         dto.tag = params.getString(PARAM_TAG);

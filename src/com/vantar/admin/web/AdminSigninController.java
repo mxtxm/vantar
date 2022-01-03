@@ -1,15 +1,16 @@
 package com.vantar.admin.web;
 
+import com.vantar.admin.model.Admin;
 import com.vantar.common.VantarParam;
 import com.vantar.exception.*;
 import com.vantar.locale.*;
 import com.vantar.service.Services;
 import com.vantar.service.auth.*;
 import com.vantar.web.*;
+import org.slf4j.*;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-
 
 @WebServlet({
     "/admin/signin",
@@ -43,9 +44,11 @@ public class AdminSigninController extends RouteToMethod {
             try {
                 CommonUser user = auth.signin(params);
                 ui.setAuthToken(user.getToken());
+                Admin.log.info("! admin dashboard signed in: {}'", user.getUsername());
                 ui.redirect("/admin/index");
                 return;
             } catch (AuthException e) {
+                Admin.log.error("! admin dashboard rejected: ", e);
                 ui.addErrorMessage(e);
             }
         }

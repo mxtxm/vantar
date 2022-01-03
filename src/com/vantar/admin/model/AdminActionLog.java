@@ -21,11 +21,8 @@ public class AdminActionLog {
     public static Class<? extends Dto> userClass = null;
 
 
-    public static void show(Params params, HttpServletResponse response) {
-        WebUi ui = Admin.getUi(Locale.getString(VantarKey.ADMIN_ACTION_LOG), params, response);
-        if (ui == null) {
-            return;
-        }
+    public static void show(Params params, HttpServletResponse response) throws FinishException {
+        WebUi ui = Admin.getUi(Locale.getString(VantarKey.ADMIN_ACTION_LOG), params, response, true);
 
         String clazz = params.getString(VantarParam.DTO);
         Long id = params.getLong("id");

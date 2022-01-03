@@ -68,7 +68,9 @@ public class RouteToMethod extends HttpServlet {
                     e = x;
                 }
 
-                if (e instanceof InputException) {
+                if (e instanceof FinishException){
+                    // do nothing
+                } else if (e instanceof InputException) {
                     Response.clientError(response, e.getMessage());
 
                 } else if (e instanceof AuthException) {

@@ -164,6 +164,8 @@ public abstract class CommonModel {
 
     public interface WriteEvent {
 
+        void beforeSet(Dto dto) throws InputException, ServerException;
+
         void beforeWrite(Dto dto) throws InputException, ServerException;
 
         void afterWrite(Dto dto) throws InputException, ServerException;
