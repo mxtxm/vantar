@@ -122,6 +122,21 @@ public class StringUtil {
         }
     }
 
+    public static Byte toByte(String string) {
+        if (string == null) {
+            return null;
+        }
+        try {
+            return Byte.parseByte(string.trim());
+        } catch (NumberFormatException e) {
+            try {
+                return Byte.parseByte(Persian.Number.toLatin(string).trim());
+            } catch (NumberFormatException f) {
+                return null;
+            }
+        }
+    }
+
     public static Boolean toBoolean(String value) {
         if (isEmpty(value)) {
             return null;
@@ -185,7 +200,7 @@ public class StringUtil {
         }
         if (typeClass.equals(DateTime.class)) {
             try {
-                return value.equalsIgnoreCase("now") ? new DateTime() : new DateTime(value);
+                return new DateTime(value);
             } catch (DateTimeException ignore) {
 
             }

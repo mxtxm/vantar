@@ -14,7 +14,7 @@ import static com.vantar.database.query.QueryOperator.QUERY;
 class ElasticMapping {
 
     public static Map<String, Object> getDataForWrite(Dto dto) {
-        Map<String, Object> data = DataInfo.toMap(dto.getFieldValues());
+        Map<String, Object> data = StorableData.toMap(dto.getStorableData());
 
         data.forEach((name, value) -> {
             if (value instanceof DateTime) {

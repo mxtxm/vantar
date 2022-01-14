@@ -231,7 +231,7 @@ public class SqlQueryResult extends QueryResultBase implements QueryResult, Auto
                         Class<?> type = field.getType();
 
                         if (type.isEnum()) {
-                            EnumUtil.setEnumValue(dto, type, field, resultSet.getString(column.index));
+                            EnumUtil.setEnumValue(resultSet.getString(column.index), type, dto, field);
                             continue;
                         }
 
@@ -256,7 +256,7 @@ public class SqlQueryResult extends QueryResultBase implements QueryResult, Auto
                         }
 
                         if (type == List.class || type == Set.class) {
-                            Class<?>[] g = ObjectUtil.getFieldGenericTypes(field);
+                            Class<?>[] g = ClassUtil.getGenericTypes(field);
                             if (g == null || g.length != 1) {
                                 log.warn("! type/value miss-match ({}.{})", dto.getClass().getName(), field.getName());
                                 continue;
@@ -280,7 +280,7 @@ public class SqlQueryResult extends QueryResultBase implements QueryResult, Auto
                                     String[] valueBundles = StringUtil.split(resultSet.getString(many.className), VantarParam.SEPARATOR_BLOCK_COMPLEX);
                                     value = new ArrayList<>(valueBundles.length);
                                     for (String valueBundle : valueBundles) {
-                                        Dto dtoItem = (Dto) ObjectUtil.getInstance(listType);
+                                        Dto dtoItem = (Dto) ClassUtil.getInstance(listType);
                                         if (dtoItem == null) {
                                             continue;
                                         }
@@ -307,7 +307,7 @@ public class SqlQueryResult extends QueryResultBase implements QueryResult, Auto
                             if (value == null) {
                                 field.set(dto, null);
                             } else {
-                                Class<?>[] g = ObjectUtil.getFieldGenericTypes(field);
+                                Class<?>[] g = ClassUtil.getGenericTypes(field);
                                 if (g == null || g.length != 2) {
                                     log.warn("! type/value miss-match ({}.{})", dto.getClass().getName(), field.getName());
                                     continue;

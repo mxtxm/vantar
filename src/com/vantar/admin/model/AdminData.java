@@ -176,7 +176,7 @@ public class AdminData {
             }
         }
 
-        dto.setQueryDeleted(
+        dto.setDeletedQueryPolicy(
             params.isChecked(VantarParam.LOGICAL_DELETED) ? Dto.QueryDeleted.SHOW_DELETED : Dto.QueryDeleted.SHOW_NOT_DELETED
         );
 
@@ -223,7 +223,7 @@ public class AdminData {
         WebUi ui = Admin.getUiDto(Locale.getString(VantarKey.ADMIN_DELETE), params, response, dtoInfo);
 
         Dto dto = dtoInfo.getDtoInstance();
-        dto.setQueryDeleted(Dto.QueryDeleted.SHOW_ALL);
+        dto.setDeletedQueryPolicy(Dto.QueryDeleted.SHOW_ALL);
 
         if (!params.isChecked("f")) {
             dto.setDeleteLogical(false);

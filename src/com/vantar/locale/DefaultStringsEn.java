@@ -29,6 +29,7 @@ public class DefaultStringsEn {
 
         // validation
         tokens.put(VantarKey.REQUIRED, "{0}: is required");
+        tokens.put(VantarKey.REQUIRED_OR, "{0}: one and only one is required");
         tokens.put(VantarKey.DATA_TYPE, "{0}: invalid data type");
         tokens.put(VantarKey.UNIQUE, "{0}: must be unique");
         tokens.put(VantarKey.ILLEGAL, "{0}: illegal access");

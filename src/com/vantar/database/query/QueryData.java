@@ -7,6 +7,7 @@ import com.vantar.exception.DateTimeException;
 import com.vantar.locale.VantarKey;
 import com.vantar.util.collection.CollectionUtil;
 import com.vantar.util.datetime.DateTime;
+import com.vantar.util.number.NumberUtil;
 import com.vantar.util.object.ObjectUtil;
 import org.slf4j.*;
 import java.util.*;
@@ -194,7 +195,7 @@ public class QueryData {
 
                 case "IN":
                     Class<?> dataType = item.getDataType(dto);
-                    if (CollectionUtil.isCollection(dataType)) {
+                    if (CollectionUtil.isCollectionAndMap(dataType)) {
                         dataType = item.getGenericDataTypes(dto)[0];
                     }
                     if (dataType == null) {
@@ -220,7 +221,7 @@ public class QueryData {
 
                 case "NOT_IN":
                     Class<?> dataTypeB = item.getDataType(dto);
-                    if (CollectionUtil.isCollection(dataTypeB)) {
+                    if (CollectionUtil.isCollectionAndMap(dataTypeB)) {
                         dataTypeB = item.getGenericDataTypes(dto)[0];
                     }
                     if (dataTypeB == null) {
@@ -246,7 +247,7 @@ public class QueryData {
 
                 case "BETWEEN":
                     Class<?> dataTypeC = item.getDataType(dto);
-                    if (CollectionUtil.isCollection(dataTypeC)) {
+                    if (CollectionUtil.isCollectionAndMap(dataTypeC)) {
                         dataTypeC = item.getGenericDataTypes(dto)[0];
                     }
                     if (dataTypeC == null) {
@@ -265,7 +266,7 @@ public class QueryData {
                     break;
                 case "NOT_BETWEEN":
                     Class<?> dataTypeD = item.getDataType(dto);
-                    if (CollectionUtil.isCollection(dataTypeD)) {
+                    if (CollectionUtil.isCollectionAndMap(dataTypeD)) {
                         dataTypeD = item.getGenericDataTypes(dto)[0];
                     }
                     if (dataTypeD == null) {
@@ -318,23 +319,23 @@ public class QueryData {
                 case "NEAR":
                     c.near(
                         item.col,
-                        new Location(ObjectUtil.toDouble(item.values[0]), ObjectUtil.toDouble(item.values[1])),
-                        ObjectUtil.toDouble(item.values[2])
+                        new Location(NumberUtil.toDouble(item.values[0]), NumberUtil.toDouble(item.values[1])),
+                        NumberUtil.toDouble(item.values[2])
                     );
                     break;
 
                 case "FAR":
                     c.far(
                         item.col,
-                        new Location(ObjectUtil.toDouble(item.values[0]), ObjectUtil.toDouble(item.values[1])),
-                        ObjectUtil.toDouble(item.values[2])
+                        new Location(NumberUtil.toDouble(item.values[0]), NumberUtil.toDouble(item.values[1])),
+                        NumberUtil.toDouble(item.values[2])
                     );
                     break;
 
                 case "WITHIN":
                     List<Location> polygon = new ArrayList<>();
                     for (int i = 0, valuesLength = item.values.length; i < valuesLength; i++) {
-                        polygon.add(new Location(ObjectUtil.toDouble(item.values[i]), ObjectUtil.toDouble(item.values[++i])));
+                        polygon.add(new Location(NumberUtil.toDouble(item.values[i]), NumberUtil.toDouble(item.values[++i])));
                     }
                     c.within(item.col, polygon);
                     break;
@@ -439,7 +440,7 @@ public class QueryData {
             public Integer[] getValuesAsInteger() {
                 Integer[] items = new Integer[values.length];
                 for (int i = 0; i < values.length; i++) {
-                    items[i] = ObjectUtil.toInteger(values[i].toString());
+                    items[i] = (Integer) NumberUtil.toNumber(values[i].toString(), Integer.class);
                 }
                 return items;
             }
@@ -447,7 +448,7 @@ public class QueryData {
             public Long[] getValuesAsLong() {
                 Long[] items = new Long[values.length];
                 for (int i = 0; i < values.length; i++) {
-                    items[i] = ObjectUtil.toLong(values[i].toString());
+                    items[i] = NumberUtil.toNumber(values[i].toString(), Long.class);
                 }
                 return items;
             }
@@ -455,7 +456,7 @@ public class QueryData {
             public Double[] getValuesAsDouble() {
                 Double[] items = new Double[values.length];
                 for (int i = 0; i < values.length; i++) {
-                    items[i] = ObjectUtil.toDouble(values[i].toString());
+                    items[i] = NumberUtil.toDouble(values[i].toString());
                 }
                 return items;
             }

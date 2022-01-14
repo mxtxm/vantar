@@ -6,7 +6,7 @@ import com.vantar.locale.Locale;
 import com.vantar.locale.*;
 import com.vantar.service.Services;
 import com.vantar.service.cache.ServiceDtoCache;
-import com.vantar.util.object.ObjectUtil;
+import com.vantar.util.object.*;
 import com.vantar.web.*;
 import javax.servlet.http.HttpServletResponse;
 import java.util.*;
@@ -53,7 +53,7 @@ public class AdminCache {
 
         ui.addHeading(3, className);
 
-        Object object = ObjectUtil.getInstance(className);
+        Object object = ClassUtil.getInstance(className);
         ServiceDtoCache serviceDtoCache;
         try {
             serviceDtoCache = Services.get(ServiceDtoCache.class);

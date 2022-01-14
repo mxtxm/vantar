@@ -9,7 +9,7 @@ import com.vantar.database.query.*;
 import com.vantar.exception.DatabaseException;
 import com.vantar.locale.VantarKey;
 import com.vantar.util.collection.CollectionUtil;
-import com.vantar.util.object.ObjectUtil;
+import com.vantar.util.number.NumberUtil;
 import com.vantar.util.string.StringUtil;
 import org.bson.Document;
 import org.slf4j.*;
@@ -137,7 +137,7 @@ public class Mongo {
                 Document item = MongoConnection.getDatabase().getCollection(COLLECTION).find().sort(new Document(ID, -1))
                     .limit(1).first();
 
-                long id = item == null ? 0L : ObjectUtil.toLong(item.get(ID));
+                long id = item == null ? 0L : NumberUtil.toNumber(item.get(ID), Long.class);
 
                 MongoConnection.getDatabase().getCollection(COLLECTION).insertOne(
                     new Document(ID, id + 1L)
@@ -220,7 +220,7 @@ public class Mongo {
     /* INSERT > > > */
 
     public static long insert(Dto dto) throws DatabaseException {
-        dto.setDefaultsWhenNull();
+        dto.setToDefaultsWhenNull();
         dto.setCreateTime(true);
         dto.setUpdateTime(true);
 
@@ -233,9 +233,10 @@ public class Mongo {
         }
 
         try {
-            MongoConnection.getDatabase().getCollection(dto.getStorage()).insertOne(MongoMapping.getFieldValues(dto, Dto.Action.INSERT));
+            MongoConnection.getDatabase().getCollection(dto.getStorage())
+                .insertOne(MongoMapping.getFieldValuesAsDocument(dto, Dto.Action.INSERT));
         } catch (Exception e) {
-            log.error("! insert {}", MongoMapping.getFieldValues(dto, Dto.Action.INSERT).getClass(), e);
+            log.error("! insert {}", MongoMapping.getFieldValuesAsDocument(dto, Dto.Action.INSERT).getClass(), e);
             throw new DatabaseException(e);
         }
         return dto.getId();
@@ -267,7 +268,7 @@ public class Mongo {
         String collectionName = dtos.get(0).getStorage();
         List<Document> documents = new ArrayList<>();
         for (Dto dto : dtos) {
-            dto.setDefaultsWhenNull();
+            dto.setToDefaultsWhenNull();
             dto.setCreateTime(true);
             dto.setUpdateTime(true);
 
@@ -278,7 +279,7 @@ public class Mongo {
             if (!dto.beforeInsert()) {
                 throw new DatabaseException(VantarKey.EVENT_REJECT);
             }
-            documents.add(MongoMapping.getFieldValues(dto, Dto.Action.INSERT));
+            documents.add(MongoMapping.getFieldValuesAsDocument(dto, Dto.Action.INSERT));
         }
 
         try {
@@ -342,7 +343,7 @@ public class Mongo {
     }
 
     public static void update(Dto dto, Dto condition) throws DatabaseException {
-        update(MongoMapping.getFieldValues(condition, Dto.Action.GET), dto, false, true);
+        update(MongoMapping.getFieldValuesAsDocument(condition, Dto.Action.GET), dto, false, true);
     }
 
     public static void update(Dto dto) throws DatabaseException {
@@ -355,7 +356,7 @@ public class Mongo {
     public static void upsert(Dto dto) throws DatabaseException {
         Object id = dto.getId();
         if (id == null) {
-            update(MongoMapping.getFieldValues(dto, Dto.Action.GET), dto, true, true);
+            update(MongoMapping.getFieldValuesAsDocument(dto, Dto.Action.GET), dto, true, true);
             return;
         }
         update(new Document(ID, id), dto, true, false);
@@ -374,10 +375,14 @@ public class Mongo {
         }
         MongoCollection<Document> collection = MongoConnection.getDatabase().getCollection(dto.getStorage());
         try {
+            Document toUpdate = new Document(
+                "$set",
+                MongoMapping.getFieldValuesAsDocument(dto, dto.getAction(Dto.Action.UPDATE_ALL_COLS))
+            );
             if (all) {
-                collection.updateMany(condition, new Document("$set", MongoMapping.getFieldValues(dto, Dto.Action.UPDATE)), options);
+                collection.updateMany(condition, toUpdate, options);
             } else {
-                collection.updateOne(condition, new Document("$set", MongoMapping.getFieldValues(dto, Dto.Action.UPDATE)), options);
+                collection.updateOne( condition, toUpdate, options);
             }
         } catch (Exception e) {
             log.error("! update({}, {})", condition, dto, e);
@@ -418,7 +423,7 @@ public class Mongo {
     public static long delete(QueryBuilder q) throws DatabaseException {
         Dto dto = q.getDto();
         String storage = dto.getStorage();
-        if (dto.deleteLogical()) {
+        if (dto.getDeleteLogicalState()) {
             update(storage, new MongoQuery(q).matches, new Document(LOGICAL_DELETE_FIELD, LOGICAL_DELETE_VALUE));
             return 1L;
         }
@@ -427,9 +432,11 @@ public class Mongo {
 
     public static long delete(Dto condition) throws DatabaseException {
         Object id = condition.getId();
-        Document conditionDocument = id == null ? MongoMapping.getFieldValues(condition, Dto.Action.GET) : new Document(ID, id);
+        Document conditionDocument = id == null ?
+            MongoMapping.getFieldValuesAsDocument(condition, Dto.Action.GET) :
+            new Document(ID, id);
 
-        if (condition.deleteLogical()) {
+        if (condition.getDeleteLogicalState()) {
             update(condition.getStorage(), conditionDocument, new Document(LOGICAL_DELETE_FIELD, LOGICAL_DELETE_VALUE));
             return 1L;
         }

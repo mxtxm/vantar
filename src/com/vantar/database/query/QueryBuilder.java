@@ -3,7 +3,6 @@ package com.vantar.database.query;
 import com.vantar.common.VantarParam;
 import com.vantar.database.dto.*;
 import com.vantar.exception.InputException;
-import com.vantar.locale.VantarKey;
 import com.vantar.util.datetime.DateTime;
 import com.vantar.util.object.ObjectUtil;
 import com.vantar.util.string.StringUtil;
@@ -475,7 +474,7 @@ public class QueryBuilder {
         if (condition == null) {
             condition = new QueryCondition(operator);
         }
-        DataInfo.toMap(dto.getFieldValues()).forEach((name, value) -> {
+        StorableData.toMap(dto.getStorableData()).forEach((name, value) -> {
             if (value instanceof String) {
                 if (likeTextMatch) {
                     condition.like(name, (String) value);

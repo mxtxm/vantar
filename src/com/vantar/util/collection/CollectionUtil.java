@@ -291,11 +291,27 @@ public class CollectionUtil {
         return "";
     }
 
+    public static boolean isMap(Class<?> typeClass) {
+        return typeClass != null && Map.class.isAssignableFrom(typeClass);
+    }
+
+    public static boolean isMap(Object ob) {
+        return ob instanceof Map<?, ?>;
+    }
+
     public static boolean isCollection(Class<?> typeClass) {
-        return typeClass != null && (Collection.class.isAssignableFrom(typeClass) || Map.class.isAssignableFrom(typeClass));
+        return typeClass != null && Collection.class.isAssignableFrom(typeClass);
     }
 
     public static boolean isCollection(Object ob) {
+        return ob instanceof Collection<?>;
+    }
+
+    public static boolean isCollectionAndMap(Class<?> typeClass) {
+        return typeClass != null && (Collection.class.isAssignableFrom(typeClass) || Map.class.isAssignableFrom(typeClass));
+    }
+
+    public static boolean isCollectionAndMap(Object ob) {
         return (ob instanceof Collection<?>) || (ob instanceof Map<?, ?>);
     }
 

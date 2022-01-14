@@ -37,19 +37,16 @@ public class EnumUtil {
         return items;
     }
 
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public static void setEnumValue(Object object, Class<?> type, Field field, String value) throws IllegalAccessException {
+    public static void setEnumValue(String value, Class<?> type, Object object, Field field) throws IllegalAccessException {
         try {
-            field.set(object, value == null ?
-                null :
-                Enum.valueOf((Class<? extends Enum>) type, PATTERN_ENUM_INVALID_CHARS.matcher(value).replaceAll("")));
+            field.set(object, getEnumValue(value, type));
         } catch (IllegalArgumentException e) {
             log.error("! {} > ({}){}.{}", value, type.getSimpleName(), object.getClass().getSimpleName(), field.getName(), e);
         }
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})
-    public static <T> T getEnumValue(Class<T> type, String value) {
+    public static <T> T getEnumValue(String value, Class<T> type) {
         try {
             return value == null ?
                 null :
@@ -58,5 +55,12 @@ public class EnumUtil {
             log.error("! {} > ({})", value, type.getSimpleName(), e);
             return null;
         }
+    }
+
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public static <T> T getEnumValueThrow(String value, Class<T> type) throws IllegalArgumentException {
+        return value == null ?
+            null :
+            (T) Enum.valueOf((Class<? extends Enum>) type, PATTERN_ENUM_INVALID_CHARS.matcher(value).replaceAll(""));
     }
 }

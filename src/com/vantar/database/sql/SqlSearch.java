@@ -63,7 +63,7 @@ public class SqlSearch extends SqlQueryHelper {
     }
 
     public boolean existsByDto(Dto dto) throws DatabaseException {
-        SqlParams sqlParams = new SqlParams(DataInfo.toMap(dto.getFieldValues()));
+        SqlParams sqlParams = new SqlParams(StorableData.toMap(dto.getStorableData()));
         String sql = "SELECT 1 FROM " + dto.getStorage() + " WHERE " + sqlParams.getTemplate() + ';';
 
         try (SqlQueryResult queryResult = (SqlQueryResult) getData(dto, sql, sqlParams.getValues())) {

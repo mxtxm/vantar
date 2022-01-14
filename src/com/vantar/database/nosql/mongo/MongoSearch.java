@@ -4,7 +4,7 @@ import com.mongodb.client.*;
 import com.vantar.database.dto.Dto;
 import com.vantar.database.query.*;
 import com.vantar.exception.*;
-import com.vantar.util.object.ObjectUtil;
+import com.vantar.util.object.*;
 import org.bson.Document;
 import java.util.List;
 
@@ -135,7 +135,7 @@ public class MongoSearch {
     }
 
     public static <T extends Dto> T getDto(Class<T> tClass, long id, String... locales) throws NoContentException {
-        T dto = ObjectUtil.getInstance(tClass);
+        T dto = ClassUtil.getInstance(tClass);
         if (dto == null) {
             return null;
         }
@@ -161,7 +161,7 @@ public class MongoSearch {
         try {
             if (dto.isDeleteLogicalEnabled()) {
                 Document condition;
-                switch (dto.queryDeleted()) {
+                switch (dto.getDeletedQueryPolicy()) {
                     case SHOW_NOT_DELETED:
                         condition = new Document(Mongo.LOGICAL_DELETE_FIELD, new Document("$ne", Mongo.LOGICAL_DELETE_VALUE));
                         break;

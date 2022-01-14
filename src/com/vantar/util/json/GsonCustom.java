@@ -5,9 +5,8 @@ import com.google.gson.stream.*;
 import com.vantar.database.datatype.Location;
 import com.vantar.exception.DateTimeException;
 import com.vantar.util.datetime.DateTime;
-import com.vantar.util.object.ObjectUtil;
+import com.vantar.util.object.*;
 import com.vantar.util.string.StringUtil;
-import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.lang.reflect.*;
 import java.util.*;
@@ -276,7 +275,7 @@ public class GsonCustom {
                 return null;
             }
 
-            Class<?> collectionType = ObjectUtil.toClass(type);
+            Class<?> collectionType = ClassUtil.typeToClass(type);
             if (collectionType == null) {
                 return null;
             }
@@ -341,7 +340,7 @@ public class GsonCustom {
                 return null;
             }
 
-            Class<?> mapType = ObjectUtil.toClass(type);
+            Class<?> mapType = ClassUtil.typeToClass(type);
             if (mapType == null) {
                 return null;
             }
@@ -375,7 +374,7 @@ public class GsonCustom {
             Gson gson = Json.gson();
             for (Map.Entry<?, ?> entry : json.getAsJsonObject().entrySet()) {
                 map.put(
-                    (K) ObjectUtil.convert(entry.getKey(), (Type) k),
+                    (K) ObjectUtil.convert(entry.getKey(), ClassUtil.typeToClass((Type) k)),
                     gson.fromJson((JsonElement) entry.getValue(), (Type) v)
                 );
             }

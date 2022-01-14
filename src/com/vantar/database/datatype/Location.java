@@ -40,6 +40,9 @@ public class Location {
 
         latitude = StringUtil.toDouble(parts[0]);
         longitude = StringUtil.toDouble(parts[1]);
+        if (parts.length > 2) {
+            countryCode = parts[2];
+        }
     }
 
     public void round(int decimals) {

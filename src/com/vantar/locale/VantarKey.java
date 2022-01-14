@@ -21,6 +21,7 @@ public enum VantarKey implements LangKey {
 
     // validation
     REQUIRED,
+    REQUIRED_OR,
     DATA_TYPE,
     UNIQUE,
     ILLEGAL,
@@ -257,4 +258,5 @@ public enum VantarKey implements LangKey {
     DELETE_FAIL_HAS_DEPENDENCIES,
 
     ADMIN_AUTH_FAILED,
+
 }

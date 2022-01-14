@@ -1,6 +1,6 @@
 package com.vantar.web;
 
-import com.vantar.admin.model.AdminData;
+import com.vantar.admin.model.*;
 import com.vantar.common.VantarParam;
 import com.vantar.database.dto.*;
 import com.vantar.database.query.PageData;
@@ -13,11 +13,12 @@ import com.vantar.service.log.dto.UserLog;
 import com.vantar.util.collection.CollectionUtil;
 import com.vantar.util.datetime.DateTime;
 import com.vantar.util.json.Json;
-import com.vantar.util.object.ObjectUtil;
+import com.vantar.util.object.*;
 import com.vantar.util.string.*;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.lang.annotation.Annotation;
+import java.lang.reflect.Field;
 import java.util.*;
 
 
@@ -619,7 +620,6 @@ public class WebUi {
 
     public WebUi addInput(String label, String name, String defaultValue, String type, String classs) {
         String autoComplete = StringUtil.contains(name, "password") ? "new-password'" : "nope'";
-        // readonly='readonly' onfocus='this.removeAttribute("readonly");'
         return addWidgetRow(label, name,
             "<input autocomplete='" + autoComplete + " type='" + type + "' name='" + name+ "' id='" + name + "' "
                 + (classs == null ? " " : "class='" + classs + "' ")
@@ -813,6 +813,13 @@ public class WebUi {
         }
     }
 
+    private void setAdditive(String msg) {
+        if (additive == null) {
+            additive = new StringBuilder();
+        }
+        additive.append(msg);
+    }
+
     /**
      * Tags: not exists: include, none: exclude, insert/update: include for action
      */
@@ -838,21 +845,29 @@ public class WebUi {
                 );
             }
 
+            Field field = dto.getField(name);
             Class<?> type = dto.getPropertyType(name);
             Object value = dto.getPropertyValue(name);
             if (value == null || (type == String.class && StringUtil.isEmpty((String) value))) {
                 value = dto.getDefaultValue(name);
             }
 
-            if (ObjectUtil.implementsInterface(type, Number.class)) {
-                addInput(name, name, value == null ? null : value.toString(), "number");
+            if (ClassUtil.implementsInterface(type, Number.class)) {
+                addInput(name, name, value == null ? null : value.toString());
+
             } else if (type == Boolean.class) {
                 addSelect(name, name, new String[] {"Yes", "No"}, value == null ? null : ((Boolean) value ? "Yes" : "No"));
-            } else if (
-                (type.equals(Set.class)
-                    || type.equals(Collection.class) || type.equals(List.class) || type.equals(ArrayList.class))
-                    && dto.getPropertyGenericTypes(name)[0].isEnum()
-            ) {
+
+            } else if (type.isEnum()) {
+                final Class<? extends Enum<?>> enumType = (Class<? extends Enum<?>>) type;
+                String[] values = new String[enumType.getEnumConstants().length];
+                int i = 0;
+                for (Enum<?> x : enumType.getEnumConstants()) {
+                    values[i++] = x.toString();
+                }
+                addSelect(name, name, values, value == null ? null : value.toString());
+
+            } else if (ClassUtil.implementsInterface(type, CollectionUtil.class) && dto.getPropertyGenericTypes(name)[0].isEnum()) {
                 final Class<? extends Enum<?>> enumType = (Class<? extends Enum<?>>) dto.getPropertyGenericTypes(name)[0];
                 String[] values = new String[enumType.getEnumConstants().length];
                 int i = 0;
@@ -871,22 +886,49 @@ public class WebUi {
                 }
                 addSelect(name, name, values, value == null ? null : selectedValues, true, "json");
 
-            } else if (type.isEnum()) {
-                final Class<? extends Enum<?>> enumType = (Class<? extends Enum<?>>) type;
-                String[] values = new String[enumType.getEnumConstants().length];
-                int i = 0;
-                for (Enum<?> x : enumType.getEnumConstants()) {
-                    values[i++] = x.toString();
+            } else if (CollectionUtil.isCollection(type)) {
+                Class<?>[] g = ClassUtil.getGenericTypes(field);
+                if (CollectionUtil.isNotEmpty(g)) {
+                    if (ClassUtil.implementsInterface(g[0], Dto.class)) {
+                        Object obj = ClassUtil.getInstance(g[0]);
+                        if (obj != null) {
+                            setAdditive("<pre class='format'>[" + Json.toJsonPrettyStructure(obj) + "]</pre>");
+                        }
+                    } else {
+                        setAdditive("<span class='format'>[" + g[0].getSimpleName() + "]</span>");
+                    }
                 }
-                addSelect(name, name, values, value == null ? null : value.toString());
-
-            } else if (CollectionUtil.isCollection(type) || ObjectUtil.implementsInterface(type, Dto.class)) {
                 addTextArea(
                     name,
                     name,
                     value == null ? null : Json.toJsonPretty(value),
                     "small json"
                 );
+
+            } else if (CollectionUtil.isMap(type)) {
+                Class<?>[] g = ClassUtil.getGenericTypes(field);
+                if (CollectionUtil.isNotEmpty(g) && g.length == 2) {
+                    setAdditive("<span class='format'>{" + g[0].getSimpleName() + ": " + g[1].getSimpleName() + "}</span>");
+                }
+                addTextArea(
+                    name,
+                    name,
+                    value == null ? null : Json.toJsonPretty(value),
+                    "small json"
+                );
+
+            } else if (ClassUtil.implementsInterface(type, Dto.class)) {
+                Dto dtoX = DtoDictionary.get(type).getDtoInstance();
+                if (dtoX != null) {
+                    setAdditive("<span class='format'>" + Json.toJsonPretty(dtoX) + "</span>");
+                }
+                addTextArea(
+                    name,
+                    name,
+                    value == null ? null : Json.toJsonPretty(value),
+                    "small json"
+                );
+
 
             } else {
                 String iType;
@@ -1066,7 +1108,7 @@ public class WebUi {
             .append("<td class='dto-list-form-option'>")
             .append("<select name='" + VantarParam.SEARCH_FIELD + "'><option value='all'>all</option>");
         for (String name : dto.getProperties()) {
-            if (ObjectUtil.implementsInterface(dto.getPropertyType(name), Dto.class)) {
+            if (ClassUtil.implementsInterface(dto.getPropertyType(name), Dto.class)) {
                 DtoDictionary.Info obj = DtoDictionary.get(name);
                 if (obj == null) {
                     continue;
@@ -1128,7 +1170,7 @@ public class WebUi {
                 for (String name : fields) {
                     Class<?> type = dto.getPropertyType(name);
                     if ((!name.equals("name") && !name.equals("title")) &&
-                        (CollectionUtil.isCollection(type) || ObjectUtil.implementsInterface(type, Dto.class))) {
+                        (CollectionUtil.isCollectionAndMap(type) || ClassUtil.implementsInterface(type, Dto.class))) {
                         continue;
                     }
 
@@ -1170,7 +1212,7 @@ public class WebUi {
                 Class<?> type = dto.getPropertyType(name);
 
                 if ((!name.equals("name") && !name.equals("title")) &&
-                    (CollectionUtil.isCollection(type) || ObjectUtil.implementsInterface(type, Dto.class))) {
+                    (CollectionUtil.isCollectionAndMap(type) || ClassUtil.implementsInterface(type, Dto.class))) {
                     continue;
                 }
 

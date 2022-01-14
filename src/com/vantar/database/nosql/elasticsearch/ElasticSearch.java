@@ -5,7 +5,7 @@ import com.vantar.database.dto.Dto;
 import com.vantar.database.query.QueryBuilder;
 import com.vantar.database.query.*;
 import com.vantar.exception.*;
-import com.vantar.util.object.ObjectUtil;
+import com.vantar.util.object.*;
 import com.vantar.util.string.StringUtil;
 import org.elasticsearch.action.get.*;
 import org.elasticsearch.action.search.*;
@@ -144,7 +144,7 @@ public class ElasticSearch {
                 continue;
             }
 
-            T newDto = (T) ObjectUtil.getInstance(dto.getClass());
+            T newDto = (T) ClassUtil.getInstance(dto.getClass());
             if (newDto != null) {
                 newDto.set(json, Dto.Action.GET);
                 dtos.add(newDto);

@@ -2,7 +2,7 @@ package com.vantar.business;
 
 import com.vantar.common.VantarParam;
 import com.vantar.database.common.ValidationError;
-import com.vantar.database.dto.Dto;
+import com.vantar.database.dto.*;
 import com.vantar.database.query.QueryBuilder;
 import com.vantar.exception.*;
 import com.vantar.service.Services;
@@ -20,15 +20,17 @@ public abstract class CommonModel {
 
 
     public static void afterDataChange(Dto dto) {
-        ServiceDtoCache service;
-        try {
-            service = Services.get(ServiceDtoCache.class);
-        } catch (ServiceException e) {
-            return;
+        if (dto.hasAnnotation(Cache.class)) {
+            ServiceDtoCache service;
+            try {
+                service = Services.get(ServiceDtoCache.class);
+            } catch (ServiceException e) {
+                return;
+            }
+            String dtoName = dto.getClass().getSimpleName();
+            service.update(dtoName);
+            Services.messaging.broadcast(VantarParam.MESSAGE_DATABASE_UPDATED, dtoName);
         }
-        String dtoName = dto.getClass().getSimpleName();
-        service.update(dtoName);
-        Services.messaging.broadcast(VantarParam.MESSAGE_DATABASE_UPDATED, dtoName);
     }
 
     protected static void importDataX(Import importCallback, String data, Dto dto, List<String> presentField, WebUi ui) {
@@ -128,7 +130,7 @@ public abstract class CommonModel {
             }
 
             dto.reset();
-            dto.setDefaults();
+            dto.setToDefaults();
 
             for (int j = 0; j < fieldCount; j++) {
                 dto.setPropertyValue(fields[j], cols[j].equals("-") ? null : cols[j]);

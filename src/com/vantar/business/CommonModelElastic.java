@@ -8,7 +8,7 @@ import com.vantar.exception.*;
 import com.vantar.locale.Locale;
 import com.vantar.locale.*;
 import com.vantar.util.number.NumberUtil;
-import com.vantar.util.object.ObjectUtil;
+import com.vantar.util.object.*;
 import com.vantar.web.*;
 import org.slf4j.*;
 import java.util.*;
@@ -156,9 +156,9 @@ public class CommonModelElastic extends CommonModel {
     private static ResponseMessage updateX(Object params, Dto dto, WriteEvent event) throws InputException, ServerException {
         List<ValidationError> errors;
         if (params instanceof String) {
-            errors = dto.set((String) params, Dto.Action.UPDATE);
+            errors = dto.set((String) params, Dto.Action.UPDATE_ALL_COLS);
         } else {
-            errors = dto.set((Params) params, Dto.Action.UPDATE);
+            errors = dto.set((Params) params, Dto.Action.UPDATE_ALL_COLS);
         }
 
         if (event != null) {
@@ -209,7 +209,7 @@ public class CommonModelElastic extends CommonModel {
                     event.beforeWrite(dto);
                 }
 
-                List<ValidationError> errors = dto.validate(Dto.Action.UPDATE);
+                List<ValidationError> errors = dto.validate(Dto.Action.UPDATE_ALL_COLS);
                 if (!errors.isEmpty()) {
                     throw new InputException(errors);
                 }
@@ -264,7 +264,7 @@ public class CommonModelElastic extends CommonModel {
             throw new InputException(VantarKey.INVALID_JSON_DATA);
         }
 
-        T dto = ObjectUtil.getInstance(tClass);
+        T dto = ClassUtil.getInstance(tClass);
         if (dto == null) {
             throw new InputException(VantarKey.INVALID_JSON_DATA);
         }
@@ -323,7 +323,7 @@ public class CommonModelElastic extends CommonModel {
         BatchEvent event) throws InputException, ServerException {
 
         for (Map<String, Object> record : records) {
-            Dto dto = ObjectUtil.getInstance(tClass);
+            Dto dto = ClassUtil.getInstance(tClass);
             if (dto == null) {
                 throw new ServerException(VantarKey.CAN_NOT_CREATE_DTO);
             }
@@ -359,7 +359,7 @@ public class CommonModelElastic extends CommonModel {
                 throw new ServerException(VantarKey.UPDATE_FAIL);
             }
 
-            List<ValidationError> errors = dto.set(record, Dto.Action.UPDATE);
+            List<ValidationError> errors = dto.set(record, Dto.Action.UPDATE_ALL_COLS);
             if (!errors.isEmpty()) {
                 throw new InputException(errors);
             }

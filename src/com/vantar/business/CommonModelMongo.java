@@ -14,10 +14,11 @@ import com.vantar.service.Services;
 import com.vantar.service.cache.ServiceDtoCache;
 import com.vantar.util.collection.CollectionUtil;
 import com.vantar.util.number.NumberUtil;
-import com.vantar.util.object.ObjectUtil;
+import com.vantar.util.object.*;
 import com.vantar.util.string.StringUtil;
 import com.vantar.web.*;
 import org.slf4j.*;
+import javax.ws.rs.GET;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -28,10 +29,12 @@ public class CommonModelMongo extends CommonModel {
     private static final Logger log = LoggerFactory.getLogger(CommonModelMongo.class);
 
 
+    // INSERT > > >
+
+
     public static ResponseMessage insert(Params params, Dto dto) throws InputException, ServerException {
         return insertX(params, dto, null, null);
     }
-
     public static ResponseMessage insert(Params params, Dto dto, WriteEvent event) throws InputException, ServerException {
         return insertX(params, dto, event, null);
     }
@@ -39,19 +42,15 @@ public class CommonModelMongo extends CommonModel {
     public static ResponseMessage insertJson(Params params, Dto dto) throws InputException, ServerException {
         return insertX(params.getJson(), dto, null, null);
     }
-
     public static ResponseMessage insertJson(Params params, Dto dto, WriteEvent event) throws InputException, ServerException {
         return insertX(params.getJson(), dto, event, null);
     }
-
-    public static ResponseMessage insertJson(String json, Dto dto) throws InputException, ServerException {
-        return insertX(json, dto, null, null);
-    }
-
     public static ResponseMessage insertJson(Params params, String key, Dto dto) throws InputException, ServerException {
         return insertX(params.getString(key), dto, null, params);
     }
-
+    public static ResponseMessage insertJson(String json, Dto dto) throws InputException, ServerException {
+        return insertX(json, dto, null, null);
+    }
     public static ResponseMessage insertJson(String json, Dto dto, WriteEvent event) throws InputException, ServerException {
         return insertX(json, dto, event, null);
     }
@@ -62,7 +61,9 @@ public class CommonModelMongo extends CommonModel {
         }
 
         List<ValidationError> errors = params instanceof String ?
-            dto.set((String) params, Dto.Action.INSERT) : dto.set((Params) params, Dto.Action.INSERT);
+            dto.set((String) params, Dto.Action.INSERT) :
+            dto.set((Params) params, Dto.Action.INSERT);
+
         if (CollectionUtil.isNotEmpty(errors)) {
             throw new InputException(errors);
         }
@@ -76,33 +77,33 @@ public class CommonModelMongo extends CommonModel {
             if (errors != null) {
                 throw new InputException(errors);
             }
-
-            long id = CommonRepoMongo.insert(dto);
-            if (event != null) {
-                event.afterWrite(dto);
-            }
-
-            try {
-                dto = CommonRepoMongo.getById(dto);
-            } catch (DatabaseException e) {
-                log.error("! {}", dto, e);
-            } catch (NoContentException e) {
-                throw new ServerException(VantarKey.INSERT_FAIL);
-            }
-
-            logAction(requestParams == null ? params : requestParams, dto, Dto.Action.INSERT);
-
-            return new ResponseMessage(VantarKey.INSERT_SUCCESS, id, dto);
+            Mongo.insert(dto);
         } catch (DatabaseException e) {
             log.error("! {}", dto, e);
             throw new ServerException(VantarKey.INSERT_FAIL);
         }
+
+        CommonModel.afterDataChange(dto);
+        if (event != null) {
+            event.afterWrite(dto);
+        }
+
+        try {
+            dto = CommonRepoMongo.getById(dto);
+        } catch (DatabaseException e) {
+            log.error("! {}", dto, e);
+        } catch (NoContentException e) {
+            throw new ServerException(VantarKey.INSERT_FAIL);
+        }
+
+        logAction(requestParams == null ? params : requestParams.toJsonString(), dto, Dto.Action.INSERT);
+
+        return new ResponseMessage(VantarKey.INSERT_SUCCESS, dto.getId(), dto);
     }
 
     public static ResponseMessage insert(Dto dto) throws ServerException, InputException {
         return insert(dto, null);
     }
-
     public static ResponseMessage insert(Dto dto, WriteEvent event) throws ServerException, InputException {
         if (event != null) {
             event.beforeSet(dto);
@@ -122,13 +123,13 @@ public class CommonModelMongo extends CommonModel {
             if (errors != null) {
                 throw new InputException(errors);
             }
-
-            CommonRepoMongo.insert(dto);
+            Mongo.insert(dto);
         } catch (DatabaseException e) {
             log.error("! {}", dto, e);
             throw new ServerException(VantarKey.INSERT_FAIL);
         }
 
+        CommonModel.afterDataChange(dto);
         if (event != null) {
             event.afterWrite(dto);
         }
@@ -146,59 +147,38 @@ public class CommonModelMongo extends CommonModel {
         return new ResponseMessage(VantarKey.INSERT_SUCCESS, dto.getId(), dto);
     }
 
+
+    // < < < INSERT
+
+
+
+    // UPDATE > > >
+
+
     public static ResponseMessage update(Params params, Dto dto) throws InputException, ServerException {
-        return updateX(params, dto, null, Dto.Action.UPDATE, null);
+        return updateX(params, dto, null, null, params.getX("action", Dto.Action.UPDATE_FEW_COLS));
     }
-
-    public static ResponseMessage updateStrict(Params params, Dto dto) throws InputException, ServerException {
-        return updateX(params, dto, null, Dto.Action.UPDATE_STRICT, null);
-    }
-
     public static ResponseMessage update(Params params, Dto dto, WriteEvent event) throws InputException, ServerException {
-        return updateX(params, dto, event, Dto.Action.UPDATE, null);
-    }
-
-    public static ResponseMessage updateStrict(Params params, Dto dto, WriteEvent event) throws InputException, ServerException {
-        return updateX(params, dto, event, Dto.Action.UPDATE_STRICT, null);
+        return updateX(params, dto, event, null, params.getX("action", Dto.Action.UPDATE_FEW_COLS));
     }
 
     public static ResponseMessage updateJson(Params params, Dto dto) throws InputException, ServerException {
-        return updateX(params.getJson(), dto, null, Dto.Action.UPDATE, null);
+        return updateX(params.getJson(), dto, null, null, params.getX("action", Dto.Action.UPDATE_FEW_COLS));
     }
-
-    public static ResponseMessage updateJsonStrict(Params params, Dto dto) throws InputException, ServerException {
-        return updateX(params.getJson(), dto, null, Dto.Action.UPDATE_STRICT, null);
-    }
-
     public static ResponseMessage updateJson(Params params, Dto dto, WriteEvent event) throws InputException, ServerException {
-        return updateX(params.getJson(), dto, event, Dto.Action.UPDATE, null);
+        return updateX(params.getJson(), dto, event, null, params.getX("action", Dto.Action.UPDATE_FEW_COLS));
     }
-
-    public static ResponseMessage updateJsonStrict(Params params, Dto dto, WriteEvent event) throws InputException, ServerException {
-        return updateX(params.getJson(), dto, event, Dto.Action.UPDATE_STRICT, null);
-    }
-
-    public static ResponseMessage updateJson(String json, Dto dto) throws InputException, ServerException {
-        return updateX(json, dto, null, Dto.Action.UPDATE, null);
-    }
-
-    public static ResponseMessage updateJsonStrict(String json, Dto dto) throws InputException, ServerException {
-        return updateX(json, dto, null, Dto.Action.UPDATE_STRICT, null);
-    }
-
     public static ResponseMessage updateJson(Params params, String key, Dto dto) throws InputException, ServerException {
-        return updateX(params.getString(key), dto, null, Dto.Action.UPDATE_STRICT, params);
+        return updateX(params.getString(key), dto, null, params, params.getX("action", Dto.Action.UPDATE_FEW_COLS));
     }
-
+    public static ResponseMessage updateJson(String json, Dto dto) throws InputException, ServerException {
+        return updateX(json, dto, null, null, Dto.Action.UPDATE_FEW_COLS);
+    }
     public static ResponseMessage updateJson(String json, Dto dto, WriteEvent event) throws InputException, ServerException {
-        return updateX(json, dto, event, Dto.Action.UPDATE, null);
+        return updateX(json, dto, event, null, Dto.Action.UPDATE_FEW_COLS);
     }
 
-    public static ResponseMessage updateJsonStrict(String json, Dto dto, WriteEvent event) throws InputException, ServerException {
-        return updateX(json, dto, event, Dto.Action.UPDATE_STRICT, null);
-    }
-
-    private static ResponseMessage updateX(Object params, Dto dto, WriteEvent event, Dto.Action action, Params requestParams)
+    private static ResponseMessage updateX(Object params, Dto dto, WriteEvent event, Params requestParams, Dto.Action action)
         throws InputException, ServerException {
 
         if (event != null) {
@@ -206,7 +186,9 @@ public class CommonModelMongo extends CommonModel {
         }
 
         List<ValidationError> errors = params instanceof String ?
-            dto.set((String) params, action) : dto.set((Params) params, action);
+            dto.set((String) params, action) :
+            dto.set((Params) params, action);
+
         if (CollectionUtil.isNotEmpty(errors)) {
             throw new InputException(errors);
         }
@@ -220,13 +202,13 @@ public class CommonModelMongo extends CommonModel {
             if (errors != null) {
                 throw new InputException(errors);
             }
-
-            CommonRepoMongo.update(dto);
+            Mongo.update(dto);
         } catch (DatabaseException e) {
             log.error("! {}", dto, e);
             throw new ServerException(VantarKey.UPDATE_FAIL);
         }
 
+        CommonModel.afterDataChange(dto);
         if (event != null) {
             event.afterWrite(dto);
         }
@@ -239,32 +221,70 @@ public class CommonModelMongo extends CommonModel {
             throw new ServerException(VantarKey.UPDATE_FAIL);
         }
 
-        logAction(requestParams == null ? params : requestParams, dto, Dto.Action.UPDATE);
+        logAction(requestParams == null ? params : requestParams, dto, dto.getAction(Dto.Action.UPDATE_FEW_COLS));
 
         return new ResponseMessage(VantarKey.UPDATE_SUCCESS, dto);
     }
 
     public static ResponseMessage update(Dto dto) throws ServerException, InputException {
-        return update(dto, null);
+        return updateX(dto, null, Dto.Action.UPDATE_FEW_COLS, null);
+    }
+    public static ResponseMessage update(Dto dto, Dto.Action action) throws ServerException, InputException {
+        return updateX(dto, null, action, null);
+    }
+    public static ResponseMessage update(Dto dto, WriteEvent event) throws ServerException, InputException {
+        return updateX(dto, null, Dto.Action.UPDATE_FEW_COLS, event);
+    }
+    public static ResponseMessage update(Dto dto, Dto.Action action, WriteEvent event) throws ServerException, InputException {
+        return updateX(dto, null, action, event);
     }
 
-    public static ResponseMessage update(Dto dto, WriteEvent event) throws ServerException, InputException {
+    public static ResponseMessage update(QueryBuilder q) throws ServerException, InputException {
+        return updateX(null, q, Dto.Action.UPDATE_FEW_COLS, null);
+    }
+    public static ResponseMessage update(QueryBuilder q, Dto.Action action) throws ServerException, InputException {
+        return updateX(null, q, action, null);
+    }
+    public static ResponseMessage update(QueryBuilder q, WriteEvent event) throws ServerException, InputException {
+        return updateX(null, q, Dto.Action.UPDATE_FEW_COLS, event);
+    }
+    public static ResponseMessage update(QueryBuilder q, Dto.Action action, WriteEvent event) throws ServerException, InputException {
+        return updateX(null, q, action, event);
+    }
+
+    private static ResponseMessage updateX(Dto dto, QueryBuilder q, Dto.Action action, WriteEvent event) throws ServerException, InputException {
+        if (q != null) {
+            dto = q.getDto();
+        }
+        if (event != null) {
+            event.beforeSet(dto);
+        }
+
+        List<ValidationError> errors = dto.validate(action);
+        if (CollectionUtil.isNotEmpty(errors)) {
+            throw new InputException(errors);
+        }
+
         if (event != null) {
             event.beforeWrite(dto);
         }
 
         try {
-            List<ValidationError> errors = CommonRepoMongo.getUniqueViolation(dto);
+            errors = CommonRepoMongo.getUniqueViolation(dto);
             if (errors != null) {
                 throw new InputException(errors);
             }
-
-            CommonRepoMongo.update(dto);
+            if (q == null) {
+                Mongo.update(dto);
+            } else {
+                Mongo.update(q);
+            }
         } catch (DatabaseException e) {
             log.error("! {}", dto, e);
             throw new ServerException(VantarKey.UPDATE_FAIL);
         }
 
+        CommonModel.afterDataChange(dto);
         if (event != null) {
             event.afterWrite(dto);
         }
@@ -277,15 +297,22 @@ public class CommonModelMongo extends CommonModel {
             throw new ServerException(VantarKey.UPDATE_FAIL);
         }
 
-        logAction(null, dto, Dto.Action.UPDATE);
+        logAction(null, dto, action);
 
         return new ResponseMessage(VantarKey.UPDATE_SUCCESS, dto);
     }
 
+
+    // < < < UPDATE
+
+
+
+    // DELETE > > >
+
+
     public static ResponseMessage delete(Params params, Dto dto) throws InputException, ServerException {
         return delete(params, dto, null);
     }
-
     public static ResponseMessage delete(Params params, Dto dto, WriteEvent event) throws InputException, ServerException {
         if (event != null) {
             event.beforeSet(dto);
@@ -309,7 +336,8 @@ public class CommonModelMongo extends CommonModel {
         }
 
         try {
-            ResponseMessage r = new ResponseMessage(VantarKey.DELETE_SUCCESS, CommonRepoMongo.delete(dto));
+            ResponseMessage r = new ResponseMessage(VantarKey.DELETE_SUCCESS, Mongo.delete(dto));
+            CommonModel.afterDataChange(dto);
             if (event != null) {
                 event.afterWrite(dto);
             }
@@ -323,12 +351,69 @@ public class CommonModelMongo extends CommonModel {
         }
     }
 
+    public static ResponseMessage deleteById(Dto dto) throws InputException, ServerException {
+        return deleteX(dto, null, null);
+    }
+    public static ResponseMessage deleteById(Dto dto, WriteEvent event) throws InputException, ServerException {
+        return deleteX(dto, null, event);
+    }
+
+    public static ResponseMessage delete(QueryBuilder q) throws InputException, ServerException {
+        return deleteX(null, q, null);
+    }
+    public static ResponseMessage delete(QueryBuilder q, WriteEvent event) throws InputException, ServerException {
+        return deleteX(null, q, event);
+    }
+
+    public static ResponseMessage deleteX(Dto dto, QueryBuilder q, WriteEvent event) throws InputException, ServerException {
+        if (q != null) {
+            dto = q.getDto();
+        }
+        if (event != null) {
+            event.beforeSet(dto);
+        }
+
+        List<ValidationError> errors = dto.validate(Dto.Action.DELETE);
+        if (CollectionUtil.isNotEmpty(errors)) {
+            throw new InputException(errors);
+        }
+
+        if (event != null) {
+            event.beforeWrite(dto);
+        }
+
+        Long id = dto.getId();
+        if (NumberUtil.isIdValid(id)) {
+            List<DataDependency.Dependants> items = DataDependency.getDependencies(dto, id);
+            if (!items.isEmpty()) {
+                return new ResponseMessage(VantarKey.DELETE_FAIL_HAS_DEPENDENCIES, items);
+            }
+        }
+
+        try {
+            ResponseMessage r = new ResponseMessage(
+                VantarKey.DELETE_SUCCESS,
+                q == null ? Mongo.delete(dto) : Mongo.delete(q)
+            );
+            CommonModel.afterDataChange(dto);
+            if (event != null) {
+                event.afterWrite(dto);
+            }
+
+            logAction(null, dto, Dto.Action.DELETE);
+
+            return r;
+        } catch (DatabaseException e) {
+            log.error("! {}", e.getMessage());
+            throw new ServerException(VantarKey.DELETE_FAIL);
+        }
+    }
+
     public static <T extends Dto> ResponseMessage deleteBatch(Params params, Class<T> tClass)
         throws InputException, ServerException {
 
         return deleteBatch(params, tClass, null);
     }
-
     public static <T extends Dto> ResponseMessage deleteBatch(Params params, Class<T> tClass, WriteEvent event)
         throws InputException, ServerException {
 
@@ -340,7 +425,7 @@ public class CommonModelMongo extends CommonModel {
             throw new InputException(VantarKey.INVALID_JSON_DATA);
         }
 
-        T dto = ObjectUtil.getInstance(tClass);
+        T dto = ClassUtil.getInstance(tClass);
         if (dto == null) {
             throw new InputException(VantarKey.INVALID_JSON_DATA);
         }
@@ -372,7 +457,6 @@ public class CommonModelMongo extends CommonModel {
             if (!ids.isEmpty()) {
                 afterDataChange(dto);
             }
-
         } catch (DatabaseException e) {
             log.error("! {}", e.getMessage());
             throw new ServerException(VantarKey.DELETE_FAIL);
@@ -386,7 +470,6 @@ public class CommonModelMongo extends CommonModel {
 
         return unDeleteBatch(params, tClass, null);
     }
-
     public static <T extends Dto> ResponseMessage unDeleteBatch(Params params, Class<T> tClass, WriteEvent event)
         throws InputException, ServerException {
 
@@ -398,7 +481,7 @@ public class CommonModelMongo extends CommonModel {
             throw new InputException(VantarKey.INVALID_JSON_DATA);
         }
 
-        T dto = ObjectUtil.getInstance(tClass);
+        T dto = ClassUtil.getInstance(tClass);
         if (dto == null) {
             throw new InputException(VantarKey.INVALID_JSON_DATA);
         }
@@ -440,6 +523,14 @@ public class CommonModelMongo extends CommonModel {
         return new ResponseMessage(VantarKey.UPDATE_MANY_SUCCESS, ids.size());
     }
 
+
+    // < < < DELETE
+
+
+
+    // PURGE > > >
+
+
     public static ResponseMessage purge(Params params, String collection) throws ServerException {
         try {
             CommonRepoMongo.purge(collection);
@@ -462,7 +553,13 @@ public class CommonModelMongo extends CommonModel {
         }
     }
 
-    // > > > admin tools
+
+    // < < < PURGE
+
+
+
+    // ADMIN DASHBOARD > > >
+
 
     public static void importDataAdmin(String data, Dto dto, List<String> presentField, boolean deleteAll, WebUi ui) {
         logAction(ui.params, "", Dto.Action.IMPORT);
@@ -519,15 +616,12 @@ public class CommonModelMongo extends CommonModel {
     }
 
 
+    // < < < ADMIN DASHBOARD
 
 
 
+    // GET DATA > > >
 
-
-
-
-
-    /* > > > GET DATA */
 
     public static Object search(Params params, Dto dto) throws ServerException, NoContentException, InputException {
         return search(params, dto, dto, null);

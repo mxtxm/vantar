@@ -63,6 +63,14 @@ public class Json {
         return object == null ? "" : getBuilder().setPrettyPrinting().create().toJson(object);
     }
 
+    public static String toJsonPrettyStructure(Object object) {
+        return object == null
+            ? "" :
+            new GsonBuilder()
+                .excludeFieldsWithModifiers(Modifier.STATIC, Modifier.PRIVATE, Modifier.PROTECTED)
+                .serializeNulls().setPrettyPrinting().create().toJson(object);
+    }
+
     public static <T> T fromJson(String value, Class<T> typeClass) {
         try {
             return gson().fromJson(value, typeClass);

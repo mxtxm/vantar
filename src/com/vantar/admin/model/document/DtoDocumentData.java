@@ -6,7 +6,7 @@ import com.vantar.database.dto.*;
 import com.vantar.util.collection.CollectionUtil;
 import com.vantar.util.datetime.*;
 import com.vantar.util.json.Json;
-import com.vantar.util.object.ObjectUtil;
+import com.vantar.util.object.*;
 import com.vantar.util.string.StringUtil;
 import java.lang.reflect.*;
 import java.util.*;
@@ -19,6 +19,7 @@ public class DtoDocumentData {
     public String enumClass;
     public String[] exclude;
     public Set<String> includeFields;
+    public Set<String> actionParams;
     public String[] key;
     public String searchParams;
     public String searchResult;
@@ -32,7 +33,7 @@ public class DtoDocumentData {
         // > > >
 
         if (enumClass != null) {
-            Class<?> c = ObjectUtil.getClass(enumClass);
+            Class<?> c = ClassUtil.getClass(enumClass);
             if (c == null || c.getEnumConstants() == null) {
                 return "!!!DOCUMENT CREATION ERROR!!!";
             }
@@ -93,7 +94,7 @@ public class DtoDocumentData {
 
         StringBuilder sb = new StringBuilder();
         if (dto != null) {
-            Dto obj = ObjectUtil.getInstance(dto);
+            Dto obj = ClassUtil.getInstance(dto);
             if (obj == null) {
                 AdminDocument.log.error("! can not create {}", dto);
                 return "!!!DOCUMENT CREATION ERROR!!!";
@@ -203,7 +204,7 @@ public class DtoDocumentData {
                     sb.append(" value is set based on selected locale.");
                 }
                 if (prop.endsWith("Id")) {
-                    Object foreignObj = ObjectUtil.getInstance(StringUtil.firstCharToUpperCase(StringUtil.remove(prop, "Id")));
+                    Object foreignObj = ClassUtil.getInstance(StringUtil.firstCharToUpperCase(StringUtil.remove(prop, "Id")));
                     if (foreignObj != null) {
                         sb.append(" id reference to ");
                         setReference(sb, foreignObj.getClass(), obj.getClass());
@@ -221,13 +222,35 @@ public class DtoDocumentData {
                 sb.append("\n");
             }
 
+            if (actionParams != null) {
+                boolean showNulls = false;
+                if (actionParams.contains("UPDATE_FEW_COLS") || actionParams.contains("UPDATE_ALL_COLS")) {
+                    showNulls = true;
+                    sb.append("* <span class='b-field'>String __action: update actions, value can be:  ");
+                    boolean all = false;
+                    if (actionParams.contains("UPDATE_ALL_COLS")) {
+                        sb.append("\"UPDATE_ALL_COLS\"");
+                        all = true;
+                    }
+                    if (actionParams.contains("UPDATE_FEW_COLS")) {
+                        if (all) {
+                            sb.append(" | ");
+                        }
+                        sb.append("\"UPDATE_FEW_COLS\" (default)");
+                    }
+                    sb.append("</span>\n");
+                }
+                if (showNulls) {
+                    sb.append("* <span class='b-field'>List&lt;String&gt; __nullProperties: a list of property(field) names that must be set to null</span>\n");
+                }
+            }
+
             sb.append("##### sample #####\n");
             try {
                 sb.append("<pre>").append(Json.makePretty(getAsJsonExampleDto(obj.getClass()))).append("</pre>\n");
             } catch (Exception e) {
-                AdminDocument.log.warn("! JSON error", e);
+                AdminDocument.log.warn("! JSON error {}\n", getAsJsonExampleDto(obj.getClass()), e);
                 sb.append("<pre><br/>").append(getAsJsonExampleDto(obj.getClass())).append("</pre>\n");
-
             }
         }
 
@@ -237,7 +260,7 @@ public class DtoDocumentData {
     private String getAsJsonExampleList(Field f, Class<?> dto) {
         StringBuilder json = new StringBuilder();
         json.append('[');
-        Class<?>[] g = ObjectUtil.getFieldGenericTypes(f);
+        Class<?>[] g = ClassUtil.getGenericTypes(f);
         if (g.length == 1) {
             Class<?> genericType = g[0];
 
@@ -248,20 +271,20 @@ public class DtoDocumentData {
                 }
                 json.setLength(json.length() - 2);
 
-            } else if (ObjectUtil.implementsInterface(genericType, Dto.class)) {
+            } else if (ClassUtil.implementsInterface(genericType, Dto.class)) {
                 if (genericType.equals(dto)) {
                     json.append("\"{RECURSIVE}\"");
                 } else {
                     json.append(getAsJsonExampleDto(genericType));
                 }
-            } else if (ObjectUtil.extendsClass(genericType, Number.class)) {
-                json.append("000");
+            } else if (ClassUtil.extendsClass(genericType, Number.class)) {
+                json.append("0");
             } else if (genericType == String.class) {
                 json.append("\"STRING\"");
             } else if (genericType == Boolean.class) {
                 json.append("true,");
             } else if (genericType == Location.class) {
-                json.append("{\"latitude\":000,\"longitude\":000}");
+                json.append("{\"latitude\":0,\"longitude\":0}");
             } else if (genericType == List.class || genericType == Set.class || genericType == Collection.class) {
                 json.append("[]");
             } else if (genericType == Map.class) {
@@ -277,11 +300,11 @@ public class DtoDocumentData {
     private String getAsJsonExampleMap(Field f) {
         StringBuilder json = new StringBuilder();
         json.append('{');
-        Class<?>[] g = ObjectUtil.getFieldGenericTypes(f);
+        Class<?>[] g = ClassUtil.getGenericTypes(f);
         if (g.length == 2) {
             Class<?> genericTypeK = g[0];
-            if (ObjectUtil.extendsClass(genericTypeK, Number.class)) {
-                json.append("000:");
+            if (ClassUtil.extendsClass(genericTypeK, Number.class)) {
+                json.append("0:");
             } else if (genericTypeK == String.class) {
                 json.append("\"STRING\":");
             }
@@ -295,20 +318,22 @@ public class DtoDocumentData {
                 }
                 json.setLength(json.length() - 2);
 
-            } else if (ObjectUtil.implementsInterface(genericType, Dto.class)) {
+            } else if (ClassUtil.implementsInterface(genericType, Dto.class)) {
                 json.append(getAsJsonExampleDto(genericType));
-            } else if (ObjectUtil.extendsClass(genericType, Number.class)) {
-                json.append("000");
+            } else if (ClassUtil.extendsClass(genericType, Number.class)) {
+                json.append("0");
             } else if (genericType == String.class) {
                 json.append("\"STRING\"");
             } else if (genericType == Boolean.class) {
                 json.append("true,");
             } else if (genericType == Location.class) {
-                json.append("{\"latitude\":000,\"longitude\":000}");
+                json.append("{\"latitude\":0,\"longitude\":0}");
             } else if (genericType == List.class || genericType == Set.class || genericType == Collection.class) {
                 json.append("[]");
             } else if (genericType == Map.class) {
                 json.append("{}");
+            } else {
+                json.append("\"OBJECT\"");
             }
         }
         json.append("}");
@@ -365,8 +390,8 @@ public class DtoDocumentData {
                 continue;
             }
 
-            if (ObjectUtil.extendsClass(propType, Number.class)) {
-                json.append("000").append(',');
+            if (ClassUtil.extendsClass(propType, Number.class)) {
+                json.append("0").append(',');
                 continue;
             }
             if (propType == Boolean.class) {
@@ -378,7 +403,7 @@ public class DtoDocumentData {
                 continue;
             }
             if (propType == Location.class) {
-                json.append("{\"latitude\":000,\"longitude\":000,\"countryCode\":\"en\"},");
+                json.append("{\"latitude\":0,\"longitude\":0,\"countryCode\":\"en\"},");
                 continue;
             }
             if (f.isAnnotationPresent(Localized.class)) {
@@ -402,7 +427,7 @@ public class DtoDocumentData {
                 json.append(getAsJsonExampleMap(f)).append(',');
                 continue;
             }
-            if (ObjectUtil.implementsInterface(propType, Dto.class)) {
+            if (ClassUtil.implementsInterface(propType, Dto.class)) {
                 json.append(getAsJsonExampleDto(propType)).append(',');
                 continue;
             }

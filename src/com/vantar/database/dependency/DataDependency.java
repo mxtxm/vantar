@@ -4,7 +4,7 @@ import com.vantar.business.CommonRepoMongo;
 import com.vantar.database.dto.*;
 import com.vantar.database.query.QueryBuilder;
 import com.vantar.exception.*;
-import com.vantar.util.object.ObjectUtil;
+import com.vantar.util.object.*;
 import org.slf4j.*;
 import java.lang.reflect.Field;
 import java.util.*;
@@ -80,12 +80,12 @@ public class DataDependency {
         Class<?> hostFieldType = hostField.getType();
         String hostFieldName = prefix + hostField.getName();
 
-        if (ObjectUtil.implementsInterface(hostFieldType, Collection.class)) {
+        if (ClassUtil.implementsInterface(hostFieldType, Collection.class)) {
 
             /*
              * (3) field is Collection<Long> and items are fks to "target dto"
              */
-            Class<?> gClass = ObjectUtil.getFieldGenericTypes(hostField)[0];
+            Class<?> gClass = ClassUtil.getGenericTypes(hostField)[0];
             if (gClass.equals(Long.class)) {
                 Dependants d = getDependantDataIn(dbms, hostDtoInfo.getDtoInstance(), hostFieldName, id);
                 if (d != null) {
@@ -121,7 +121,7 @@ public class DataDependency {
          * (8) field is Dto where
          *     Dto-class="target dto".class and the object is a copy of a "target dto" record
          */
-        if (ObjectUtil.implementsInterface(hostFieldType, Dto.class)) {
+        if (ClassUtil.implementsInterface(hostFieldType, Dto.class)) {
             Dependants d = getDependantDataEquals(dbms, hostDtoInfo.getDtoInstance(), hostFieldName + ".id", id);
             if (d != null) {
                 dependencies.add(d);
@@ -144,12 +144,12 @@ public class DataDependency {
         Class<?> hostFieldType = hostField.getType();
         String hostFieldName = prefix + hostField.getName();
 
-        if (ObjectUtil.implementsInterface(hostFieldType, Collection.class)) {
+        if (ClassUtil.implementsInterface(hostFieldType, Collection.class)) {
 
             /*
              * (3) field is Collection<Long> and items are fks to "target dto"
              */
-            Class<?> gClass = ObjectUtil.getFieldGenericTypes(hostField)[0];
+            Class<?> gClass = ClassUtil.getGenericTypes(hostField)[0];
             if (gClass.equals(Long.class)) {
                 Dependants d = getDependantDataIn(dbms, hostDtoInfo.getDtoInstance(), hostFieldName, id);
                 if (d != null) {
@@ -185,7 +185,7 @@ public class DataDependency {
          * (8) field is Dto where
          *     Dto-class="target dto".class and the object is a copy of a "target dto" record
          */
-        if (ObjectUtil.implementsInterface(hostFieldType, Dto.class)) {
+        if (ClassUtil.implementsInterface(hostFieldType, Dto.class)) {
             Dependants d = getDependantDataEquals(dbms, hostDtoInfo.getDtoInstance(), hostFieldName + ".id", id);
             if (d != null) {
                 dependencies.add(d);
@@ -205,10 +205,10 @@ public class DataDependency {
         Class<?> hostFieldType = hostField.getType();
         String hostFieldName = hostField.getName();
 
-        if (ObjectUtil.implementsInterface(hostFieldType, Collection.class)) {
-            Class<?> gClass = ObjectUtil.getFieldGenericTypes(hostField)[0];
+        if (ClassUtil.implementsInterface(hostFieldType, Collection.class)) {
+            Class<?> gClass = ClassUtil.getGenericTypes(hostField)[0];
 
-            if (ObjectUtil.implementsInterface(gClass, Dto.class)) {
+            if (ClassUtil.implementsInterface(gClass, Dto.class)) {
 
                 /*
                  * (5) field is Collection<Dto> where generic type is "target dto".class
@@ -221,7 +221,7 @@ public class DataDependency {
                 /*
                  * (6) field is Collection<Dto>
                  */
-                if (ObjectUtil.implementsInterface(hostFieldType, Dto.class)) {
+                if (ClassUtil.implementsInterface(hostFieldType, Dto.class)) {
 //                    Dependants d = getDependantDataIn(dbms, hostDtoInfo.getDtoInstance(), prefix + hostFieldName + "._id", id);
 //                    if (d != null) {
 //                        dependencies.add(d);
@@ -254,7 +254,7 @@ public class DataDependency {
         /*
          * (4) field is a Dto > crawl inside it until a "target dto" dependency or object is found
          */
-        if (ObjectUtil.implementsInterface(hostFieldType, Dto.class)) {
+        if (ClassUtil.implementsInterface(hostFieldType, Dto.class)) {
             putCrawlDependencies(
                 dbms,
                 dto, id,
@@ -295,7 +295,7 @@ public class DataDependency {
                 continue;
             }
 
-            if (!ObjectUtil.implementsInterface(innerField.getType(), Dto.class)) {
+            if (!ClassUtil.implementsInterface(innerField.getType(), Dto.class)) {
                 continue;
             }
 

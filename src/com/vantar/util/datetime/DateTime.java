@@ -1,7 +1,8 @@
 package com.vantar.util.datetime;
 
+import com.vantar.database.common.ValidationError;
 import com.vantar.exception.DateTimeException;
-import com.vantar.locale.Locale;
+import com.vantar.locale.*;
 import com.vantar.util.string.StringUtil;
 import java.sql.Timestamp;
 import java.time.Instant;
@@ -104,6 +105,9 @@ public class DateTime {
     }
 
     public DateTime(String dateTime) throws DateTimeException {
+        if (dateTime.equalsIgnoreCase("now")) {
+            setToNow();
+        }
         fromString(dateTime, DEFAULT_DATE_FROMAT);
     }
 
@@ -459,5 +463,16 @@ public class DateTime {
 
     public static DateTime getYesterday() {
         return new DateTime(getYesterdayTimestamp());
+    }
+
+    public static DateTime toDateTime(Object value) throws DateTimeException {
+        if (value == null || value instanceof DateTime) {
+            return (DateTime) value;
+        }
+        String stringValue = value.toString();
+        if (StringUtil.isEmpty(stringValue)) {
+            return null;
+        }
+        return new DateTime(stringValue);
     }
 }

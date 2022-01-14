@@ -22,11 +22,11 @@ public class SqlParams {
     }
 
     public SqlParams(Dto dto) {
-        this(DataInfo.toMap(dto.getFieldValues()));
+        this(StorableData.toMap(dto.getStorableData()));
     }
 
     public SqlParams(Dto dto, String glue) {
-        this(DataInfo.toMap(dto.getFieldValues()), glue);
+        this(StorableData.toMap(dto.getStorableData()), glue);
     }
 
     public SqlParams(Map<String, Object> params) {

@@ -79,7 +79,7 @@ public class ElasticWrite implements Closeable {
         }
 
         if (id != null) {
-            UpdateRequest request = new UpdateRequest(dto.getStorage(), id.toString()).doc(DataInfo.toMap(dto.getFieldValues()));
+            UpdateRequest request = new UpdateRequest(dto.getStorage(), id.toString()).doc(StorableData.toMap(dto.getStorableData()));
             try {
                 checkFailure(ElasticConnection.getClient().update(request, RequestOptions.DEFAULT));
                 return;
@@ -105,7 +105,7 @@ public class ElasticWrite implements Closeable {
             throw new DatabaseException(VantarKey.EVENT_REJECT);
         }
 
-        bulk.add(new UpdateRequest(dto.getStorage(), dto.getId().toString()).doc(DataInfo.toMap(dto.getFieldValues())));
+        bulk.add(new UpdateRequest(dto.getStorage(), dto.getId().toString()).doc(StorableData.toMap(dto.getStorableData())));
     }
 
     public static void deleteOne(Dto dto) throws DatabaseException {

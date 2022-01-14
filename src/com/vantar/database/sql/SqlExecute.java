@@ -51,7 +51,7 @@ public class SqlExecute extends SqlQueryHelper {
     }
 
     public void execute(String sql, Dto data) throws DatabaseException {
-        execute(sql, data.getFieldValues());
+        execute(sql, data.getStorableData());
     }
 
     public void execute(String sql, Object... params) throws DatabaseException {
@@ -72,7 +72,7 @@ public class SqlExecute extends SqlQueryHelper {
 
     public long insert(Dto dto) throws DatabaseException {
         dto.setCreateTime(true);
-        long id = insert(dto.getStorage(), DataInfo.toMap(dto.getFieldValues()));
+        long id = insert(dto.getStorage(), StorableData.toMap(dto.getStorableData()));
 
         if (!dto.beforeInsert()) {
             throw new DatabaseException(VantarKey.EVENT_REJECT);
@@ -152,7 +152,7 @@ public class SqlExecute extends SqlQueryHelper {
         int i = 0;
 
         for (Dto dto : data) {
-            Map<String, Object> params = DataInfo.toMap(dto.getFieldValues());
+            Map<String, Object> params = StorableData.toMap(dto.getStorableData());
 
             if (firstDto) {
                 sql.append("INSERT INTO ").append(dto.getStorage()).append(" (");
@@ -248,7 +248,7 @@ public class SqlExecute extends SqlQueryHelper {
     }
 
     public void updateBySql(Dto data, String condition) throws DatabaseException {
-        updateBySql(data.getStorage(), condition, DataInfo.toMap(data.getFieldValues()));
+        updateBySql(data.getStorage(), condition, StorableData.toMap(data.getStorableData()));
     }
 
     public void updateBySql(String table, String condition, Map<String, Object> params) throws DatabaseException {
@@ -259,7 +259,7 @@ public class SqlExecute extends SqlQueryHelper {
     public void delete(Dto dto) throws DatabaseException {
         Long id = dto.getId();
         if (id == null) {
-            delete(dto.getStorage(), DataInfo.toMap(dto.getFieldValues()));
+            delete(dto.getStorage(), StorableData.toMap(dto.getStorableData()));
             return;
         }
         execute("DELETE FROM " + dto.getStorage() + " WHERE id=" + id + ";");

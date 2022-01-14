@@ -4,7 +4,7 @@ import java.lang.annotation.Annotation;
 import java.util.*;
 
 
-public class DataInfo {
+public class StorableData {
 
     public String name;
     public Object value;
@@ -13,13 +13,13 @@ public class DataInfo {
     public Annotation[] annotations;
 
 
-    public DataInfo(Class<?> type, Object value, boolean isNull) {
+    public StorableData(Class<?> type, Object value, boolean isNull) {
         this.type = type;
         this.value = value;
         this.isNull = isNull;
     }
 
-    public DataInfo(String name, Class<?> type, Object value, boolean isNull, Annotation[] annotations) {
+    public StorableData(String name, Class<?> type, Object value, boolean isNull, Annotation[] annotations) {
         this.name = name;
         this.type = type;
         this.value = value;
@@ -51,9 +51,9 @@ public class DataInfo {
         return null;
     }
 
-    public static Map<String, Object> toMap(List<DataInfo> infos) {
+    public static Map<String, Object> toMap(List<StorableData> infos) {
         Map<String, Object> x = new HashMap<>();
-        for (DataInfo info : infos) {
+        for (StorableData info : infos) {
             x.put(info.name, info.value);
         }
         return x;

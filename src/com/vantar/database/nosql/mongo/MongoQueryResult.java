@@ -189,7 +189,7 @@ public class MongoQueryResult extends QueryResultBase implements QueryResult, Au
                     }
 
                     if (type.isEnum()) {
-                        EnumUtil.setEnumValue(dto, type, field, document.getString(key));
+                        EnumUtil.setEnumValue(document.getString(key), type, dto, field);
                         continue;
                     }
 
@@ -205,7 +205,7 @@ public class MongoQueryResult extends QueryResultBase implements QueryResult, Au
                     }
 
                     if (type == List.class || type == Set.class) {
-                        Class<?>[] g = ObjectUtil.getFieldGenericTypes(field);
+                        Class<?>[] g = ClassUtil.getGenericTypes(field);
                         if (g == null || g.length != 1) {
                             log.warn("! type/value miss-match ({}.{})", dto.getClass().getName(), field.getName());
                             continue;
@@ -235,7 +235,7 @@ public class MongoQueryResult extends QueryResultBase implements QueryResult, Au
 
                             list = new ArrayList<>();
                             for (Document d : docs) {
-                                Dto obj = (Dto) ObjectUtil.getInstance(listType);
+                                Dto obj = (Dto) ClassUtil.getInstance(listType);
                                 if (obj == null) {
                                     continue;
                                 }
@@ -256,7 +256,7 @@ public class MongoQueryResult extends QueryResultBase implements QueryResult, Au
                         if (v == null) {
                             field.set(dto, null);
                         } else {
-                            Class<?>[] g = ObjectUtil.getFieldGenericTypes(field);
+                            Class<?>[] g = ClassUtil.getGenericTypes(field);
                             if (g == null || g.length != 2) {
                                 log.warn("! type/value miss-match ({}.{})", dto.getClass().getName(), field.getName());
                                 continue;
@@ -288,8 +288,8 @@ public class MongoQueryResult extends QueryResultBase implements QueryResult, Au
                         continue;
                     }
 
-                    if (ObjectUtil.implementsInterface(type, Dto.class)) {
-                        Dto obj = (Dto) ObjectUtil.getInstance(type);
+                    if (ClassUtil.implementsInterface(type, Dto.class)) {
+                        Dto obj = (Dto) ClassUtil.getInstance(type);
                         if (obj != null) {
                             mapRecordToObject((Document) value, obj, obj.getFields());
                         }
@@ -322,22 +322,22 @@ public class MongoQueryResult extends QueryResultBase implements QueryResult, Au
 
         Map<K, V> map = new HashMap<>();
         for (Map.Entry<String, Object> entry : document.entrySet()) {
-            if (ObjectUtil.implementsInterface(vClass, Dto.class)) {
-                V vDto = ObjectUtil.getInstance(vClass);
+            if (ClassUtil.implementsInterface(vClass, Dto.class)) {
+                V vDto = ClassUtil.getInstance(vClass);
                 if (vDto == null) {
                     continue;
                 }
                 mapRecordToObject((Document) entry.getValue(), (Dto) vDto, ((Dto) vDto).getFields());
                 map.put(
-                    (K) ObjectUtil.convert(entry.getKey(), kClass),
+                    ObjectUtil.convert(entry.getKey(), kClass),
                     vDto
                 );
                 continue;
             }
 
             map.put(
-                (K) ObjectUtil.convert(entry.getKey(), kClass),
-                (V) ObjectUtil.convert(entry.getValue(), vClass)
+                ObjectUtil.convert(entry.getKey(), kClass),
+                ObjectUtil.convert(entry.getValue(), vClass)
             );
         }
         return map;
@@ -376,7 +376,7 @@ public class MongoQueryResult extends QueryResultBase implements QueryResult, Au
 
         boolean isListSet = type == List.class || type == Set.class;
         if (isListSet) {
-            Class<?>[] types = ObjectUtil.getFieldGenericTypes(fieldX);
+            Class<?>[] types = ClassUtil.getGenericTypes(fieldX);
             if (types == null || types.length == 0) {
                 log.warn("! can not get generic type to fetch d={} dto={} f={} t={}", document, dtoX, fieldX, type);
                 return true;
@@ -409,7 +409,7 @@ public class MongoQueryResult extends QueryResultBase implements QueryResult, Au
                     continue;
                 }
 
-                Dto baseDto = (Dto) ObjectUtil.getInstance(type);
+                Dto baseDto = (Dto) ClassUtil.getInstance(type);
                 if (baseDto == null) {
                     log.warn("! can not create object ({})", type);
                     return true;
@@ -453,7 +453,7 @@ public class MongoQueryResult extends QueryResultBase implements QueryResult, Au
             return true;
         }
 
-        Dto baseDto = (Dto) ObjectUtil.getInstance(fieldX.getType());
+        Dto baseDto = (Dto) ClassUtil.getInstance(fieldX.getType());
         if (baseDto == null) {
             log.warn("! can not create object ({})", type);
             return true;
@@ -488,7 +488,7 @@ public class MongoQueryResult extends QueryResultBase implements QueryResult, Au
 
     private void fetchFromDatabase(Document document, Dto dtoX, Field fieldX, Class<?> type) throws IllegalAccessException {
         if (type == List.class || type == Set.class) {
-            Class<?>[] types = ObjectUtil.getFieldGenericTypes(fieldX);
+            Class<?>[] types = ClassUtil.getGenericTypes(fieldX);
             if (types == null || types.length == 0) {
                 log.warn("! can not get generic type to fetch d={} dto={} f={} t={}", document, dtoX, fieldX, type);
                 return;

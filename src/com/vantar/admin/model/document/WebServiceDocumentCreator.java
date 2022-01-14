@@ -2,7 +2,7 @@ package com.vantar.admin.model.document;
 
 import com.vantar.admin.model.AdminDocument;
 import com.vantar.util.json.Json;
-import com.vantar.util.object.ObjectUtil;
+import com.vantar.util.object.*;
 import com.vantar.util.string.StringUtil;
 import com.vantar.web.*;
 import javax.servlet.http.HttpServletResponse;
@@ -193,7 +193,7 @@ public class WebServiceDocumentCreator {
     public static Set<Class<?>> getExceptions(String className, String methodName) {
         Class<?>[] parameterTypes = new Class[] { Params.class, HttpServletResponse.class };
         try {
-            Class<?> c = ObjectUtil.getClass(className);
+            Class<?> c = ClassUtil.getClass(className);
             if (c == null) {
                 return new HashSet<>();
             }
@@ -213,7 +213,7 @@ public class WebServiceDocumentCreator {
     public static String setAccess(String content, String className, String methodName) {
         Class<?>[] parameterTypes = new Class[] { Params.class, HttpServletResponse.class };
         try {
-            Class<?> c = ObjectUtil.getClass(className);
+            Class<?> c = ClassUtil.getClass(className);
             if (c == null) {
                 return content;
             }

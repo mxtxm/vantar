@@ -11,139 +11,103 @@ public interface Dto {
 
     String ID = "id";
 
-    // must implement > > >
-
     String getStorage();
-
     boolean isEmpty();
+    boolean contains(String propertyName);
+    void reset();
+    Dto getClone();
+    String getSequenceName();
+    long getSequenceInitValue();
 
     Long getId();
-
     void setId(Long id);
 
-    // implemented in base > > >
-
-    Field[] getFields();
-
     void setLang(String lang);
-
     String getLang();
 
     boolean hasAnnotation(String property, Class<? extends Annotation> annotation);
-
     boolean hasAnnotation(Class<? extends Annotation> annotation);
-
     <T extends Annotation> T getAnnotation(String property, Class<T> annotation);
-
     List<String> annotatedProperties(Class<? extends Annotation> annotation);
 
-    Field getField(String name);
-
-    boolean contains(String fieldName);
-
-    Set<String> getExclude();
-
     void setInclude(String... include);
-
     void setExclude(String... exclude);
-
-    Set<String> getNullProperties();
-
-    boolean isNull(String name);
+    void addExclude(String... exclude);
+    Set<String> getExclude();
+    boolean isExcluded(String name);
 
     void addNullProperties(String... nullProperties);
-
     void setNullProperties(String... nullProperties);
+    Set<String> getNullProperties();
+    boolean isNull(String name);
 
-    String[] getProperties();
-
-    String[] getProperties(String... exclude);
-
-    Map<String, Object> getPropertyValues(String... include);
-
-    Map<String, Object> getPropertyValuesIncludeNulls(String... include);
-
-    Map<String, Object> getPropertyValues(boolean includeNulls, boolean snakeCase, Map<String, String> propertyNameMap, String... include);
-
-    List<DataInfo> getFieldValues();
-
-    List<ManyToManyDefinition> getManyToManyFieldValues(long id);
-
-    Map<String, Class<?>> getPropertyTypes();
-
-    Class<?>[] getPropertyGenericTypes(String name);
-
-    void setCreateTime(boolean setCreateTime);
-
-    void setUpdateTime(boolean setUpdateTime);
-
-    void setDefaults();
-
-    void setDefaultsWhenNull();
-
-    void beforeJson();
-
-    boolean beforeInsert();
-
-    boolean beforeUpdate();
-
-    void afterSetData();
-
-    void afterFetchData(long i);
-
-    void afterFetchData();
-
-    Object getPropertyValue(String name);
-
-    String getPresentationValue();
+    Field getField(String name);
+    Field[] getFields();
 
     Class<?> getPropertyType(String name);
+    Map<String, Class<?>> getPropertyTypes();
+    Class<?>[] getPropertyGenericTypes(String name);
 
+    String[] getProperties();
+    String[] getProperties(String... exclude);
+
+    Object getPropertyValue(String name);
+    Map<String, Object> getPropertyValues(String... include);
+    Map<String, Object> getPropertyValuesIncludeNulls(String... include);
+    Map<String, Object> getPropertyValues(boolean includeNulls, boolean snakeCase, Map<String, String> propertyNameMap, String... include);
+
+    void setToDefaults();
+    void setToDefaultsWhenNull();
     Object getDefaultValue(String name);
 
-    String getSequenceName();
+    List<String> getPresentationPropertyNames();
+    String getPresentationValue();
+    String getPresentationValue(String separator);
 
-    String[] getIndexes();
-
-    boolean setPropertyValue(String name, Object value);
-
+    List<ValidationError> setPropertyValue(String name, Object value);
     List<ValidationError> setPropertyValue(String name, Object value, Action action);
-
-    void reset();
-
-    long getSequenceInitValue();
-
-    Dto getClone();
-
-    void set(Dto dto, String... locales);
-
+    List<ValidationError> set(Dto dto, String... locales);
+    List<ValidationError> set(Dto dto, Action action, String... locales);
     List<ValidationError> set(String json, Dto.Action action);
-
     List<ValidationError> set(Map<String, Object> params, Action action);
-
     List<ValidationError> set(Params params, Action action);
-
     List<ValidationError> set(Params params, Action action, String prefix, String suffix);
-
     List<ValidationError> validate(Action action);
 
-    boolean isDeleteLogicalEnabled();
     void setDeleteLogical(boolean deleteLogical);
-    boolean deleteLogical();
-    void setQueryDeleted(QueryDeleted policy);
-    QueryDeleted queryDeleted();
+    boolean getDeleteLogicalState();
+    boolean isDeleteLogicalEnabled();
+    void setDeletedQueryPolicy(QueryDeleted policy);
+    QueryDeleted getDeletedQueryPolicy();
+
+    Dto.Action getAction(Dto.Action defaultAction);
+    String[] getIndexes();
+    void setCreateTime(boolean setCreateTime);
+    void setUpdateTime(boolean setUpdateTime);
+    List<StorableData> getStorableData();
+    List<ManyToManyDefinition> getManyToManyFieldValues(long id);
+
+    void beforeJson();
+    boolean beforeInsert();
+    boolean beforeUpdate();
+    void afterSetData();
+    void afterFetchData(long i);
+    void afterFetchData();
 
 
     enum Action {
-        INSERT,
-        UPDATE,
-        UPDATE_STRICT,
-        STRICT_WITH_NULLS,
-        DELETE,
+        SET,
         GET,
+
+        IMPORT,
+        INSERT,
+
+        UPDATE_ALL_COLS,
+        UPDATE_FEW_COLS,
+
+        DELETE,
         UN_DELETE,
         PURGE,
-        IMPORT,
     }
 
 

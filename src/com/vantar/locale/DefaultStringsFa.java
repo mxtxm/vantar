@@ -27,6 +27,7 @@ public class DefaultStringsFa {
 
         // validation
         tokens.put(VantarKey.REQUIRED, "{0}: وارد کردن اجباری است");
+        tokens.put(VantarKey.REQUIRED_OR, "{0}: وارد کردن یکی از فیلدها اجباری است");
         tokens.put(VantarKey.DATA_TYPE, "{0}: نوع داده نادرست است");
         tokens.put(VantarKey.UNIQUE, "{0}: باید در سیستم یکتا باشد، این مقدار هم اکنون در سیستم وارد شده است");
         tokens.put(VantarKey.ILLEGAL, "{0}: دسترسی ممنوع");

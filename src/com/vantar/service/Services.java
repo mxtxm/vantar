@@ -9,7 +9,7 @@ import com.vantar.database.sql.SqlConnection;
 import com.vantar.queue.Queue;
 import com.vantar.service.messaging.ServiceMessaging;
 import com.vantar.util.datetime.DateTime;
-import com.vantar.util.object.ObjectUtil;
+import com.vantar.util.object.*;
 import com.vantar.util.string.StringUtil;
 import org.slf4j.*;
 import java.lang.reflect.Field;
@@ -104,7 +104,7 @@ public class Services {
 
                 String packageName = StringUtil.trim(Settings.getValue(key + ".package"), '.');
                 String className = StringUtil.toStudlyCase(key);
-                Service service = ObjectUtil.getInstance(packageName + '.' + className);
+                Service service = ClassUtil.getInstance(packageName + '.' + className);
                 if (service == null) {
                     log.error("! service('{}.{}') could not create instance", packageName, className);
                     continue;
@@ -189,7 +189,7 @@ public class Services {
             } else if (type.equals(Character.class)) {
                 field.set(object, StringUtil.toCharacter(value));
             } else if (type.equals(DateTime.class)) {
-                field.set(object, value.equalsIgnoreCase("now") ? new DateTime() : new DateTime(value));
+                field.set(object, new DateTime(value));
             }
         } catch (NoSuchFieldException | IllegalAccessException | IllegalArgumentException | DateTimeException e) {
             log.error("! set({}: {} < {})", object.getClass().getSimpleName(), name.trim(), value, e);

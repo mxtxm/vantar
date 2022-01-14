@@ -149,6 +149,21 @@ public class Params {
         return type + ": N/A";
     }
 
+    public String toJsonString() {
+        switch (type) {
+            case MAP:
+                return Json.toJson(map);
+            case FORM_DATA:
+                return Json.toJson(request.getParameterMap());
+            case JSON:
+                return getJson();
+
+            case MULTI_PART:
+                return Json.toJsonPretty(request.getParameterMap());
+        }
+        return "{}";
+    }
+
     public boolean contains(String key) {
         String v = request == null ? null : request.getParameter(key);
         if (v != null) {
@@ -189,6 +204,10 @@ public class Params {
     // > > > GET
 
 
+    public <T> T getX(String key, T defaultValue) {
+        T obj = map == null ? defaultValue : (T) map.get(key);
+        return obj == null ? defaultValue : obj;
+    }
 
     public String getParameter(String key) {
         if (ignoreParams != null && ignoreParams.contains(key)) {
@@ -229,7 +248,7 @@ public class Params {
             return getDateTime(key);
         }
         if (typeClass.isEnum()) {
-            return EnumUtil.getEnumValue(typeClass, getString(key));
+            return EnumUtil.getEnumValue(getString(key), typeClass);
         }
         return null;
     }
@@ -359,7 +378,7 @@ public class Params {
             object = getParameter(key);
             isEmpty = StringUtil.isEmpty((String) object);
         }
-        List<T> list = ObjectUtil.getList(object, type);
+        List<T> list = ObjectUtil.toList(object, type);
         typeMisMatch = (list == null || list.isEmpty()) && isEmpty;
         return list;
     }
@@ -572,7 +591,10 @@ public class Params {
 
 
     public Location getLocation(String key) {
-        Location location = new Location(getDouble(key + "_latitude"), getDouble(key + "_longitude"));
+        String locationString = getString(key);
+        Location location = locationString != null ?
+            new Location(locationString) :
+            new Location(getDouble(key + "_latitude"), getDouble(key + "_longitude"));
         return location.isEmpty() ? null : location;
     }
 

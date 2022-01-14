@@ -4,7 +4,7 @@ import com.vantar.admin.model.*;
 import com.vantar.common.Settings;
 import com.vantar.database.dto.*;
 import com.vantar.util.file.FileUtil;
-import com.vantar.util.object.ObjectUtil;
+import com.vantar.util.object.*;
 import com.vantar.util.string.StringUtil;
 import java.lang.reflect.*;
 import java.util.*;
@@ -99,7 +99,7 @@ public class DtoDocumentCreator {
                     document.append("* ").append(type.getSimpleName());
 
                     if (type.equals(List.class) || type.equals(ArrayList.class) || type.equals(Set.class)) {
-                        Class<?>[] g = ObjectUtil.getFieldGenericTypes(field);
+                        Class<?>[] g = ClassUtil.getGenericTypes(field);
                         if (g == null || g.length != 1) {
                             AdminDocument.log.warn("! invalid generics ({}.{})", dto.getClass().getSimpleName(), field.getName());
                             continue;
@@ -111,7 +111,7 @@ public class DtoDocumentCreator {
                             .append("&gt;");
 
                     } else if (type.equals(Map.class)) {
-                        Class<?>[] g = ObjectUtil.getFieldGenericTypes(field);
+                        Class<?>[] g = ClassUtil.getGenericTypes(field);
                         if (g == null || g.length != 2) {
                             AdminDocument.log.warn("! invalid generics ({}.{})", dto.getClass().getSimpleName(), field.getName());
                             continue;

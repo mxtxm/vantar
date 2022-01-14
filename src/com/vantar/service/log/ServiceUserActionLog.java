@@ -27,15 +27,16 @@ public class ServiceUserActionLog implements Services.Service {
 
     // > > > service params injected from config
     public Boolean onEndSetNull;
-    public Boolean storeEnabled;
     public String dbms;
+    public Boolean delayedStoreEnabled
+        ;
     public Integer insertIntervalMin;
     // < < <
 
     public void start() {
         serviceOn = true;
         isBusy.set(false);
-        if (!storeEnabled) {
+        if (!delayedStoreEnabled) {
             return;
         }
         schedule = Executors.newSingleThreadScheduledExecutor();
@@ -45,7 +46,7 @@ public class ServiceUserActionLog implements Services.Service {
     public void stop() {
         serviceOn = false;
         isBusy.set(false);
-        if (!storeEnabled) {
+        if (!delayedStoreEnabled) {
             return;
         }
         schedule.shutdown();
@@ -76,7 +77,10 @@ public class ServiceUserActionLog implements Services.Service {
     }
 
     public static void add(Params params, String action, Object object, String description) {
-        if (!Services.isUp(ServiceUserActionLog.class)) {
+        ServiceUserActionLog userLogService;
+        try {
+            userLogService = Services.get(ServiceUserActionLog.class);
+        } catch (ServiceException e) {
             return;
         }
 
@@ -109,7 +113,7 @@ public class ServiceUserActionLog implements Services.Service {
         }
         userLog.description = description;
 
-        if (Queue.isUp) {
+        if (userLogService.delayedStoreEnabled && Queue.isUp) {
             Queue.add(VantarParam.QUEUE_NAME_USER_ACTION_LOG, new Packet(userLog));
             log.debug("userLog > queue({})", VantarParam.QUEUE_NAME_USER_ACTION_LOG);
         } else {

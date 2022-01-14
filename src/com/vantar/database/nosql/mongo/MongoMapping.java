@@ -39,15 +39,16 @@ public class MongoMapping {
         return document;
     }
 
-    public static Document getFieldValues(Dto dto, Dto.Action action) {
+    public static Document getFieldValuesAsDocument(Dto dto, Dto.Action action) {
         Document document = new Document();
 
-        for (DataInfo info : dto.getFieldValues()) {
+        for (StorableData info : dto.getStorableData()) {
             if (info.name.equals("id")) {
                 info.name = Mongo.ID;
             }
-
-            if (info.isNull && (action.equals(Dto.Action.UPDATE) || action.equals(Dto.Action.INSERT))) {
+            if (info.isNull) {
+                document.put(info.name, null);
+            } else if (info.value == null && (action.equals(Dto.Action.UPDATE_ALL_COLS) || action.equals(Dto.Action.INSERT))) {
                 document.put(info.name, null);
             } else if (info.value != null) {
                 document.put(info.name, getValueForDocument(info, action));
@@ -57,7 +58,7 @@ public class MongoMapping {
         return document;
     }
 
-    private static Object getValueForDocument(DataInfo info, Dto.Action action) {
+    private static Object getValueForDocument(StorableData info, Dto.Action action) {
         if (info.value == null) {
             return null;
         }
@@ -79,7 +80,7 @@ public class MongoMapping {
             }
 
         } else if (info.type.isEnum()) {
-            return action == Dto.Action.GET ? info.value.toString() : ((Enum<?>) info.value).name();
+            return info.value.toString();
 
         } else if (info.type.equals(Location.class)) {
             Location location = (Location) info.value;
@@ -100,7 +101,7 @@ public class MongoMapping {
 
             for (Object v : (List) info.value) {
                 if (v != null) {
-                    list.add(getValueForDocument(new DataInfo(v.getClass(), v, false), action));
+                    list.add(getValueForDocument(new StorableData(v.getClass(), v, false), action));
                 }
             }
             return list;
@@ -109,7 +110,7 @@ public class MongoMapping {
             return mapToDocumentObject((Map<?, ?>) info.value, action);
 
         } else if (info.value instanceof Dto) {
-            return getFieldValues((Dto) info.value, action);
+            return getFieldValuesAsDocument((Dto) info.value, action);
 
         } else {
             if (!info.type.getPackage().getName().startsWith("java.")) {
@@ -124,7 +125,7 @@ public class MongoMapping {
         Document document = new Document();
         data.forEach((k, v) -> {
             if (k !=null && v != null) {
-                document.put(k, getValueForDocument(new DataInfo(v.getClass(), v, false), action));
+                document.put(k, getValueForDocument(new StorableData(v.getClass(), v, false), action));
             }
         });
         return document;
@@ -134,7 +135,7 @@ public class MongoMapping {
         Document document = new Document();
         data.forEach((k, v) -> {
             if (k !=null && v != null) {
-                document.put(k.toString(), getValueForDocument(new DataInfo(v.getClass(), v, false), action));
+                document.put(k.toString(), getValueForDocument(new StorableData(v.getClass(), v, false), action));
             }
         });
         return document;
@@ -229,7 +230,7 @@ public class MongoMapping {
         }
 
         QueryCondition condition;
-        if (dto.isDeleteLogicalEnabled() && dto.queryDeleted() != Dto.QueryDeleted.SHOW_ALL) {
+        if (dto.isDeleteLogicalEnabled() && dto.getDeletedQueryPolicy() != Dto.QueryDeleted.SHOW_ALL) {
 
             if (qCondition == null) {
                 condition = new QueryCondition(dto.getStorage());
@@ -240,7 +241,7 @@ public class MongoMapping {
                 condition.addCondition(qCondition);
             }
 
-            switch (dto.queryDeleted()) {
+            switch (dto.getDeletedQueryPolicy()) {
                 case SHOW_NOT_DELETED:
                     condition.notEqual(Mongo.LOGICAL_DELETE_FIELD, Mongo.LOGICAL_DELETE_VALUE);
                     break;
