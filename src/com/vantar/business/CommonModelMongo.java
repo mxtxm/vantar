@@ -18,7 +18,6 @@ import com.vantar.util.object.*;
 import com.vantar.util.string.StringUtil;
 import com.vantar.web.*;
 import org.slf4j.*;
-import javax.ws.rs.GET;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -70,6 +69,7 @@ public class CommonModelMongo extends CommonModel {
 
         if (event != null) {
             event.beforeWrite(dto);
+            dto.removeNullPropertiesNatural();
         }
 
         try {
@@ -77,7 +77,16 @@ public class CommonModelMongo extends CommonModel {
             if (errors != null) {
                 throw new InputException(errors);
             }
+            errors = CommonRepoMongo.getRelationViolation(dto);
+            if (errors != null) {
+                throw new InputException(errors);
+            }
             Mongo.insert(dto);
+            errors = CommonRepoMongo.getParentChildViolation(dto);
+            if (errors != null) {
+                Mongo.delete(dto);
+                throw new InputException(errors);
+            }
         } catch (DatabaseException e) {
             log.error("! {}", dto, e);
             throw new ServerException(VantarKey.INSERT_FAIL);
@@ -116,6 +125,7 @@ public class CommonModelMongo extends CommonModel {
 
         if (event != null) {
             event.beforeWrite(dto);
+            dto.removeNullPropertiesNatural();
         }
 
         try {
@@ -123,7 +133,16 @@ public class CommonModelMongo extends CommonModel {
             if (errors != null) {
                 throw new InputException(errors);
             }
+            errors = CommonRepoMongo.getRelationViolation(dto);
+            if (errors != null) {
+                throw new InputException(errors);
+            }
             Mongo.insert(dto);
+            errors = CommonRepoMongo.getParentChildViolation(dto);
+            if (errors != null) {
+                Mongo.delete(dto);
+                throw new InputException(errors);
+            }
         } catch (DatabaseException e) {
             log.error("! {}", dto, e);
             throw new ServerException(VantarKey.INSERT_FAIL);
@@ -180,7 +199,6 @@ public class CommonModelMongo extends CommonModel {
 
     private static ResponseMessage updateX(Object params, Dto dto, WriteEvent event, Params requestParams, Dto.Action action)
         throws InputException, ServerException {
-
         if (event != null) {
             event.beforeSet(dto);
         }
@@ -195,10 +213,19 @@ public class CommonModelMongo extends CommonModel {
 
         if (event != null) {
             event.beforeWrite(dto);
+            dto.removeNullPropertiesNatural();
         }
 
         try {
             errors = CommonRepoMongo.getUniqueViolation(dto);
+            if (errors != null) {
+                throw new InputException(errors);
+            }
+            errors = CommonRepoMongo.getParentChildViolation(dto);
+            if (errors != null) {
+                throw new InputException(errors);
+            }
+            errors = CommonRepoMongo.getRelationViolation(dto);
             if (errors != null) {
                 throw new InputException(errors);
             }
@@ -267,10 +294,19 @@ public class CommonModelMongo extends CommonModel {
 
         if (event != null) {
             event.beforeWrite(dto);
+            dto.removeNullPropertiesNatural();
         }
 
         try {
             errors = CommonRepoMongo.getUniqueViolation(dto);
+            if (errors != null) {
+                throw new InputException(errors);
+            }
+            errors = CommonRepoMongo.getParentChildViolation(dto);
+            if (errors != null) {
+                throw new InputException(errors);
+            }
+            errors = CommonRepoMongo.getRelationViolation(dto);
             if (errors != null) {
                 throw new InputException(errors);
             }
@@ -373,9 +409,11 @@ public class CommonModelMongo extends CommonModel {
             event.beforeSet(dto);
         }
 
-        List<ValidationError> errors = dto.validate(Dto.Action.DELETE);
-        if (CollectionUtil.isNotEmpty(errors)) {
-            throw new InputException(errors);
+        if (q == null) {
+            List<ValidationError> errors = dto.validate(Dto.Action.DELETE);
+            if (CollectionUtil.isNotEmpty(errors)) {
+                throw new InputException(errors);
+            }
         }
 
         if (event != null) {
@@ -531,21 +569,11 @@ public class CommonModelMongo extends CommonModel {
     // PURGE > > >
 
 
-    public static ResponseMessage purge(Params params, String collection) throws ServerException {
+    public static ResponseMessage purge(Params params, Dto dto) throws ServerException {
         try {
-            CommonRepoMongo.purge(collection);
-            logAction(params, collection, Dto.Action.PURGE);
-            return new ResponseMessage(VantarKey.DELETE_SUCCESS);
-        } catch (DatabaseException e) {
-            log.error("! {}", e.getMessage());
-            throw new ServerException(VantarKey.DELETE_FAIL);
-        }
-    }
-
-    public static ResponseMessage purgeData(Params params, String collection) throws ServerException {
-        try {
-            CommonRepoMongo.purgeData(collection);
-            logAction(params, collection, Dto.Action.PURGE);
+            CommonRepoMongo.purge(dto.getStorage());
+            afterDataChange(dto);
+            logAction(params, dto.getStorage(), Dto.Action.PURGE);
             return new ResponseMessage(VantarKey.DELETE_SUCCESS);
         } catch (DatabaseException e) {
             log.error("! {}", e.getMessage());

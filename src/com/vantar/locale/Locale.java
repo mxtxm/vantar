@@ -68,8 +68,9 @@ public class Locale {
         }
 
         try {
-            LangJson langJson = Json.fromJsonNotChecked(params.getJson(), LangJson.class);
+            LangJson langJson = Json.fromJson(params.getJson(), LangJson.class);
             threadLangs.put(Thread.currentThread().getId(), langJson == null ? defaultLocale : langJson.lang);
+            return;
         } catch (Exception ignore) {
 
         }

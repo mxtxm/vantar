@@ -7,13 +7,12 @@ import com.vantar.exception.DateTimeException;
 import com.vantar.locale.VantarKey;
 import com.vantar.util.collection.CollectionUtil;
 import com.vantar.util.datetime.DateTime;
-import com.vantar.util.json.Json;
+import com.vantar.util.json.*;
 import com.vantar.util.number.NumberUtil;
 import com.vantar.util.object.*;
 import com.vantar.util.string.*;
 import com.vantar.web.Params;
 import org.slf4j.*;
-import javax.ws.rs.GET;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.*;
 import java.util.*;
@@ -21,22 +20,22 @@ import java.util.*;
 
 public abstract class DtoBase implements Dto {
 
-    private static final Logger log = LoggerFactory.getLogger(DtoBase.class);
-    private static final long INIT_SEQUENCE_VALUE = 1L;
-    private static final boolean DEFAULT_DELETE_LOGICAL = false;
+    private transient static final Logger log = LoggerFactory.getLogger(DtoBase.class);
+    private transient static final long INIT_SEQUENCE_VALUE = 1L;
+    private transient static final boolean DEFAULT_DELETE_LOGICAL = false;
 
-    private boolean setCreateTime;
-    private boolean setUpdateTime;
-    private Set<String> excludeProperties;
-    private Set<String> nullProperties;
-    private String lang;
-    private boolean deleteLogical = DEFAULT_DELETE_LOGICAL;
-    private QueryDeleted deletedQueryPolicy = QueryDeleted.SHOW_NOT_DELETED;
-    private Action action;
+    private transient boolean setCreateTime;
+    private transient boolean setUpdateTime;
+    private transient Set<String> excludeProperties;
+    private transient Set<String> nullProperties;
+    private transient String bLang;
+    private transient boolean deleteLogical = DEFAULT_DELETE_LOGICAL;
+    private transient QueryDeleted deletedQueryPolicy = QueryDeleted.SHOW_NOT_DELETED;
+    private transient Action bAction;
 
 
     public Action getAction(Action defaultAction) {
-        return action == null ? defaultAction : action;
+        return bAction == null ? defaultAction : bAction;
     }
 
     public boolean isDeleteLogicalEnabled() {
@@ -71,7 +70,11 @@ public abstract class DtoBase implements Dto {
     }
 
     public void setId(Long id) {
-        setPropertyValue(ID, id);
+        try {
+            getField(ID).set(this, id);
+        } catch (IllegalAccessException ignore) {
+
+        }
     }
 
     public Long getId() {
@@ -79,11 +82,11 @@ public abstract class DtoBase implements Dto {
     }
 
     public void setLang(String lang) {
-        this.lang = lang;
+        this.bLang = lang;
     }
 
     public String getLang() {
-        return lang == null ? (String) getPropertyValue("lang") : lang;
+        return bLang == null ? (String) getPropertyValue("lang") : bLang;
     }
 
     public void setCreateTime(boolean setCreateTime) {
@@ -139,6 +142,26 @@ public abstract class DtoBase implements Dto {
         }
     }
 
+    public void removeNullProperties(String... properties) {
+        if (nullProperties == null) {
+            return;
+        }
+        for (String p : properties) {
+            nullProperties.remove(p);
+        }
+    }
+
+    public void removeNullPropertiesNatural() {
+        if (nullProperties == null) {
+            return;
+        }
+        for (Map.Entry<String, Object> entry : getPropertyValues().entrySet()) {
+            if (entry.getValue() != null) {
+                nullProperties.remove(entry.getKey());
+            }
+        }
+    }
+
     public Set<String> getNullProperties() {
         return nullProperties;
     }
@@ -156,11 +179,7 @@ public abstract class DtoBase implements Dto {
     }
 
     public Dto getClone() {
-        Dto dto = ClassUtil.getInstance(getClass());
-        if (dto != null) {
-            dto.set(this);
-        }
-        return dto;
+        return JsonAllProps.fromJson(JsonAllProps.toJson(this), this.getClass());
     }
 
     public boolean contains(String propertyName) {
@@ -354,8 +373,8 @@ public abstract class DtoBase implements Dto {
             for (String propertyName : getPresentationPropertyNames()) {
                 Field field = getField(propertyName);
                 sb.append(
-                    field.isAnnotationPresent(Localized.class) && lang != null ?
-                        ((Map<String, String>) field.get(this)).get(lang) :
+                    field.isAnnotationPresent(Localized.class) && bLang != null ?
+                        ((Map<String, String>) field.get(this)).get(bLang) :
                         field.get(this).toString()
                 )
                     .append(separator);
@@ -506,6 +525,7 @@ public abstract class DtoBase implements Dto {
                     if ((setCreateTime && field.isAnnotationPresent(CreateTime.class))
                         || (setUpdateTime && field.isAnnotationPresent(UpdateTime.class))) {
 
+                        isNull = false;
                         value = new DateTime();
                     }
                 } else if (field.isAnnotationPresent(StoreString.class)) {
@@ -673,7 +693,9 @@ public abstract class DtoBase implements Dto {
         }
         json = json.trim();
         if (!json.startsWith("{") && !json.endsWith("}")) {
-            return validate(action);
+            List<ValidationError> errors = new ArrayList<>(1);
+            errors.add(new ValidationError(VantarKey.INVALID_JSON_DATA));
+            return errors;
         }
 
         Dto dto = Json.fromJson(json, getClass());
@@ -807,9 +829,9 @@ public abstract class DtoBase implements Dto {
         }
 
         try {
-            action = StringUtil.isNotEmpty(actionString) ? Action.valueOf(actionString) : defaultAction;
+            bAction = StringUtil.isNotEmpty(actionString) ? Action.valueOf(actionString) : defaultAction;
         } catch (IllegalArgumentException e) {
-            action = defaultAction;
+            bAction = defaultAction;
         }
     }
 
@@ -874,17 +896,22 @@ public abstract class DtoBase implements Dto {
                 }
             }
 
+            if (action.equals(Action.SET) && nullProperties != null) {
+                nullProperties.remove(name);
+            }
+
             if (value == null) {
-                if ((action.equals(Action.INSERT) || action.equals(Action.IMPORT) || action.equals(Action.UPDATE_ALL_COLS)
-                    || action.equals(Action.SET))) {
+                if ((action.equals(Action.INSERT) || action.equals(Action.IMPORT) || action.equals(Action.UPDATE_ALL_COLS))) {
 
                     Object defaultValue = getDefaultValue(field);
                     if (defaultValue != null) {
                         field.set(this, defaultValue);
                     }
-                    if (field.get(this) == null) {
+                    if (field.get(this) == null && !name.equals(ID)) {
                         addNullProperties(name);
                     }
+                } else if (action.equals(Action.SET)) {
+                    field.set(this, null);
                 } else if (action.equals(Action.UPDATE_FEW_COLS)) {
                     Object defaultValue = getDefaultValue(field);
                     if (defaultValue != null) {
@@ -894,7 +921,7 @@ public abstract class DtoBase implements Dto {
             } else {
                 field.set(this, value);
             }
-        } catch (IllegalAccessException e) {
+        } catch (IllegalAccessException | IllegalArgumentException e) {
             log.error("! {}>{}", name, value, e);
             errors.add(new ValidationError(name, VantarKey.ILLEGAL));
         }
@@ -916,39 +943,61 @@ public abstract class DtoBase implements Dto {
     }
 
     private void validateGroup(List<ValidationError> errors, Action action) {
-        if (action.equals(Action.GET) || action.equals(Action.DELETE) || action.equals(Action.UN_DELETE)
-            || action.equals(Action.PURGE)) {
+        if (!(action.equals(Action.GET) || action.equals(Action.DELETE) || action.equals(Action.UN_DELETE)
+            || action.equals(Action.PURGE))) {
 
-            return;
-        }
-        if (getClass().isAnnotationPresent(RequiredGroupOr.class)) {
-            for (String requiredProps : getClass().getAnnotation(RequiredGroupOr.class).value()) {
-                boolean isOk = false;
-                for (String prop : StringUtil.split(requiredProps, ',')) {
-                    Object v = getPropertyValue(prop.trim());
-                    if (v == null) {
-                        continue;
-                    }
-                    if (v instanceof String && ((String) v).isEmpty()) {
-                        continue;
-                    }
-                    if (v instanceof Collection && ((Collection<?>) v).isEmpty()) {
-                        continue;
-                    }
-                    if (v instanceof Map && ((Map<?, ?>) v).isEmpty()) {
-                        continue;
-                    }
+            if (getClass().isAnnotationPresent(RequiredGroupXor.class)) {
+                for (String requiredProps : getClass().getAnnotation(RequiredGroupXor.class).value()) {
+                    int notNullCount = 0;
+                    for (String prop : StringUtil.split(requiredProps, ',')) {
+                        Object v = getPropertyValue(prop.trim());
+                        if (v == null
+                            || (v instanceof String && ((String) v).isEmpty())
+                            ||(v instanceof Collection && ((Collection<?>) v).isEmpty())
+                            || (v instanceof Map && ((Map<?, ?>) v).isEmpty())) {
 
-                    isOk = !isOk;
-                    if (!isOk) {
-                        break;
+                            continue;
+                        }
+
+                        ++notNullCount;
+                    }
+                    if (action.equals(Action.UPDATE_FEW_COLS)) {
+                        if (notNullCount == 2) {
+                            errors.add(new ValidationError(requiredProps, VantarKey.REQUIRED_XOR));
+                        }
+                    } else if (notNullCount != 1) {
+                        errors.add(new ValidationError(requiredProps, VantarKey.REQUIRED_XOR));
                     }
                 }
-                if (!isOk) {
-                    errors.add(new ValidationError(requiredProps, VantarKey.REQUIRED_OR));
+            }
+
+            if (action.equals(Action.UPDATE_FEW_COLS)) {
+                return;
+            }
+
+            if (getClass().isAnnotationPresent(RequiredGroupOr.class)) {
+                for (String requiredProps : getClass().getAnnotation(RequiredGroupOr.class).value()) {
+                    boolean ok = false;
+                    for (String prop : StringUtil.split(requiredProps, ',')) {
+                        Object v = getPropertyValue(prop.trim());
+                        if (v == null
+                            || (v instanceof String && ((String) v).isEmpty())
+                            ||(v instanceof Collection && ((Collection<?>) v).isEmpty())
+                            || (v instanceof Map && ((Map<?, ?>) v).isEmpty())) {
+
+                            continue;
+                        }
+
+                        ok = true;
+                        break;
+                    }
+                    if (!ok) {
+                        errors.add(new ValidationError(requiredProps, VantarKey.REQUIRED_OR));
+                    }
                 }
             }
         }
+
     }
 
     private void validateField(Field field, Object paramValue, Action action, List<ValidationError> errors) {

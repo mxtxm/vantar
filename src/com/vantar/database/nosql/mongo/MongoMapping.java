@@ -17,7 +17,6 @@ import java.util.regex.Pattern;
 import static com.vantar.database.query.QueryOperator.AND;
 import static com.vantar.database.query.QueryOperator.QUERY;
 
-
 @SuppressWarnings({"unchecked", "rawtypes"})
 public class MongoMapping {
 
@@ -65,7 +64,7 @@ public class MongoMapping {
 
         if (info.type.equals(String.class)) {
             return action.equals(Dto.Action.GET) && StringUtil.isNotEmpty((String) info.value) ?
-                new Document("$regex", ".*" + Pattern.quote((String) info.value) + ".*") : info.value;
+                new Document("$regex", "(?i)" + Pattern.quote((String) info.value) + ".*") : info.value;
 
         } else if (info.type.equals(DateTime.class)) {
             DateTime dateTime = (DateTime) info.value;
@@ -84,6 +83,9 @@ public class MongoMapping {
 
         } else if (info.type.equals(Location.class)) {
             Location location = (Location) info.value;
+            if (location.latitude == null || location.longitude == null) {
+                return null;
+            }
             return new Point(new Position(location.latitude, location.longitude));
 
         } else if (info.type.equals(com.vantar.database.datatype.Polygon.class)) {
@@ -91,6 +93,9 @@ public class MongoMapping {
             List<Position> positions = new ArrayList<>();
             for (Location location : polygon.locations) {
                 if (location != null) {
+                    if (location.latitude == null || location.longitude == null) {
+                        continue;
+                    }
                     positions.add(new Position(location.latitude, location.longitude));
                 }
             }
@@ -98,7 +103,6 @@ public class MongoMapping {
 
         } else if (info.value instanceof List) {
             List<Object> list = new ArrayList<>();
-
             for (Object v : (List) info.value) {
                 if (v != null) {
                     list.add(getValueForDocument(new StorableData(v.getClass(), v, false), action));
@@ -106,10 +110,20 @@ public class MongoMapping {
             }
             return list;
 
+        } else if (info.value instanceof Set) {
+            Set<Object> set = new HashSet<>();
+            for (Object v : (Set) info.value) {
+                if (v != null) {
+                    set.add(getValueForDocument(new StorableData(v.getClass(), v, false), action));
+                }
+            }
+            return set;
+
         } else if (info.value instanceof Map) {
             return mapToDocumentObject((Map<?, ?>) info.value, action);
 
         } else if (info.value instanceof Dto) {
+            ((Dto) info.value).setToDefaultsWhenNull();
             return getFieldValuesAsDocument((Dto) info.value, action);
 
         } else {
@@ -277,10 +291,10 @@ public class MongoMapping {
                     matches.add(new Document(fieldName, new Document("$ne", item.getValue())));
                     break;
                 case LIKE:
-                    matches.add(new Document(fieldName, new Document("$regex", ".*" + Pattern.quote(item.stringValue) + ".*")));
+                    matches.add(new Document(fieldName, new Document("$regex", "(?i)" + Pattern.quote(item.stringValue) + ".*")));
                     break;
                 case NOT_LIKE:
-                    matches.add(new Document(fieldName, new Document("$ne", new Document("$regex", ".*" + Pattern.quote(item.stringValue) + ".*"))));
+                    matches.add(new Document(fieldName, new Document("$ne", new Document("$regex", "(?i)" + Pattern.quote(item.stringValue) + ".*"))));
                     break;
                 case IN:
                     matches.add(new Document(fieldName, new Document("$in", Arrays.asList(item.getValues()))));
@@ -298,7 +312,7 @@ public class MongoMapping {
                     String p = Pattern.quote(item.stringValue);
                     dto.getPropertyTypes().forEach((name, tClass) -> {
                         if (tClass.equals(String.class)) {
-                            textMatches.add(new Document(name, new Document("$regex", ".*" + p + ".*")));
+                            textMatches.add(new Document(name, new Document("$regex", "(?i)" + p + ".*")));
                         }
                     });
 

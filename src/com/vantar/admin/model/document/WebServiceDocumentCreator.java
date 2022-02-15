@@ -119,7 +119,11 @@ public class WebServiceDocumentCreator {
             "    {\n" +
             "        \"code\": (int) status code 200/4xx/5xx,\n" +
             "        \"message\": (String) \"message, i.e. success or user validation errors\",\n" +
-            "        \"successful\": (boolean) true/false\n" +
+            "        \"successful\": (boolean) true/false,\n" +
+            "        // if success:\n" +
+            "        \"value\": (long) deleted record count\n" +
+            "        // if can not delete because of dependencies:\n" +
+            "        \"value\": [{\"name\":\"dto.class\", [{data}, {data},...]}, {}, ...]\n" +
             "    }\n");
 
         content = StringUtil.replace(content, "<<<access>>>", "PUBLIC", 1);

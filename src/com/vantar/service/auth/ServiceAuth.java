@@ -5,7 +5,7 @@ import com.vantar.exception.*;
 import com.vantar.locale.VantarKey;
 import com.vantar.service.Services;
 import com.vantar.util.file.FileUtil;
-import com.vantar.util.json.Json;
+import com.vantar.util.json.*;
 import com.vantar.util.string.StringUtil;
 import com.vantar.web.*;
 import org.apache.commons.codec.digest.DigestUtils;
@@ -30,6 +30,8 @@ public class ServiceAuth extends Permit implements Services.Service {
     private final Map<String, TokenData> oneTimeTokens = new ConcurrentHashMap<>(MAX_VERIFY_TOKENS);
     private final Map<String, TokenData> verifyTokens = new ConcurrentHashMap<>(MAX_VERIFY_TOKENS);
 
+    private static Class<? extends CommonUser> userClass;
+
     public Boolean onEndSetNull;
     /* parent class: public Integer tokenExpireMin; */
     public Integer tokenCheckIntervalMin;
@@ -39,6 +41,7 @@ public class ServiceAuth extends Permit implements Services.Service {
     public boolean signUpVerifyTokenNumberOnly = DEFAULT_VERIFY_TOKEN_NUMBER_ONLY;
     public boolean signInVerifyTokenNumberOnly = DEFAULT_VERIFY_TOKEN_NUMBER_ONLY;
 
+
     public void start() {
         schedule = Executors.newSingleThreadScheduledExecutor();
         schedule.scheduleWithFixedDelay(this::validateTokens, tokenCheckIntervalMin, tokenCheckIntervalMin, TimeUnit.MINUTES);
@@ -46,17 +49,33 @@ public class ServiceAuth extends Permit implements Services.Service {
 
     public void stop() {
         if (tokenStorePath != null) {
-            Json.addInterface(CommonUser.class);
+            JsonAllProps.addInterface(CommonUser.class);
             FileUtil.write(
                 tokenStorePath,
-                Json.toJson(onlineUsers) + VantarParam.SEPARATOR_BLOCK_COMPLEX +
-                Json.toJson(signupVerifyTokens) + VantarParam.SEPARATOR_BLOCK_COMPLEX +
-                Json.toJson(oneTimeTokens) + VantarParam.SEPARATOR_BLOCK_COMPLEX +
-                Json.toJson(verifyTokens)
+                JsonAllProps.toJson(onlineUsers) + VantarParam.SEPARATOR_BLOCK_COMPLEX +
+                JsonAllProps.toJson(signupVerifyTokens) + VantarParam.SEPARATOR_BLOCK_COMPLEX +
+                JsonAllProps.toJson(oneTimeTokens) + VantarParam.SEPARATOR_BLOCK_COMPLEX +
+                JsonAllProps.toJson(verifyTokens)
             );
             log.info("> > > Auth-tokens are backed-up.");
         }
         schedule.shutdown();
+    }
+
+    public ServiceAuth updateOnlineUsers(List<CommonUser> users) {
+        for (CommonUser u : users) {
+            updateOnlineUser(u);
+        }
+        return this;
+    }
+
+    public ServiceAuth updateOnlineUser(CommonUser user) {
+        for (TokenData t : onlineUsers.values()) {
+            if (t.user.getId().equals(user.getId())) {
+                t.user = user;
+            }
+        }
+        return this;
     }
 
     public ServiceAuth restoreTokens() {
@@ -69,29 +88,30 @@ public class ServiceAuth extends Permit implements Services.Service {
             return this;
         }
 
+        //JsonAllProps.addInterface(CommonUser.class);
+        //JsonAllProps.addKoon(CommonUser.class, userClass);
         String[] parts = StringUtil.split(contents, VantarParam.SEPARATOR_BLOCK_COMPLEX);
         if (parts.length == 4) {
-            Json.addInterface(CommonUser.class);
             if (StringUtil.isNotEmpty(parts[0])) {
-                Map<String, TokenData> x = Json.mapFromJson(parts[0], String.class, TokenData.class);
+                Map<String, TokenData> x = JsonAllProps.mapFromJson(parts[0], String.class, TokenData.class);
                 if (x != null) {
                     onlineUsers.putAll(x);
                 }
             }
             if (StringUtil.isNotEmpty(parts[1])) {
-                Map<String, TokenData> x = Json.mapFromJson(parts[1], String.class, TokenData.class);
+                Map<String, TokenData> x = JsonAllProps.mapFromJson(parts[1], String.class, TokenData.class);
                 if (x != null) {
                     signupVerifyTokens.putAll(x);
                 }
             }
             if (StringUtil.isNotEmpty(parts[2])) {
-                Map<String, TokenData> x = Json.mapFromJson(parts[2], String.class, TokenData.class);
+                Map<String, TokenData> x = JsonAllProps.mapFromJson(parts[2], String.class, TokenData.class);
                 if (x != null) {
                     oneTimeTokens.putAll(x);
                 }
             }
             if (StringUtil.isNotEmpty(parts[3])) {
-                Map<String, TokenData> x = Json.mapFromJson(parts[3], String.class, TokenData.class);
+                Map<String, TokenData> x = JsonAllProps.mapFromJson(parts[3], String.class, TokenData.class);
                 if (x != null) {
                     verifyTokens.putAll(x);
                 }
@@ -190,7 +210,7 @@ public class ServiceAuth extends Permit implements Services.Service {
         tokenData = new TokenData(user);
         makeUserOnline(tokenData);
 
-        CommonUser u = Json.fromJson(Json.toJson(user), user.getClass());
+        CommonUser u = (CommonUser) user.getClone();
         if (u != null) {
             u.nullPassword();
         }
@@ -240,18 +260,27 @@ public class ServiceAuth extends Permit implements Services.Service {
         return this;
     }
 
-    private String makeUserOnline(TokenData info) {
+    private synchronized String makeUserOnline(TokenData info) {
         while (true) {
             String token = DigestUtils.sha1Hex(info.user.getPassword() + info.user.getFullName() + Math.random());
             if (onlineUsers.containsKey(token)) {
                 continue;
             }
 
-            onlineUsers.forEach((t, u) -> {
-                if (u.user.getId().equals(info.user.getId())) {
-                    onlineUsers.remove(u.user.getToken());
+            try {
+                List<String> tokensToDelete = new ArrayList<>(5);
+                for (Map.Entry<String, TokenData> entry : onlineUsers.entrySet()) {
+                    if (entry.getValue().user.getId().equals(info.user.getId())) {
+                        tokensToDelete.add(entry.getKey());
+                    }
                 }
-            });
+                for (String tokenToDelete : tokensToDelete) {
+                    onlineUsers.remove(tokenToDelete);
+                }
+            } catch (Exception e) {
+                log.error("!  token={} online={}\n", info, onlineUsers);
+            }
+
             onlineUsers.put(token, info);
             info.user.setToken(token);
             return token;
@@ -325,6 +354,14 @@ public class ServiceAuth extends Permit implements Services.Service {
         signupVerifyTokens.remove(token);
         oneTimeTokens.remove(token);
         verifyTokens.remove(token);
+    }
+
+    public static Class<? extends CommonUser> getUserClass() {
+        return userClass;
+    }
+
+    public static void setUserClass(Class<? extends CommonUser> uc) {
+        userClass = uc;
     }
 
 

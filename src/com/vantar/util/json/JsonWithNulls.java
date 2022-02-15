@@ -10,9 +10,9 @@ import java.lang.reflect.*;
 import java.util.*;
 
 
-public class Json {
+public class JsonWithNulls {
 
-    private static final Logger log = LoggerFactory.getLogger(Json.class);
+    private static final Logger log = LoggerFactory.getLogger(JsonWithNulls.class);
     private static Gson gson;
 
 
@@ -35,7 +35,8 @@ public class Json {
             .registerTypeAdapterFactory(TypeAdapters.newFactory(DateTime.class, GsonCustom.typeAdapterDateTime))
             .registerTypeAdapterFactory(TypeAdapters.newFactory(Location.class, GsonCustom.typeAdapterLocation))
             .setDateFormat("yyyy-MM-dd hh:mm:ss")
-            .excludeFieldsWithModifiers(Modifier.STATIC, Modifier.PRIVATE, Modifier.PROTECTED);
+            .excludeFieldsWithModifiers(Modifier.STATIC, Modifier.PRIVATE, Modifier.PROTECTED)
+            .serializeNulls();
     }
 
     public static void reset() {

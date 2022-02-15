@@ -53,7 +53,7 @@ public class ServiceMessaging {
         }
 
         LogEvent.beat(ServiceMessaging.class, "broadcast");
-         Queue.emmit(QUEUE_NAME_MESSAGE, new Packet(new Message(message), type));
+        Queue.emmit(QUEUE_NAME_MESSAGE, new Packet(new Message(message), type));
         log.debug("> broadcasted({}, {})", type, message);
     }
 
@@ -138,12 +138,12 @@ public class ServiceMessaging {
                             }
                         }
                         break;
-
-                    default:
-                        if (event != null) {
-                            event.onReceive(type, message);
-                        }
                 }
+
+                if (event != null) {
+                    event.onReceive(type, message);
+                }
+
                 return true;
             }
 

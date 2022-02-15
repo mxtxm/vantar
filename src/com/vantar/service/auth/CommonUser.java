@@ -1,10 +1,10 @@
 package com.vantar.service.auth;
 
-
+import com.vantar.database.dto.Dto;
 import java.util.List;
 
 
-public interface CommonUser {
+public interface CommonUser extends Dto {
 
     void setToken(String token);
 

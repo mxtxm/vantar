@@ -204,6 +204,7 @@ public class Params {
     // > > > GET
 
 
+    // todo: something more neat, get from map
     public <T> T getX(String key, T defaultValue) {
         T obj = map == null ? defaultValue : (T) map.get(key);
         return obj == null ? defaultValue : obj;
@@ -449,6 +450,24 @@ public class Params {
 
 
 
+    // > > > GET ENUM
+
+
+
+    public <E extends Enum<?>> E getEnum(String key, Class<E> type) {
+        return getEnum(key, type, null);
+    }
+
+    public <E extends Enum<?>> E getEnum(String key, Class<E> type, E defaultValue) {
+        String value = getParameter(key);
+        if (value == null || value.isEmpty()) {
+            return defaultValue;
+        }
+        return EnumUtil.getEnumValue(value, type);
+    }
+
+
+
     // > > > GET JSON
 
 
@@ -670,7 +689,7 @@ public class Params {
 
             return new Uploaded(filePart);
         } catch (IOException | ServletException e) {
-            log.error("!", e);
+            log.warn("! IO ERROR / is request multi-part?");
             return new Uploaded(VantarKey.IO_ERROR);
         }
     }

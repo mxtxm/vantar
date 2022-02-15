@@ -322,6 +322,7 @@ public class QueryBuilder {
     }
 
     public boolean conditionIsEmpty() {
+        if (dto == null) log.error(">>>>>>>>>>{}");
         if (dto.isDeleteLogicalEnabled()) {
             return false;
         }

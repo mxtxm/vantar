@@ -165,20 +165,22 @@ public class AdminDocument {
         log.info("created dto document");
 
         try {
+            DirUtil.removeDirectory(Settings.config.getProperty("documents.dir.release"));
             DirUtil.copy(
                 FileUtil.getClassPathAbsolutePath("/document"),
                 Settings.config.getProperty("documents.dir.release")
+            );
+
+            DirUtil.browseByExtensionRecursive(
+                Settings.config.getProperty("documents.dir.release"),
+                "md",
+                file -> FileUtil.write(file.getAbsolutePath(), AdminDocument.getParsedDocument(file.getAbsolutePath(), false))
             );
         } catch (Exception e) {
             log.info("< !!! failed to released all documents");
             return;
         }
 
-        DirUtil.browseByExtensionRecursive(
-            Settings.config.getProperty("documents.dir.release"),
-            "md",
-            file -> FileUtil.write(file.getAbsolutePath(), AdminDocument.getParsedDocument(file.getAbsolutePath(), false))
-        );
         log.info("released all documents");
         log.info("< finished creating documents");
     }

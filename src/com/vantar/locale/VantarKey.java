@@ -22,8 +22,11 @@ public enum VantarKey implements LangKey {
     // validation
     REQUIRED,
     REQUIRED_OR,
+    REQUIRED_XOR,
     DATA_TYPE,
     UNIQUE,
+    REFERENCE,
+    PARENT_CHILD,
     ILLEGAL,
     EMPTY_ID,
     INVALID_ID,

@@ -3,6 +3,7 @@ package com.vantar.util.json;
 import com.google.gson.*;
 import com.google.gson.internal.bind.TypeAdapters;
 import com.vantar.database.datatype.Location;
+import com.vantar.service.auth.*;
 import com.vantar.util.datetime.DateTime;
 import com.vantar.util.string.StringUtil;
 import org.slf4j.*;
@@ -10,9 +11,9 @@ import java.lang.reflect.*;
 import java.util.*;
 
 
-public class Json {
+public class JsonAllProps {
 
-    private static final Logger log = LoggerFactory.getLogger(Json.class);
+    private static final Logger log = LoggerFactory.getLogger(JsonAllProps.class);
     private static Gson gson;
 
 
@@ -22,10 +23,10 @@ public class Json {
         }
         return gson;
     }
-    private static GsonBuilder getBuilder() {
+    private synchronized static GsonBuilder getBuilder() {
         return new GsonBuilder()
             .registerTypeHierarchyAdapter(Collection.class, new GsonCustom.CollectionDeserializer())
-            .registerTypeHierarchyAdapter(Map.class, new GsonCustom.MapDeserializer())
+            .registerTypeHierarchyAdapter(Map.class, new GsonCustom.MapDeserializerAllProps())
             .registerTypeAdapterFactory(TypeAdapters.newFactory(String.class, String.class, GsonCustom.typeAdapterString))
             .registerTypeAdapterFactory(TypeAdapters.newFactory(int.class, Integer.class, GsonCustom.typeAdapterInteger))
             .registerTypeAdapterFactory(TypeAdapters.newFactory(long.class, Long.class, GsonCustom.typeAdapterLong))
@@ -34,20 +35,28 @@ public class Json {
             .registerTypeAdapterFactory(TypeAdapters.newFactory(float.class, Float.class, GsonCustom.typeAdapterFloat))
             .registerTypeAdapterFactory(TypeAdapters.newFactory(DateTime.class, GsonCustom.typeAdapterDateTime))
             .registerTypeAdapterFactory(TypeAdapters.newFactory(Location.class, GsonCustom.typeAdapterLocation))
-            .setDateFormat("yyyy-MM-dd hh:mm:ss")
-            .excludeFieldsWithModifiers(Modifier.STATIC, Modifier.PRIVATE, Modifier.PROTECTED);
+//            .registerTypeAdapter(CommonUser.class, new GsonCustom.InterfaceAdapter())
+//            .registerTypeAdapter(CommonUserRole.class, new GsonCustom.InterfaceAdapter())
+            .excludeFieldsWithModifiers(Modifier.STATIC)
+            .setDateFormat("yyyy-MM-dd hh:mm:ss");
     }
 
     public static void reset() {
         gson = null;
     }
 
+//    public static void addKoon(Class<?> interfaceType, Class<?> classType) {
+//        gson = getBuilder()
+//            .registerTypeAdapter(interfaceType, new GsonCustom.InterfaceAdapterX<CommonUser>(classType))
+//            .create();
+//    }
+
     public static void addInterface(Class<?>... interfaces) {
-        GsonBuilder builder = gson().newBuilder();
-        for (Class<?> i : interfaces) {
-            //builder.registerTypeAdapter(i, new GsonCustom.InterfaceAdapter());
-        }
-        gson = builder.create();
+//        GsonBuilder builder = getBuilder();
+//        for (Class<?> i : interfaces) {
+//            builder.registerTypeAdapter(i, new GsonCustom.InterfaceAdapter());
+//        }
+//        gson = builder.create();
     }
 
 

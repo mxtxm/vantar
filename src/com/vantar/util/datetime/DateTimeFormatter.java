@@ -1,7 +1,7 @@
 package com.vantar.util.datetime;
 
 import com.vantar.locale.VantarKey;
-import com.vantar.util.string.Persian;
+import com.vantar.util.string.*;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -138,6 +138,18 @@ public class DateTimeFormatter {
     public String getDateTimePersianAsString() {
         String v = PersianDateUtil.toPersian(year, month, day).getDate() + " " + getTimeHms();
         pattern = "yyyy-MM-dd HH:mm:ss";
+        return v;
+    }
+
+    public String getDateTimeAsFilename() {
+        String v = year + "-" + month + "-" + day + "-" + hour + "-" + minute + "-" + second;
+        pattern = "yyyy-MM-dd-HH-mm-ss";
+        return v;
+    }
+
+    public String getDateTimePersianAsFilename() {
+        String v = PersianDateUtil.toPersian(year, month, day).getDate() + "-" + hour + "-" + minute + "-" + second;
+        pattern = "yyyy-MM-dd-HH-mm-ss";
         return v;
     }
 

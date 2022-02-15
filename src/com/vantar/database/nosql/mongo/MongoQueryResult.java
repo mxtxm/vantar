@@ -146,6 +146,9 @@ public class MongoQueryResult extends QueryResultBase implements QueryResult, Au
 
     private void mapRecordToDto(Document document) {
         mapRecordToObject(document, dto, fields);
+        if (event != null) {
+            event.afterSetData(dto);
+        }
     }
 
     private void mapRecordToObject(Document document, Dto dto, Field[] fields) {
@@ -222,12 +225,26 @@ public class MongoQueryResult extends QueryResultBase implements QueryResult, Au
                             || listType.getSuperclass() == Long.class
                             || listType.getSuperclass() == Double.class) {
 
-                            v = document.getList(key, listType);
-                            field.set(dto, v != null && type == Set.class ? new HashSet<>(v) : v);
+                            try {
+                                v = document.getList(key, listType);
+                                field.set(dto, v != null && type == Set.class ? new HashSet<>(v) : v);
+                            } catch (Exception e) {
+                                log.error(
+                                    "! can not get List<{}> from database ({}={})",
+                                    listType.getSimpleName(), key, document.get(key), e
+                                );
+                            }
 
                         } else if (listType == Dto.class || listType.getSuperclass() == DtoBase.class) {
                             List<Dto> list;
-                            List<Document> docs = document.getList(key, Document.class);
+                            List<Document> docs;
+                            try {
+                                docs = document.getList(key, Document.class);
+                            } catch (Exception e) {
+                                docs = null;
+                                log.error("! can not get List<Dto> from database ({}={})", key, document.get(key), e);
+                            }
+
                             if (docs == null) {
                                 field.set(dto, null);
                                 continue;
@@ -243,7 +260,6 @@ public class MongoQueryResult extends QueryResultBase implements QueryResult, Au
                                 list.add(obj);
                             }
                             field.set(dto, type == Set.class ? new HashSet<>(list) : list);
-
                         } else {
                             v = Json.listFromJson(Json.toJson(document.get(key)), listType);
                             field.set(dto, v != null && type == Set.class ? new HashSet<>(v) : v);
@@ -299,6 +315,9 @@ public class MongoQueryResult extends QueryResultBase implements QueryResult, Au
 
                     field.set(dto, value);
 
+                } catch (NullPointerException e) {
+                    dto.setPropertyValue(field.getName(), null);
+                    log.warn("! data > {}({}:{})", dto.getClass(), key, document.get(key), e);
                 } catch (IllegalArgumentException e) {
                     dto.setPropertyValue(field.getName(), value);
                     log.warn("! data > {}({}:{})", dto.getClass(), key, document.get(key), e);

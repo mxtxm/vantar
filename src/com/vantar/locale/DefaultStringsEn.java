@@ -29,9 +29,12 @@ public class DefaultStringsEn {
 
         // validation
         tokens.put(VantarKey.REQUIRED, "{0}: is required");
-        tokens.put(VantarKey.REQUIRED_OR, "{0}: one and only one is required");
+        tokens.put(VantarKey.REQUIRED_OR, "{0}: at least one is required");
+        tokens.put(VantarKey.REQUIRED_XOR, "{0}: one and only one is required");
         tokens.put(VantarKey.DATA_TYPE, "{0}: invalid data type");
         tokens.put(VantarKey.UNIQUE, "{0}: must be unique");
+        tokens.put(VantarKey.REFERENCE, "{0}: reference ({1}) not exists");
+        tokens.put(VantarKey.PARENT_CHILD, "{0}: impossible parent and child");
         tokens.put(VantarKey.ILLEGAL, "{0}: illegal access");
         tokens.put(VantarKey.EMPTY_ID, "{0}: can not be empty");
         tokens.put(VantarKey.INVALID_ID, "{0}: invalid id");

@@ -384,7 +384,7 @@ public class AdminDatabase {
 
                 int i = 0;
                 while (count > 0 && i++ < DB_DELETE_TRIES) {
-                    CommonModelMongo.purge(ui.params, dto.getStorage());
+                    CommonModelMongo.purge(ui.params, dto);
                     count = CommonRepoMongo.count(dto.getStorage());
                 }
                 msg = Locale.getString(count == 0 ? VantarKey.DELETE_SUCCESS : VantarKey.DELETE_FAIL);

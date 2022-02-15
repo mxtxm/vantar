@@ -12,9 +12,10 @@ import com.vantar.service.log.ServiceUserActionLog;
 import com.vantar.service.log.dto.UserLog;
 import com.vantar.util.collection.CollectionUtil;
 import com.vantar.util.datetime.DateTime;
-import com.vantar.util.json.Json;
+import com.vantar.util.json.*;
 import com.vantar.util.object.*;
 import com.vantar.util.string.*;
+import org.slf4j.*;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.lang.annotation.Annotation;
@@ -24,8 +25,9 @@ import java.util.*;
 
 public class WebUi {
 
-    public static final String PARAM_CONFIRM = "confirm";
+    private static final Logger log = LoggerFactory.getLogger(WebUi.class);
 
+    public static final String PARAM_CONFIRM = "confirm";
 
     public static final String COLSPAN_SEPARATOR = ":::";
     public static final String LINK_SEPARATOR = ">>>";
@@ -892,7 +894,7 @@ public class WebUi {
                     if (ClassUtil.implementsInterface(g[0], Dto.class)) {
                         Object obj = ClassUtil.getInstance(g[0]);
                         if (obj != null) {
-                            setAdditive("<pre class='format'>[" + Json.toJsonPrettyStructure(obj) + "]</pre>");
+                            setAdditive("<pre class='format'>[" + JsonWithNulls.toJsonPretty(obj) + "]</pre>");
                         }
                     } else {
                         setAdditive("<span class='format'>[" + g[0].getSimpleName() + "]</span>");
@@ -918,9 +920,16 @@ public class WebUi {
                 );
 
             } else if (ClassUtil.implementsInterface(type, Dto.class)) {
-                Dto dtoX = DtoDictionary.get(type).getDtoInstance();
-                if (dtoX != null) {
-                    setAdditive("<span class='format'>" + Json.toJsonPretty(dtoX) + "</span>");
+                DtoDictionary.Info info = DtoDictionary.get(type);
+                if (info == null) {
+                    log.error("! dto not in dictionary? ({})", type);
+                } else {
+                    Dto dtoX = info.getDtoInstance();
+                    if (dtoX == null) {
+                        log.error("! dto not in dictionary? ({})", type);
+                    } else {
+                        setAdditive("<span class='format'>" + JsonWithNulls.toJsonPretty(dtoX) + "</span>");
+                    }
                 }
                 addTextArea(
                     name,

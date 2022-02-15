@@ -9,6 +9,8 @@ import java.util.*;
 
 public interface QueryResult {
 
+    <T extends QueryResult> T setEvent(QueryResultBase.Event event);
+
     <T extends QueryResult> T setLocale(String... locales);
 
     <T extends Dto> T first() throws NoContentException, DatabaseException;

@@ -9,6 +9,7 @@ import com.vantar.database.query.*;
 import com.vantar.exception.*;
 import com.vantar.locale.VantarKey;
 import com.vantar.util.collection.CollectionUtil;
+import com.vantar.util.object.ClassUtil;
 import com.vantar.util.string.StringUtil;
 import com.vantar.web.ResponseMessage;
 import java.util.*;
@@ -123,7 +124,7 @@ public class CommonRepoMongo extends Mongo {
 
         if (dto.getClass().isAnnotationPresent(UniqueGroup.class)) {
             for (String group : dto.getClass().getAnnotation(UniqueGroup.class).value()) {
-                if (!MongoSearch.isUnique(dto, StringUtil.split(group, ','))) {
+                if (!MongoSearch.isUnique(dto, StringUtil.split(group, VantarParam.SEPARATOR_COMMON))) {
                     if (errors == null) {
                         errors = new ArrayList<>();
                     }
@@ -135,13 +136,69 @@ public class CommonRepoMongo extends Mongo {
         return errors;
     }
 
-    public static void purge(String collection) throws DatabaseException {
-        deleteAll(collection);
-        Mongo.Index.remove(collection);
-        Mongo.Sequence.remove(collection);
+    public static List<ValidationError> getParentChildViolation(Dto dto) {
+        Long id = dto.getId();
+        if (id == null) {
+            return null;
+        }
+        List<ValidationError> errors = null;
+        for (String name : dto.annotatedProperties(Depends.class)) {
+            if (dto.getAnnotation(name, Depends.class).value().equals(dto.getClass())) {
+                Object value = dto.getPropertyValue(name);
+                if (value != null && value.equals(id)) {
+                    if (errors == null) {
+                        errors = new ArrayList<>();
+                    }
+                    errors.add(new ValidationError(name, VantarKey.UNIQUE));
+                }
+            }
+        }
+        return errors;
     }
 
-    public static void purgeData(String collection) throws DatabaseException {
+    public static List<ValidationError> getRelationViolation(Dto dto) {
+        List<ValidationError> errors = new ArrayList<>();
+        for (String name : dto.annotatedProperties(Depends.class)) {
+            Object value = dto.getPropertyValue(name);
+            if (value != null) {
+                if (value instanceof Long) {
+                    checkRelation(dto, name, (Long) value, errors);
+                } else if (ClassUtil.implementsInterface(value.getClass(), Collection.class)) {
+                    if (ClassUtil.getGenericTypes(dto.getField(name))[0].equals(Long.class)) {
+                        for (Long v : (Collection<Long>) value) {
+                            checkRelation(dto, name, v, errors);
+                        }
+                    }
+                }
+            }
+        }
+        return errors.isEmpty() ? null : errors;
+    }
+
+    private static void checkRelation(Dto dto, String name, Long value, List<ValidationError> errors) {
+        DtoDictionary.Info info = DtoDictionary.get(dto.getAnnotation(name, Depends.class).value());
+        if (info == null) {
+            return;
+        }
+
+        Dto dtoD = info.getDtoInstance();
+        if (dtoD == null) {
+            return;
+        }
+
+        QueryBuilder q = new QueryBuilder(dtoD);
+        q.condition().equal(Dto.ID, value);
+
+        try {
+            if (!MongoSearch.exists(q)) {
+                errors.add(new ValidationError(name, VantarKey.REFERENCE, value));
+            }
+        } catch (DatabaseException e) {
+            log.error("! could not check reference dto={} field={} value={}", dto, name, value, e);
+        }
+    }
+
+    public static void purge(String collection) throws DatabaseException {
         deleteAll(collection);
         Mongo.Index.remove(collection);
         Mongo.Sequence.remove(collection);
@@ -224,14 +281,21 @@ public class CommonRepoMongo extends Mongo {
         if (event != null) {
             event.beforeQuery(q);
         }
-        return search(q, locales);
+        return search(q, event, locales);
     }
 
     public static Object search(QueryBuilder q, String... locales) throws DatabaseException, NoContentException {
+        return search(q, null, locales);
+    }
+
+    public static Object search(QueryBuilder q, QueryResultBase.Event event, String... locales) throws DatabaseException, NoContentException {
         if (q.isPagination()) {
-            return MongoSearch.getPage(q, locales);
+            return MongoSearch.getPage(q, event, locales);
         } else {
             QueryResult result = MongoSearch.getData(q);
+            if (event != null) {
+                result.setEvent(event);
+            }
             if (CollectionUtil.isNotEmpty(locales)) {
                 result.setLocale(locales);
             }

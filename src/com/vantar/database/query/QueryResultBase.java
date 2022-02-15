@@ -16,7 +16,13 @@ abstract public class QueryResultBase {
     protected Field[] fields;
     protected Set<String> exclude;
     protected String[] locales;
+    protected Event event;
 
+
+    public <T extends QueryResult> T setEvent(Event event) {
+        this.event = event;
+        return (T) this;
+    }
 
     public <T extends QueryResult> T setLocale(String... locales) {
         this.locales = locales;
@@ -70,4 +76,10 @@ abstract public class QueryResultBase {
     abstract public boolean next() throws DatabaseException;
 
     abstract public void close();
+
+
+    public interface Event {
+
+        void afterSetData(Dto dto);
+    }
 }

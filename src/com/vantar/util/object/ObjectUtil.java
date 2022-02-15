@@ -1,6 +1,5 @@
 package com.vantar.util.object;
 
-import com.google.gson.JsonSyntaxException;
 import com.vantar.common.VantarParam;
 import com.vantar.database.datatype.Location;
 import com.vantar.exception.DateTimeException;
@@ -189,6 +188,8 @@ public class ObjectUtil {
             } else if (type.equals(Map.class)) {
                 Class<?>[] types = ClassUtil.getGenericTypes(field);
                 field.set(obj, Json.mapFromJson(value.toString(), types[0], types[1]));
+            } else if (type.isEnum()) {
+                field.set(obj, EnumUtil.getEnumValue(value.toString(), type));
             }
             return true;
         } catch (IllegalAccessException | IllegalArgumentException | DateTimeException e) {
@@ -318,4 +319,19 @@ public class ObjectUtil {
         }
     }
 
+    public static Object callStaticMethod(Class<?> tClass, String methodName, Object... params) throws Throwable {
+        Class<?>[] types = new Class[params.length];
+        for (int i = 0, paramsLength = params.length; i < paramsLength; i++) {
+            types[i] = params[i].getClass();
+        }
+        try {
+            Method method = tClass.getMethod(methodName, types);
+            return method.invoke(null, params);
+        } catch (NoSuchMethodException | IllegalAccessException e) {
+            log.error("! {}.{}", tClass.getSimpleName(), methodName, e);
+            return null;
+        } catch (InvocationTargetException e) {
+            throw e.getCause();
+        }
+    }
 }

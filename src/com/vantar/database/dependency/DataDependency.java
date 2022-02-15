@@ -281,7 +281,18 @@ public class DataDependency {
         }
         breadCrumb.add(hostField.getType());
 
-        for (Field innerField : DtoDictionary.get(hostField.getType()).getDtoInstance().getFields()) {
+        DtoDictionary.Info info = DtoDictionary.get(hostField.getType());
+        if (info == null) {
+            log.error("! undefined dto({})", hostField.getType());
+            return;
+        }
+        Dto instance = info.getDtoInstance();
+        if (instance == null) {
+            log.error("! not instance from dto({})", hostField.getType());
+            return;
+        }
+
+        for (Field innerField : instance.getFields()) {
 
             Depends depends = innerField.getAnnotation(Depends.class);
             if (depends != null && depends.value().equals(dto.getClass())) {

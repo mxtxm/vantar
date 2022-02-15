@@ -128,6 +128,17 @@ public class DirUtil {
         return files;
     }
 
+    public static boolean removeDirectory(String dir) {
+        File directoryToBeDeleted = new File(dir);
+        File[] allContents = directoryToBeDeleted.listFiles();
+        if (allContents != null) {
+            for (File file : allContents) {
+                removeDirectory(file.getAbsolutePath());
+            }
+        }
+        return directoryToBeDeleted.delete();
+    }
+
 
     public interface Callback {
 

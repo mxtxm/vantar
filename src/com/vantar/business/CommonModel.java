@@ -3,7 +3,8 @@ package com.vantar.business;
 import com.vantar.common.VantarParam;
 import com.vantar.database.common.ValidationError;
 import com.vantar.database.dto.*;
-import com.vantar.database.query.QueryBuilder;
+import com.vantar.database.nosql.mongo.MongoQueryResult;
+import com.vantar.database.query.*;
 import com.vantar.exception.*;
 import com.vantar.service.Services;
 import com.vantar.service.cache.ServiceDtoCache;
@@ -174,7 +175,7 @@ public abstract class CommonModel {
     }
 
 
-    public interface QueryEvent {
+    public interface QueryEvent extends QueryResultBase.Event {
 
         void beforeQuery(QueryBuilder q) throws InputException, ServerException;
 

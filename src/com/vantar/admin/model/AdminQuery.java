@@ -175,7 +175,7 @@ public class AdminQuery {
                         data = search.getPage(q);
                     }
                 } else if (dtoInfo.dbms.equals(DtoDictionary.Dbms.MONGO)) {
-                    data = MongoSearch.getPage(q);
+                    data = MongoSearch.getPage(q, null);
                 } else if (dtoInfo.dbms.equals(DtoDictionary.Dbms.ELASTIC)) {
                     data = ElasticSearch.getPage(q);
                 }

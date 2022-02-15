@@ -7,7 +7,6 @@ import com.vantar.locale.*;
 import com.vantar.service.Services;
 import com.vantar.service.auth.*;
 import com.vantar.web.*;
-import org.slf4j.*;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;

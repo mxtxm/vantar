@@ -4,7 +4,7 @@ import java.lang.reflect.*;
 import java.util.Map;
 
 
-public class MapOfJson<K, V> implements ParameterizedType {
+class MapOfJson<K, V> implements ParameterizedType {
 
     private final Class<?> wrappedK;
     private final Class<?> wrappedV;

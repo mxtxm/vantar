@@ -5,42 +5,12 @@ import com.vantar.database.dto.Dto;
 import com.vantar.database.query.*;
 import com.vantar.exception.*;
 import com.vantar.util.object.*;
+import com.vantar.util.string.StringUtil;
 import org.bson.Document;
 import java.util.List;
 
 
 public class MongoSearch {
-
-    /**
-     * Check by property value
-     * if dto.id is set, it will be taken into account thus (id, property) must be unique
-     */
-//    public static boolean isUnique(Dto dto, String property) throws DatabaseException {
-//        try {
-//            MongoCursor<Document> documents = MongoConnection.getDatabase().getCollection(dto.getStorage())
-//                .find(
-//                    new Document(property, dto.getPropertyValue(property))
-//                        .append(Mongo.LOGICAL_DELETE_FIELD, new Document("$ne", Mongo.LOGICAL_DELETE_VALUE))
-//                )
-//                .limit(2)
-//                .iterator();
-//            if (!documents.hasNext()) {
-//                return true;
-//            }
-//            Long id = dto.getId();
-//            if (id != null) {
-//                Document d = documents.next();
-//                if (documents.hasNext()) {
-//                    return false;
-//                }
-//                return id.equals(d.getLong(Mongo.ID));
-//            }
-//        } catch (Exception e) {
-//            Mongo.log.error("! isUnique({})", dto, e);
-//            throw new DatabaseException(e);
-//        }
-//        return false;
-//    }
 
     /**
      * Check by property values
@@ -50,7 +20,7 @@ public class MongoSearch {
         Document condition = new Document(Mongo.LOGICAL_DELETE_FIELD, new Document("$ne", Mongo.LOGICAL_DELETE_VALUE));
         for (String property : properties) {
             property = property.trim();
-            condition.append(property, dto.getPropertyValue(property));
+            condition.append(StringUtil.toSnakeCase(property), dto.getPropertyValue(property));
         }
 
         try {
@@ -80,7 +50,7 @@ public class MongoSearch {
         try {
             return MongoConnection.getDatabase().getCollection(dto.getStorage())
                 .find(
-                    new Document(property, dto.getPropertyValue(property))
+                    new Document(StringUtil.toSnakeCase(property), dto.getPropertyValue(property))
                         .append(Mongo.LOGICAL_DELETE_FIELD, new Document("$ne", Mongo.LOGICAL_DELETE_VALUE))
                 )
                 .iterator()
@@ -189,7 +159,7 @@ public class MongoSearch {
         }
     }
 
-    public static PageData getPage(QueryBuilder q, String... locales) throws NoContentException, DatabaseException {
+    public static PageData getPage(QueryBuilder q, QueryResultBase.Event event, String... locales) throws NoContentException, DatabaseException {
         MongoQuery mongoQuery = new MongoQuery(q);
         long total = q.getTotal();
         if (total == 0) {
@@ -199,6 +169,9 @@ public class MongoSearch {
         QueryResult result = mongoQuery.getData();
         if (locales.length > 0) {
             result.setLocale(locales);
+        }
+        if (event != null) {
+            result.setEvent(event);
         }
 
         return new PageData(

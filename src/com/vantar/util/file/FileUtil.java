@@ -19,6 +19,22 @@ public class FileUtil {
     private static final Logger log = LoggerFactory.getLogger(FileUtil.class);
 
 
+    public static String toFilename(String string) {
+        return toFilename(string, "-");
+    }
+
+    public static String toFilenameWithoutSpace(String string) {
+        return toFilename(string, "-").replace(' ', '-');
+    }
+
+    public static String toFilename(String string, String replace) {
+        return StringUtil.replace(
+            string,
+            new char[] {'\n', '\t', '|', '/', '\\', '#', '&', '<', '>', '"', '\'', ':', '?', '*'},
+            replace
+        );
+    }
+
     public static double getSizeMb(String filepath) {
         File file = new File(filepath);
         if (file.exists()) {

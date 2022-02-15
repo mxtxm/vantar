@@ -3,9 +3,10 @@ package com.vantar.admin.model.document;
 import com.vantar.admin.model.*;
 import com.vantar.database.datatype.Location;
 import com.vantar.database.dto.*;
+import com.vantar.database.nosql.mongo.Mongo;
 import com.vantar.util.collection.CollectionUtil;
 import com.vantar.util.datetime.*;
-import com.vantar.util.json.Json;
+import com.vantar.util.json.*;
 import com.vantar.util.object.*;
 import com.vantar.util.string.StringUtil;
 import java.lang.reflect.*;
@@ -64,6 +65,15 @@ public class DtoDocumentData {
             String className = parts[parts.length - 1];
             String name = StringUtil.replace(className, '$', '.');
             String hash = StringUtil.replace(className, '$', '-');
+            String sample;
+            try {
+                sample = "##### sample #####\n" +
+                    "<pre>" + JsonWithNulls.makePretty(getAsJsonExampleDto(ClassUtil.getClass(searchResult))) + "</pre>\n";
+            } catch (Exception e) {
+                sample = "";
+                Admin.log.warn("! could not create search example for ({})", searchResult);
+            }
+
             return
                 "<pre>" +
                     "JSON<br/>" +
@@ -73,7 +83,7 @@ public class DtoDocumentData {
                     "        int page: page number<br/>" +
                     "        int length: records per page<br/>" +
                     "        long total: total number of records<br/>" +
-                    "    }</pre><br/>\n";
+                    "    }</pre><br/>\n" + sample;
         }
 
         // > > >
@@ -247,7 +257,7 @@ public class DtoDocumentData {
 
             sb.append("##### sample #####\n");
             try {
-                sb.append("<pre>").append(Json.makePretty(getAsJsonExampleDto(obj.getClass()))).append("</pre>\n");
+                sb.append("<pre>").append(JsonWithNulls.makePretty(getAsJsonExampleDto(obj.getClass()))).append("</pre>\n");
             } catch (Exception e) {
                 AdminDocument.log.warn("! JSON error {}\n", getAsJsonExampleDto(obj.getClass()), e);
                 sb.append("<pre><br/>").append(getAsJsonExampleDto(obj.getClass())).append("</pre>\n");
@@ -428,6 +438,10 @@ public class DtoDocumentData {
                 continue;
             }
             if (ClassUtil.implementsInterface(propType, Dto.class)) {
+                if (propType.equals(gType)) {
+                    json.append("{\"RECURSIVE\"}");
+                    continue;
+                }
                 json.append(getAsJsonExampleDto(propType)).append(',');
                 continue;
             }

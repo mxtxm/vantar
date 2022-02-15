@@ -158,6 +158,16 @@ public class Mongo {
     /* SEQUENCE < < < */
 
 
+//    public static Collation getCollation() {
+//        return Collation.builder()
+//            .locale("en")
+//            .collationStrength(CollationStrength.SECONDARY)
+//            .numericOrdering(true)
+//            .normalization(false)
+//            .build();
+//    }
+
+
     /**
      * INDEX > > >
      * "col1:1,col2:-1"
@@ -166,7 +176,8 @@ public class Mongo {
 
         public static void create(Dto dto) throws DatabaseException {
 //            CreateCollectionOptions options = new CreateCollectionOptions();
-//            options.collation(Collation.builder().locale("en_US").collationStrength(CollationStrength.SECONDARY).build());
+//            options.collation(getCollation());
+//
 //            try {
 //                MongoConnection.getDatabase().createCollection(dto.getStorage(), options);
 //            } catch (MongoCommandException e) {
@@ -233,6 +244,9 @@ public class Mongo {
         }
 
         try {
+            if (dto.getId() == null) {
+                throw new DatabaseException("! id missing");
+            }
             MongoConnection.getDatabase().getCollection(dto.getStorage())
                 .insertOne(MongoMapping.getFieldValuesAsDocument(dto, Dto.Action.INSERT));
         } catch (Exception e) {
@@ -377,7 +391,7 @@ public class Mongo {
         try {
             Document toUpdate = new Document(
                 "$set",
-                MongoMapping.getFieldValuesAsDocument(dto, dto.getAction(Dto.Action.UPDATE_ALL_COLS))
+                MongoMapping.getFieldValuesAsDocument(dto, dto.getAction(Dto.Action.UPDATE_FEW_COLS))
             );
             if (all) {
                 collection.updateMany(condition, toUpdate, options);

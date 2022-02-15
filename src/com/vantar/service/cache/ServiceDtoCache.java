@@ -80,7 +80,7 @@ public class ServiceDtoCache implements Services.Service {
                 dtos = info.queryCache == null ? CommonRepoMongo.getAll(dto) : CommonRepoMongo.getData(info.queryCache);
             } catch (NoContentException ignore) {
 
-            } catch (DatabaseException e) {
+            } catch (Exception e) {
                 log.error("! dto cache failed {}", dto.getClass().getSimpleName(), e);
             }
         } else if (info.dtoClass.isAnnotationPresent(Sql.class)) {
@@ -89,7 +89,7 @@ public class ServiceDtoCache implements Services.Service {
                 dtos = info.queryCache == null ? repo.getAll(dto) : repo.getData(info.queryCache);
             } catch (NoContentException ignore) {
 
-            } catch (DatabaseException e) {
+            } catch (Exception e) {
                 log.error("! dto cache failed {}", dto.getClass().getSimpleName(), e);
             }
         } else if (info.dtoClass.isAnnotationPresent(Elastic.class)) {
@@ -97,7 +97,7 @@ public class ServiceDtoCache implements Services.Service {
                 dtos = info.queryCache == null ? CommonRepoElastic.getAll(dto) : CommonRepoElastic.getData(info.queryCache);
             } catch (NoContentException ignore) {
 
-            } catch (DatabaseException e) {
+            } catch (Exception e) {
                 log.error("! dto cache failed {}", dto.getClass().getSimpleName(), e);
             }
         } else {

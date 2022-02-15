@@ -7,6 +7,7 @@ import com.vantar.exception.DateTimeException;
 import com.vantar.util.datetime.DateTime;
 import com.vantar.util.object.*;
 import com.vantar.util.string.StringUtil;
+import org.slf4j.*;
 import java.io.IOException;
 import java.lang.reflect.*;
 import java.util.*;
@@ -324,7 +325,7 @@ public class GsonCustom {
 
         @SuppressWarnings("unchecked")
         public <T> Collection<T> parseCollection(JsonElement json, Collection<T> collection, T genericType) {
-            Gson gson = Json.gson();
+            Gson gson = JsonAllProps.gson();
             for (JsonElement json2 : json.getAsJsonArray()) {
                 collection.add((T) gson.fromJson(json2,  (Type) genericType));
             }
@@ -371,7 +372,7 @@ public class GsonCustom {
 
         @SuppressWarnings("unchecked")
         public <K, V> Map<K, V> parseMap(JsonElement json, Map<K, V> map, K k, V v) {
-            Gson gson = Json.gson();
+            Gson gson = JsonAllProps.gson();
             for (Map.Entry<?, ?> entry : json.getAsJsonObject().entrySet()) {
                 map.put(
                     (K) ObjectUtil.convert(entry.getKey(), ClassUtil.typeToClass((Type) k)),
@@ -381,6 +382,58 @@ public class GsonCustom {
             return map;
         }
     }
+
+
+    public static class MapDeserializerAllProps implements JsonDeserializer<Map<?, ?>> {
+
+        @Override
+        public Map<?, ?> deserialize(JsonElement json, Type type, JsonDeserializationContext context) throws JsonParseException {
+            if (json == null || json.isJsonNull() || json.isJsonPrimitive()) {
+                return null;
+            }
+
+            Class<?> mapType = ClassUtil.typeToClass(type);
+            if (mapType == null) {
+                return null;
+            }
+
+            Type keyType;
+            Type valueType;
+
+            if (type instanceof ParameterizedType) {
+                keyType = ((ParameterizedType) type).getActualTypeArguments()[0];
+                valueType = ((ParameterizedType) type).getActualTypeArguments()[1];
+            } else {
+                keyType = Object.class;
+                valueType = Object.class;
+            }
+
+            if (mapType == Map.class || mapType == HashMap.class) {
+                return parseMap(json, new HashMap<>(), keyType, valueType);
+            } else if (mapType == LinkedHashMap.class) {
+                return parseMap(json, new LinkedHashMap<>(), keyType, valueType);
+            } else if (mapType == ConcurrentMap.class || mapType == ConcurrentHashMap.class) {
+                return parseMap(json, new ConcurrentHashMap<>(), keyType, valueType);
+            } else if (mapType == IdentityHashMap.class) {
+                return parseMap(json, new IdentityHashMap<>(), keyType, valueType);
+            }
+
+            return null;
+        }
+
+        @SuppressWarnings("unchecked")
+        public <K, V> Map<K, V> parseMap(JsonElement json, Map<K, V> map, K k, V v) {
+            Gson gson = JsonAllProps.gson();
+            for (Map.Entry<?, ?> entry : json.getAsJsonObject().entrySet()) {
+                map.put(
+                    (K) ObjectUtil.convert(entry.getKey(), ClassUtil.typeToClass((Type) k)),
+                    gson.fromJson((JsonElement) entry.getValue(), (Type) v)
+                );
+            }
+            return map;
+        }
+    }
+
 
 
     public static class InterfaceAdapter implements JsonSerializer, JsonDeserializer {
@@ -412,5 +465,45 @@ public class GsonCustom {
                 throw new JsonParseException(e.getMessage());
             }
         }
+    }
+
+
+    private static final Logger log = LoggerFactory.getLogger(JsonAllProps.class);
+
+
+    public  static class InterfaceAdapterX<T> implements JsonDeserializer<T> {
+
+        private static final String CLASSNAME = "CLASSNAME";
+        private static final String DATA = "DATA";
+
+
+        private final Class<?> t;
+
+        public InterfaceAdapterX(Class<?> t) {
+            this.t = t;
+        }
+
+        public T deserialize(JsonElement e, Type type, JsonDeserializationContext context) throws JsonParseException {
+
+log.error(">>>>>>>>>{} {} {}", t, DATA, type);
+            JsonObject jsonObject = e.getAsJsonObject();
+//            JsonPrimitive prim = (JsonPrimitive) jsonObject.get(CLASSNAME);
+//
+//            String className = prim.getAsString();
+//            Class<?> klass = getObjectClass(className);
+            return context.deserialize(jsonObject.get(DATA), t);
+        }
+
+//    @Override
+//    public T deserialize(JsonElement element, Type type, JsonDeserializationContext context) throws JsonParseException {
+//
+//    log.error(">>>>>>>>kiri {} {} ",type,context);
+//    JsonObject jsonObject = element.getAsJsonObject();
+//    JsonPrimitive prim = (JsonPrimitive) jsonObject.get(CLASSNAME);
+//    String className = prim.getAsString();
+//    Class<T> clazz = getClassInstance(className);
+//    return context.deserialize(jsonObject, clazz);
+//    }
+
     }
 }

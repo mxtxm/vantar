@@ -2,6 +2,7 @@ package com.vantar.admin.model;
 
 import com.vantar.business.*;
 import com.vantar.common.VantarParam;
+import com.vantar.database.dependency.DataDependency;
 import com.vantar.database.dto.*;
 import com.vantar.database.nosql.elasticsearch.*;
 import com.vantar.database.nosql.mongo.*;
@@ -193,7 +194,7 @@ public class AdminData {
                 }
             } else if (dtoInfo.dbms.equals(DtoDictionary.Dbms.MONGO)) {
                 if (MongoConnection.isUp) {
-                    data = MongoSearch.getPage(q);
+                    data = MongoSearch.getPage(q, null);
                 } else {
                     ui.addMessage(Locale.getString(VantarKey.ADMIN_SERVICE_IS_OFF, "Mongo"));
                 }
@@ -293,7 +294,19 @@ public class AdminData {
                         ui.addMessage(CommonModelMongo.unDeleteBatch(params, dto.getClass()).message);
                     } else {
                         dto.setDeleteLogical(params.isChecked(VantarParam.LOGICAL_DELETED));
-                        ui.addMessage(CommonModelMongo.deleteBatch(params, dto.getClass()).message);
+
+                        ResponseMessage resp = CommonModelMongo.deleteBatch(params, dto.getClass());
+                        ui.addMessage(resp.message);
+                        if (resp.value instanceof List) {
+                            List<DataDependency.Dependants> items = (List<DataDependency.Dependants>) resp.value;
+                            for (DataDependency.Dependants item : items) {
+                                ui.addHeading(item.name);
+                                for (Dto dtoDep : item.dtos) {
+                                    ui.addPre(dtoDep.toString());
+                                }
+                            }
+
+                        }
                     }
                 } else {
                     ui.addMessage(Locale.getString(VantarKey.ADMIN_SERVICE_IS_OFF, "Mongo"));
@@ -342,7 +355,7 @@ public class AdminData {
                     }
                 } else if (dtoInfo.dbms.equals(DtoDictionary.Dbms.MONGO)) {
                     if (MongoConnection.isUp) {
-                        ui.addMessage(CommonModelMongo.purgeData(ui.params, dto.getStorage()).message);
+                        ui.addMessage(CommonModelMongo.purge(ui.params, dto).message);
                     } else {
                         ui.addMessage(Locale.getString(VantarKey.ADMIN_SERVICE_IS_OFF, "Mongo"));
                     }

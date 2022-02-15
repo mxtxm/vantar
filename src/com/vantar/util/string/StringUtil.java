@@ -1,11 +1,16 @@
 package com.vantar.util.string;
 
 import com.vantar.common.VantarParam;
+import com.vantar.database.datatype.Location;
+import com.vantar.database.dto.*;
 import com.vantar.exception.DateTimeException;
 import com.vantar.locale.Locale;
 import com.vantar.locale.StopWord;
 import com.vantar.util.collection.CollectionUtil;
 import com.vantar.util.datetime.DateTime;
+import com.vantar.util.json.Json;
+import com.vantar.util.number.NumberUtil;
+import com.vantar.util.object.*;
 import java.util.*;
 import java.util.regex.Pattern;
 
@@ -180,17 +185,8 @@ public class StringUtil {
         if (typeClass.equals(String.class)) {
             return value;
         }
-        if (typeClass.equals(Integer.class)) {
-            return StringUtil.toInteger(value);
-        }
-        if (typeClass.equals(Long.class)) {
-            return StringUtil.toLong(value);
-        }
-        if (typeClass.equals(Double.class)) {
-            return StringUtil.toDouble(value);
-        }
-        if (typeClass.equals(Float.class)) {
-            return StringUtil.toFloat(value);
+        if (ClassUtil.extendsClass(typeClass, Number.class)) {
+            return NumberUtil.toNumber(value, typeClass);
         }
         if (typeClass.equals(Boolean.class)) {
             return StringUtil.toBoolean(value);
@@ -198,12 +194,21 @@ public class StringUtil {
         if (typeClass.equals(Character.class)) {
             return StringUtil.toCharacter(value);
         }
+        if (typeClass.equals(Location.class)) {
+            return new Location(value);
+        }
         if (typeClass.equals(DateTime.class)) {
             try {
                 return new DateTime(value);
             } catch (DateTimeException ignore) {
-
+                return null;
             }
+        }
+        if (typeClass.isEnum()) {
+            return EnumUtil.getEnumValue(value, typeClass);
+        }
+        if (ClassUtil.extendsClass(typeClass, Dto.class)) {
+            return Json.fromJson(value, typeClass);
         }
         return null;
     }

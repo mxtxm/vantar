@@ -37,6 +37,8 @@ public interface Dto {
     boolean isExcluded(String name);
 
     void addNullProperties(String... nullProperties);
+    void removeNullProperties(String... nullProperties);
+    void removeNullPropertiesNatural();
     void setNullProperties(String... nullProperties);
     Set<String> getNullProperties();
     boolean isNull(String name);

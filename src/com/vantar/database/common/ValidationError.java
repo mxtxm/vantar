@@ -2,6 +2,7 @@ package com.vantar.database.common;
 
 import com.vantar.locale.LangKey;
 import com.vantar.locale.Locale;
+import com.vantar.util.object.ObjectUtil;
 import java.util.List;
 
 
@@ -21,7 +22,7 @@ public class ValidationError {
         this.params = new String[params.length + 1];
         this.params[0] = name == null ? "" : name;
         for (int i = 0, paramsLength = params.length; i < paramsLength; i++) {
-            this.params[i+1] = params[i];
+            this.params[i+1] = ObjectUtil.toString(params[i]);
         }
     }
 

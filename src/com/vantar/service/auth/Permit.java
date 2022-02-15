@@ -229,7 +229,7 @@ public class Permit {
         }
 
         if (StringUtil.isNotEmpty(methodPermissionRules.allowedFeature)) {
-            // single role
+            // single feature
             if (role != null) {
                 if (getUserByMatchedFeatureSet(role, token, methodPermissionRules.allowedFeature)) {
                     return;
@@ -237,7 +237,7 @@ public class Permit {
                 throw new AuthException(VantarKey.NO_ACCESS);
             }
 
-            // multi role
+            // multi feature
             List<? extends CommonUserRole> roles = token.user.getRoles();
             if (CollectionUtil.isEmpty(roles)) {
                 throw new AuthException(VantarKey.NO_ACCESS);
