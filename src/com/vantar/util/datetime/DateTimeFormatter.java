@@ -377,4 +377,51 @@ public class DateTimeFormatter {
 
         return time.toString();
     }
+
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null) {
+            return false;
+        }
+        if (obj == this) {
+            return true;
+        }
+        if (!this.getClass().equals(obj.getClass())) {
+            return false;
+        }
+        DateTimeFormatter formatter = (DateTimeFormatter) obj;
+        if (year != formatter.year) {
+            return false;
+        }
+        if (month != formatter.month) {
+            return false;
+        }
+        if (day != formatter.day) {
+            return false;
+        }
+        if (hour != formatter.hour) {
+            return false;
+        }
+        if (minute != formatter.minute) {
+            return false;
+        }
+        if (second != formatter.second) {
+            return false;
+        }
+        return offset == formatter.offset;
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = 7;
+        hash = 31 * hash + year;
+        hash = 31 * hash + month;
+        hash = 31 * hash + day;
+        hash = 31 * hash + hour;
+        hash = 31 * hash + minute;
+        hash = 31 * hash + second;
+        hash = 31 * hash + offset;
+        return hash;
+    }
 }

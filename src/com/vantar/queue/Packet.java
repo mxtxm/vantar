@@ -1,12 +1,15 @@
 package com.vantar.queue;
 
-import com.vantar.util.json.Json;
+import com.vantar.util.json.*;
 import com.vantar.util.string.StringUtil;
+import org.slf4j.*;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 
 public class Packet {
+
+    private static final Logger log = LoggerFactory.getLogger(Packet.class);
 
     private int type;
     private String data;
@@ -23,7 +26,7 @@ public class Packet {
         if (object == null) {
             return;
         }
-        data = jobType + "|" +  object.getClass().getName() + "|" +  Json.toJson(object);
+        data = jobType + "|" +  object.getClass().getName() + "|" +  Json.d.toJson(object);
     }
 
     // Q >
@@ -52,8 +55,12 @@ public class Packet {
         return type;
     }
 
-    public String gettClass() {
-        return tClass;
+    public Class<?> getClassType() {
+        try {
+            return Class.forName(tClass);
+        } catch (ClassNotFoundException e) {
+            return null;
+        }
     }
 
     public String getString() {
@@ -69,26 +76,49 @@ public class Packet {
     }
 
     public <T> T getObject(Class<T> typeClass) {
-        return Json.fromJson(data, typeClass);
+        return Json.d.fromJson(data, typeClass);
     }
 
+    @SuppressWarnings("unchecked")
     public <T> T getObject() {
         try {
-            return (T) Json.fromJson(data, Class.forName(tClass));
-        } catch (ClassNotFoundException | NullPointerException e) {
+            return (T) Json.d.fromJson(data, getClassType());
+        } catch (NullPointerException e) {
+            log.error("! class={}", tClass, e);
             return null;
         }
     }
 
     public <T> List<T> getList(Class<T> typeClass) {
-        return Json.listFromJson(data, typeClass);
+        return Json.d.listFromJson(data, typeClass);
     }
 
     public <K, V> Map<K, V> getList(Class<K> keyTypeClass, Class<V> valueTypeClass) {
-        return Json.mapFromJson(data, keyTypeClass, valueTypeClass);
+        return Json.d.mapFromJson(data, keyTypeClass, valueTypeClass);
     }
 
     public String toString() {
         return "type:" + type + ", class:" + tClass + ", data:" + data;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null) {
+            return false;
+        }
+        if (obj == this) {
+            return true;
+        }
+        if (!this.getClass().equals(obj.getClass())) {
+            return false;
+        }
+        Packet packet = (Packet) obj;
+        if (type != packet.type) {
+            return false;
+        }
+        if ((data == null && packet.data != null) || (data != null && !data.equals(packet.data))) {
+            return false;
+        }
+        return (tClass != null || packet.tClass == null) && (tClass == null || tClass.equals(packet.tClass));
     }
 }

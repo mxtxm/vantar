@@ -392,7 +392,12 @@ public class GsonCustom {
                 return null;
             }
 
-            Class<?> mapType = ClassUtil.typeToClass(type);
+            Class<?> mapType;
+            try {
+                mapType = ClassUtil.typeToClass(type);
+            } catch (Exception e) {
+                return null;
+            }
             if (mapType == null) {
                 return null;
             }

@@ -7,7 +7,6 @@ import org.apache.tika.metadata.*;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.*;
 import org.apache.tika.sax.BodyContentHandler;
-import org.slf4j.*;
 import org.xml.sax.SAXException;
 import java.io.*;
 import java.nio.file.*;
@@ -16,7 +15,6 @@ import java.util.*;
 
 public class FileType {
 
-    private static final Logger log = LoggerFactory.getLogger(FileType.class);
     private MediaType mediaType;
     private final TikaInputStream stream;
     private String filepath;
@@ -57,9 +55,8 @@ public class FileType {
                 metadata.set(TikaCoreProperties.RESOURCE_NAME_KEY, filepath);
             }
             mediaType = TikaConfig.getDefaultConfig().getDetector().detect(stream, metadata);
+        } catch (IOException ignore) {
 
-        } catch (IOException e) {
-            log.error("! io error", e);
         }
     }
 
@@ -86,7 +83,6 @@ public class FileType {
         try {
             parser.parse(stream, handler, metadata, context);
         } catch (IOException | SAXException | TikaException e) {
-            e.printStackTrace();
             return null;
         }
 

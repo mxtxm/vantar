@@ -21,10 +21,6 @@ import java.util.*;
 
 public class AdminDatabase {
 
-    private static final String PARAM_DELETE_INDEX = "deleteindex";
-    private static final String PARAM_REMOVE = "remove";
-    private static final String PARAM_EXCLUDE = "exclude";
-    private static final String PARAM_DELAY = "delay";
     private static final int DB_DELETE_TRIES = 100;
     private static final int DELAY = 1000;
 
@@ -75,14 +71,14 @@ public class AdminDatabase {
 
         if (!params.isChecked("f")) {
             ui  .beginFormPost()
-                .addCheckbox(Locale.getString(VantarKey.ADMIN_DATABASE_INDEX_REMOVE), PARAM_DELETE_INDEX)
+                .addCheckbox(Locale.getString(VantarKey.ADMIN_DATABASE_INDEX_REMOVE), "deleteindex")
                 .addSubmit(Locale.getString(VantarKey.ADMIN_DATABASE_INDEX_CREATE_START))
                 .finish();
 
             return;
         }
 
-        createSqlIndex(ui, params.isChecked(PARAM_DELETE_INDEX));
+        createSqlIndex(ui, params.isChecked("deleteindex"));
         ui.finish();
     }
 
@@ -145,15 +141,15 @@ public class AdminDatabase {
 
         if (!params.isChecked("f")) {
             ui  .beginFormPost()
-                .addInput(Locale.getString(VantarKey.ADMIN_DELAY), PARAM_DELAY, Integer.toString(DELAY), "ltr")
-                .addInput(Locale.getString(VantarKey.ADMIN_DELETE_EXCLUDE), PARAM_EXCLUDE, "", "ltr")
-                .addCheckbox(Locale.getString(VantarKey.ADMIN_DELETE_INCLUDE), PARAM_REMOVE, false)
+                .addInput(Locale.getString(VantarKey.ADMIN_DELAY), "delay", Integer.toString(DELAY), "ltr")
+                .addInput(Locale.getString(VantarKey.ADMIN_DELETE_EXCLUDE), "exclude", "", "ltr")
+                .addCheckbox(Locale.getString(VantarKey.ADMIN_DELETE_INCLUDE), "remove", false)
                 .addSubmit(Locale.getString(VantarKey.ADMIN_DELETE))
                 .finish();
             return;
         }
 
-        purgeSql(ui, params.getInteger(PARAM_DELAY, DELAY), params.isChecked(PARAM_REMOVE), params.getStringSet(PARAM_EXCLUDE));
+        purgeSql(ui, params.getInteger("delay", DELAY), params.isChecked("remove"), params.getStringSet("exclude"));
         ui.finish();
     }
 
@@ -235,15 +231,15 @@ public class AdminDatabase {
 
         if (!params.isChecked("f")) {
             ui  .beginFormPost()
-                .addInput(Locale.getString(VantarKey.ADMIN_DELAY), PARAM_DELAY, Integer.toString(DELAY), "ltr")
-                .addInput(Locale.getString(VantarKey.ADMIN_IMPORT_EXCLUDE), PARAM_EXCLUDE, "", "ltr")
-                .addCheckbox(Locale.getString(VantarKey.ADMIN_DATABASE_DELETE_ALL), PARAM_REMOVE, true)
+                .addInput(Locale.getString(VantarKey.ADMIN_DELAY), "delay", Integer.toString(DELAY), "ltr")
+                .addInput(Locale.getString(VantarKey.ADMIN_IMPORT_EXCLUDE), "exclude", "", "ltr")
+                .addCheckbox(Locale.getString(VantarKey.ADMIN_DATABASE_DELETE_ALL), "remove", true)
                 .addSubmit(Locale.getString(VantarKey.ADMIN_IMPORT))
                 .finish();
             return;
         }
 
-        importSql(ui, params.getInteger(PARAM_DELAY, DELAY), params.isChecked(PARAM_REMOVE), params.getStringSet(PARAM_EXCLUDE));
+        importSql(ui, params.getInteger("delay", DELAY), params.isChecked("remove"), params.getStringSet("exclude"));
         ui.finish();
     }
 
@@ -290,13 +286,13 @@ public class AdminDatabase {
 
         if (!params.isChecked("f")) {
             ui  .beginFormPost()
-                .addCheckbox(Locale.getString(VantarKey.ADMIN_DATABASE_INDEX_REMOVE), PARAM_DELETE_INDEX)
+                .addCheckbox(Locale.getString(VantarKey.ADMIN_DATABASE_INDEX_REMOVE), "deleteindex")
                 .addSubmit(Locale.getString(VantarKey.ADMIN_DATABASE_INDEX_CREATE_START))
                 .finish();
             return;
         }
 
-        createMongoIndex(ui, params.isChecked(PARAM_DELETE_INDEX));
+        createMongoIndex(ui, params.isChecked("deleteindex"));
         ui.finish();
     }
 
@@ -352,14 +348,14 @@ public class AdminDatabase {
 
         if (!params.isChecked("f")) {
             ui  .beginFormPost()
-                .addInput(Locale.getString(VantarKey.ADMIN_DELAY), PARAM_DELAY, Integer.toString(DELAY), "ltr")
-                .addInput(Locale.getString(VantarKey.ADMIN_DELETE_EXCLUDE), PARAM_EXCLUDE, "", "ltr")
+                .addInput(Locale.getString(VantarKey.ADMIN_DELAY), "delay", Integer.toString(DELAY), "ltr")
+                .addInput(Locale.getString(VantarKey.ADMIN_DELETE_EXCLUDE), "exclude", "", "ltr")
                 .addSubmit(Locale.getString(VantarKey.ADMIN_DELETE))
                 .finish();
             return;
         }
 
-        purgeMongo(ui, params.getInteger(PARAM_DELAY, DELAY), params.getStringSet(PARAM_EXCLUDE));
+        purgeMongo(ui, params.getInteger("delay", DELAY), params.getStringSet("exclude"));
         ui.finish();
     }
 
@@ -384,7 +380,7 @@ public class AdminDatabase {
 
                 int i = 0;
                 while (count > 0 && i++ < DB_DELETE_TRIES) {
-                    CommonModelMongo.purge(ui.params, dto);
+                    CommonModelMongo.purge(dto);
                     count = CommonRepoMongo.count(dto.getStorage());
                 }
                 msg = Locale.getString(count == 0 ? VantarKey.DELETE_SUCCESS : VantarKey.DELETE_FAIL);
@@ -423,15 +419,15 @@ public class AdminDatabase {
 
         if (!params.isChecked("f")) {
             ui  .beginFormPost()
-                .addInput(Locale.getString(VantarKey.ADMIN_DELAY), PARAM_DELAY, Integer.toString(DELAY), "ltr")
-                .addInput(Locale.getString(VantarKey.ADMIN_IMPORT_EXCLUDE), PARAM_EXCLUDE, "", "ltr")
-                .addCheckbox(Locale.getString(VantarKey.ADMIN_DATABASE_DELETE_ALL), PARAM_REMOVE, true)
+                .addInput(Locale.getString(VantarKey.ADMIN_DELAY), "delay", Integer.toString(DELAY), "ltr")
+                .addInput(Locale.getString(VantarKey.ADMIN_IMPORT_EXCLUDE), "exclude", "", "ltr")
+                .addCheckbox(Locale.getString(VantarKey.ADMIN_DATABASE_DELETE_ALL), "remove", true)
                 .addSubmit(Locale.getString(VantarKey.ADMIN_IMPORT))
                 .finish();
             return;
         }
 
-        importMongo(ui, params.getInteger(PARAM_DELAY, DELAY), params.isChecked(PARAM_REMOVE), params.getStringSet(PARAM_EXCLUDE));
+        importMongo(ui, params.getInteger("delay", DELAY), params.isChecked("remove"), params.getStringSet("exclude"));
         ui.finish();
     }
 
@@ -512,15 +508,15 @@ public class AdminDatabase {
 
         if (!params.isChecked("f")) {
             ui  .beginFormPost()
-                .addInput(Locale.getString(VantarKey.ADMIN_DELAY), PARAM_DELAY, Integer.toString(DELAY), "ltr")
-                .addInput(Locale.getString(VantarKey.ADMIN_DELETE_EXCLUDE), PARAM_EXCLUDE, "", "ltr")
-                .addCheckbox(Locale.getString(VantarKey.ADMIN_DELETE_INCLUDE), PARAM_REMOVE, false)
+                .addInput(Locale.getString(VantarKey.ADMIN_DELAY), "delay", Integer.toString(DELAY), "ltr")
+                .addInput(Locale.getString(VantarKey.ADMIN_DELETE_EXCLUDE), "exclude", "", "ltr")
+                .addCheckbox(Locale.getString(VantarKey.ADMIN_DELETE_INCLUDE), "remove", false)
                 .addSubmit(Locale.getString(VantarKey.ADMIN_DELETE))
                 .finish();
             return;
         }
 
-        purgeElastic(ui, params.getInteger(PARAM_DELAY, DELAY), params.isChecked(PARAM_REMOVE), params.getStringSet(PARAM_EXCLUDE));
+        purgeElastic(ui, params.getInteger("delay", DELAY), params.isChecked("remove"), params.getStringSet("exclude"));
         ui.finish();
     }
 
@@ -571,15 +567,15 @@ public class AdminDatabase {
 
         if (!params.isChecked("f")) {
             ui  .beginFormPost()
-                .addInput(Locale.getString(VantarKey.ADMIN_DELAY), PARAM_DELAY, Integer.toString(DELAY), "ltr")
-                .addInput(Locale.getString(VantarKey.ADMIN_IMPORT_EXCLUDE), PARAM_EXCLUDE, "", "ltr")
-                .addCheckbox(Locale.getString(VantarKey.ADMIN_DATABASE_DELETE_ALL), PARAM_REMOVE, true)
+                .addInput(Locale.getString(VantarKey.ADMIN_DELAY), "delay", Integer.toString(DELAY), "ltr")
+                .addInput(Locale.getString(VantarKey.ADMIN_IMPORT_EXCLUDE), "exclude", "", "ltr")
+                .addCheckbox(Locale.getString(VantarKey.ADMIN_DATABASE_DELETE_ALL), "remove", true)
                 .addSubmit(Locale.getString(VantarKey.ADMIN_IMPORT))
                 .finish();
             return;
         }
 
-        importElastic(ui, params.getInteger(PARAM_DELAY, DELAY), params.isChecked(PARAM_REMOVE), params.getStringSet(PARAM_EXCLUDE));
+        importElastic(ui, params.getInteger("delay", DELAY), params.isChecked("remove"), params.getStringSet("exclude"));
         ui.finish();
     }
 

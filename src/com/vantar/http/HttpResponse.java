@@ -3,7 +3,7 @@ package com.vantar.http;
 import com.vantar.exception.HttpException;
 import com.vantar.util.collection.CollectionUtil;
 import com.vantar.util.json.Json;
-import com.vantar.util.string.*;
+import com.vantar.util.string.StringUtil;
 import org.apache.http.*;
 import org.apache.http.client.entity.GzipDecompressingEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -12,7 +12,6 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.util.EntityUtils;
 import org.slf4j.*;
 import java.io.*;
-import java.lang.reflect.Type;
 import java.net.URI;
 import java.util.*;
 
@@ -98,31 +97,27 @@ public class HttpResponse {
     }
 
     public String toStringDecoded() {
-        return Json.fromJson(toString(), String.class);
+        return Json.d.fromJson(toString(), String.class);
     }
 
     public <T> T toObject(Class<T> typeClass) {
-        return Json.fromJson(toString(), typeClass);
+        return Json.d.fromJson(toString(), typeClass);
     }
 
-    public <T> T toObject(Type type) {
-        return Json.fromJson(toString(), type);
-    }
-
-    public <T> List<T> toList(Class type) {
-        return Json.listFromJson(toString(), type);
+    public <T> List<T> toList(Class<T> type) {
+        return Json.d.listFromJson(toString(), type);
     }
 
     public <T> List<T> toList() {
-        return Json.fromJson(toString(), List.class);
+        return Json.d.fromJson(toString(), List.class);
     }
 
     public <K, V> Map<K, V> toMap() {
-        return Json.fromJson(toString(), Map.class);
+        return Json.d.fromJson(toString(), Map.class);
     }
 
     public <K, V> Map<K, V> toMap(Class<K> typeClassKey, Class<V> typeClassValue) {
-        return Json.mapFromJson(toString(), typeClassKey, typeClassValue);
+        return Json.d.mapFromJson(toString(), typeClassKey, typeClassValue);
     }
 
     public Integer toInteger() {

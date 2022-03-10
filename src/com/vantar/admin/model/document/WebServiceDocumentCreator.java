@@ -1,7 +1,7 @@
 package com.vantar.admin.model.document;
 
-import com.vantar.admin.model.AdminDocument;
-import com.vantar.util.json.Json;
+import com.vantar.admin.model.*;
+import com.vantar.util.json.*;
 import com.vantar.util.object.*;
 import com.vantar.util.string.StringUtil;
 import com.vantar.web.*;
@@ -84,12 +84,12 @@ public class WebServiceDocumentCreator {
                 catchData = false;
                 String x = sb.toString();
                 sb.setLength(0);
-                DtoDocumentData dtoDocumentData = Json.fromJson(
+                DtoDocumentData dtoDocumentData = Json.d.fromJson(
                     StringUtil.replace(StringUtil.replace(x, "}}", "}"), "{{", "{"),
                     DtoDocumentData.class
                 );
                 if (dtoDocumentData == null) {
-                    AdminDocument.log.error("! object=null {}", StringUtil.replace(StringUtil.replace(x, "}}", "}\n"), "{{", "{"));
+                    Admin.log.error("! object=null {}", StringUtil.replace(StringUtil.replace(x, "}}", "}\n"), "{{", "{"));
                 } else {
                     if (dtoDocumentData.action != null && dtoDocumentData.action.equalsIgnoreCase("exception")) {
                         content = fixExceptions(content, x, dtoDocumentData);
@@ -209,7 +209,7 @@ public class WebServiceDocumentCreator {
             }
             return exceptions;
         } catch (Exception e) {
-            AdminDocument.log.warn("! could not get exceptions ({}, {})", className, methodName, e);
+            Admin.log.warn("! could not get exceptions ({}, {})", className, methodName, e);
             return new HashSet<>();
         }
     }
@@ -235,7 +235,7 @@ public class WebServiceDocumentCreator {
 
             return content;
         } catch (Exception e) {
-            AdminDocument.log.warn("! could not get exceptions ({}, {})", className, methodName, e);
+            Admin.log.warn("! could not get exceptions ({}, {})", className, methodName, e);
             return content;
         }
     }

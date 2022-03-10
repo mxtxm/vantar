@@ -5,7 +5,7 @@ import com.vantar.database.dto.*;
 import com.vantar.exception.DatabaseException;
 import com.vantar.util.datetime.DateTime;
 import com.vantar.util.file.FileUtil;
-import com.vantar.util.json.Json;
+import com.vantar.util.json.*;
 import com.vantar.util.string.StringUtil;
 import org.elasticsearch.ElasticsearchStatusException;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
@@ -82,7 +82,7 @@ public class ElasticIndexes {
         if (StringUtil.isNotEmpty(settingsJson)) {
             request.settings(settingsJson, XContentType.JSON);
         }
-        request.mapping(Json.toJson(getDtoMappings(dto)), XContentType.JSON);
+        request.mapping(Json.d.toJson(getDtoMappings(dto)), XContentType.JSON);
 
         try {
             ElasticConnection.getClient().indices().create(request, RequestOptions.DEFAULT);
@@ -118,7 +118,7 @@ public class ElasticIndexes {
         }
 
         PutMappingRequest mappingRequest = new PutMappingRequest(collection);
-        mappingRequest.source(Json.toJson(getDtoMappings(dto)), XContentType.JSON);
+        mappingRequest.source(Json.d.toJson(getDtoMappings(dto)), XContentType.JSON);
         try {
             ElasticConnection.getClient().indices().putMapping(mappingRequest, RequestOptions.DEFAULT);
         } catch (ElasticsearchStatusException | IOException e) {

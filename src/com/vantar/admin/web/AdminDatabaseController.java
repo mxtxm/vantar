@@ -6,7 +6,6 @@ import com.vantar.web.*;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServletResponse;
 
-
 @WebServlet({
     "/admin/database/sql/synch",
     "/admin/database/sql/index/create",

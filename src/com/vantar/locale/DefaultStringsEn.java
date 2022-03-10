@@ -5,7 +5,7 @@ import java.util.*;
 
 public class DefaultStringsEn {
 
-    private static final Map<LangKey, String> tokens = new HashMap<>();
+    private static final Map<LangKey, String> tokens = new HashMap<>(290);
 
     static {
         // auth
@@ -275,6 +275,9 @@ public class DefaultStringsEn {
         tokens.put(VantarKey.DELETE_FAIL_HAS_DEPENDENCIES, "Not deleted because of dependencies");
 
         tokens.put(VantarKey.ADMIN_AUTH_FAILED, "Authentication failed: Session expired or not signed-in or not unauthorized");
+
+        tokens.put(VantarKey.ADMIN_ACTION_LOG_USER, "User actions");
+        tokens.put(VantarKey.ADMIN_ACTION_LOG_REQUEST, "Request/Response logs");
     }
 
     public static String getString(LangKey key) {

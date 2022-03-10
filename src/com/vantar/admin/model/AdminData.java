@@ -1,7 +1,7 @@
 package com.vantar.admin.model;
 
 import com.vantar.business.*;
-import com.vantar.common.VantarParam;
+import com.vantar.common.*;
 import com.vantar.database.dependency.DataDependency;
 import com.vantar.database.dto.*;
 import com.vantar.database.nosql.elasticsearch.*;
@@ -12,22 +12,19 @@ import com.vantar.exception.*;
 import com.vantar.locale.Locale;
 import com.vantar.locale.*;
 import com.vantar.service.Services;
-import com.vantar.util.object.ObjectUtil;
+import com.vantar.service.auth.*;
+import com.vantar.util.json.*;
+import com.vantar.util.object.*;
 import com.vantar.util.string.*;
 import com.vantar.web.*;
-import org.slf4j.*;
 import javax.servlet.http.HttpServletResponse;
-import java.lang.reflect.Field;
+import java.lang.reflect.*;
 import java.util.*;
 
 
 public class AdminData {
 
-    private static final Logger log = LoggerFactory.getLogger(AdminData.class);
-    private static final String PARAM_DELETE_ALL = "deleteall";
-    public static final int N_PER_PAGE = 30;
-
-    public static Event event;
+    public static final int N_PER_PAGE = 100;
 
 
     public static void index(Params params, HttpServletResponse response) throws FinishException {
@@ -39,7 +36,7 @@ public class AdminData {
             ui.beginBox(groupName);
             groupDtos.forEach((dtoName, info) -> {
                 if (info.dbms == null) {
-                    log.warn("! {} missing dbms", info.getDtoClassName());
+                    Admin.log.warn("! {} missing dbms", info.getDtoClassName());
                     return;
                 }
 
@@ -209,7 +206,7 @@ public class AdminData {
 
         } catch (DatabaseException e) {
             ui.addErrorMessage(ObjectUtil.throwableToString(e));
-            log.error("! {}", dto, e);
+            Admin.log.error("! {}", dto, e);
         }
 
         ui.addDtoListWithHeader(data, dtoInfo, q.getDtoResult().getProperties());
@@ -240,7 +237,7 @@ public class AdminData {
                         ui.addMessage(Locale.getString(VantarKey.NO_CONTENT));
                     } catch (DatabaseException e) {
                         ui.addErrorMessage(e);
-                        log.error("! {}", dto, e);
+                        Admin.log.error("! {}", dto, e);
                     }
                 } else {
                     ui.addMessage(Locale.getString(VantarKey.ADMIN_SERVICE_IS_OFF, "SQL"));
@@ -253,7 +250,7 @@ public class AdminData {
                         ui.addMessage(Locale.getString(VantarKey.NO_CONTENT));
                     } catch (ServerException e) {
                         ui.addErrorMessage(e);
-                        log.error("! {}", dto, e);
+                        Admin.log.error("! {}", dto, e);
                     }
                 } else {
                     ui.addMessage(Locale.getString(VantarKey.ADMIN_SERVICE_IS_OFF, "Mongo"));
@@ -266,7 +263,7 @@ public class AdminData {
                         ui.addMessage(Locale.getString(VantarKey.NO_CONTENT));
                     } catch (DatabaseException e) {
                         ui.addErrorMessage(e);
-                        log.error("! {}", dto, e);
+                        Admin.log.error("! {}", dto, e);
                     }
                 } else {
                     ui.addMessage(Locale.getString(VantarKey.ADMIN_SERVICE_IS_OFF, "ElasticSearch"));
@@ -277,6 +274,7 @@ public class AdminData {
             return;
         }
 
+        Event event = getEvent();
         if (event != null) {
             event.beforeDelete(dto);
         }
@@ -325,11 +323,88 @@ public class AdminData {
 
         } catch (ServerException | InputException e) {
             ui.addErrorMessage(e);
-            log.error("! {}", dto, e);
+            Admin.log.error("! {}", dto, e);
         }
 
         if (dtoInfo.broadcastMessage != null) {
             Services.messaging.broadcast(dtoInfo.broadcastMessage);
+        }
+
+        ui.finish();
+    }
+
+    public static void deleteMany(Params params, HttpServletResponse response, DtoDictionary.Info dtoInfo) throws FinishException {
+        if (dtoInfo == null) {
+            return;
+        }
+        WebUi ui = Admin.getUiDto(Locale.getString(VantarKey.ADMIN_DELETE), params, response, dtoInfo);
+
+        if (!params.isChecked("confirm-delete")) {
+            ui.addMessage(Locale.getString(VantarKey.DELETE_FAIL)).finish();
+            return;
+        }
+
+        Dto dto = dtoInfo.getDtoInstance();
+
+        for (Long id : params.getLongList("delete-check")) {
+            dto.reset();
+            dto.setId(id);
+
+            Event event = getEvent();
+            if (event != null) {
+                event.beforeDelete(dto);
+            }
+
+            try {
+                if (dtoInfo.dbms.equals(DtoDictionary.Dbms.MONGO)) {
+                    if (MongoConnection.isUp) {
+                        if (params.isChecked(VantarParam.LOGICAL_DELETED_UNDO)) {
+                            ui.addMessage(CommonModelMongo.unDeleteBatch(params, dto.getClass()).message);
+                        } else {
+                            dto.setDeleteLogical(params.isChecked(VantarParam.LOGICAL_DELETED));
+                            ResponseMessage resp = CommonModelMongo.deleteById(dto);
+                            ui.addMessage(resp.message);
+                            if (resp.value instanceof List) {
+                                List<DataDependency.Dependants> items = (List<DataDependency.Dependants>) resp.value;
+                                for (DataDependency.Dependants item : items) {
+                                    ui.addHeading(item.name);
+                                    for (Dto dtoDep : item.dtos) {
+                                        ui.addPre(dtoDep.toString());
+                                    }
+                                }
+
+                            }
+                        }
+                    } else {
+                        ui.addMessage(Locale.getString(VantarKey.ADMIN_SERVICE_IS_OFF, "Mongo"));
+                    }
+
+                } else if (dtoInfo.dbms.equals(DtoDictionary.Dbms.SQL)) {
+                    if (SqlConnection.isUp) {
+                        ui.addMessage(CommonModelSql.deleteBatch(params, dto.getClass()).message);
+                    } else {
+                        ui.addMessage(Locale.getString(VantarKey.ADMIN_SERVICE_IS_OFF, "SQL"));
+                    }
+
+                } else if (dtoInfo.dbms.equals(DtoDictionary.Dbms.ELASTIC)) {
+                    if (ElasticConnection.isUp) {
+                        ui.addMessage(CommonModelElastic.deleteBatch(params, dto.getClass()).message);
+                    } else {
+                        ui.addMessage(Locale.getString(VantarKey.ADMIN_SERVICE_IS_OFF, "ElasticSearch"));
+                    }
+                }
+
+                if (event != null) {
+                    event.afterDelete(dto);
+                }
+            } catch (ServerException | InputException e) {
+                ui.addErrorMessage(e);
+                Admin.log.error("! {}", dto, e);
+            }
+
+            if (dtoInfo.broadcastMessage != null) {
+                Services.messaging.broadcast(dtoInfo.broadcastMessage);
+            }
         }
 
         ui.finish();
@@ -355,7 +430,7 @@ public class AdminData {
                     }
                 } else if (dtoInfo.dbms.equals(DtoDictionary.Dbms.MONGO)) {
                     if (MongoConnection.isUp) {
-                        ui.addMessage(CommonModelMongo.purge(ui.params, dto).message);
+                        ui.addMessage(CommonModelMongo.purge(dto).message);
                     } else {
                         ui.addMessage(Locale.getString(VantarKey.ADMIN_SERVICE_IS_OFF, "Mongo"));
                     }
@@ -368,7 +443,7 @@ public class AdminData {
                 }
             } catch (ServerException e) {
                 ui.addErrorMessage(e);
-                log.error("! {}", dto, e);
+                Admin.log.error("! {}", dto, e);
             }
 
             if (dtoInfo.broadcastMessage != null) {
@@ -399,7 +474,7 @@ public class AdminData {
                         );
                     } catch (DatabaseException e) {
                         ui.addErrorMessage(e);
-                        log.error("! {}", dto, e);
+                        Admin.log.error("! {}", dto, e);
                     } catch (NoContentException e) {
                         ui.addMessage(Locale.getString(VantarKey.NO_CONTENT));
                     }
@@ -417,7 +492,7 @@ public class AdminData {
                         ui.addMessage(Locale.getString(VantarKey.NO_CONTENT));
                     } catch (ServerException | InputException e) {
                         ui.addErrorMessage(e);
-                        log.error("! {}", dto, e);
+                        Admin.log.error("! {}", dto, e);
                     }
                 } else {
                     ui.addMessage(Locale.getString(VantarKey.ADMIN_SERVICE_IS_OFF, "Mongo"));
@@ -431,7 +506,7 @@ public class AdminData {
                         );
                     } catch (DatabaseException e) {
                         ui.addErrorMessage(e);
-                        log.error("! {}", dto, e);
+                        Admin.log.error("! {}", dto, e);
                     } catch (NoContentException e) {
                         ui.addMessage(Locale.getString(VantarKey.NO_CONTENT));
                     }
@@ -444,6 +519,7 @@ public class AdminData {
             return;
         }
 
+        Event event = getEvent();
         if (event != null) {
             event.beforeUpdate(dto);
         }
@@ -457,7 +533,47 @@ public class AdminData {
                 }
             } else if (dtoInfo.dbms.equals(DtoDictionary.Dbms.MONGO)) {
                 if (MongoConnection.isUp) {
-                    CommonModelMongo.updateJson(params, "asjson", dto);
+                    CommonModelMongo.updateJson(params, "asjson", dto, new CommonModel.WriteEvent() {
+                        @Override
+                        public void beforeSet(Dto dto) {
+
+                        }
+
+                        @Override
+                        public void beforeWrite(Dto dto) {
+
+                        }
+
+                        @Override
+                        public void afterWrite(Dto dto) throws InputException, ServerException {
+                            if (dto instanceof CommonUser) {
+                                for (DtoDictionary.Info info: DtoDictionary.getAll()) {
+                                    if (ClassUtil.implementsInterface(info.dtoClass, CommonUserPassword.class)) {
+                                        if (dto.getClass().equals(info.dtoClass)) {
+                                            break;
+                                        }
+                                        PasswordField pf = Json.d.fromJson(params.getString("asjson"), PasswordField.class);
+                                        if (pf == null || StringUtil.isEmpty(pf.password)) {
+                                            break;
+                                        }
+                                        CommonUserPassword userPassword = (CommonUserPassword) info.getDtoInstance();
+                                        userPassword.setId(dto.getId());
+                                        userPassword.setPassword(pf.password);
+                                        try {
+                                            if (MongoSearch.existsById(userPassword)) {
+                                                CommonModelMongo.update(userPassword);
+                                            } else {
+                                                CommonModelMongo.insert(userPassword);
+                                            }
+                                        } catch (DatabaseException e) {
+                                            throw new ServerException(VantarKey.FETCH_FAIL);
+                                        }
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    });
                 } else {
                     ui.addMessage(Locale.getString(VantarKey.ADMIN_SERVICE_IS_OFF, "Mongo"));
                 }
@@ -477,7 +593,7 @@ public class AdminData {
 
         } catch (InputException | ServerException e) {
             ui.addErrorMessage(e);
-            log.error("! {}", dto, e);
+            Admin.log.error("! {}", dto, e);
         }
 
         if (dtoInfo.broadcastMessage != null) {
@@ -504,6 +620,7 @@ public class AdminData {
             return;
         }
 
+        Event event = getEvent();
         if (event != null) {
             event.beforeInsert(dto);
         }
@@ -517,7 +634,40 @@ public class AdminData {
                 }
             } else if (dtoInfo.dbms.equals(DtoDictionary.Dbms.MONGO)) {
                 if (MongoConnection.isUp) {
-                    CommonModelMongo.insertJson(params, "asjson", dto);
+                    CommonModelMongo.insertJson(params, "asjson", dto, new CommonModel.WriteEvent() {
+                        @Override
+                        public void beforeSet(Dto dto) {
+
+                        }
+
+                        @Override
+                        public void beforeWrite(Dto dto) {
+
+                        }
+
+                        @Override
+                        public void afterWrite(Dto dto) throws ServerException, InputException {
+                            if (dto instanceof CommonUser) {
+                                for (DtoDictionary.Info info: DtoDictionary.getAll()) {
+                                    if (ClassUtil.implementsInterface(info.dtoClass, CommonUserPassword.class)) {
+                                        if (dto.getClass().equals(info.dtoClass)) {
+                                            break;
+                                        }
+                                        PasswordField pf = Json.d.fromJson(params.getString("asjson"), PasswordField.class);
+                                        if (pf == null || StringUtil.isEmpty(pf.password)) {
+                                            break;
+                                        }
+                                        CommonUserPassword userPassword = (CommonUserPassword) info.getDtoInstance();
+                                        CommonModelMongo.insert(userPassword);
+                                        userPassword.setId(dto.getId());
+                                        userPassword.setPassword(pf.password);
+                                        CommonModelMongo.insert(userPassword);
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    });
                 } else {
                     ui.addMessage(Locale.getString(VantarKey.ADMIN_SERVICE_IS_OFF, "Mongo"));
                 }
@@ -537,7 +687,7 @@ public class AdminData {
 
         } catch (InputException | ServerException e) {
             ui.addErrorMessage(e);
-            log.error("! {}", dto, e);
+            Admin.log.error("! {}", dto, e);
         }
 
         if (dtoInfo.broadcastMessage != null) {
@@ -566,7 +716,7 @@ public class AdminData {
                     params.getString("import"),
                     dto,
                     dtoIndex.present,
-                    params.isChecked(PARAM_DELETE_ALL),
+                    params.isChecked("deleteall"),
                     ui
                 );
             } else {
@@ -578,7 +728,7 @@ public class AdminData {
                     params.getString("import"),
                     dto,
                     dtoIndex.present,
-                    params.isChecked(PARAM_DELETE_ALL),
+                    params.isChecked("deleteall"),
                     ui
                 );
             } else {
@@ -590,7 +740,7 @@ public class AdminData {
                     params.getString("import"),
                     dto,
                     dtoIndex.present,
-                    params.isChecked(PARAM_DELETE_ALL),
+                    params.isChecked("deleteall"),
                     ui
                 );
             } else {
@@ -625,7 +775,7 @@ public class AdminData {
             }
         } catch (DatabaseException e) {
             ui.addErrorMessage(e);
-            log.error("!", e);
+            Admin.log.error("!", e);
         }
 
         ui.containerEnd().containerEnd().write();
@@ -650,7 +800,7 @@ public class AdminData {
             }
         } catch (DatabaseException e) {
             ui.addErrorMessage(e);
-            log.error("!", e);
+            Admin.log.error("!", e);
         }
 
         ui.containerEnd().containerEnd().write();
@@ -675,7 +825,7 @@ public class AdminData {
             }
         } catch (DatabaseException e) {
             ui.addErrorMessage(e);
-            log.error("!", e);
+            Admin.log.error("!", e);
         }
 
         ui.containerEnd().containerEnd().write();
@@ -692,5 +842,24 @@ public class AdminData {
 
         void beforeDelete(Dto dto);
         void afterDelete(Dto dto);
+    }
+
+
+    private static class PasswordField {
+        public String password;
+    }
+
+    private static Event getEvent() {
+        String appPackage = Settings.getAppPackage();
+        String adminApp = StringUtil.isEmpty(appPackage) ? null : appPackage + ".business.admin.model.AdminApp";
+        if (StringUtil.isNotEmpty(adminApp)) {
+            try {
+                Method method = Class.forName(adminApp).getMethod("getAdminDataEvent");
+                return (Event) method.invoke(null);
+            } catch (ClassNotFoundException | NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+                Admin.log.error("! AdminData '{}.getAdminDataEvent()'", adminApp, e);
+            }
+        }
+        return null;
     }
 }

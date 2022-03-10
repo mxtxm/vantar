@@ -178,4 +178,19 @@ public class ClassUtil {
 
         return classes;
     }
+
+    public static int sizeOfStatic(Class<?> tClass) {
+        int size = 0;
+        for (Field field : tClass.getDeclaredFields()) {
+            if (!Modifier.isStatic(field.getModifiers())) {
+                continue;
+            }
+            try {
+                size += com.carrotsearch.sizeof.RamUsageEstimator.sizeOf(field.get(null));
+            } catch (IllegalAccessException ignore) {
+
+            }
+        }
+        return size;
+    }
 }

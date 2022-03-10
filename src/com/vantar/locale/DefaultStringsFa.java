@@ -5,7 +5,7 @@ import java.util.*;
 
 public class DefaultStringsFa {
 
-    private static final Map<LangKey, String> tokens = new HashMap<>();
+    private static final Map<LangKey, String> tokens = new HashMap<>(290);
 
     static {
         // auth
@@ -276,6 +276,9 @@ public class DefaultStringsFa {
         tokens.put(VantarKey.DELETE_FAIL_HAS_DEPENDENCIES, "بعلت وجود وابستگی امکان حذف وجود ندارد");
 
         tokens.put(VantarKey.ADMIN_AUTH_FAILED, "خظای احراز هویت کاربر: session فاسد شده یا وارد داشبورد نشدید یا دسترسی ندارید");
+
+        tokens.put(VantarKey.ADMIN_ACTION_LOG_USER, "لاگ کاربران");
+        tokens.put(VantarKey.ADMIN_ACTION_LOG_REQUEST, "لاگ درخواست ها");
     }
 
     public static String getString(LangKey key) {

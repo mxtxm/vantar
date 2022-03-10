@@ -6,7 +6,7 @@ import com.vantar.database.query.QueryBuilder;
 import com.vantar.exception.*;
 import com.vantar.util.datetime.DateTimeRange;
 import com.vantar.util.file.FileUtil;
-import com.vantar.util.json.Json;
+import com.vantar.util.json.*;
 import com.vantar.util.string.*;
 import com.vantar.web.*;
 import java.io.*;
@@ -87,7 +87,7 @@ public class ElasticBackup {
                 }
 
                 for (Dto item : data) {
-                    zos.write((Json.toJson(item) + "\n").getBytes());
+                    zos.write((Json.d.toJson(item) + "\n").getBytes());
                     ++l;
                 }
                 long elapsed = (System.currentTimeMillis() - startItemTime) / 1000;
@@ -163,7 +163,7 @@ public class ElasticBackup {
                     int i = 1;
                     while (reader.ready()) {
                         dto.reset();
-                        dto.set(Json.mapFromJson(reader.readLine(), String.class, Object.class), Dto.Action.INSERT);
+                        dto.set(Json.d.mapFromJson(reader.readLine(), String.class, Object.class), Dto.Action.INSERT);
                         write.insert(dto);
                     }
                     write.commit();

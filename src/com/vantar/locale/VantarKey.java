@@ -262,4 +262,7 @@ public enum VantarKey implements LangKey {
 
     ADMIN_AUTH_FAILED,
 
+    ADMIN_ACTION_LOG_USER,
+    ADMIN_ACTION_LOG_REQUEST,
+
 }

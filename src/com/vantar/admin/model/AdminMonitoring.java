@@ -16,15 +16,19 @@ import java.util.*;
 
 public class AdminMonitoring {
 
-    public static final Map<String, List<String>> links = new LinkedHashMap<>();
-
-
     public static void index(Params params, HttpServletResponse response) throws FinishException {
         WebUi ui = Admin.getUi(Locale.getString(VantarKey.ADMIN_MENU_MONITORING), params, response, true);
+
+        Map<String, List<String>> links = new LinkedHashMap<>();
 
         List<String> items = new ArrayList<>(1);
         items.add(Locale.getString(VantarKey.ADMIN_SYSTEM_ERRORS) + ":/admin/system/errors");
         links.put(Locale.getString(VantarKey.ADMIN_SYSTEM_ERRORS), items);
+
+        items = new ArrayList<>(2);
+        items.add(Locale.getString(VantarKey.ADMIN_ACTION_LOG_USER) + ":/admin/action/log/user");
+        items.add(Locale.getString(VantarKey.ADMIN_ACTION_LOG_REQUEST) + ":/admin/action/log/request");
+        links.put(Locale.getString(VantarKey.ADMIN_ACTION_LOG), items);
 
         items = new ArrayList<>(2);
         items.add(Locale.getString(VantarKey.ADMIN_SERVICES_LAST_RUN) + ":/admin/services/status");
@@ -53,8 +57,8 @@ public class AdminMonitoring {
         if (StringUtil.isNotEmpty(appPackage)) {
             try {
                 Class<?> tClass = Class.forName(appPackage + ".business.admin.model.AdminApp");
-                Method method = tClass.getMethod("extendMonitoringLinks");
-                method.invoke(null);
+                Method method = tClass.getMethod("extendMonitoringLinks", Map.class);
+                method.invoke(null, links);
             } catch (ClassNotFoundException | NoSuchMethodException | IllegalAccessException | InvocationTargetException ignore) {
 
             }
@@ -76,7 +80,7 @@ public class AdminMonitoring {
         WebUi ui = Admin.getUi(Locale.getString(VantarKey.ADMIN_SERVICES_LAST_RUN), params, response, true);
 
         LogEvent.getBeats().forEach((service, logs) -> {
-            ui.beginBox(service);
+            ui.beginBox(service.getName());
             logs.forEach((comment, time) ->
                 ui.addKeyValue(comment, time.toString() + " ("
                     + DateTimeFormatter.secondsToDateTime(Math.abs(time.secondsFromNow())) + ")")

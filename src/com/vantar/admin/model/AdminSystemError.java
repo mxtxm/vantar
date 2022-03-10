@@ -12,9 +12,6 @@ import java.util.List;
 
 public class AdminSystemError {
 
-    private static final String PARAM_TAG = "tag";
-
-
     public static void systemErrors(Params params, HttpServletResponse response) throws FinishException {
         WebUi ui = Admin.getUi(Locale.getString(VantarKey.ADMIN_SYSTEM_ERRORS), params, response, true);
         ui.write();
@@ -26,7 +23,7 @@ public class AdminSystemError {
 
         for (String tag : tags) {
             ui  .beginBox(tag)
-                .addBlockLink(Locale.getString(VantarKey.ADMIN_DELETE_DO), "/admin/system/errors/delete?" + PARAM_TAG + "=" + tag)
+                .addBlockLink(Locale.getString(VantarKey.ADMIN_DELETE_DO), "/admin/system/errors/delete?tag=" + tag)
                 .addEmptyLine();
 
             for (String item : LogEvent.get(tag)) {
@@ -42,7 +39,7 @@ public class AdminSystemError {
         WebUi ui = Admin.getUi(Locale.getString(VantarKey.ADMIN_ERRORS_DELETE), params, response, true);
 
         Log dto = new Log();
-        dto.tag = params.getString(PARAM_TAG);
+        dto.tag = params.getString("tag");
 
         ui.beginBox(dto.tag);
 

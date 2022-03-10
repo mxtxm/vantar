@@ -1,6 +1,5 @@
 package com.vantar.service.backup;
 
-import com.vantar.common.Settings;
 import com.vantar.database.dto.DtoDictionary;
 import com.vantar.database.nosql.elasticsearch.ElasticBackup;
 import com.vantar.database.nosql.mongo.MongoBackup;
@@ -20,6 +19,7 @@ public class ServiceBackup implements Services.Service {
     public Boolean onEndSetNull;
     public String dbms;
     public Integer intervalHour;
+    public String path;
 
 
     public void start() {
@@ -42,18 +42,21 @@ public class ServiceBackup implements Services.Service {
     }
 
     private void create() {
-        String head = Settings.backup().getBackupDir();
         String tail = "-" + (new DateTime().formatter().getDateTimeSimple()) + ".dump";
 
         dbms = dbms.toUpperCase();
         if (StringUtil.contains(dbms, DtoDictionary.Dbms.MONGO.toString())) {
-            MongoBackup.dump(head + "mongo" + tail, null, null);
+            MongoBackup.dump(path + "mongo" + tail, null, null);
         }
         if (StringUtil.contains(dbms, DtoDictionary.Dbms.SQL.toString())) {
-            SqlBackup.dump(head + "sql" + tail, null, null);
+            SqlBackup.dump(path + "sql" + tail, null, null);
         }
         if (StringUtil.contains(dbms, DtoDictionary.Dbms.ELASTIC.toString())) {
-            ElasticBackup.dump(head + "elastic" + tail, null, null);
+            ElasticBackup.dump(path + "elastic" + tail, null, null);
         }
+    }
+
+    public String getPath() {
+        return path;
     }
 }

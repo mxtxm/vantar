@@ -58,4 +58,8 @@ public class StopWord {
             stopWords.remove(lang);
         }
     }
+
+    public static void clear() {
+        stopWords = null;
+    }
 }

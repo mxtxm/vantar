@@ -16,10 +16,8 @@ import java.util.concurrent.ConcurrentHashMap;
 public class Permit {
 
     protected static final int MAX_CONTROLLER_SIZE = 1000;
-
     protected final Map<String, TokenData> onlineUsers = new ConcurrentHashMap<>(ServiceAuth.MAX_SIGNED_USERS);
     private Map<String, Permission> controllerPermissionTable;
-
     public Integer tokenExpireMin;
 
 

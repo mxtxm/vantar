@@ -2,7 +2,7 @@ package com.vantar.service.log.dto;
 
 import com.vantar.database.dto.*;
 import com.vantar.util.datetime.DateTime;
-import java.util.Map;
+import java.util.*;
 
 @Elastic
 @Mongo
@@ -12,7 +12,9 @@ public class UserLog extends DtoBase {
     public Long id;
 
     public Long userId;
+    public Long threadId;
     public String action;
+    public String requestType;
 
     public String className;
     public Long objectId;
@@ -22,8 +24,7 @@ public class UserLog extends DtoBase {
     public Map<String, String> headers;
     public String url;
     public String ip;
-
-    public String description;
+    public List<String> uploadedFiles;
 
     @Timestamp
     @CreateTime

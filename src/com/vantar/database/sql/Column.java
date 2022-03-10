@@ -1,4 +1,4 @@
-package com.vantar.database.common;
+package com.vantar.database.sql;
 
 
 public class Column {

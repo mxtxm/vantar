@@ -12,10 +12,6 @@ public interface CommonUser extends Dto {
 
     AccessStatus getAccessStatus();
 
-    void nullPassword();
-
-    String getPassword();
-
     String getFullName();
 
     String getMobile();
@@ -27,9 +23,5 @@ public interface CommonUser extends Dto {
     CommonUserRole getRole();
     List<? extends CommonUserRole> getRoles();
 
-    void setSigningIn();
-
     Long getId();
-
-    boolean passwordEquals(String password);
 }

@@ -76,7 +76,7 @@ public class CommonModelSql extends CommonModel {
             if (event != null) {
                 event.afterWrite(dto);
             }
-            return new ResponseMessage(VantarKey.INSERT_SUCCESS, id);
+            return ResponseMessage.success(VantarKey.INSERT_SUCCESS, id);
         } catch (DatabaseException e) {
             log.error("! {}", e.getMessage());
             throw new ServerException(VantarKey.INSERT_FAIL);
@@ -127,7 +127,7 @@ public class CommonModelSql extends CommonModel {
             }
         }
 
-        return new ResponseMessage(VantarKey.INSERT_SUCCESS, dtos.size());
+        return ResponseMessage.success(VantarKey.INSERT_SUCCESS, dtos.size());
     }
 
     public static ResponseMessage update(Params params, Dto dto) throws InputException, ServerException {
@@ -191,7 +191,7 @@ public class CommonModelSql extends CommonModel {
         if (event != null) {
             event.afterWrite(dto);
         }
-        return new ResponseMessage(VantarKey.UPDATE_SUCCESS);
+        return ResponseMessage.success(VantarKey.UPDATE_SUCCESS);
     }
 
     public static <T extends Dto> ResponseMessage updateBatch(Params params, Class<T> tClass) throws InputException, ServerException {
@@ -236,7 +236,7 @@ public class CommonModelSql extends CommonModel {
             afterDataChange(dtos.get(0));
         }
 
-        return new ResponseMessage(VantarKey.UPDATE_SUCCESS, dtos.size());
+        return ResponseMessage.success(VantarKey.UPDATE_SUCCESS, dtos.size());
     }
 
     public static ResponseMessage delete(Params params, Dto dto) throws InputException, ServerException {
@@ -249,7 +249,7 @@ public class CommonModelSql extends CommonModel {
             CommonRepoSql repo = new CommonRepoSql(connection);
             repo.delete(dto);
 
-            return new ResponseMessage(VantarKey.DELETE_SUCCESS);
+            return ResponseMessage.success(VantarKey.DELETE_SUCCESS);
         } catch (DatabaseException e) {
             log.error("! {}", e.getMessage());
             throw new ServerException(VantarKey.DELETE_FAIL);
@@ -298,7 +298,7 @@ public class CommonModelSql extends CommonModel {
             afterDataChange(dto);
         }
 
-        return new ResponseMessage(VantarKey.DELETE_SUCCESS, ids.size());
+        return ResponseMessage.success(VantarKey.DELETE_SUCCESS, ids.size());
     }
 
     public static ResponseMessage batch(Params params, Dto dto) throws InputException, ServerException {
@@ -319,7 +319,7 @@ public class CommonModelSql extends CommonModel {
 
             connection.commit();
             afterDataChange(dto);
-            return new ResponseMessage(msg);
+            return ResponseMessage.success(msg);
 
         } catch (DatabaseException e) {
             log.error("! {}", e.getMessage());
@@ -408,7 +408,7 @@ public class CommonModelSql extends CommonModel {
         try (SqlConnection connection = new SqlConnection()) {
             CommonRepoSql repo = new CommonRepoSql(connection);
             repo.purge(table);
-            return new ResponseMessage(VantarKey.DELETE_SUCCESS);
+            return ResponseMessage.success(VantarKey.DELETE_SUCCESS);
         } catch (DatabaseException e) {
             throw new ServerException(VantarKey.DELETE_FAIL);
         }
@@ -418,7 +418,7 @@ public class CommonModelSql extends CommonModel {
         try (SqlConnection connection = new SqlConnection()) {
             CommonRepoSql repo = new CommonRepoSql(connection);
             repo.purgeData(table);
-            return new ResponseMessage(VantarKey.DELETE_SUCCESS);
+            return ResponseMessage.success(VantarKey.DELETE_SUCCESS);
         } catch (DatabaseException e) {
             log.error("! {}", e.getMessage());
             throw new ServerException(VantarKey.DELETE_FAIL);

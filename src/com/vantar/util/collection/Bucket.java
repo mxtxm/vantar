@@ -1,8 +1,6 @@
 package com.vantar.util.collection;
 
-import com.vantar.util.json.Json;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.vantar.util.json.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.locks.Lock;
@@ -11,8 +9,6 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 
 public class Bucket<T> {
-
-    private static final Logger log = LoggerFactory.getLogger(Bucket.class);
 
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
     private final Lock readLock = lock.readLock();
@@ -35,8 +31,8 @@ public class Bucket<T> {
             }
             data.add(value);
             json = null;
-        } catch (InterruptedException e) {
-            log.error("! bucket({})", value, e);
+        } catch (InterruptedException ignore) {
+
         } finally{
             writeLock.unlock();
         }
@@ -46,7 +42,7 @@ public class Bucket<T> {
         readLock.lock();
         try {
             if (json == null) {
-                json = Json.toJson(data);
+                json = Json.d.toJson(data);
             }
             return json;
         } finally{

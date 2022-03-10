@@ -19,7 +19,6 @@ public class CollectionUtil {
         for (Map.Entry<K, V> entry : list) {
             result.put(entry.getKey(), entry.getValue());
         }
-
         return result;
     }
 
@@ -37,7 +36,6 @@ public class CollectionUtil {
                 break;
             }
         }
-
         return result;
     }
 
@@ -52,7 +50,6 @@ public class CollectionUtil {
         for (Map.Entry<K, V> entry : list) {
             result.put(entry.getKey(), entry.getValue());
         }
-
         return result;
     }
 

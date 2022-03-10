@@ -26,7 +26,6 @@ public class ServiceMessaging {
         if (!Queue.isUp) {
             return;
         }
-
         serviceOn = true;
         LogEvent.beat(this.getClass(), "start");
         receive();
@@ -36,11 +35,9 @@ public class ServiceMessaging {
         if (!Queue.isUp) {
             return;
         }
-
         serviceOn = false;
         LogEvent.beat(this.getClass(), "stop");
-        Queue.cancelTake(workerTag, QUEUE_NAME_MESSAGE);
-        Queue.abortChannel(workerTag);
+        Queue.cancelTake(workerTag);
     }
 
     public void broadcast(int type) {
@@ -73,8 +70,6 @@ public class ServiceMessaging {
 
                 int type = packet.getType();
                 Message message = packet.getObject();
-                log.debug("> received({}, {}, {})", type, message.message, message.serverId);
-
                 switch (type) {
 
                     case VantarParam.MESSAGE_SERVICES_START:
@@ -123,7 +118,7 @@ public class ServiceMessaging {
                         }
                         break;
 
-                    case VantarParam.MESSAGE_UPDATE_CONFIG_SETTINGS:
+                    case VantarParam.MESSAGE_UPDATE_SETTINGS:
                         if (!Services.ID.equals(message.serverId)) {
                             AdminSettings.updateProperties(message.getString(), Settings.config, Settings.configClass);
                         }
@@ -170,6 +165,10 @@ public class ServiceMessaging {
 
         public String serverId;
         public Object message;
+
+        public Message() {
+
+        }
 
         public Message(String message) {
             serverId = Services.ID;

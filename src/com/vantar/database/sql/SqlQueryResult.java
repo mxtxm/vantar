@@ -1,6 +1,5 @@
 package com.vantar.database.sql;
 
-import com.google.gson.reflect.TypeToken;
 import com.vantar.common.VantarParam;
 import com.vantar.database.common.*;
 import com.vantar.database.dto.*;
@@ -8,7 +7,7 @@ import com.vantar.database.query.*;
 import com.vantar.exception.*;
 import com.vantar.util.collection.CollectionUtil;
 import com.vantar.util.datetime.DateTime;
-import com.vantar.util.json.Json;
+import com.vantar.util.json.*;
 import com.vantar.util.object.*;
 import com.vantar.util.string.*;
 import org.slf4j.*;
@@ -163,7 +162,7 @@ public class SqlQueryResult extends QueryResultBase implements QueryResult, Auto
             while (resultSet.next()) {
                 result.put(
                     resultSet.getString(keyField),
-                    CollectionUtil.getStringFromMap(Json.mapFromJson(resultSet.getString(valueField), String.class, String.class))
+                    CollectionUtil.getStringFromMap(Json.d.mapFromJson(resultSet.getString(valueField), String.class, String.class))
                 );
             }
         } catch (SQLException e) {
@@ -240,7 +239,7 @@ public class SqlQueryResult extends QueryResultBase implements QueryResult, Auto
                             if (value == null) {
                                 field.set(dto, null);
                             } else {
-                                field.set(dto, Json.fromJson(value, TypeToken.get(type).getType()));
+                                field.set(dto, Json.d.fromJson(value, type));
                             }
                             continue;
                         }
@@ -250,7 +249,7 @@ public class SqlQueryResult extends QueryResultBase implements QueryResult, Auto
                             if (value == null) {
                                 field.set(dto, null);
                             } else {
-                                field.set(dto, CollectionUtil.getStringFromMap(Json.mapFromJson(value, String.class, String.class), locales));
+                                field.set(dto, CollectionUtil.getStringFromMap(Json.d.mapFromJson(value, String.class, String.class), locales));
                             }
                             continue;
                         }
@@ -292,7 +291,7 @@ public class SqlQueryResult extends QueryResultBase implements QueryResult, Auto
                                     }
                                 }
                             } else {
-                                value = Json.listFromJson(resultSet.getString(column.index), listType);
+                                value = Json.d.listFromJson(resultSet.getString(column.index), listType);
                             }
 
                             field.set(
@@ -312,7 +311,7 @@ public class SqlQueryResult extends QueryResultBase implements QueryResult, Auto
                                     log.warn("! type/value miss-match ({}.{})", dto.getClass().getName(), field.getName());
                                     continue;
                                 }
-                                field.set(dto, Json.mapFromJson(value, g[0], g[1]));
+                                field.set(dto, Json.d.mapFromJson(value, g[0], g[1]));
                             }
                             continue;
                         }

@@ -1,13 +1,15 @@
 package com.vantar.admin.model;
 
-import com.vantar.common.Settings;
 import com.vantar.database.dto.DtoDictionary;
 import com.vantar.database.nosql.elasticsearch.ElasticBackup;
 import com.vantar.database.nosql.mongo.MongoBackup;
 import com.vantar.database.sql.SqlBackup;
-import com.vantar.exception.FinishException;
+import com.vantar.exception.*;
 import com.vantar.locale.Locale;
 import com.vantar.locale.*;
+import com.vantar.service.Services;
+import com.vantar.service.backup.ServiceBackup;
+import com.vantar.util.collection.CollectionUtil;
 import com.vantar.util.datetime.*;
 import com.vantar.util.file.FileUtil;
 import com.vantar.util.string.StringUtil;
@@ -19,32 +21,37 @@ import java.util.*;
 
 public class AdminBackup {
 
-    private static final String DUMP_FILE = "dumpfile";
-    private static final String DELETE_ALL = "deleteall";
-    private static final String DATE_TIME_MIN = "datemin";
-    private static final String DATE_TIME_MAX = "datemax";
-    private static final String PARAM_FILE = "file";
+    private static final String DUMP_FILE_EXT = ".dump";
 
 
     public static void backup(Params params, HttpServletResponse response, DtoDictionary.Dbms dbms) throws FinishException {
         WebUi ui = Admin.getUi(Locale.getString(VantarKey.ADMIN_BACKUP_CREATE), params, response, true);
         ui.beginBox(dbms.toString());
 
-        DateTimeRange dateRange = params.getDateRange(DATE_TIME_MIN, DATE_TIME_MAX);
+        ServiceBackup backup;
+        try {
+            backup = Services.get(ServiceBackup.class);
+        } catch (ServiceException e) {
+            ui.addErrorMessage(e);
+            ui.write();
+            return;
+        }
+
+        DateTimeRange dateRange = params.getDateRange("datemin", "datemax");
         String dbDumpFilename = params.getString(
-            DUMP_FILE,
-            Settings.backup().getBackupDir() + dbms.toString().toLowerCase() + "-"
-                + (new DateTime().formatter().getDateTimeSimple()) + ".dump"
+            "dumpfile",
+            backup.getPath() + dbms.toString().toLowerCase() + "-"
+                + (new DateTime().formatter().getDateTimeSimple()) + DUMP_FILE_EXT
         );
 
         if (!params.isChecked("f")) {
             ui  .addMessage(Locale.getString(VantarKey.ADMIN_BACKUP_MSG1))
                 .addMessage(Locale.getString(VantarKey.ADMIN_BACKUP_MSG2))
                 .beginFormPost()
-                .addInput(Locale.getString(VantarKey.ADMIN_BACKUP_FILE_PATH), DUMP_FILE, dbDumpFilename)
-                .addInput(Locale.getString(VantarKey.ADMIN_DATE_FROM), DATE_TIME_MIN,
+                .addInput(Locale.getString(VantarKey.ADMIN_BACKUP_FILE_PATH), "dumpfile", dbDumpFilename)
+                .addInput(Locale.getString(VantarKey.ADMIN_DATE_FROM), "datemin",
                     dateRange.dateMin == null ? "" : dateRange.dateMin.formatter().getDateTimePersian())
-                .addInput(Locale.getString(VantarKey.ADMIN_DATE_TO), DATE_TIME_MAX,
+                .addInput(Locale.getString(VantarKey.ADMIN_DATE_TO), "datemax",
                     dateRange.dateMax == null ? "" : dateRange.dateMax.formatter().getDateTimePersian())
                 .addSubmit(Locale.getString(VantarKey.ADMIN_BACKUP_CREATE_START))
                 .finish();
@@ -70,12 +77,21 @@ public class AdminBackup {
 
         ui.beginBox(dbms.toString());
 
-        String dbDumpFilename = params.getString(DUMP_FILE);
+        ServiceBackup backup;
+        try {
+            backup = Services.get(ServiceBackup.class);
+        } catch (ServiceException e) {
+            ui.addErrorMessage(e);
+            ui.write();
+            return;
+        }
+
+        String dbDumpFilename = params.getString("dumpfile");
 
         if (!params.isChecked("f")) {
             List<String> files = new ArrayList<>();
             String dbmsName = dbms.toString().toLowerCase();
-            for (String path : FileUtil.getDirectoryFiles(Settings.backup().getBackupDir())) {
+            for (String path : FileUtil.getDirectoryFiles(backup.getPath())) {
                 if (!StringUtil.contains(path, dbmsName)) {
                     continue;
                 }
@@ -86,19 +102,19 @@ public class AdminBackup {
                 .addMessage(Locale.getString(VantarKey.ADMIN_RESTORE_MSG2))
                 .addMessage(Locale.getString(VantarKey.ADMIN_RESTORE_MSG3))
                 .beginFormPost()
-                .addSelect(Locale.getString(VantarKey.ADMIN_BACKUP_FILE_PATH), DUMP_FILE, files.toArray(new String[0]))
-                .addCheckbox(Locale.getString(VantarKey.ADMIN_RESTORE_DELETE_CURRENT_DATA), DELETE_ALL, true)
+                .addSelect(Locale.getString(VantarKey.ADMIN_BACKUP_FILE_PATH), "dumpfile", files.toArray(new String[0]))
+                .addCheckbox(Locale.getString(VantarKey.ADMIN_RESTORE_DELETE_CURRENT_DATA), "deleteall", true)
                 .addSubmit(Locale.getString(VantarKey.ADMIN_BACKUP_RESTORE))
                 .finish();
             return;
         }
 
         if (dbms.equals(DtoDictionary.Dbms.SQL)) {
-            SqlBackup.restore(dbDumpFilename, params.isChecked(DELETE_ALL), ui);
+            SqlBackup.restore(dbDumpFilename, params.isChecked("deleteall"), ui);
         } else if (dbms.equals(DtoDictionary.Dbms.MONGO)) {
-            MongoBackup.restore(dbDumpFilename, params.isChecked(DELETE_ALL), ui);
+            MongoBackup.restore(dbDumpFilename, params.isChecked("deleteall"), ui);
         } else if (dbms.equals(DtoDictionary.Dbms.ELASTIC)) {
-            ElasticBackup.restore(dbDumpFilename, params.isChecked(DELETE_ALL), ui);
+            ElasticBackup.restore(dbDumpFilename, params.isChecked("deleteall"), ui);
         }
 
         ui.finish();
@@ -107,56 +123,54 @@ public class AdminBackup {
     public static void backupFiles(Params params, HttpServletResponse response, DtoDictionary.Dbms dbms) throws FinishException {
         WebUi ui = Admin.getUi(Locale.getString(VantarKey.ADMIN_BACKUP_FILES), params, response, true);
 
-        ui.beginBox(dbms.toString() + Locale.getString(VantarKey.ADMIN_DOWNLOAD));
-        String dbmsName = dbms.toString().toLowerCase();
-
-        for (String path : FileUtil.getDirectoryFiles(Settings.backup().getBackupDir())) {
-            if (!StringUtil.contains(path, dbmsName)) {
-                continue;
-            }
-            String[] parts = StringUtil.split(path, '/');
-            String filename = parts[parts.length - 1];
-            ui.addBlockLink(filename + " (" + FileUtil.getSizeMb(path) + "Mb)",
-                "/admin/data/backup/download?" + PARAM_FILE + "=" + filename);
-        }
-
-        ui.containerEnd().beginBox(dbms.toString() + Locale.getString(VantarKey.ADMIN_REMOVE_BACKUP_FILE));
-
-        for (String path : FileUtil.getDirectoryFiles(Settings.backup().getBackupDir())) {
-            if (!StringUtil.contains(path, dbmsName)) {
-                continue;
-            }
-            String[] parts = StringUtil.split(path, '/');
-            String filename = parts[parts.length - 1];
-            ui.addBlockLink(filename + " (" + FileUtil.getSizeMb(path) + "Mb)",
-                "/admin/data/backup/delete?" + PARAM_FILE + "=" + path);
-        }
-
-        ui.finish();
-    }
-
-    public static void deleteFile(Params params, HttpServletResponse response) throws FinishException {
-        WebUi ui = Admin.getUi(Locale.getString(VantarKey.ADMIN_REMOVE_BACKUP_FILE), params, response, true);
-
-        String filepath = params.getString(PARAM_FILE);
-        ui.beginBox(filepath);
-
-        if (!params.isChecked("f")) {
-            ui  .beginFormPost()
-                .addHidden(PARAM_FILE, filepath)
-                .addCheckbox(Locale.getString(VantarKey.ADMIN_DELETE_DO), DELETE_ALL)
-                .addSubmit(Locale.getString(VantarKey.ADMIN_DELETE_DO))
-                .finish();
+        ServiceBackup backup;
+        try {
+            backup = Services.get(ServiceBackup.class);
+        } catch (ServiceException e) {
+            ui.addErrorMessage(e);
+            ui.write();
             return;
         }
 
-        File file = new File(filepath);
-        if (file.delete()) {
-            ui.addMessage(Locale.getString(VantarKey.DELETE_SUCCESS));
-        } else {
-            ui.addErrorMessage(Locale.getString(VantarKey.DELETE_FAIL));
+        ui.addPageTitle(dbms.toString() + Locale.getString(VantarKey.ADMIN_BACKUP_FILES));
+
+        List<String> paths = params.getStringList("delete");
+        if (!CollectionUtil.isEmpty(paths) && params.isChecked(WebUi.PARAM_CONFIRM)) {
+            for (String path : paths) {
+                String[] parts = StringUtil.split(path, '/');
+                String filename = parts[parts.length - 1];
+
+                File file = new File(path);
+                if (file.delete()) {
+                    ui.addMessage(filename + ": " + Locale.getString(VantarKey.DELETE_SUCCESS));
+                } else {
+                    ui.addErrorMessage(filename + ": " + Locale.getString(VantarKey.DELETE_FAIL));
+                }
+            }
+            ui.finish();
+            return;
         }
 
-        ui.finish();
+        ui  .beginFormPost()
+            .addEmptyLine();
+
+        for (String path : FileUtil.getDirectoryFiles(backup.getPath())) {
+            if (!path.endsWith(DUMP_FILE_EXT)) {
+                continue;
+            }
+            String[] parts = StringUtil.split(path, '/');
+            String filename = parts[parts.length - 1];
+
+            ui.addBoxWithNoEscape(
+                ui.getCheckbox("delete", path) +
+                ui.getLink("download", "/admin/data/backup/download?" + "file" + "=" + filename, false, false) +
+                filename + " (" + FileUtil.getSizeMb(path) + "Mb)"
+            ).write();
+        }
+
+        ui  .addEmptyLine(3)
+            .addCheckbox(Locale.getString(VantarKey.ADMIN_DELETE_DO), WebUi.PARAM_CONFIRM)
+            .addSubmit(Locale.getString(VantarKey.ADMIN_DELETE))
+            .finish();
     }
 }

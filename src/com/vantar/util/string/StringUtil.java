@@ -8,7 +8,7 @@ import com.vantar.locale.Locale;
 import com.vantar.locale.StopWord;
 import com.vantar.util.collection.CollectionUtil;
 import com.vantar.util.datetime.DateTime;
-import com.vantar.util.json.Json;
+import com.vantar.util.json.*;
 import com.vantar.util.number.NumberUtil;
 import com.vantar.util.object.*;
 import java.util.*;
@@ -208,7 +208,7 @@ public class StringUtil {
             return EnumUtil.getEnumValue(value, typeClass);
         }
         if (ClassUtil.extendsClass(typeClass, Dto.class)) {
-            return Json.fromJson(value, typeClass);
+            return Json.d.fromJson(value, typeClass);
         }
         return null;
     }
@@ -974,5 +974,5 @@ public class StringUtil {
         public boolean inRange(int value) {
             return value >= min && value <= max;
         }
-    }
+        }
 }

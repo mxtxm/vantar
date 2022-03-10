@@ -12,18 +12,11 @@ import com.vantar.exception.*;
 import com.vantar.locale.*;
 import com.vantar.util.object.ObjectUtil;
 import com.vantar.web.*;
-import org.slf4j.*;
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 
 public class AdminQuery {
-
-    private static final Logger log = LoggerFactory.getLogger(AdminQuery.class);
-    private static final String PARAM_GROUP = "g";
-    private static final String PARAM_TITLE = "t";
-    private static final String PARAM_QUERY = "q";
-
 
     public static void index(Params params, HttpServletResponse response) throws FinishException {
         WebUi ui = Admin.getUi(Locale.getString(VantarKey.ADMIN_MENU_QUERY_TITLE), params, response, true);
@@ -64,9 +57,9 @@ public class AdminQuery {
 
         if (!params.isChecked("f")) {
             ui  .beginFormPost()
-                .addInput(Locale.getString(VantarKey.ADMIN_GROUP), PARAM_GROUP, item.group)
-                .addInput(Locale.getString(VantarKey.ADMIN_TITLE), PARAM_TITLE, item.title)
-                .addTextArea("Query JSON", PARAM_QUERY, item.q);
+                .addInput(Locale.getString(VantarKey.ADMIN_GROUP), "g", item.group)
+                .addInput(Locale.getString(VantarKey.ADMIN_TITLE), "t", item.title)
+                .addTextArea("Query JSON", "q", item.q);
 
             if (item.id != null) {
                 ui.addHidden(VantarParam.ID, item.id.toString());
@@ -80,9 +73,9 @@ public class AdminQuery {
             return;
         }
 
-        item.group = params.getString(PARAM_GROUP);
-        item.title = params.getString(PARAM_TITLE);
-        item.q = params.getString(PARAM_QUERY);
+        item.group = params.getString("g");
+        item.title = params.getString("t");
+        item.q = params.getString("q");
         try {
             if (item.id == null) {
                 CommonRepoMongo.insert(item);
@@ -108,7 +101,7 @@ public class AdminQuery {
         if (!params.isChecked("f") || !params.isChecked(WebUi.PARAM_CONFIRM)) {
             ui  .beginFormPost()
                 .addHeading(3, item.group + " - " + item.title)
-                .addTextArea("", "", "bpp"+item.q)
+                .addTextArea("", "", "bpp" + item.q)
                 .addCheckbox(Locale.getString(VantarKey.ADMIN_CONFIRM), WebUi.PARAM_CONFIRM);
 
             if (item.id != null) {
@@ -147,7 +140,7 @@ public class AdminQuery {
                 Locale.getString(VantarKey.ADMIN_DELETE2), "/admin/query/delete?" + VantarParam.ID + "=" + item.id
             )
             .beginFormPost()
-            .addTextArea("Query JSON", PARAM_QUERY, params.getString(PARAM_QUERY, item.q), "small")
+            .addTextArea("Query JSON", "q", params.getString("q", item.q), "small")
             .addSubmit()
             .addEmptyLine(2)
             .addBlockLinkNewPage(Locale.getString(VantarKey.ADMIN_HELP), "/admin/document/show?document=document--webservice--search.md")
@@ -156,7 +149,7 @@ public class AdminQuery {
         if (params.isChecked("f")) {
             QueryBuilder q;
             try {
-                q = new QueryBuilder(params.getQueryData(PARAM_QUERY));
+                q = new QueryBuilder(params.getQueryData("q"));
             } catch (InputException e) {
                 ui.write().addErrorMessage(e).finish();
                 return;
@@ -183,7 +176,7 @@ public class AdminQuery {
                 ui.addMessage(Locale.getString(VantarKey.NO_CONTENT));
             } catch (DatabaseException e) {
                 ui.addErrorMessage(ObjectUtil.throwableToString(e));
-                log.error("! ", e);
+                Admin.log.error("! ", e);
             }
 
             if (data != null) {

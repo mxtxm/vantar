@@ -6,10 +6,11 @@ import java.util.Map;
 
 public class HtmlEscape {
 
-    private static final Map<Character, String> htmlEncodeChars = new HashMap<>();
+    private Map<Character, String> htmlEncodeChars;
 
-    static
-    {
+
+    public HtmlEscape() {
+        htmlEncodeChars = new HashMap<>();
         // Special characters for HTML
         htmlEncodeChars.put('\u0026', "&amp;");
         htmlEncodeChars.put('\u003C', "&lt;");
@@ -270,7 +271,7 @@ public class HtmlEscape {
         htmlEncodeChars.put('\u2666', "&diams;");
     }
 
-    public static String encode(String source) {
+    public String encode(String source) {
         if (null == source) {
             return null;
         }

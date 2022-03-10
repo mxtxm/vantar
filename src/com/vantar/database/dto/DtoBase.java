@@ -179,7 +179,8 @@ public abstract class DtoBase implements Dto {
     }
 
     public Dto getClone() {
-        return JsonAllProps.fromJson(JsonAllProps.toJson(this), this.getClass());
+        Jackson jackson = Json.getWithPrivate();
+        return jackson.fromJson(jackson.toJson(this), this.getClass());
     }
 
     public boolean contains(String propertyName) {
@@ -530,7 +531,7 @@ public abstract class DtoBase implements Dto {
                     }
                 } else if (field.isAnnotationPresent(StoreString.class)) {
                     type = String.class;
-                    value = Json.toJson(value);
+                    value = JsonOld.toJson(value);
                 } else if (type.isEnum()) {
                     type = String.class;
                     value = ((Enum<?>) value).name();
@@ -698,9 +699,9 @@ public abstract class DtoBase implements Dto {
             return errors;
         }
 
-        Dto dto = Json.fromJson(json, getClass());
+        Dto dto = JsonOld.fromJson(json, getClass());
         if (dto != null) {
-            DtoSetConfigs dtoSetConfigs = Json.fromJson(json, DtoSetConfigs.class);
+            DtoSetConfigs dtoSetConfigs = JsonOld.fromJson(json, DtoSetConfigs.class);
             if (dtoSetConfigs != null) {
                 setDtoSetConfigs(
                     dtoSetConfigs.__excludeProperties,
@@ -713,7 +714,7 @@ public abstract class DtoBase implements Dto {
         }
 
         log.info("^^^ ignore the above error ^^^");
-        return set(Json.mapFromJson(json, String.class, Object.class), action);
+        return set(JsonOld.mapFromJson(json, String.class, Object.class), action);
     }
 
     /**
@@ -1092,6 +1093,51 @@ public abstract class DtoBase implements Dto {
             return false;
         }
         return Modifier.isFinal(m) || Modifier.isStatic(m) || field.isAnnotationPresent(NoStore.class);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null) {
+            return false;
+        }
+        if (obj == this) {
+            return true;
+        }
+        if (!this.getClass().equals(obj.getClass())) {
+            return false;
+        }
+        Dto dto = (Dto) obj;
+        Long id = this.getId();
+        if (id != null && this.getId().equals(((Dto) obj).getId())) {
+            return true;
+        }
+        for (Map.Entry<String, Object> entry : getPropertyValues().entrySet()) {
+            Object v1 = entry.getValue();
+            Object v2 = dto.getPropertyValue(entry.getKey());
+            if (v1 == null) {
+                if (v2 == null) {
+                    continue;
+                }
+                return false;
+            }
+            if (!v1.equals(v2)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        Long id = getId();
+        if (id != null) {
+            return getClass().hashCode() * id.hashCode();
+        }
+        int hash = getClass().hashCode();
+        for (Object v : getPropertyValues().values()) {
+            hash = 31 * hash + (v == null ? 0 : v.hashCode());
+        }
+        return hash;
     }
 
     // > > > events to override

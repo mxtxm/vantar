@@ -101,7 +101,7 @@ public class DtoDocumentCreator {
                     if (type.equals(List.class) || type.equals(ArrayList.class) || type.equals(Set.class)) {
                         Class<?>[] g = ClassUtil.getGenericTypes(field);
                         if (g == null || g.length != 1) {
-                            AdminDocument.log.warn("! invalid generics ({}.{})", dto.getClass().getSimpleName(), field.getName());
+                            Admin.log.warn("! invalid generics ({}.{})", dto.getClass().getSimpleName(), field.getName());
                             continue;
                         }
                         String[] parts = StringUtil.split(g[0].getTypeName(), '.');
@@ -113,7 +113,7 @@ public class DtoDocumentCreator {
                     } else if (type.equals(Map.class)) {
                         Class<?>[] g = ClassUtil.getGenericTypes(field);
                         if (g == null || g.length != 2) {
-                            AdminDocument.log.warn("! invalid generics ({}.{})", dto.getClass().getSimpleName(), field.getName());
+                            Admin.log.warn("! invalid generics ({}.{})", dto.getClass().getSimpleName(), field.getName());
                             continue;
                         }
                         String[] partsK = StringUtil.split(g[0].getTypeName(), '.');
@@ -143,5 +143,4 @@ public class DtoDocumentCreator {
         FileUtil.makeDirectory(Settings.config.getProperty("documents.dir"));
         FileUtil.write(Settings.config.getProperty("documents.dir") + "objects.md", document.toString());
     }
-
 }

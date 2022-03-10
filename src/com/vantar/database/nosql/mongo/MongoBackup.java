@@ -24,29 +24,25 @@ public class MongoBackup {
 
     public static void dump(String dumpPath, DateTimeRange dateRange, WebUi ui) {
         MongoDatabase database;
-        FileOutputStream fos;
         try {
             database = MongoConnection.getDatabase();
-            fos = new FileOutputStream(dumpPath);
-        } catch (DatabaseException | FileNotFoundException e) {
+        } catch (DatabaseException e) {
             if (ui != null) {
                 ui.addErrorMessage(e).write();
             }
             return;
         }
-        BufferedOutputStream bos = new BufferedOutputStream(fos);
-        ZipOutputStream zos = new ZipOutputStream(bos);
 
         if (ui != null) {
             ui.addHeading("Mongo " + database.getName() + " > " + dumpPath).write();
         }
 
-        long startTime = System.currentTimeMillis();
         long r = 0;
-        try {
+        long startTime = System.currentTimeMillis();
+        try (ZipOutputStream zip = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(dumpPath)))) {
             for (String collection : MongoConnection.getCollections()) {
                 long startCollectionTime = System.currentTimeMillis();
-                zos.putNextEntry(new ZipEntry(collection + ".dump"));
+                zip.putNextEntry(new ZipEntry(collection + ".dump"));
                 int l = 0;
                 FindIterable<Document> q;
 
@@ -83,7 +79,7 @@ public class MongoBackup {
                 }
 
                 for (Document document : q) {
-                    zos.write((document.toJson() + "\n").getBytes());
+                    zip.write((document.toJson() + "\n").getBytes());
                     ++l;
                 }
                 long elapsed = (System.currentTimeMillis() - startCollectionTime) / 1000;
@@ -92,58 +88,59 @@ public class MongoBackup {
                 }
                 r += l;
             }
-            zos.closeEntry();
+            zip.closeEntry();
+
             if (ui != null) {
                 ui.addPre(
                     "finished in: " + ((System.currentTimeMillis() - startTime) / 1000) + "s" +
-                        "\n" + r + " records" +
-                        "\n" + FileUtil.getSizeMb(dumpPath) + "Mb"
+                    "\n" + r + " records" + "\n" + FileUtil.getSizeMb(dumpPath) + "Mb"
                 );
             }
         } catch (IOException | DatabaseException e) {
             if (ui != null) {
                 ui.addErrorMessage(e);
             }
-        } finally {
-            try {
-                zos.close();
-            } catch (IOException e) {
-                if (ui != null) {
-                    ui.addErrorMessage(e);
-                }
-            }
         }
+
         if (ui != null) {
             ui.containerEnd().write();
         }
     }
 
+    public static void restore(String zipPath, boolean deleteData) {
+        restore(zipPath, deleteData, null);
+    }
+
     public static void restore(String zipPath, boolean deleteData, WebUi ui) {
         MongoDatabase database;
-        ZipFile zipFile;
         try {
             database = MongoConnection.getDatabase();
-            zipFile = new ZipFile(zipPath);
-        } catch (DatabaseException | IOException e) {
-            ui.addErrorMessage(e).write();
+        } catch (DatabaseException e) {
+            if (ui != null){
+                ui.addErrorMessage(e).write();
+            }
             return;
         }
 
-        ui.addHeading("Mongo " + zipPath + " > " + database.getName()).write();
+        if (ui != null) {
+            ui.addHeading("Mongo " + zipPath + " > " + database.getName()).write();
+        }
 
         long startTime = System.currentTimeMillis();
         long r = 0;
 
-        Enumeration<? extends ZipEntry> entries = zipFile.entries();
-        while (entries.hasMoreElements()) {
-            long startItemTime = System.currentTimeMillis();
-            ZipEntry entry = entries.nextElement();
-            try {
-                InputStream stream = zipFile.getInputStream(entry);
+        try (ZipFile zipFile = new ZipFile(zipPath)) {
+            Enumeration<? extends ZipEntry> entries = zipFile.entries();
+            while (entries.hasMoreElements()) {
+                long startItemTime = System.currentTimeMillis();
+                ZipEntry entry = entries.nextElement();
                 String[] parts = StringUtil.split(entry.getName(), '/');
                 String collection = StringUtil.replace(parts[parts.length - 1], ".dump", "");
 
-                try (BufferedReader reader = new BufferedReader(new InputStreamReader(stream))) {
+                try (
+                    InputStream stream = zipFile.getInputStream(entry);
+                    BufferedReader reader = new BufferedReader(new InputStreamReader(stream))) {
+
                     if (deleteData) {
                         Mongo.deleteAll(collection);
                     }
@@ -159,24 +156,31 @@ public class MongoBackup {
                     }
                     Mongo.insert(collection, documents);
 
-                    long elapsed = (System.currentTimeMillis() - startItemTime) / 1000;
-                    ui.addKeyValue(collection, (i-1) + " records,    " + (elapsed * 10 / 10d) + "s").write();
-                    r += i - 1;
-
+                    if (ui != null) {
+                        long elapsed = (System.currentTimeMillis() - startItemTime) / 1000;
+                        ui.addKeyValue(collection, (i - 1) + " records,    " + (elapsed * 10 / 10d) + "s").write();
+                        r += i - 1;
+                    }
                 } catch (IOException | DatabaseException e) {
-                    ui.addErrorMessage(e);
+                    if (ui != null) {
+                        ui.addErrorMessage(e);
+                    }
                 }
-            } catch (IOException e) {
-                ui.addErrorMessage(e);
+            }
+        } catch (IOException e) {
+            if (ui != null) {
+                ui.addErrorMessage(e).write();
             }
         }
 
-        ui  .addPre(
-                "finished in: " + ((System.currentTimeMillis() - startTime) / 1000) + "s" +
-                "\n" + r + " records" +
-                "\n" + FileUtil.getSizeMb(zipPath) + "Mb"
-            )
-            .containerEnd()
-            .write();
+        if (ui != null) {
+            ui .addPre(
+                    "finished in: " + ((System.currentTimeMillis() - startTime) / 1000) + "s" +
+                    "\n" + r + " records" +
+                    "\n" + FileUtil.getSizeMb(zipPath) + "Mb"
+                )
+                .containerEnd()
+                .write();
+        }
     }
 }

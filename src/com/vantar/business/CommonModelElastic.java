@@ -74,7 +74,7 @@ public class CommonModelElastic extends CommonModel {
             if (event != null) {
                 event.afterWrite(dto);
             }
-            return new ResponseMessage(VantarKey.INSERT_SUCCESS, id);
+            return ResponseMessage.success(VantarKey.INSERT_SUCCESS, id);
         } catch (DatabaseException e) {
             log.error("! {}", e.getMessage());
             throw new ServerException(VantarKey.INSERT_FAIL);
@@ -126,7 +126,7 @@ public class CommonModelElastic extends CommonModel {
             }
         }
 
-        return new ResponseMessage(VantarKey.INSERT_SUCCESS, dtos.size());
+        return ResponseMessage.success(VantarKey.INSERT_SUCCESS, dtos.size());
     }
 
     public static ResponseMessage update(Params params, Dto dto) throws InputException, ServerException {
@@ -188,7 +188,7 @@ public class CommonModelElastic extends CommonModel {
         if (event != null) {
             event.afterWrite(dto);
         }
-        return new ResponseMessage(VantarKey.UPDATE_SUCCESS);
+        return ResponseMessage.success(VantarKey.UPDATE_SUCCESS);
     }
 
     public static <T extends Dto> ResponseMessage updateBatch(Params params, Class<T> tClass) throws InputException, ServerException {
@@ -232,7 +232,7 @@ public class CommonModelElastic extends CommonModel {
             afterDataChange(dtos.get(0));
         }
 
-        return new ResponseMessage(VantarKey.UPDATE_SUCCESS, dtos.size());
+        return ResponseMessage.success(VantarKey.UPDATE_SUCCESS, dtos.size());
     }
 
     public static ResponseMessage delete(Params params, Dto dto) throws InputException, ServerException {
@@ -248,7 +248,7 @@ public class CommonModelElastic extends CommonModel {
             throw new ServerException(VantarKey.DELETE_FAIL);
         }
 
-        return new ResponseMessage(VantarKey.DELETE_SUCCESS);
+        return ResponseMessage.success(VantarKey.DELETE_SUCCESS);
     }
 
     public static <T extends Dto> ResponseMessage deleteBatch(Params params, Class<T> tClass) throws InputException, ServerException {
@@ -292,7 +292,7 @@ public class CommonModelElastic extends CommonModel {
             afterDataChange(dto);
         }
 
-        return new ResponseMessage(VantarKey.DELETE_SUCCESS, ids.size());
+        return ResponseMessage.success(VantarKey.DELETE_SUCCESS, ids.size());
     }
 
     public static ResponseMessage batch(Params params, Dto dto) throws InputException, ServerException {
@@ -311,7 +311,7 @@ public class CommonModelElastic extends CommonModel {
 
             write.commit();
             afterDataChange(dto);
-            return new ResponseMessage(msg);
+            return ResponseMessage.success(msg);
 
         } catch (DatabaseException e) {
             log.error("! {}", e.getMessage());
@@ -405,7 +405,7 @@ public class CommonModelElastic extends CommonModel {
     public static ResponseMessage purge(String collection) throws ServerException {
         try {
             CommonRepoElastic.purge(collection);
-            return new ResponseMessage(VantarKey.DELETE_SUCCESS);
+            return ResponseMessage.success(VantarKey.DELETE_SUCCESS);
         } catch (DatabaseException e) {
             log.error("! {}", e.getMessage());
             throw new ServerException(VantarKey.DELETE_FAIL);
@@ -415,7 +415,7 @@ public class CommonModelElastic extends CommonModel {
     public static ResponseMessage purgeData(String collection) throws ServerException {
         try {
             CommonRepoElastic.purgeData(collection);
-            return new ResponseMessage(VantarKey.DELETE_SUCCESS);
+            return ResponseMessage.success(VantarKey.DELETE_SUCCESS);
         } catch (DatabaseException e) {
             log.error("! {}", e.getMessage());
             throw new ServerException(VantarKey.DELETE_FAIL);

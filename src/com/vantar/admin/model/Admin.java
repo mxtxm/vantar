@@ -12,6 +12,7 @@ import com.vantar.locale.*;
 import com.vantar.queue.Queue;
 import com.vantar.service.Services;
 import com.vantar.service.auth.*;
+import com.vantar.util.number.NumberUtil;
 import com.vantar.util.string.StringUtil;
 import com.vantar.web.*;
 import org.slf4j.*;
@@ -24,32 +25,11 @@ public class Admin {
 
     public static final Logger log = LoggerFactory.getLogger(AdminSigninController.class);
 
-    public static String appTitle = "";
-    public static Map<String, String> menu;
-    public static Map<String, List<String>> shortcuts;
 
-
-    private static void setMenus(WebUi ui) throws FinishException {
-        menu = new LinkedHashMap<>();
-        shortcuts = new LinkedHashMap<>();
-        boolean isRoot = AdminAuth.isRoot(ui);
-
-        String appPackage = Settings.getAppPackage();
-        String adminApp = StringUtil.isEmpty(appPackage) ? null : appPackage + ".business.admin.model.AdminApp";
-
-        // admin dashboard title
-        if (StringUtil.isNotEmpty(adminApp)) {
-            try {
-                Class<?> tClass = Class.forName(adminApp);
-                Method method = tClass.getMethod("setTitle");
-                method.invoke(null);
-            } catch (ClassNotFoundException | NoSuchMethodException | IllegalAccessException | InvocationTargetException ignore) {
-                log.info("> > > admin dashboard title not set '{}.setTitle()'", adminApp);
-            }
-        }
-
+    private static Map<String, String> getMenus(WebUi ui) throws FinishException {
+        Map<String, String> menu = new LinkedHashMap<>();
         menu.put(Locale.getString(VantarKey.ADMIN_MENU_HOME), "/admin");
-        if (isRoot) {
+        if (AdminAuth.isRoot(ui)) {
             menu.put(Locale.getString(VantarKey.ADMIN_MENU_MONITORING), "/admin/monitoring");
             menu.put(Locale.getString(VantarKey.ADMIN_MENU_DATA), "/admin/data");
             menu.put(Locale.getString(VantarKey.ADMIN_MENU_ADVANCED), "/admin/advanced");
@@ -59,41 +39,19 @@ public class Admin {
         menu.put(Locale.getString(VantarKey.ADMIN_MENU_DOCUMENTS), "/admin/document/index");
 
         // custom menu
+        String appPackage = Settings.getAppPackage();
+        String adminApp = StringUtil.isEmpty(appPackage) ? null : appPackage + ".business.admin.model.AdminApp";
         if (StringUtil.isNotEmpty(adminApp)) {
             try {
                 Class<?> tClass = Class.forName(adminApp);
-                Method method = tClass.getMethod("extendMenu", Params.class);
-                method.invoke(null, ui.params);
-            } catch (ClassNotFoundException | NoSuchMethodException | IllegalAccessException | InvocationTargetException ignore) {
-                log.info("> > > admin dashboard title not set '{}.extendMenu()'", adminApp);
+                Method method = tClass.getMethod("extendMenu", Params.class, Map.class);
+                method.invoke(null, ui.params, menu);
+            } catch (ClassNotFoundException | NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+                log.error("! admin dashboard '{}.extendMenu(params, Map<menu,url>)'", adminApp, e);
             }
         }
 
-        List<String> shortCuts = new ArrayList<>(20);
-        if (isRoot) {
-            shortCuts.add("");
-            shortCuts.add(Locale.getString(VantarKey.ADMIN_USERS) + ":/admin/data/list?dto=User");
-            shortCuts.add("");
-            shortCuts.add(Locale.getString(VantarKey.ADMIN_SYSTEM_ERRORS) + ":/admin/system/errors");
-            shortCuts.add(Locale.getString(VantarKey.ADMIN_SERVICES_LAST_RUN) + ":/admin/services/status");
-            shortCuts.add(Locale.getString(VantarKey.ADMIN_SERVICES_STATUS) + ":/admin/services/run");
-            shortCuts.add("");
-            shortCuts.add(Locale.getString(VantarKey.ADMIN_BACKUP_SQL) + ":/admin/data/backup/sql");
-            shortCuts.add(Locale.getString(VantarKey.ADMIN_BACKUP_MONGO) + ":/admin/data/backup/mongo");
-            shortCuts.add(Locale.getString(VantarKey.ADMIN_BACKUP_ELASTIC) + ":/admin/data/backup/elastic");
-            shortcuts.put(Locale.getString(VantarKey.ADMIN_SHORTCUTS), shortCuts);
-        }
-
-        // custom shortcuts
-        if (StringUtil.isNotEmpty(adminApp)) {
-            try {
-                Class<?> tClass = Class.forName(adminApp);
-                Method method = tClass.getMethod("extendShortcuts");
-                method.invoke(null);
-            } catch (ClassNotFoundException | NoSuchMethodException | IllegalAccessException | InvocationTargetException ignore) {
-                log.info("> > > admin dashboard title not set '{}.extendShortcuts()'", adminApp);
-            }
-        }
+        return menu;
     }
 
     public static WebUi getUi(String title, Params params, HttpServletResponse response, boolean requiresRoot)
@@ -102,17 +60,13 @@ public class Admin {
         WebUi ui = new WebUi(params, response);
 
         if (requiresRoot && !AdminAuth.isRoot(ui)) {
-            ui  .addErrorMessage(Locale.getString(VantarKey.ADMIN_AUTH_TOKEN))
-                .finish();
+            ui.addErrorMessage(Locale.getString(VantarKey.ADMIN_AUTH_TOKEN)).finish();
             throw new FinishException();
         }
 
-        setMenus(ui);
-
-        ui  .addMenu(menu, getOnlineUserTitle(params))
-            .addPageTitle(appTitle + " : " + title).beginMain();
-
-        return ui;
+        return ui
+            .addMenu(getMenus(ui), getOnlineUserTitle(params))
+            .addPageTitle(Settings.config.getProperty("title") + " : " + title).beginMain();
     }
 
     public static WebUi getUiDto(String title, Params params, HttpServletResponse response, DtoDictionary.Info dtoInfo)
@@ -125,12 +79,10 @@ public class Admin {
             throw new FinishException();
         }
 
-        setMenus(ui);
+        return ui
+            .addMenu(getMenus(ui), getOnlineUserTitle(params))
+            .setBreadcrumb(Settings.config.getProperty("title") + " : " + title, dtoInfo).beginMain();
 
-        ui  .addMenu(menu, getOnlineUserTitle(params))
-            .setBreadcrumb(appTitle + " : " + title, dtoInfo).beginMain();
-
-        return ui;
     }
 
     private static String getOnlineUserTitle(Params params) {
@@ -150,6 +102,35 @@ public class Admin {
         }
 
         WebUi ui = getUi(Locale.getString(VantarKey.ADMIN_SYSTEM_ADMIN), params, response, false);
+
+        Map<String, List<String>> shortcuts = new LinkedHashMap<>();
+        List<String> defaultLinks = new ArrayList<>(20);
+        if (AdminAuth.isRoot(ui)) {
+            defaultLinks.add("");
+            defaultLinks.add(Locale.getString(VantarKey.ADMIN_USERS) + ":/admin/data/list?dto=User");
+            defaultLinks.add("");
+            defaultLinks.add(Locale.getString(VantarKey.ADMIN_SYSTEM_ERRORS) + ":/admin/system/errors");
+            defaultLinks.add(Locale.getString(VantarKey.ADMIN_SERVICES_LAST_RUN) + ":/admin/services/status");
+            defaultLinks.add(Locale.getString(VantarKey.ADMIN_SERVICES_STATUS) + ":/admin/services/run");
+            defaultLinks.add("");
+            defaultLinks.add(Locale.getString(VantarKey.ADMIN_BACKUP_SQL) + ":/admin/data/backup/sql");
+            defaultLinks.add(Locale.getString(VantarKey.ADMIN_BACKUP_MONGO) + ":/admin/data/backup/mongo");
+            defaultLinks.add(Locale.getString(VantarKey.ADMIN_BACKUP_ELASTIC) + ":/admin/data/backup/elastic");
+            shortcuts.put(Locale.getString(VantarKey.ADMIN_SHORTCUTS), defaultLinks);
+        }
+
+        // custom shortcuts
+        String appPackage = Settings.getAppPackage();
+        String adminApp = StringUtil.isEmpty(appPackage) ? null : appPackage + ".business.admin.model.AdminApp";
+        if (StringUtil.isNotEmpty(adminApp)) {
+            try {
+                Class<?> tClass = Class.forName(adminApp);
+                Method method = tClass.getMethod("extendShortcuts", Params.class, Map.class);
+                method.invoke(null, ui.params, shortcuts);
+            } catch (ClassNotFoundException | NoSuchMethodException | IllegalAccessException | InvocationTargetException ignore) {
+                log.info("> > > admin dashboard title not set '{}.extendShortcuts()'", adminApp);
+            }
+        }
 
         shortcuts.forEach((cat, items) -> {
             ui.addHeading(cat);
@@ -181,11 +162,19 @@ public class Admin {
             ui  .addKeyValue("Mongo ", MongoConnection.isUp ? "on" : "off")
                 .addKeyValue("ElasticSearch ", ElasticConnection.isUp ? "on" : "off")
                 .addKeyValue("Sql ", SqlConnection.isUp ? "on" : "off")
-                .addKeyValue("RabbitMQ ", Queue.isUp ? "on" : "off");
+                .addKeyValue("RabbitMQ ", Queue.isUp ? "on" : "off")
+
+                .addEmptyLine()
+
+                .addKeyValue("Designated memory", NumberUtil.round(Runtime.getRuntime().maxMemory() / (1024D * 1024D), 1) + "MB")
+                .addKeyValue("Allocated memory", NumberUtil.round(Runtime.getRuntime().totalMemory() / (1024D * 1024D), 1) + "MB")
+                .addKeyValue("Free memory", NumberUtil.round(Runtime.getRuntime().freeMemory() / (1024D * 1024D), 1) + "MB")
+                .addKeyValue(
+                    "Used memory",
+                    NumberUtil.round((Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / (1024D * 1024D), 1) + "MB"
+                );
         }
 
-        ui  .addEmptyLine(8).addHeading(3, "Vantar system administration: " + VantarParam.VERSION);
-
-        ui.finish();
+        ui.addEmptyLine(8).addHeading(3, "Vantar system administration: " + VantarParam.VERSION).finish();
     }
 }

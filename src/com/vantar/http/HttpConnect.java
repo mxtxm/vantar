@@ -4,7 +4,7 @@ import com.vantar.database.dto.Dto;
 import com.vantar.exception.HttpException;
 import com.vantar.locale.Locale;
 import com.vantar.locale.*;
-import com.vantar.util.json.Json;
+import com.vantar.util.json.*;
 import org.apache.http.*;
 import org.apache.http.client.config.*;
 import org.apache.http.client.methods.*;
@@ -244,11 +244,11 @@ public class HttpConnect {
     private HttpResponse requestJson(String url, String method, Object object) throws HttpException {
         String json;
         if (object instanceof Dto) {
-            json = Json.toJson(((Dto) object).getPropertyValues());
+            json = Json.d.toJson(((Dto) object).getPropertyValues());
         } else if (object instanceof String) {
             json = (String) object;
         } else {
-            json = Json.toJson(object);
+            json = Json.d.toJson(object);
         }
 
         HttpRequest request;

@@ -23,4 +23,9 @@ public interface QueueConfig {
 
     @Config.Key("rabbitmq.queues")
     String getRabbitMqQueues();
+
+    @Config.DefaultValue("10")
+    @Config.Key("rabbitmq.heartbeat")
+    int getRabbitMqHeartbeat();
+
 }

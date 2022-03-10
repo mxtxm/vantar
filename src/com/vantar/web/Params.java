@@ -10,7 +10,7 @@ import com.vantar.locale.*;
 import com.vantar.util.collection.CollectionUtil;
 import com.vantar.util.datetime.*;
 import com.vantar.util.file.*;
-import com.vantar.util.json.Json;
+import com.vantar.util.json.*;
 import com.vantar.util.object.*;
 import com.vantar.util.string.StringUtil;
 import org.slf4j.*;
@@ -20,11 +20,28 @@ import java.io.*;
 import java.net.*;
 import java.nio.file.*;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 
 public class Params {
 
     private static final Logger log = LoggerFactory.getLogger(Params.class);
+    public static final Map<Long, Params> threadParams = new ConcurrentHashMap<>();
+
+
+    public static void setThreadParams(Params params) {
+        threadParams.put(Thread.currentThread().getId(), params);
+    }
+
+    public static void removeThreadParams() {
+        threadParams.remove(Thread.currentThread().getId());
+    }
+
+    public static Params getThreadParams() {
+        return threadParams.get(Thread.currentThread().getId());
+    }
+
+
 
     public final HttpServletRequest request;
     public final Type type;
@@ -137,14 +154,13 @@ public class Params {
     public String toString() {
         switch (type) {
             case MAP:
-                return "MAP: " + Json.toJsonPretty(map);
+                return "MAP: " + Json.d.toJsonPretty(map);
             case FORM_DATA:
-                return "FORM-DATA: " + Json.toJsonPretty(request.getParameterMap());
+                return "FORM-DATA: " + Json.d.toJsonPretty(request.getParameterMap());
             case JSON:
                 return "JSON: " + getJson();
-
             case MULTI_PART:
-                return "MULTI_PART: " + Json.toJsonPretty(request.getParameterMap());
+                return "MULTI_PART: " + Json.d.toJsonPretty(request.getParameterMap());
         }
         return type + ": N/A";
     }
@@ -152,14 +168,12 @@ public class Params {
     public String toJsonString() {
         switch (type) {
             case MAP:
-                return Json.toJson(map);
+                return Json.d.toJson(map);
             case FORM_DATA:
-                return Json.toJson(request.getParameterMap());
+            case MULTI_PART:
+                return Json.d.toJson(request.getParameterMap());
             case JSON:
                 return getJson();
-
-            case MULTI_PART:
-                return Json.toJsonPretty(request.getParameterMap());
         }
         return "{}";
     }
@@ -395,7 +409,7 @@ public class Params {
 
     private <T> List<T> getListFromJson(String value, Class<T> typeClass) {
         try {
-            return Json.listFromJson(value, typeClass);
+            return Json.d.listFromJson(value, typeClass);
         } catch (JsonSyntaxException e) {
             log.error("!", e);
             typeMisMatch = true;
@@ -482,8 +496,7 @@ public class Params {
 
         StringBuilder buffer = new StringBuilder();
         String line;
-        try {
-            BufferedReader reader = request.getReader();
+        try (BufferedReader reader = request.getReader()) {
             while ((line = reader.readLine()) != null) {
                 buffer.append(line);
             }
@@ -497,50 +510,26 @@ public class Params {
     }
 
     public <T> T getJson(Class<T> typeClass) {
-        return Json.fromJson(getJson(), typeClass);
+        return Json.d.fromJson(getJson(), typeClass);
     }
 
     public <T> List<T> getJsonList(Class<T> typeClass) {
         if (request == null) {
             return null;
         }
-
-        StringBuilder buffer = new StringBuilder();
-        String line;
-        try {
-            BufferedReader reader = request.getReader();
-            while ((line = reader.readLine()) != null) {
-                buffer.append(line);
-            }
-        } catch (Exception e) {
-            log.error("!", e);
-            return null;
-        }
-
-        return Json.listFromJson(buffer.toString(), typeClass);
+        return Json.d.listFromJson(getJson(), typeClass);
     }
 
     public <K, V> Map<K,V> getJsonMap(Class<K> typeClassKey, Class<V> typeClassValue) {
         if (request == null) {
             return null;
         }
-
-        StringBuilder buffer = new StringBuilder();
-        String line;
-        try {
-            BufferedReader reader = request.getReader();
-            while ((line = reader.readLine()) != null) {
-                buffer.append(line);
-            }
-        } catch (Exception e) {
-            log.error("!", e);
-            return null;
-        }
-
-        return Json.mapFromJson(buffer.toString(), typeClassKey, typeClassValue);
+        return Json.d.mapFromJson(getJson(), typeClassKey, typeClassValue);
     }
 
-
+    public <T> T extractFromJson(String key, Class<T> type) {
+        return Json.d.extract(getJson(), key, type);
+    }
 
     // > > > GET DATABASE QUERY
 
@@ -552,7 +541,7 @@ public class Params {
 
     public QueryData getQueryData(String key) {
         String json = getString(key);
-        return json == null ? null : normalizeQueryData(Json.fromJson(json, QueryData.class));
+        return json == null ? null : normalizeQueryData(Json.d.fromJson(json, QueryData.class));
     }
 
     private QueryData normalizeQueryData(QueryData q) {
@@ -675,6 +664,11 @@ public class Params {
     // > > > UPLOAD
 
 
+    private List<String> uploadFiles;
+
+    public List<String> getUploadFiles() {
+        return uploadFiles;
+    }
 
     public Uploaded upload(String name) {
         if (request == null) {
@@ -687,14 +681,19 @@ public class Params {
                 return new Uploaded(VantarKey.REQUIRED);
             }
 
-            return new Uploaded(filePart);
+            Uploaded upload = new Uploaded(filePart);
+            if (uploadFiles == null) {
+                uploadFiles = new ArrayList<>();
+            }
+            uploadFiles.add(upload.getOriginalFilename());
+            return upload;
         } catch (IOException | ServletException e) {
             log.warn("! IO ERROR / is request multi-part?");
             return new Uploaded(VantarKey.IO_ERROR);
         }
     }
 
-    public static class Uploaded {
+    public static class Uploaded implements Closeable {
 
         private VantarKey error;
         private Part filePart;
@@ -794,6 +793,14 @@ public class Params {
 
         public String toString() {
             return ObjectUtil.toString(this);
+        }
+
+        public void close() {
+            try {
+                filePart.getInputStream().close();
+            } catch (IOException ignore) {
+
+            }
         }
     }
 }

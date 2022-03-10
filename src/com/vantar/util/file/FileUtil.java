@@ -178,52 +178,51 @@ public class FileUtil {
         return false;
     }
 
-    public static boolean zip(String dirpath, String zipFilename) {
-        return zip(dirpath, zipFilename, null);
+    public static boolean zip(String dir, String zipFilename) {
+        return zip(dir, zipFilename, null);
     }
 
-    public static boolean zip(String dirpath, String zipFilename, BeforeZipCallback callback) {
-        Path sourceDir = Paths.get(dirpath);
+    public static boolean zip(String dir, String zipPath, BeforeZipCallback callback) {
+        Path sourceDir = Paths.get(dir);
         try {
-            ZipOutputStream outputStream = new ZipOutputStream(new FileOutputStream(zipFilename));
             Files.walkFileTree(sourceDir, new SimpleFileVisitor<Path>() {
                 @Override
                 public FileVisitResult visitFile(Path file, BasicFileAttributes attributes) {
-                    if (callback == null || callback.accept(file.toAbsolutePath().toString())) {
-                        try {
-                            Path targetFile = sourceDir.relativize(file);
-                            outputStream.putNextEntry(new ZipEntry(targetFile.toString()));
-                            byte[] bytes = Files.readAllBytes(file);
-                            outputStream.write(bytes, 0, bytes.length);
-                            outputStream.closeEntry();
-                        } catch (IOException e) {
-                            log.error("! ziping({} > {})", dirpath, zipFilename, e);
+                    try (ZipOutputStream zip = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(zipPath)))) {
+                        if (callback == null || callback.accept(file.toAbsolutePath().toString())) {
+                            try {
+                                Path targetFile = sourceDir.relativize(file);
+                                zip.putNextEntry(new ZipEntry(targetFile.toString()));
+                                byte[] bytes = Files.readAllBytes(file);
+                                zip.write(bytes, 0, bytes.length);
+                                zip.closeEntry();
+                            } catch (IOException e) {
+                                log.error("! ziping({} > {})", dir, zipPath, e);
+                            }
                         }
+                    } catch (IOException e) {
+                        log.error("! ziping({} > {})", dir, zipPath, e);
                     }
                     return FileVisitResult.CONTINUE;
                 }
             });
-            outputStream.close();
-            return true;
         } catch (IOException e) {
-            log.error("! ziping({} > {})", dirpath, zipFilename, e);
+            log.error("! ziping({} > {})", dir, zipPath, e);
+            return false;
         }
-        return false;
+        return true;
     }
 
-    public static boolean unzip(String zipFile, String destination) {
+    public static boolean unzip(String zipPath, String dir) {
         int BUFFER_SIZE = 2048;
-        ZipFile zip = null;
-        try {
-            File destDirectory = new File(destination);
+        try (ZipFile zip = new ZipFile(new File(zipPath), ZipFile.OPEN_READ)) {
+            File destDirectory = new File(dir);
             destDirectory.mkdirs();
-
-            zip = new ZipFile(new File(zipFile), ZipFile.OPEN_READ);
 
             Enumeration<? extends ZipEntry> zipFileEntries = zip.entries();
             while (zipFileEntries.hasMoreElements()) {
                 ZipEntry entry = zipFileEntries.nextElement();
-                File destFile = new File(destDirectory, entry.getName());
+                File destFile = new File (destDirectory, entry.getName());
 
                 File parentDestFile = destFile.getParentFile();
                 parentDestFile.mkdirs();
@@ -231,18 +230,13 @@ public class FileUtil {
                 if (!entry.isDirectory()) {
                     BufferedInputStream buffer = new BufferedInputStream(zip.getInputStream(entry));
                     int currentByte;
-
                     byte[] data = new byte[BUFFER_SIZE];
 
-                    FileOutputStream fOS = new FileOutputStream(destFile);
-                    BufferedOutputStream bufOS = new BufferedOutputStream(fOS, BUFFER_SIZE);
-
-                    while ((currentByte = buffer.read(data, 0, BUFFER_SIZE)) != -1) {
-                        bufOS.write(data, 0, currentByte);
+                    try (BufferedOutputStream bufOS = new BufferedOutputStream(new FileOutputStream(destFile), BUFFER_SIZE)) {
+                        while ((currentByte = buffer.read(data, 0, BUFFER_SIZE)) != -1) {
+                            bufOS.write(data, 0, currentByte);
+                        }
                     }
-
-                    bufOS.flush();
-                    bufOS.close();
 
                     if (entry.getName().toLowerCase().endsWith(".zip")) {
                         String zipFilePath = destDirectory.getPath() + File.separatorChar + entry.getName();
@@ -252,16 +246,8 @@ public class FileUtil {
             }
             return true;
         } catch (Exception e) {
-            log.error("! ({} > {})", zipFile, destination, e);
+            log.error("! ({} > {})", zipPath, dir, e);
             return false;
-        } finally {
-            if (zip != null) {
-                try {
-                    zip.close();
-                } catch (IOException ignore) {
-
-                }
-            }
         }
     }
 

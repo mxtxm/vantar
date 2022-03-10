@@ -5,7 +5,7 @@ import com.vantar.database.datatype.Location;
 import com.vantar.exception.DateTimeException;
 import com.vantar.util.collection.CollectionUtil;
 import com.vantar.util.datetime.DateTime;
-import com.vantar.util.json.Json;
+import com.vantar.util.json.*;
 import com.vantar.util.number.NumberUtil;
 import com.vantar.util.string.*;
 import org.slf4j.*;
@@ -45,11 +45,12 @@ public class ObjectUtil {
             return (String) object;
         } else if (object instanceof Number || object instanceof Boolean || object instanceof DateTime
             || object instanceof Character) {
-
             return object.toString();
+        } else if (object instanceof Throwable) {
+            return throwableToString((Throwable) object);
         }
         try {
-            return Json.toJsonPretty(object);
+            return Json.d.toJsonPretty(object);
         } catch (Exception e) {
             log.error("! toJson error {}", object.getClass());
             return "{}";
@@ -63,7 +64,7 @@ public class ObjectUtil {
         if (e == null) {
             return "";
         }
-        StringBuilder sb = new StringBuilder(1000).append(e.toString());
+        StringBuilder sb = new StringBuilder().append(e.toString());
         if (e.getStackTrace() != null) {
             for (StackTraceElement element : e.getStackTrace()) {
                 sb.append("\n").append(element.toString());
@@ -179,15 +180,15 @@ public class ObjectUtil {
                 field.set(obj, new Location(value.toString()));
 
             } else if (type.equals(List.class) || type.equals(ArrayList.class)) {
-                field.set(obj, Json.listFromJson(value.toString(), ClassUtil.getGenericTypes(field)[0]));
+                field.set(obj, JsonOld.listFromJson(value.toString(), ClassUtil.getGenericTypes(field)[0]));
 
             } else if (type.equals(Set.class)) {
-                List<?> list = Json.listFromJson(value.toString(), ClassUtil.getGenericTypes(field)[0]);
+                List<?> list = JsonOld.listFromJson(value.toString(), ClassUtil.getGenericTypes(field)[0]);
                 field.set(obj, list == null ? null : new HashSet<>(list));
 
             } else if (type.equals(Map.class)) {
                 Class<?>[] types = ClassUtil.getGenericTypes(field);
-                field.set(obj, Json.mapFromJson(value.toString(), types[0], types[1]));
+                field.set(obj, JsonOld.mapFromJson(value.toString(), types[0], types[1]));
             } else if (type.isEnum()) {
                 field.set(obj, EnumUtil.getEnumValue(value.toString(), type));
             }
@@ -212,7 +213,7 @@ public class ObjectUtil {
 
         String[] strings;
         if (type.isArray()) {
-            strings = Json.fromJson(Json.toJson(object), String[].class);
+            strings = JsonOld.fromJson(JsonOld.toJson(object), String[].class);
         } else {
             if (!type.equals(String.class)) {
                 object = object.toString();
@@ -226,7 +227,7 @@ public class ObjectUtil {
             }
 
             if (value.startsWith("[") && value.endsWith("]")) {
-                List<T> list = Json.listFromJson(value, genericType);
+                List<T> list = JsonOld.listFromJson(value, genericType);
                 return list == null ? new ArrayList<>() : list;
             }
             strings = StringUtil.split(value, VantarParam.SEPARATOR_COMMON);
@@ -293,7 +294,7 @@ public class ObjectUtil {
     @SuppressWarnings("unchecked")
     public static <K, V> Map<K, V> toMap(Object object, Class<K> k, Class<V> v) {
         if (object instanceof String) {
-            return Json.mapFromJson((String) object, k, v);
+            return JsonOld.mapFromJson((String) object, k, v);
         } else if (object instanceof Map) {
             return (Map<K, V>) object;
         }

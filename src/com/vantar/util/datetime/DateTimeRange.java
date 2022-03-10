@@ -1,5 +1,6 @@
 package com.vantar.util.datetime;
 
+import com.vantar.database.dto.Dto;
 import java.util.*;
 
 
@@ -89,5 +90,30 @@ public class DateTimeRange {
 
     public String toString() {
         return "(" + (dateMin == null ? "null" : dateMin.toString()) + ", " + (dateMax == null ? "null" : dateMax.toString()) + ")";
+    }
+
+    public boolean equals(Object obj) {
+        if (obj == null) {
+            return false;
+        }
+        if (obj == this) {
+            return true;
+        }
+        if (!this.getClass().equals(obj.getClass())) {
+            return false;
+        }
+        DateTimeRange range = (DateTimeRange) obj;
+        if (dateMin == null || dateMax == null || range.dateMax == null || range.dateMin == null) {
+            return false;
+        }
+        return dateMin.equals(range.dateMin) && dateMax.equals(range.dateMax);
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = 7;
+        hash = 31 * hash + (dateMin == null ? 0 : dateMin.hashCode());
+        hash = 31 * hash + (dateMax == null ? 0 : dateMax.hashCode());
+        return hash;
     }
 }

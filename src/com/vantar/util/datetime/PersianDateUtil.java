@@ -4,7 +4,8 @@ package com.vantar.util.datetime;
 public class PersianDateUtil {
 
     public static final int PERSIAN_YEAR_UPPER_LIMIT = 1500;
-    private static final int[] breaks = new int[] {-61, 9, 38, 199, 426, 686, 756, 818, 1111, 1181, 1210, 1635, 2060, 2097, 2192, 2262, 2324, 2394, 2456, 3178};
+    private static final int[] breaks = new int[] {-61, 9, 38, 199, 426, 686, 756, 818, 1111, 1181, 1210, 1635, 2060,
+        2097, 2192, 2262, 2324, 2394, 2456, 3178};
 
 
     public static boolean isValid(int year, int month, int day) {
@@ -185,7 +186,7 @@ public class PersianDateUtil {
     }
 
     private static int div(int a, int  b) {
-        return (int) Math.floor( a / b);
+        return (int) Math.floor(a / b);
     }
 
     private static int mod(int a, int  b) {

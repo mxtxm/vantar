@@ -7,7 +7,7 @@ import com.vantar.database.query.PageData;
 import com.vantar.locale.Locale;
 import com.vantar.locale.*;
 import com.vantar.service.Services;
-import com.vantar.service.auth.CommonUser;
+import com.vantar.service.auth.*;
 import com.vantar.service.log.ServiceUserActionLog;
 import com.vantar.service.log.dto.UserLog;
 import com.vantar.util.collection.CollectionUtil;
@@ -28,7 +28,6 @@ public class WebUi {
     private static final Logger log = LoggerFactory.getLogger(WebUi.class);
 
     public static final String PARAM_CONFIRM = "confirm";
-
     public static final String COLSPAN_SEPARATOR = ":::";
     public static final String LINK_SEPARATOR = ">>>";
 
@@ -48,6 +47,7 @@ public class WebUi {
     private final String alignKey;
     private final String alignValue;
     private StringBuilder additive;
+    private final HtmlEscape escape = new HtmlEscape();
 
 
     public WebUi(Params params, HttpServletResponse response) {
@@ -157,18 +157,24 @@ public class WebUi {
     }
 
     private WebUi addLink(String text, String url, boolean newWindow, boolean block) {
-        if (block) {
-            html.append("<p class='link'>\n");
-        }
-        html.append("<a");
-        if (newWindow) {
-            html.append(" target='_blank'");
-        }
-        html.append(" href='").append(getCompleteLink(url)).append("'>").append(escapeWithNtoBr(text)).append("</a>\n");
-        if (block) {
-            html.append("</p>\n");
-        }
+        html.append(getLink(text, url, newWindow, block));
         return this;
+    }
+
+    public String getLink(String text, String url, boolean newWindow, boolean block) {
+        StringBuilder s = new StringBuilder();
+        if (block) {
+            s.append("<p class='link'>\n");
+        }
+        s.append("<a");
+        if (newWindow) {
+            s.append(" target='_blank'");
+        }
+        s.append(" href='").append(getCompleteLink(url)).append("'>").append(escapeWithNtoBr(text)).append("</a>\n");
+        if (block) {
+            s.append("</p>\n");
+        }
+        return s.toString();
     }
 
     public void redirect(String url) {
@@ -244,6 +250,11 @@ public class WebUi {
         return this;
     }
 
+    public WebUi addBoxWithNoEscape(String content) {
+        html.append("<div class='box-content'>").append(content).append("</div>");
+        return this;
+    }
+
     public WebUi beginBox2(String title) {
         openTags.push("    </div>\n</div>\n");
         html.append("<div class='solid-box-empty clearfix'>\n    <h4 class='box-title2'>")
@@ -296,8 +307,8 @@ public class WebUi {
     }
 
     public WebUi addKeyValue(Object key, Object value, String classs) {
-        key = StringUtil.replace(HtmlEscape.encode(key == null ? "" : key.toString()), "\n", "<br/>");
-        value = StringUtil.replace(HtmlEscape.encode(value == null ? "NULL" : value.toString()), "\n", "<br/><br/>");
+        key = StringUtil.replace(escape(key == null ? "" : key.toString()), "\n", "<br/>");
+        value = StringUtil.replace(escape(value == null ? "NULL" : value.toString()), "\n", "<br/><br/>");
         String kc = StringUtil.isEmpty(classs) ? "" : " key-" + classs;
         String vc = StringUtil.isEmpty(classs) ? "" : " value-" + classs;
 
@@ -310,49 +321,53 @@ public class WebUi {
         return this;
     }
 
-
     public WebUi addLogRow(UserLog userLog, CommonUser user) {
-
         html.append("<div class='log-row clearfix'>");
 
-        html.append("<div class='log-col-user'><p class='action'>")
-            .append(userLog.action)
-            .append("</p><p class='time'>")
-            .append(userLog.time.formatter().getDateTimePersianAsString()).append("</p>");
-
+        html.append("<div class='log-col-user'>")
+            .append("<p class='action'>").append(userLog.action).append("</p>")
+            .append("<p class='url'>").append(userLog.url).append("</p>")
+            .append("<p class='request-type'>").append(userLog.requestType).append("</p>")
+            .append("<p class='thread-id'>").append("thread: ").append(userLog.threadId).append("</p>")
+            .append("<p class='time'>").append(userLog.time.formatter().getDateTimePersianAsString()).append("</p>");
         if (user != null) {
-            html.append("<p class='user'>(")
-                .append(user.getId()).append(") ")
+            html.append("<p class='user'>(").append(user.getId()).append(") ")
                 .append(user.getUsername()).append(" - ").append(user.getFullName()).append("</p>");
         }
         html.append("</div>");
 
-        StringBuilder headers = new StringBuilder();
+        html.append("<div class='log-col-request'>")
+            .append("<p class='ip'>").append(userLog.ip).append("</p><pre class='headers'>");
         if (userLog.headers != null) {
             userLog.headers.forEach((k, v) -> {
-                headers.append("<strong>").append(k).append("</strong>: ").append(v).append("\n");
+                html.append("<strong>").append(k).append("</strong>: ").append(escape(v)).append("\n");
             });
         }
+        html.append("</pre></div>");
 
-        html.append("<div class='log-col-request'><p class='url'>")
-            .append(userLog.url)
-            .append("</p><p class='ip'>").append(userLog.ip).append("</p><pre class='headers'>")
-            .append(headers).append("</pre></div>");
-
+        html.append("<div class='log-col-data'><pre class='object'>");
+        if (userLog.className != null) {
+            html.append("<strong>").append(escape(userLog.className));
+            if (userLog.objectId != null) {
+                html.append(" (").append(userLog.objectId).append(")");
+            }
+            html.append("</strong>\n");
+        }
         if (userLog.object == null) {
-            userLog.object = "";
+            // nothing
+        } else if (userLog.object.startsWith("[") || userLog.object.startsWith("{")) {
+            html.append(escape(Json.d.toJsonPretty(userLog.object)));
         } else {
-            userLog.object = Json.makePretty(userLog.object);
+            html.append(escape(userLog.object));
         }
-
-        if (userLog.description == null) {
-            userLog.description = "";
+        if (userLog.uploadedFiles != null) {
+            html.append("\n\n<strong>files:</strong>");
+            for (String file : userLog.uploadedFiles) {
+                html.append(escape(file)).append("\n");
+            }
         }
+        html.append("</pre></div></div>");
 
-        html.append("<div class='log-col-data'><pre class='object'>")
-            .append(userLog.object)
-            .append("</pre><p class='description'>").append(userLog.description).append("</p></div>");
-        html.append("</div>");
         return this;
     }
 
@@ -525,30 +540,30 @@ public class WebUi {
     // > > > FORM
 
     public WebUi beginFormGet() {
-        return beginFormGet("get", null, false);
+        return beginForm("get", null, false);
     }
 
     public WebUi beginFormGet(String action) {
-        return beginFormGet("get", action, false);
+        return beginForm("get", action, false);
     }
 
     public WebUi beginFormPost() {
-        return beginFormGet("post", null, false);
+        return beginForm("post", null, false);
     }
 
     public WebUi beginFormPost(String action) {
-        return beginFormGet("post", action, false);
+        return beginForm("post", action, false);
     }
 
     public WebUi beginUploadForm() {
-        return beginFormGet("post", null, true);
+        return beginForm("post", null, true);
     }
 
     public WebUi beginUploadForm(String action) {
-        return beginFormGet("post", action, true);
+        return beginForm("post", action, true);
     }
 
-    private WebUi beginFormGet(String method, String action, boolean multiPart) {
+    private WebUi beginForm(String method, String action, boolean multiPart) {
         openTags.push("</form>\n");
         html.append("<form ");
         if (multiPart) {
@@ -596,8 +611,14 @@ public class WebUi {
 
     public WebUi addCheckbox(String label, String name, Boolean checked, String value) {
         return addWidgetRow(label, name,
-            "<input style='margin-top:5px' type='checkbox' value='" + value + "' name='" + name+ "' id='" + name + "' "
-            + (checked != null && checked ? " checked='checked'" : "") + "style='direction:" + alignValue + "' />\n");
+            "<input style='margin-top:5px; direction:" + alignValue + "' type='checkbox' value='" + value
+            + "' name='" + name+ "' id='" + name + "' "
+            + (checked != null && checked ? " checked='checked'" : "") + " />\n");
+    }
+
+    public String getCheckbox(String name, String value) {
+        return "<span class='check-box-container'>" + "<input type='checkbox' value='" + value + "' name='" + name+ "' "
+            + "style='direction:" + alignValue + "' /></span>";
     }
 
     public WebUi addInput(String label, String name) {
@@ -836,16 +857,17 @@ public class WebUi {
                 continue;
             }
 
-            setAdditive(dto, name, Required.class, "<span class='required'>*</span>");
-            setAdditive(dto, name, Localized.class, "<span class='format'>{\"en\":\"\", \"fa\":\"\"}</span>");
-            setAdditive(dto, name, Unique.class, "<span class='unique'>unique</span>");
+            setAdditive(dto, name, Required.class, "<pre class='required'>*</pre>");
+            setAdditive(dto, name, Unique.class, "<pre class='unique'>unique</pre>");
             Default a = dto.getAnnotation(name, Default.class);
             if (a != null) {
                 setAdditive(
                     dto,
-                    name, Default.class, "<span class='unique'>" + dto.getAnnotation(name, Default.class).value() + "</span>"
+                    name, Default.class, "<pre class='default' title=\"default value\">"
+                        + dto.getAnnotation(name, Default.class).value() + "</pre>"
                 );
             }
+            setAdditive(dto, name, Localized.class, "<pre class='format'>{\"en\":\"\", \"fa\":\"\"}</pre>");
 
             Field field = dto.getField(name);
             Class<?> type = dto.getPropertyType(name);
@@ -894,28 +916,28 @@ public class WebUi {
                     if (ClassUtil.implementsInterface(g[0], Dto.class)) {
                         Object obj = ClassUtil.getInstance(g[0]);
                         if (obj != null) {
-                            setAdditive("<pre class='format'>[" + JsonWithNulls.toJsonPretty(obj) + "]</pre>");
+                            setAdditive("<pre class='format'>[" + Json.getWithNulls().toJsonPretty(obj) + "]</pre>");
                         }
                     } else {
-                        setAdditive("<span class='format'>[" + g[0].getSimpleName() + "]</span>");
+                        setAdditive("<pre class='format'>[" + g[0].getSimpleName() + "]</pre>");
                     }
                 }
                 addTextArea(
                     name,
                     name,
-                    value == null ? null : Json.toJsonPretty(value),
+                    value == null ? null : Json.getWithNulls().toJsonPretty(value),
                     "small json"
                 );
 
             } else if (CollectionUtil.isMap(type)) {
                 Class<?>[] g = ClassUtil.getGenericTypes(field);
                 if (CollectionUtil.isNotEmpty(g) && g.length == 2) {
-                    setAdditive("<span class='format'>{" + g[0].getSimpleName() + ": " + g[1].getSimpleName() + "}</span>");
+                    setAdditive("<pre class='format'>{" + g[0].getSimpleName() + ": " + g[1].getSimpleName() + "}</pre>");
                 }
                 addTextArea(
                     name,
                     name,
-                    value == null ? null : Json.toJsonPretty(value),
+                    value == null ? null : Json.getWithNulls().toJsonPretty(value),
                     "small json"
                 );
 
@@ -928,26 +950,30 @@ public class WebUi {
                     if (dtoX == null) {
                         log.error("! dto not in dictionary? ({})", type);
                     } else {
-                        setAdditive("<span class='format'>" + JsonWithNulls.toJsonPretty(dtoX) + "</span>");
+                        setAdditive("<pre class='format'>" + Json.getWithNulls().toJsonPretty(dtoX) + "</pre>");
                     }
                 }
                 addTextArea(
                     name,
                     name,
-                    value == null ? null : Json.toJsonPretty(value),
+                    value == null ? null : Json.getWithNulls().toJsonPretty(value),
                     "small json"
                 );
-
 
             } else {
                 String iType;
                 if (name.contains("password") || (tags != null && CollectionUtil.contains(tags.value(), "password"))) {
                     iType = "password";
+                    value = "";
                 } else {
                     iType = null;
                 }
                 addInput(name, name, value == null ? null : value.toString(), iType);
             }
+        }
+
+        if (dto instanceof CommonUser && !(dto instanceof CommonUserPassword)) {
+            addInput("password", "password", null, "password");
         }
 
         addSubmit(Locale.getString(VantarKey.ADMIN_DO));
@@ -1151,13 +1177,30 @@ public class WebUi {
         // button
         html.append("<tr><td></td><td><button type='submit'>&gt;&gt;</button></td></tr>")
             .append("<tr><td></td><td>")
-            .append("</td></tr></table></form>");
+            .append("</td></tr></table></form>")
+            .append("<form method='post' action='/admin/data/delete/many'>");
 
         if (data == null) {
             addMessage(Locale.getString(VantarKey.NO_CONTENT));
         } else {
             addDtoList(data, true, fields);
         }
+
+        html.append("<div id='delete-container'>")
+            .append("<input name='" + VantarParam.DTO + "' value='").append(dto.getClass().getSimpleName())
+            .append("' type='hidden'/>");
+
+        if (dto.isDeleteLogicalEnabled()) {
+            html.append("<div class='delete-type-container'>")
+                .append("<input type='checkbox' name='do-logical-delete' id='do-logical-delete' checked='checked'/> ")
+                .append("<label for='do-logical-delete'>").append(Locale.getString(VantarKey.LOGICAL_DELETED)).append("</label></div>");
+        }
+
+        html.append("<div> <input type='checkbox' name='confirm-delete'/> <label for='confirm-delete'>")
+            .append(Locale.getString(VantarKey.ADMIN_CONFIRM)).append("</label></div>")
+            .append("<div class='delete-button-container'><button type='submit'>")
+            .append(Locale.getString(VantarKey.ADMIN_DELETE)).append("</button></div>")
+            .append("</div>");
 
         setJs("/js/jquery.min.js");
         setJs("/js/vantar.js");
@@ -1204,12 +1247,14 @@ public class WebUi {
                 }
 
                 String className = dto.getClass().getSimpleName();
-                html.append("<td class='option'><div class='option'><a href='" + "/admin/data/update?" + VantarParam.DTO + "=")
+                html
+//                    .append("<td class='option'><div class='option'><a href='" + "/admin/data/delete?" + VantarParam.DTO + "=")
+                    .append("<td class='option delete-option'><input class='delete-check' name='delete-check' value='")
+                    .append(dto.getId()).append("' type='checkbox'/></td>")
+                    .append("<td class='option'><div class='option'><a href='" + "/admin/data/update?" + VantarParam.DTO + "=")
                     .append(className).append("&id=").append(dto.getId()).append(x).append("'>")
-                    .append(Locale.getString(VantarKey.ADMIN_EDIT)).append("</a></div></td>")
-                    .append("<td class='option'><div class='option'><a href='" + "/admin/data/delete?" + VantarParam.DTO + "=")
-                    .append(className).append("&id=").append(dto.getId()).append(x).append("'>")
-                    .append(Locale.getString(VantarKey.ADMIN_DELETE)).append("</a></div></td>");
+                    .append(Locale.getString(VantarKey.ADMIN_EDIT)).append("</a></div></td>");
+
 
                 if (isLogServiceUp) {
                     html.append("<td class='option'><div class='option'><a href='" + "/admin/data/log?" + VantarParam.DTO + "=")
@@ -1316,7 +1361,7 @@ public class WebUi {
                 + direction + ">\n\n" + html.toString();
 
         written = true;
-        Response.writeString(response, content);
+        Response.writeHtml(response, content);
 
         try {
             response.flushBuffer();
@@ -1361,10 +1406,10 @@ public class WebUi {
     }
 
     private String escape(String text) {
-        return HtmlEscape.encode(text);
+        return escape.encode(text);
     }
 
     private String escapeWithNtoBr(String text) {
-        return StringUtil.replace(HtmlEscape.encode(text), "\n", "<br/>");
+        return StringUtil.replace(escape.encode(text), "\n", "<br/>");
     }
 }

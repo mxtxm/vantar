@@ -7,7 +7,6 @@ import com.vantar.web.*;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServletResponse;
 
-
 @WebServlet({
     "/admin/data",
 
@@ -15,6 +14,7 @@ import javax.servlet.http.HttpServletResponse;
     "/admin/data/list",
     "/admin/data/update",
     "/admin/data/delete",
+    "/admin/data/delete/many",
     "/admin/data/purge",
     "/admin/data/insert",
     "/admin/data/import",
@@ -42,6 +42,10 @@ public class AdminDataController extends RouteToMethod {
         AdminData.delete(params, response, DtoDictionary.get(params.getString("dto")));
     }
 
+    public void dataDeleteMany(Params params, HttpServletResponse response) throws FinishException {
+        AdminData.deleteMany(params, response, DtoDictionary.get(params.getString("dto")));
+    }
+
     public void dataPurge(Params params, HttpServletResponse response) throws FinishException {
         AdminData.purge(params, response, DtoDictionary.get(params.getString("dto")));
     }
@@ -59,7 +63,7 @@ public class AdminDataController extends RouteToMethod {
     }
 
     public void dataLog(Params params, HttpServletResponse response) throws FinishException {
-        AdminActionLog.show(params, response);
+        AdminActionLog.record(params, response);
     }
 
     public void dataSqlStatus(Params params, HttpServletResponse response) throws FinishException {

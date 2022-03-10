@@ -6,7 +6,7 @@ import com.vantar.database.query.QueryResult;
 import com.vantar.database.query.QueryResultBase;
 import com.vantar.exception.NoContentException;
 import com.vantar.util.collection.CollectionUtil;
-import com.vantar.util.json.Json;
+import com.vantar.util.json.*;
 import com.vantar.util.string.StringUtil;
 import org.elasticsearch.search.SearchHit;
 import java.util.HashMap;
@@ -37,7 +37,7 @@ public class ElasticQueryResult extends QueryResultBase implements QueryResult, 
             return null;
         }
         field = StringUtil.toSnakeCase(field);
-        Map<String, Object> map = Json.mapFromJson(json, String.class, Object.class);
+        Map<String, Object> map = Json.d.mapFromJson(json, String.class, Object.class);
         return map == null ? null : map.get(field);
     }
 
@@ -113,7 +113,7 @@ public class ElasticQueryResult extends QueryResultBase implements QueryResult, 
         //todo support enums
         if (json != null) {
             dto.reset();
-            dto.set(Json.mapFromJson(json, String.class, Object.class), Dto.Action.GET);
+            dto.set(Json.d.mapFromJson(json, String.class, Object.class), Dto.Action.GET);
         }
     }
 }

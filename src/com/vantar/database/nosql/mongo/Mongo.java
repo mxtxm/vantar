@@ -5,7 +5,7 @@ import com.mongodb.client.*;
 import com.mongodb.client.model.*;
 import com.vantar.common.VantarParam;
 import com.vantar.database.dto.Dto;
-import com.vantar.database.query.*;
+import com.vantar.database.query.QueryBuilder;
 import com.vantar.exception.DatabaseException;
 import com.vantar.locale.VantarKey;
 import com.vantar.util.collection.CollectionUtil;
@@ -311,6 +311,7 @@ public class Mongo {
         if (documents.isEmpty()) {
             return;
         }
+        documents = Escape.escapeDocuments(documents);
         try {
             InsertManyOptions options = new InsertManyOptions();
             options.bypassDocumentValidation(true);
@@ -634,6 +635,44 @@ public class Mongo {
 
         public static String getKey(String dictionary, String key) {
             return dictionary + '.' + StringUtil.replace(key, new char[] {'.', '$'}, "  ");
+        }
+
+        public static String keyForStore(String key) {
+            return StringUtil.replace(StringUtil.replace(key, '.', "{DOT}"), '$', "{DOL}");
+        }
+
+        public static String keyForView(String key) {
+            return StringUtil.replace(StringUtil.replace(key, "{DOT}", "."), "{DOL}", "$");
+        }
+
+        public static List<Document> escapeDocuments(List<Document> documents) {
+            List<Document> out = new ArrayList<>(documents.size());
+            for (Document document : documents) {
+                out.add(escapeDocument(document));
+            }
+            return out;
+        }
+
+        public static Document escapeDocument(Document document) {
+            final Document out = new Document();
+            document.forEach((k, v) -> {
+                if (v instanceof List) {
+                    v = escapeObjects((List<?>) v);
+                }
+                if (v instanceof Document) {
+                    v = escapeDocument((Document) v);
+                }
+                out.append(keyForStore(k), v);
+            });
+            return out;
+        }
+
+        private static List<?> escapeObjects(List<?> objects) {
+            List<Object> out = new ArrayList<>(objects.size());
+            for (Object object : objects) {
+                out.add(object instanceof Document ? escapeDocument((Document) object) : object);
+            }
+            return out;
         }
     }
 }

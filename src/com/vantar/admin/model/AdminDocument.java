@@ -8,29 +8,22 @@ import com.vantar.locale.*;
 import com.vantar.util.file.*;
 import com.vantar.util.string.StringUtil;
 import com.vantar.web.*;
-import com.vladsch.flexmark.html.HtmlRenderer;
-import com.vladsch.flexmark.parser.Parser;
-import com.vladsch.flexmark.util.ast.Node;
-import com.vladsch.flexmark.util.data.MutableDataSet;
-import org.slf4j.*;
+import org.commonmark.node.Node;
+import org.commonmark.parser.Parser;
+import org.commonmark.renderer.html.HtmlRenderer;
 import javax.servlet.http.HttpServletResponse;
 import java.util.*;
 
 
 public class AdminDocument {
 
-    public static final Logger log = LoggerFactory.getLogger(AdminDocument.class);
-    private static Set<String> tags;
-
-
     public static void index(Params params, HttpServletResponse response) throws FinishException {
         WebUi ui = Admin.getUi(Locale.getString(VantarKey.ADMIN_MENU_DOCUMENTS), params, response, false);
 
         String lang = params.getLang();
 
-        if (tags == null) {
-            tags = getTags();
-        }
+
+        Set<String> tags = getTags();
         if (!tags.isEmpty()) {
             String[] links = new String[tags.size() * 2 + 2];
             int i = -1;
@@ -114,17 +107,14 @@ public class AdminDocument {
     }
 
     private static void show(String documentPath, HttpServletResponse response, boolean fromClasspath, String tag) {
-        MutableDataSet options = new MutableDataSet();
-        Parser parser = Parser.builder(options).build();
-        HtmlRenderer renderer = HtmlRenderer.builder(options).build();
-
+        Parser parser = Parser.builder().build();
         Node document = parser.parse(
             WebServiceDocumentCreator.getParsedMd(
                 fromClasspath ? FileUtil.getFileContentFromClassPath(documentPath) : FileUtil.getFileContent(documentPath),
                 tag
             )
         );
-        String html = renderer.render(document);
+        HtmlRenderer renderer = HtmlRenderer.builder().build();
 
         Response.writeString(
             response,
@@ -133,7 +123,7 @@ public class AdminDocument {
                 "<link rel='stylesheet' type='text/css' href='/css/document" +
                     (StringUtil.contains(documentPath, "-fa") ? "-fa" : "-en") + ".css'>" +
                 "</head>" +
-                "<body>" + html + "</body>" +
+                "<body>" + renderer.render(document) + "</body>" +
                 "</html>"
         );
     }
@@ -156,13 +146,14 @@ public class AdminDocument {
             "md",
             file -> tags.addAll(WebServiceDocumentCreator.getTags(FileUtil.getFileContent(file.getAbsolutePath())))
         );
+
         return tags;
     }
 
     public static void createAllDocuments() {
-        log.info("> creating documents");
+        Admin.log.info("> creating documents");
         AdminDocument.createDtoDocument();
-        log.info("created dto document");
+        Admin.log.info("created dto document");
 
         try {
             DirUtil.removeDirectory(Settings.config.getProperty("documents.dir.release"));
@@ -177,11 +168,11 @@ public class AdminDocument {
                 file -> FileUtil.write(file.getAbsolutePath(), AdminDocument.getParsedDocument(file.getAbsolutePath(), false))
             );
         } catch (Exception e) {
-            log.info("< !!! failed to released all documents");
+            Admin.log.info("< !!! failed to released all documents");
             return;
         }
 
-        log.info("released all documents");
-        log.info("< finished creating documents");
+        Admin.log.info("released all documents");
+        Admin.log.info("< finished creating documents");
     }
 }

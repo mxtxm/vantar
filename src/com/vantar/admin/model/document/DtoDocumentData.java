@@ -3,10 +3,9 @@ package com.vantar.admin.model.document;
 import com.vantar.admin.model.*;
 import com.vantar.database.datatype.Location;
 import com.vantar.database.dto.*;
-import com.vantar.database.nosql.mongo.Mongo;
 import com.vantar.util.collection.CollectionUtil;
 import com.vantar.util.datetime.*;
-import com.vantar.util.json.*;
+import com.vantar.util.json.Json;
 import com.vantar.util.object.*;
 import com.vantar.util.string.StringUtil;
 import java.lang.reflect.*;
@@ -54,8 +53,8 @@ public class DtoDocumentData {
             String className = parts[parts.length - 1];
             String name = StringUtil.replace(className, '$', '.');
             String hash = StringUtil.replace(className, '$', '-');
-            return "* <a href='/admin/document/show/dtos#" + hash + "'>{" + name +
-                "}</a> : <a href='/admin/document/show?document=document--webservice--common--search.md'>SEE \"search params\"</a>\n";
+            return "* <a href='/admin/document/show/dtos#" + hash + "'>{" + name + "}</a> : " +
+                "<a href='/admin/document/show?document=document--webservice--common--search.md'>SEE \"search params\"</a>\n";
         }
 
         // > > >
@@ -68,7 +67,7 @@ public class DtoDocumentData {
             String sample;
             try {
                 sample = "##### sample #####\n" +
-                    "<pre>" + JsonWithNulls.makePretty(getAsJsonExampleDto(ClassUtil.getClass(searchResult))) + "</pre>\n";
+                    "<pre>" + Json.getWithNulls().toJsonPretty(getAsJsonExampleDto(ClassUtil.getClass(searchResult))) + "</pre>\n";
             } catch (Exception e) {
                 sample = "";
                 Admin.log.warn("! could not create search example for ({})", searchResult);
@@ -77,9 +76,11 @@ public class DtoDocumentData {
             return
                 "<pre>" +
                     "JSON<br/>" +
-                    "    if pagination = false in params then <a href='/admin/document/show/dtos#" + hash + "'>[{" + name + "}]</a></br>" +
+                    "    if pagination = false in params then <a href='/admin/document/show/dtos#" + hash + "'>[{"
+                        + name + "}]</a></br>" +
                     "    if pagination = true in params then {<br/>" +
-                    "        List&lt;" + name + "&gt; data: <a href='/admin/document/show/dtos#" + hash + "'>" + name + "</a><br/>" +
+                    "        List&lt;" + name + "&gt; data: <a href='/admin/document/show/dtos#" + hash + "'>"
+                        + name + "</a><br/>" +
                     "        int page: page number<br/>" +
                     "        int length: records per page<br/>" +
                     "        long total: total number of records<br/>" +
@@ -106,7 +107,7 @@ public class DtoDocumentData {
         if (dto != null) {
             Dto obj = ClassUtil.getInstance(dto);
             if (obj == null) {
-                AdminDocument.log.error("! can not create {}", dto);
+                Admin.log.error("! can not create {}", dto);
                 return "!!!DOCUMENT CREATION ERROR!!!";
             }
 
@@ -251,15 +252,16 @@ public class DtoDocumentData {
                     sb.append("</span>\n");
                 }
                 if (showNulls) {
-                    sb.append("* <span class='b-field'>List&lt;String&gt; __nullProperties: a list of property(field) names that must be set to null</span>\n");
+                    sb  .append("* <span class='b-field'>List&lt;String&gt; __nullProperties: ")
+                        .append("a list of property(field) names that must be set to null</span>\n");
                 }
             }
 
             sb.append("##### sample #####\n");
             try {
-                sb.append("<pre>").append(JsonWithNulls.makePretty(getAsJsonExampleDto(obj.getClass()))).append("</pre>\n");
+                sb.append("<pre>").append(Json.getWithNulls().toJsonPretty(getAsJsonExampleDto(obj.getClass()))).append("</pre>\n");
             } catch (Exception e) {
-                AdminDocument.log.warn("! JSON error {}\n", getAsJsonExampleDto(obj.getClass()), e);
+                Admin.log.warn("! JSON error {}\n", getAsJsonExampleDto(obj.getClass()), e);
                 sb.append("<pre><br/>").append(getAsJsonExampleDto(obj.getClass())).append("</pre>\n");
             }
         }
@@ -283,7 +285,7 @@ public class DtoDocumentData {
 
             } else if (ClassUtil.implementsInterface(genericType, Dto.class)) {
                 if (genericType.equals(dto)) {
-                    json.append("\"{RECURSIVE}\"");
+                    json.append("{\"RECURSIVE\":\"RECURSIVE\"}");
                 } else {
                     json.append(getAsJsonExampleDto(genericType));
                 }
@@ -401,7 +403,7 @@ public class DtoDocumentData {
             }
 
             if (ClassUtil.extendsClass(propType, Number.class)) {
-                json.append("0").append(',');
+                json.append("0,");
                 continue;
             }
             if (propType == Boolean.class) {
@@ -439,7 +441,7 @@ public class DtoDocumentData {
             }
             if (ClassUtil.implementsInterface(propType, Dto.class)) {
                 if (propType.equals(gType)) {
-                    json.append("{\"RECURSIVE\"}");
+                    json.append("{\"RECURSIVE\":\"RECURSIVE\"},");
                     continue;
                 }
                 json.append(getAsJsonExampleDto(propType)).append(',');
@@ -509,7 +511,8 @@ public class DtoDocumentData {
             ((StringBuilder) obj).append(" <a href='/admin/document/show/dtos#")
                 .append(hash).append("'>{").append(name).append("} (see object reference document)</a>");
         } else if (obj instanceof ArrayList) {
-            ((ArrayList<String>) obj).add(" <a href='/admin/document/show/dtos#" + hash + "'>{" + name + "} (see object reference document)</a>");
+            ((ArrayList<String>) obj).add(" <a href='/admin/document/show/dtos#" + hash + "'>{" + name
+                + "} (see object reference document)</a>");
         }
     }
 }

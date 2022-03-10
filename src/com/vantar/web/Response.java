@@ -1,12 +1,14 @@
 package com.vantar.web;
 
-import com.vantar.common.VantarParam;
+import com.vantar.common.*;
+import com.vantar.service.log.ServiceUserActionLog;
 import com.vantar.util.collection.CollectionUtil;
-import com.vantar.util.json.Json;
+import com.vantar.util.json.JsonOld;
 import org.slf4j.*;
 import javax.servlet.*;
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
+import java.util.*;
 
 
 public class Response {
@@ -23,6 +25,14 @@ public class Response {
     private static boolean jsonError = DEFAULT_ERROR_FORMAT;
     private static String allowOrigin = DEFAULT_ALLOWED_ORIGIN;
     private static String[] allowHeaders = DEFAULT_ALLOWED_HEADERS;
+
+    private static boolean logResponse;
+
+    static {
+        if (Settings.web() != null) {
+            logResponse = Settings.web().logResponse();
+        }
+    }
 
 
     public static void setAllowOrigin(String allowOrigin) {
@@ -50,6 +60,10 @@ public class Response {
             response.sendRedirect(url);
         } catch (IOException e) {
             log.error("! redirect failed ({})", url, e);
+            return;
+        }
+        if (logResponse) {
+            ServiceUserActionLog.addResponse("redirect:" + url, response);
         }
     }
 
@@ -67,16 +81,14 @@ public class Response {
         response.setHeader("Pragma", "no-Cache");
         response.setHeader("Cache-Control", "no-Cache");
         response.setHeader("Content-Description", "File Transfer");
-        //todo escape: you surround the string with double-quotes, and escape any quotes or backslashes within by preceding them with a single backslash.
         response.setHeader("Content-Disposition", "attachment; filename=\"" + filename + "\"");
         response.setHeader("Content-Transfer-Encoding", "binary");
         setOriginHeaders(response);
 
-        OutputStream out = null;
-        FileInputStream in = null;
-        try {
-            out = response.getOutputStream();
-            in = new FileInputStream(filepath);
+        try (
+            OutputStream out = response.getOutputStream();
+            FileInputStream in = new FileInputStream(filepath)
+        ) {
             byte[] buffer = new byte[4096];
             int length;
             while ((length = in.read(buffer)) > 0){
@@ -84,17 +96,10 @@ public class Response {
             }
         } catch (IOException e) {
             log.error("! download failed ({}, {})", filepath, filename, e);
-        } finally {
-            try {
-                if (in != null) {
-                    in.close();
-                }
-                if (out != null) {
-                    out.flush();
-                }
-            } catch (IOException e) {
-                log.error("! close failed ({}, {})", filepath, filename, e);
-            }
+        }
+
+        if (logResponse) {
+            ServiceUserActionLog.addResponse("download: " + filepath + " > " + filename, response);
         }
     }
 
@@ -104,6 +109,10 @@ public class Response {
             response.getWriter().append(data);
         } catch (IOException e) {
             log.error("! write json failed ({})", data, e);
+            return;
+        }
+        if (logResponse) {
+            ServiceUserActionLog.addResponse(data, response);
         }
     }
 
@@ -113,10 +122,15 @@ public class Response {
     }
 
     public static void writeGson(HttpServletResponse response, Object data) {
+        String json = JsonOld.toJson(data);
         try {
-            response.getWriter().append(Json.toJson(data));
+            response.getWriter().append(json);
         } catch (IOException e) {
             log.error("! write json failed ({})", data, e);
+            return;
+        }
+        if (logResponse) {
+            ServiceUserActionLog.addResponse(data, response);
         }
     }
 
@@ -138,6 +152,23 @@ public class Response {
             response.getWriter().append(data);
         } catch (IOException e) {
             log.error("! write string failed ({})", data, e);
+            return;
+        }
+        if (logResponse) {
+            ServiceUserActionLog.addResponse(data, response);
+        }
+    }
+
+    public static void writeHtml(HttpServletResponse response, String data) {
+        setStringHeaders(response);
+        try {
+            response.getWriter().append(data);
+        } catch (IOException e) {
+            log.error("! write string failed ({})", "HTML", e);
+            return;
+        }
+        if (logResponse) {
+            ServiceUserActionLog.addResponse("HTML", response);
         }
     }
 
@@ -150,7 +181,7 @@ public class Response {
         setOriginHeaders(response);
         if (jsonError) {
             response.setContentType("application/json");
-            msg = Json.toJson(new ResponseMessage(msg, status));
+            msg = JsonOld.toJson(ResponseMessage.get(status, msg));
         } else {
             response.setContentType("text/html;charset=UTF-8");
         }
@@ -163,6 +194,10 @@ public class Response {
             writer.close();
         } catch (IOException e) {
             log.error("! set error failed ({}, {})", status, msg, e);
+            return;
+        }
+        if (logResponse) {
+            ServiceUserActionLog.addResponse(status + ": " + msg, response);
         }
     }
 
@@ -239,6 +274,19 @@ public class Response {
             rd.forward(params.request, response);
         } catch (ServletException | IOException e) {
             log.error("! show template failed ({})", template, e);
+            return;
         }
+        if (logResponse) {
+            ServiceUserActionLog.addResponse("template: " + template, response);
+        }
+    }
+
+    public static Map<String, String> getHeaders(HttpServletResponse response) {
+        Map<String, String> headers = new HashMap<>();
+        for (String name : response.getHeaderNames()) {
+            headers.put(name, response.getHeader(name));
+        }
+        headers.put("Status-Code", Integer.toString(response.getStatus()));
+        return headers;
     }
 }

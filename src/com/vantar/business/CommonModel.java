@@ -3,12 +3,11 @@ package com.vantar.business;
 import com.vantar.common.VantarParam;
 import com.vantar.database.common.ValidationError;
 import com.vantar.database.dto.*;
-import com.vantar.database.nosql.mongo.MongoQueryResult;
 import com.vantar.database.query.*;
 import com.vantar.exception.*;
 import com.vantar.service.Services;
 import com.vantar.service.cache.ServiceDtoCache;
-import com.vantar.service.log.ServiceUserActionLog;
+import com.vantar.util.json.*;
 import com.vantar.util.string.StringUtil;
 import com.vantar.web.*;
 import org.slf4j.*;
@@ -35,23 +34,26 @@ public abstract class CommonModel {
     }
 
     protected static void importDataX(Import importCallback, String data, Dto dto, List<String> presentField, WebUi ui) {
-        String[] dataArray = StringUtil.split(data, '\n');
-        if (dataArray.length < 1) {
-            return;
-        }
-
-        if (data.contains("----------")) {
-            importHumanReadable(importCallback, data, dto, presentField, ui);
+        if (data.startsWith("[") && data.endsWith("[")) {
+            importJsonList(importCallback, data, dto, presentField, ui);
         } else {
-            importCsv(importCallback, dataArray, dto, presentField, ui);
+            String[] dataArray = StringUtil.split(data, '\n');
+            if (dataArray.length < 1) {
+                ui.write();
+                return;
+            }
+
+            if (data.contains("----------")) {
+                importHumanReadable(importCallback, data, dto, presentField, ui);
+            } else {
+                importCsv(importCallback, dataArray, dto, presentField, ui);
+            }
         }
 
         afterDataChange(dto);
 
         ui.write();
     }
-
-
 
     private static void importHumanReadable(Import importCallback, String data, Dto dto, List<String> presentField, WebUi ui) {
         String[] dataArray = data.split("-{10,}");
@@ -144,17 +146,23 @@ public abstract class CommonModel {
         }
     }
 
-    protected static void logAction(Object params, List<? extends Dto> dtos, Dto.Action action) {
-        for (Dto dto : dtos) {
-            logAction(params, dto, action);
+    private static void importJsonList(Import importCallback, String data, Dto dto, List<String> presentField, WebUi ui) {
+        List<? extends Dto> list = Json.d.listFromJson(data, dto.getClass());
+        if (list == null) {
+            return;
         }
-    }
 
-    protected static void logAction(Object params, Object obj, Dto.Action action) {
-        if (params instanceof Params) {
-            ServiceUserActionLog.add((Params) params, action, obj);
-        } else {
-            ServiceUserActionLog.add(action, obj);
+        for (Dto dtoX: list) {
+            dto = dtoX;
+
+            List<ValidationError> errors = dto.validate(Dto.Action.INSERT);
+            String presentValue = dto.getPresentationValue();
+            if (errors.isEmpty()) {
+                importCallback.execute(presentValue);
+                continue;
+            }
+
+            ui.addKeyValueFail(presentValue, ValidationError.toString(errors));
         }
     }
 

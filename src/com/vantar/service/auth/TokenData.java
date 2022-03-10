@@ -10,6 +10,11 @@ public class TokenData {
     public DateTime lastInteraction;
     public Type type;
 
+
+    public TokenData() {
+
+    }
+
     public TokenData(CommonUser user) {
         this.user = user;
         lastInteraction = new DateTime();

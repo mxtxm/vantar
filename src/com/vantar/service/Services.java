@@ -19,12 +19,13 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class Services {
 
+    private static final Logger log = LoggerFactory.getLogger(Services.class);
+
     public static final String ID = UUID.randomUUID().toString();
     public static Map<String, Integer> serviceCount;
-    public static final Map<String, ServiceInfo> upServices = new ConcurrentHashMap<>();
+    public static final Map<String, ServiceInfo> upServices = new ConcurrentHashMap<>(14);
     public static ServiceMessaging messaging;
 
-    private static final Logger log = LoggerFactory.getLogger(Services.class);
     private static Event event;
 
 
@@ -276,10 +277,10 @@ public class Services {
             setServiceStopped(className, null);
             messaging.broadcast(VantarParam.MESSAGE_SERVICE_STOPPED, className);
 
-            log.info(className + " stopped");
+            log.info(className + " stopped gracefully");
 
         } catch (Exception e) {
-            log.error(className + " failed to stop");
+            log.error(className + " failed to stop gracefully", e);
         }
     }
 

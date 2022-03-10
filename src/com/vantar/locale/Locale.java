@@ -2,7 +2,6 @@ package com.vantar.locale;
 
 import com.vantar.common.VantarParam;
 import com.vantar.util.collection.CollectionUtil;
-import com.vantar.util.json.Json;
 import com.vantar.util.string.*;
 import com.vantar.web.Params;
 import org.slf4j.*;
@@ -16,7 +15,6 @@ public class Locale {
     private static final Logger log = LoggerFactory.getLogger(Locale.class);
 
     protected static String stopWordPath;
-
     private static String defaultLocale;
     private static Map<String, Translation> langTokens;
     private static Map<Long, String> threadLangs;
@@ -25,18 +23,24 @@ public class Locale {
     public static void start(Map<String, Translation> langTokens, String defaultLocale, String stopWordPath) {
         Locale.langTokens = langTokens;
         Locale.defaultLocale = defaultLocale;
-        threadLangs = new ConcurrentHashMap<>();
+        threadLangs = new ConcurrentHashMap<>(30);
         if (stopWordPath != null) {
             StringUtil.rtrim(stopWordPath, '/');
         }
         Locale.stopWordPath = stopWordPath;
     }
 
+    public static void stop() {
+        langTokens = null;
+        defaultLocale = null;
+        threadLangs = null;
+        stopWordPath = null;
+    }
+
     public static void removeThreadLocale(long id) {
-        if (threadLangs == null) {
-            return;
+        if (threadLangs != null) {
+            threadLangs.remove(id);
         }
-        threadLangs.remove(id);
     }
 
     public static String getDefaultLocale() {
@@ -68,14 +72,21 @@ public class Locale {
         }
 
         try {
-            LangJson langJson = Json.fromJson(params.getJson(), LangJson.class);
-            threadLangs.put(Thread.currentThread().getId(), langJson == null ? defaultLocale : langJson.lang);
+            String langJson = params.extractFromJson(VantarParam.LANG, String.class);
+            threadLangs.put(Thread.currentThread().getId(), langJson == null ? defaultLocale : langJson);
             return;
         } catch (Exception ignore) {
 
         }
 
         threadLangs.put(Thread.currentThread().getId(), defaultLocale);
+    }
+
+    public static Set<String> getLangs() {
+        if (threadLangs == null) {
+            return null;
+        }
+        return langTokens.keySet();
     }
 
     public static String getString(LangKey key, Object... messageParams) {
@@ -137,18 +148,5 @@ public class Locale {
             log.error("! can not replace params in text ('{}', {})", value, CollectionUtil.join(messageParams, ", "));
             return "!!!!";
         }
-    }
-
-    public static Set<String> getLangs() {
-        if (threadLangs == null) {
-            return null;
-        }
-        return langTokens.keySet();
-    }
-
-
-    private static class LangJson {
-
-        public String lang;
     }
 }

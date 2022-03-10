@@ -110,6 +110,8 @@ public interface Dto {
         DELETE,
         UN_DELETE,
         PURGE,
+
+        UPLOAD,
     }
 
 

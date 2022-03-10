@@ -1,9 +1,8 @@
 package com.vantar.database.datatype;
 
-import com.google.gson.GsonBuilder;
+import com.vantar.util.json.*;
 import com.vantar.util.number.NumberUtil;
 import com.vantar.util.string.StringUtil;
-import java.lang.reflect.Modifier;
 
 
 public class Location {
@@ -20,6 +19,7 @@ public class Location {
 
     public Double latitude;
     public Double longitude;
+    public Double height;
     public String countryCode;
 
 
@@ -32,16 +32,51 @@ public class Location {
         this.longitude = longitude;
     }
 
-    public Location(String latitudeLongitude) {
-        String[] parts = StringUtil.split(latitudeLongitude, ',');
+    public Location(Double latitude, Double longitude, String countryCode) {
+        this.latitude = latitude;
+        this.longitude = longitude;
+        this.countryCode = countryCode;
+    }
+
+    public Location(Double latitude, Double longitude, Double height) {
+        this.latitude = latitude;
+        this.longitude = longitude;
+        this.height = height;
+    }
+
+    public Location(Double latitude, Double longitude, Double height, String countryCode) {
+        this.latitude = latitude;
+        this.longitude = longitude;
+        this.height = height;
+        this.countryCode = countryCode;
+    }
+
+    public Location(String string) {
+        if (string.startsWith("{")) {
+            Location location = Json.d.fromJson(string, Location.class);
+            if (location == null) {
+                return;
+            }
+            latitude = location.latitude;
+            longitude = location.longitude;
+            height = location.height;
+            countryCode = location.countryCode;
+            return;
+        }
+        String[] parts = StringUtil.split(string, ',');
         if (parts.length < 2) {
             return;
         }
-
         latitude = StringUtil.toDouble(parts[0]);
         longitude = StringUtil.toDouble(parts[1]);
-        if (parts.length > 2) {
-            countryCode = parts[2];
+        if (parts.length == 4) {
+            height = StringUtil.toDouble(parts[2]);
+            countryCode = parts[3];
+        } else if (parts.length == 3) {
+            height = StringUtil.toDouble(parts[2]);
+            if (height == null) {
+                countryCode = parts[2];
+            }
         }
     }
 
@@ -52,13 +87,26 @@ public class Location {
         if (longitude != null) {
             longitude = NumberUtil.round(longitude, decimals);
         }
+        if (height != null) {
+            height = NumberUtil.round(height, decimals);
+        }
     }
 
     @Override
     public String toString() {
-        return new GsonBuilder()
-            .excludeFieldsWithModifiers(Modifier.STATIC, Modifier.PRIVATE, Modifier.PROTECTED).create()
-            .toJson(this);
+        StringBuilder sb = new StringBuilder();
+        sb.append('{');
+        sb.append("\"latitude\":").append(latitude).append(',');
+        sb.append("\"longitude\":").append(longitude).append(',');
+        if (height != null) {
+            sb.append("\"height\":").append(height).append(',');
+        }
+        if (countryCode != null) {
+            sb.append("\"countryCode\":\"").append(countryCode).append("\"");
+        }
+        sb.setLength(sb.length() - 1);
+        sb.append('}');
+        return sb.toString();
     }
 
     public boolean isEmpty() {
@@ -88,6 +136,40 @@ public class Location {
         return ((location.longitude - longitude) <= presicion) && ((location.latitude - latitude) <= presicion);
     }
 
+    public boolean equals(Object obj) {
+        if (obj == null) {
+            return false;
+        }
+        if (obj == this) {
+            return true;
+        }
+        if (!this.getClass().equals(obj.getClass())) {
+            return false;
+        }
+        Location location = (Location) obj;
+        if ((latitude == null && location.latitude != null) || (latitude != null && !latitude.equals(location.latitude))) {
+            return false;
+        }
+        if ((longitude == null && location.longitude != null) || (longitude != null && !longitude.equals(location.longitude))) {
+            return false;
+        }
+        if ((height == null && location.height != null) || (height != null && !height.equals(location.height))) {
+            return false;
+        }
+        return (countryCode != null || location.countryCode == null)
+            && (countryCode == null || countryCode.equals(location.countryCode));
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = 7;
+        hash = 31 * hash + (longitude == null ? 0 : longitude.hashCode());
+        hash = 31 * hash + (latitude == null ? 0 : latitude.hashCode());
+        hash = 31 * hash + (height == null ? 0 : height.hashCode());
+        hash = 31 * hash + (countryCode == null ? 0 : countryCode.hashCode());
+        return hash;
+    }
+
     public Double getDistanceM(Location location) {
         return isEmpty() || location.isEmpty() ?
             null :
@@ -113,7 +195,10 @@ public class Location {
     }
 
     public static Bound getCountryBoundsByCode(String countryName) {
-        String[] parts = StringUtil.split(StringUtil.getBetween(getCountryBoundsAsString(), countryName.toLowerCase(), "\n"), '\n');
+        String[] parts = StringUtil.split(StringUtil.getBetween(getCountryBoundsAsString(), countryName.toLowerCase(), "\n"), ',');
+        if (parts.length < 5) {
+            return null;
+        }
         Bound bound = new Bound(
             new Location(StringUtil.toDouble(parts[0]), StringUtil.toDouble(parts[1])),
             new Location(StringUtil.toDouble(parts[2]), StringUtil.toDouble(parts[3]))
@@ -122,13 +207,17 @@ public class Location {
     }
 
     public static Bound getCountryBoundsByName(String countryName) {
-        String[] parts = StringUtil.split(StringUtil.getBetween(getCountryBoundsAsString(), countryName.toLowerCase(), "\n"), '\n');
+        String[] parts = StringUtil.split(StringUtil.getBetween(getCountryBoundsAsString(), countryName.toLowerCase(), "\n"), ',');
+        if (parts.length < 5) {
+            return null;
+        }
         Bound bound = new Bound(
             new Location(StringUtil.toDouble(parts[1]), StringUtil.toDouble(parts[2])),
             new Location(StringUtil.toDouble(parts[3]), StringUtil.toDouble(parts[4]))
         );
         return bound.isValid() ? bound : null;
     }
+
 
     public static class Bound {
 

@@ -5,6 +5,7 @@ import com.vantar.database.dto.DtoDictionary;
 import com.vantar.exception.FinishException;
 import com.vantar.locale.*;
 import com.vantar.locale.Locale;
+import com.vantar.queue.Queue;
 import com.vantar.service.Services;
 import com.vantar.util.collection.CollectionUtil;
 import com.vantar.util.string.StringUtil;
@@ -16,12 +17,6 @@ import java.util.*;
 
 public class AdminService {
 
-    private static final String PARAM_DELAY = "delay";
-    private static final String PARAM_TRIES = "tries";
-    private static final String PARAM_ALL = "all";
-    private static final String PARAM_EVENTS = "events";
-    private static final String PARAM_EXCLUDE = "exclude";
-    private static final String PARAM_SERVICES_START = "ss";
     private static final int DEFAULT_DELAY_SECONDS = 1;
     private static final int DEFAULT_MAX_TRIES = 20;
 
@@ -31,16 +26,16 @@ public class AdminService {
 
         if (!params.isChecked("f") || !params.isChecked(WebUi.PARAM_CONFIRM)) {
             ui  .beginFormPost()
-                .addInput(Locale.getString(Locale.getString(VantarKey.ADMIN_DELAY)), PARAM_DELAY, Integer.toString(DEFAULT_DELAY_SECONDS), "ltr")
-                .addInput(Locale.getString(Locale.getString(VantarKey.ADMIN_TRIES)), PARAM_TRIES, Integer.toString(DEFAULT_MAX_TRIES), "ltr")
-                .addCheckbox(Locale.getString(VantarKey.ADMIN_SERVICE_INCLUDE_ALL_SERVICES), PARAM_ALL)
-                .addCheckbox(Locale.getString(VantarKey.ADMIN_SERVICE_INCLUDE_ALL_DB_SERVICES), PARAM_EVENTS)
+                .addInput(Locale.getString(Locale.getString(VantarKey.ADMIN_DELAY)), "delay", Integer.toString(DEFAULT_DELAY_SECONDS), "ltr")
+                .addInput(Locale.getString(Locale.getString(VantarKey.ADMIN_TRIES)), "tries", Integer.toString(DEFAULT_MAX_TRIES), "ltr")
+                .addCheckbox(Locale.getString(VantarKey.ADMIN_SERVICE_INCLUDE_ALL_SERVICES), "all")
+                .addCheckbox(Locale.getString(VantarKey.ADMIN_SERVICE_INCLUDE_ALL_DB_SERVICES), "events")
                 .addCheckbox(Locale.getString(VantarKey.ADMIN_CONFIRM), WebUi.PARAM_CONFIRM)
                 .addSubmit(Locale.getString(VantarKey.ADMIN_SERVICE_STOP))
                 .finish();
             return;
         }
-        stopServices(ui, params.isChecked(PARAM_EVENTS), params.isChecked(PARAM_ALL), params.getInteger(PARAM_DELAY), params.getInteger(PARAM_TRIES));
+        stopServices(ui, params.isChecked("events"), params.isChecked("all"), params.getInteger("delay"), params.getInteger("tries"));
     }
 
     public static void startServices(Params params, HttpServletResponse response) throws FinishException {
@@ -48,16 +43,16 @@ public class AdminService {
 
         if (!params.isChecked("f") || !params.isChecked(WebUi.PARAM_CONFIRM)) {
             ui  .beginFormPost()
-                .addInput(Locale.getString(Locale.getString(VantarKey.ADMIN_DELAY)), PARAM_DELAY, Integer.toString(DEFAULT_DELAY_SECONDS), "ltr")
-                .addInput(Locale.getString(Locale.getString(VantarKey.ADMIN_TRIES)), PARAM_TRIES, Integer.toString(DEFAULT_MAX_TRIES), "ltr")
-                .addCheckbox(Locale.getString(VantarKey.ADMIN_SERVICE_INCLUDE_ALL_SERVICES), PARAM_ALL)
-                .addCheckbox(Locale.getString(VantarKey.ADMIN_SERVICE_INCLUDE_ALL_DB_SERVICES), PARAM_EVENTS)
+                .addInput(Locale.getString(Locale.getString(VantarKey.ADMIN_DELAY)), "delay", Integer.toString(DEFAULT_DELAY_SECONDS), "ltr")
+                .addInput(Locale.getString(Locale.getString(VantarKey.ADMIN_TRIES)), "tries", Integer.toString(DEFAULT_MAX_TRIES), "ltr")
+                .addCheckbox(Locale.getString(VantarKey.ADMIN_SERVICE_INCLUDE_ALL_SERVICES), "all")
+                .addCheckbox(Locale.getString(VantarKey.ADMIN_SERVICE_INCLUDE_ALL_DB_SERVICES), "events")
                 .addCheckbox(Locale.getString(VantarKey.ADMIN_CONFIRM), WebUi.PARAM_CONFIRM)
                 .addSubmit(Locale.getString(VantarKey.ADMIN_SERVICE_START))
                 .finish();
             return;
         }
-        startServices(ui, params.isChecked(PARAM_EVENTS), params.isChecked(PARAM_ALL), params.getInteger(PARAM_DELAY), params.getInteger(PARAM_TRIES));
+        startServices(ui, params.isChecked("events"), params.isChecked("all"), params.getInteger("delay"), params.getInteger("tries"));
     }
 
     public static void factoryReset(Params params, HttpServletResponse response) throws FinishException {
@@ -65,10 +60,10 @@ public class AdminService {
 
         if (!params.isChecked("f") || !params.isChecked(WebUi.PARAM_CONFIRM)) {
             ui  .beginFormPost()
-                .addInput(Locale.getString(Locale.getString(VantarKey.ADMIN_DELAY)), PARAM_DELAY, Integer.toString(DEFAULT_DELAY_SECONDS), "ltr")
-                .addInput(Locale.getString(Locale.getString(VantarKey.ADMIN_TRIES)), PARAM_TRIES, Integer.toString(DEFAULT_MAX_TRIES), "ltr")
-                .addInput(Locale.getString(VantarKey.ADMIN_SERVICE_CLASSES_TO_RESERVE), PARAM_EXCLUDE, "", "ltr")
-                .addCheckbox(Locale.getString(VantarKey.ADMIN_SERVICE_START_SERVICES_AT_END), PARAM_SERVICES_START)
+                .addInput(Locale.getString(Locale.getString(VantarKey.ADMIN_DELAY)), "delay", Integer.toString(DEFAULT_DELAY_SECONDS), "ltr")
+                .addInput(Locale.getString(Locale.getString(VantarKey.ADMIN_TRIES)), "tries", Integer.toString(DEFAULT_MAX_TRIES), "ltr")
+                .addInput(Locale.getString(VantarKey.ADMIN_SERVICE_CLASSES_TO_RESERVE), "exclude", "", "ltr")
+                .addCheckbox(Locale.getString(VantarKey.ADMIN_SERVICE_START_SERVICES_AT_END), "ss")
                 .addCheckbox(Locale.getString(VantarKey.ADMIN_CONFIRM), WebUi.PARAM_CONFIRM)
                 .addSubmit(Locale.getString(VantarKey.ADMIN_DO))
                 .containerEnd();
@@ -89,9 +84,9 @@ public class AdminService {
             }
         }
 
-        int delay = params.getInteger(PARAM_DELAY);
-        int tries = params.getInteger(PARAM_TRIES);
-        Set<String> exclude = params.getStringSet(PARAM_EXCLUDE);
+        int delay = params.getInteger("delay");
+        int tries = params.getInteger("tries");
+        Set<String> exclude = params.getStringSet("exclude");
 
         stopServices(ui, false, true, delay, tries);
 
@@ -115,7 +110,7 @@ public class AdminService {
         AdminData.statusMongo(ui);
         AdminData.statusSql(ui);
 
-        if (params.isChecked(PARAM_SERVICES_START)) {
+        if (params.isChecked("ss")) {
             startServices(ui, false, true, delay, tries);
         } else {
             ui  .beginBox(Locale.getString(VantarKey.ADMIN_SERVICES_ARE_STOPPED))
@@ -247,14 +242,12 @@ public class AdminService {
     private static void getSystemObjects(WebUi ui) {
         ui  .beginBox(Locale.getString(VantarKey.ADMIN_SYSYEM_CLASSES));
 
-        String[] queues = StringUtil.split(Settings.queue().getRabbitMqQueues(), VantarParam.SEPARATOR_BLOCK);
-        if (queues != null) {
-            List<String> items = new ArrayList<>();
-            for (String q : queues) {
-                items.add(StringUtil.split(q, VantarParam.SEPARATOR_COMMON)[0]);
+        if (Queue.connection != null) {
+            String[] queues = Queue.connection.getQueues();
+            if (queues != null) {
+                ui.addKeyValue("RabbitMq", CollectionUtil.join(queues, "\n"));
+                ui.addKeyValue(" ", " ");
             }
-            ui.addKeyValue("RabbitMq", CollectionUtil.join(items, "\n"));
-            ui.addKeyValue(" ", " ");
         }
 
         DtoDictionary.getStructure().forEach((dbms, info) -> {

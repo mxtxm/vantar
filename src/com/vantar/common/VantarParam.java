@@ -3,7 +3,7 @@ package com.vantar.common;
 
 public class VantarParam {
 
-    public static final String VERSION = "2.4";
+    public static final String VERSION = "2.8";
 
     public static final String QUEUE_NAME_USER_ACTION_LOG = "user-action-log";
 
@@ -12,7 +12,7 @@ public class VantarParam {
     public static final int MESSAGE_SERVICE_STARTED = 7003;
     public static final int MESSAGE_SERVICE_STOPPED = 7004;
     public static final int MESSAGE_SETTINGS_UPDATED = 7005;
-    public static final int MESSAGE_UPDATE_CONFIG_SETTINGS = 7006;
+    public static final int MESSAGE_UPDATE_SETTINGS = 7006;
     public static final int MESSAGE_SERVICE_ENABLED_COUNT = 7007;
     public static final int MESSAGE_DATABASE_UPDATED = 7008;
 

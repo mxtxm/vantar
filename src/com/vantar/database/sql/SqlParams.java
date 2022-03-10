@@ -3,8 +3,8 @@ package com.vantar.database.sql;
 import com.vantar.database.dto.*;
 import com.vantar.util.collection.CollectionUtil;
 import com.vantar.util.datetime.DateTime;
+import com.vantar.util.json.*;
 import com.vantar.util.object.ObjectUtil;
-import com.vantar.util.json.Json;
 import java.util.*;
 
 
@@ -94,7 +94,7 @@ public class SqlParams {
         Object[] array = new Object[values.size()];
         for (int i = 0; i < values.size(); i++) {
             Object value = values.get(i);
-            array[i] = value instanceof Collection || value instanceof Map ? Json.toJson(value) : value;
+            array[i] = value instanceof Collection || value instanceof Map ? Json.d.toJson(value) : value;
         }
         return array;
     }

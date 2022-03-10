@@ -1,15 +1,11 @@
 package com.vantar.util.datetime;
 
-import com.vantar.database.common.ValidationError;
 import com.vantar.exception.DateTimeException;
-import com.vantar.locale.*;
+import com.vantar.locale.Locale;
 import com.vantar.util.string.StringUtil;
 import java.sql.Timestamp;
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.util.Calendar;
-import java.util.TimeZone;
+import java.time.*;
+import java.util.*;
 
 
 public class DateTime {
@@ -17,18 +13,15 @@ public class DateTime {
     public static final String TIMESTAMP = "timestamp";
     public static final String DATE = "date";
     public static final String TIME = "time";
-
     public static final short BIGGER = 1;
     public static final short SMALLER = -1;
     public static final short EQUAL = 0;
+    public static final String DEFAULT_DATE_FORMAT = "ymd";
 
-    public static final String DEFAULT_DATE_FROMAT = "ymd";
-
-    private String dateFormat = DEFAULT_DATE_FROMAT;
     private Long timestamp;
     private String type = TIMESTAMP;
+    private String dateFormat = DEFAULT_DATE_FORMAT;
     private DateTimeFormatter formatter;
-    private boolean isPersian;
 
     // construct
 
@@ -36,8 +29,10 @@ public class DateTime {
         setToNow();
     }
 
-    public DateTime(DateTime value) {
-        setTimeStamp(value.timestamp);
+    public DateTime(DateTime dateTime) {
+        timestamp = dateTime.timestamp;
+        type = dateTime.type;
+        dateFormat = dateTime.dateFormat;
     }
 
     public DateTime(long timestamp) {
@@ -65,17 +60,19 @@ public class DateTime {
     }
 
     public DateTime(DateTimeFormatter dateTimeFormatter) {
-        if (dateTimeFormatter.year < PersianDateUtil.PERSIAN_YEAR_UPPER_LIMIT) {
-            dateTimeFormatter = PersianDateUtil.toGregorian(dateTimeFormatter);
+        formatter = dateTimeFormatter;
+        if (formatter.year < PersianDateUtil.PERSIAN_YEAR_UPPER_LIMIT) {
+            formatter = PersianDateUtil.toGregorian(formatter);
         }
         updateTimeStamp(
             LocalDateTime
-                .of(dateTimeFormatter.year, dateTimeFormatter.month, dateTimeFormatter.day, dateTimeFormatter.hour, dateTimeFormatter.minute, dateTimeFormatter.second)
+                .of(
+                    formatter.year, formatter.month, formatter.day,
+                    formatter.hour, formatter.minute, formatter.second)
                 .atZone(ZoneId.systemDefault())
                 .toInstant()
                 .toEpochMilli()
         );
-        formatter = dateTimeFormatter;
     }
 
     public DateTime(int year, int month, int day) {
@@ -108,7 +105,7 @@ public class DateTime {
         if (dateTime.equalsIgnoreCase("now")) {
             setToNow();
         }
-        fromString(dateTime, DEFAULT_DATE_FROMAT);
+        fromString(dateTime, DEFAULT_DATE_FORMAT);
     }
 
     public DateTime(String dateTime, String format) throws DateTimeException {
@@ -142,19 +139,16 @@ public class DateTime {
             setTimeStamp(timestamp);
             return this;
         }
-
         if (StringUtil.isEmpty(format)) {
-            format = DEFAULT_DATE_FROMAT;
+            format = DEFAULT_DATE_FORMAT;
         }
         formatter = DateTimeNormalizer.fromString(string, format);
 
         if (formatter.hasErrors()) {
             throw new DateTimeException(string, formatter.getErrors());
         }
-
         dateFormat = formatter.dateFormat;
         setTimeStamp(formatter.getAsTimestamp());
-
         return this;
     }
 
@@ -199,7 +193,8 @@ public class DateTime {
     }
 
     public DateTime addDays(long v) {
-        timestamp = Timestamp.valueOf(new Timestamp(timestamp).toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime().plusDays(v)).getTime();
+        timestamp = Timestamp.valueOf(new Timestamp(timestamp).toInstant()
+            .atZone(ZoneId.systemDefault()).toLocalDateTime().plusDays(v)).getTime();
         formatter = null;
         return this;
     }
@@ -364,12 +359,23 @@ public class DateTime {
         return EQUAL;
     }
 
-    public boolean equals(DateTime dt) {
-        return isEqual(dt);
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null) {
+            return false;
+        }
+        if (obj == this) {
+            return true;
+        }
+        if (!this.getClass().equals(obj.getClass())) {
+            return false;
+        }
+        return timestamp.equals(((DateTime) obj).timestamp);
     }
 
-    public boolean isEqual(DateTime dateTime) {
-        return dateTime.timestamp != null && timestamp.equals(dateTime.timestamp);
+    @Override
+    public int hashCode() {
+        return timestamp.hashCode();
     }
 
     public boolean isAfter(DateTime dateTime) {

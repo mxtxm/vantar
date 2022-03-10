@@ -10,9 +10,10 @@ import com.vantar.queue.*;
 import com.vantar.service.Services;
 import com.vantar.service.auth.*;
 import com.vantar.service.log.dto.UserLog;
-import com.vantar.util.json.Json;
-import com.vantar.web.Params;
+import com.vantar.util.json.*;
+import com.vantar.web.*;
 import org.slf4j.*;
+import javax.servlet.http.HttpServletResponse;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -28,9 +29,10 @@ public class ServiceUserActionLog implements Services.Service {
     // > > > service params injected from config
     public Boolean onEndSetNull;
     public String dbms;
-    public Boolean delayedStoreEnabled
-        ;
+    public Boolean delayedStoreEnabled;
     public Integer insertIntervalMin;
+
+
     // < < <
 
     public void start() {
@@ -56,27 +58,11 @@ public class ServiceUserActionLog implements Services.Service {
         return onEndSetNull;
     }
 
-    public static void add(String action, Object object) {
-        add(null, action, object, null);
-    }
-
-    public static void add(Params params, String action, Object object) {
-        add(params, action, object, null);
-    }
-
     public static void add(Dto.Action action, Object object) {
-        add(null, action.name(), object, null);
+        add(action.name(), object);
     }
 
-    public static void add(Params params, Dto.Action action, Object object) {
-        add(params, action.name(), object, null);
-    }
-
-    public static void add(Params params, Dto.Action action, Object object, String description) {
-        add(params, action.name(), object, description);
-    }
-
-    public static void add(Params params, String action, Object object, String description) {
+    public static void add(String action, Object object) {
         ServiceUserActionLog userLogService;
         try {
             userLogService = Services.get(ServiceUserActionLog.class);
@@ -85,8 +71,16 @@ public class ServiceUserActionLog implements Services.Service {
         }
 
         UserLog userLog = new UserLog();
+        userLog.action = action;
+        userLog.threadId = Thread.currentThread().getId();
 
+        Params params = Params.getThreadParams();
         if (params != null) {
+            userLog.headers = params.getHeaders();
+            userLog.url = params.request.getRequestURI();
+            userLog.requestType = params.getMethod() + ": " +  params.type.name();
+            userLog.ip = params.getIp();
+            userLog.uploadedFiles = params.getUploadFiles();
             try {
                 userLog.userId = Services.get(ServiceAuth.class).getCurrentUser(params).getId();
             } catch (ServiceException | AuthException e) {
@@ -94,41 +88,68 @@ public class ServiceUserActionLog implements Services.Service {
             }
         }
 
-        userLog.action = action;
-        if (object != null) {
+        if (object == null && params != null) {
+            userLog.className = "Request";
+            userLog.object = params.toJsonString();
+        } else if (object != null) {
             if (object instanceof String) {
-                userLog.className = (String) object;
+                userLog.object = Json.d.toJson(object);
             } else {
                 userLog.className = object.getClass().getName();
-                userLog.object = Json.toJson(object);
+                userLog.object = Json.d.toJson(object);
             }
             if (object instanceof Dto) {
                 userLog.objectId = ((Dto) object).getId();
             }
         }
-        if (params != null) {
-            userLog.headers = params.getHeaders();
-            userLog.url = params.getCurrentUrl();
-            userLog.ip = params.getIp();
-        }
-        userLog.description = description;
 
         if (userLogService.delayedStoreEnabled && Queue.isUp) {
             Queue.add(VantarParam.QUEUE_NAME_USER_ACTION_LOG, new Packet(userLog));
             log.debug("userLog > queue({})", VantarParam.QUEUE_NAME_USER_ACTION_LOG);
         } else {
-
-            ServiceUserActionLog serviceUserActionLog;
-            try {
-                serviceUserActionLog = Services.get(ServiceUserActionLog.class);
-            } catch (ServiceException e) {
-                log.error("! action not logged", e);
-                return;
-            }
-
-            if (serviceUserActionLog.dbms.equalsIgnoreCase(DtoDictionary.Dbms.ELASTIC.name())) {
+            if (userLogService.dbms.equalsIgnoreCase(DtoDictionary.Dbms.ELASTIC.name())) {
                 saveOnElastic(userLog);
-            } else if (serviceUserActionLog.dbms.equalsIgnoreCase(DtoDictionary.Dbms.MONGO.name())) {
+            } else if (userLogService.dbms.equalsIgnoreCase(DtoDictionary.Dbms.MONGO.name())) {
+                saveOnMongo(userLog);
+            }
+        }
+    }
+
+    public static void addResponse(Object object, HttpServletResponse response) {
+        ServiceUserActionLog userLogService;
+        try {
+            userLogService = Services.get(ServiceUserActionLog.class);
+        } catch (ServiceException e) {
+            return;
+        }
+
+        UserLog userLog = new UserLog();
+        userLog.action = "RESPONSE";
+        userLog.threadId = Thread.currentThread().getId();
+        userLog.headers = Response.getHeaders(response);
+
+        Params params = Params.getThreadParams();
+        if (params != null) {
+            userLog.url = params.request.getRequestURI();
+            log.debug(" {} <", userLog.url);
+        }
+
+        if (object != null) {
+            if (object instanceof String) {
+                userLog.object = Json.d.toJson(object);
+            } else {
+                userLog.className = object.getClass().getName();
+                userLog.object = Json.d.toJson(object);
+            }
+        }
+
+        if (userLogService.delayedStoreEnabled && Queue.isUp) {
+            Queue.add(VantarParam.QUEUE_NAME_USER_ACTION_LOG, new Packet(userLog));
+            log.debug("userLog > queue({})", VantarParam.QUEUE_NAME_USER_ACTION_LOG);
+        } else {
+            if (userLogService.dbms.equalsIgnoreCase(DtoDictionary.Dbms.ELASTIC.name())) {
+                saveOnElastic(userLog);
+            } else if (userLogService.dbms.equalsIgnoreCase(DtoDictionary.Dbms.MONGO.name())) {
                 saveOnMongo(userLog);
             }
         }
@@ -166,7 +187,7 @@ public class ServiceUserActionLog implements Services.Service {
         write.startTransaction();
 
         for (Packet packet : packets) {
-            UserLog item = packet.getObject();
+            UserLog item = packet.getObject(UserLog.class);
             try {
                 write.insert(item);
             } catch (DatabaseException e) {
@@ -194,7 +215,7 @@ public class ServiceUserActionLog implements Services.Service {
         List<UserLog> items = new ArrayList<>(packets.size());
 
         for (Packet packet : packets) {
-            items.add(packet.getObject());
+            items.add(packet.getObject(UserLog.class));
         }
 
         try {

@@ -5,6 +5,7 @@ import com.vantar.database.dto.*;
 import com.vantar.database.sql.SqlConnection;
 import com.vantar.exception.*;
 import com.vantar.service.Services;
+import com.vantar.util.object.*;
 import org.slf4j.*;
 import java.util.*;
 
@@ -18,8 +19,9 @@ public class ServiceDtoCache implements Services.Service {
 
 
     public void start() {
-        cache = Collections.synchronizedMap(new LinkedHashMap<>());
-        for (DtoDictionary.Info info : DtoDictionary.getAll()) {
+        List<DtoDictionary.Info> dtos = DtoDictionary.getAll();
+        cache = Collections.synchronizedMap(new LinkedHashMap<>(dtos.size()));
+        for (DtoDictionary.Info info : dtos) {
             update(info);
         }
     }
@@ -40,10 +42,46 @@ public class ServiceDtoCache implements Services.Service {
         return cache.get(tClass);
     }
 
+    public <A extends Dto> Map<Long, A> getMap(Class<? extends Dto> tClass, Class<A> asClass) {
+        Map<Long, Dto> originalData = cache.get(tClass);
+        if (originalData == null) {
+            return new HashMap<>(1);
+        }
+        Map<Long, A> data = new HashMap<>(originalData.size());
+        for (Map.Entry<Long, Dto> e : originalData.entrySet()) {
+            A a = ClassUtil.getInstance(asClass);
+            if (a != null) {
+                a.set(e.getValue());
+                data.put(e.getKey(), a);
+            }
+        }
+        return data;
+    }
+
     public <T extends Dto> List<T> getList(Class<T> tClass) {
         List<T> data = new ArrayList<>();
-        for (Dto item : cache.get(tClass).values()) {
+        Map<Long, Dto> values = cache.get(tClass);
+        if (values == null) {
+            return data;
+        }
+        for (Dto item : values.values()) {
             data.add((T) item);
+        }
+        return data;
+    }
+
+    public <A extends Dto> List<A> getList(Class<? extends Dto> tClass, Class<A> asClass) {
+        List<A> data = new ArrayList<>();
+        Map<Long, Dto> values = cache.get(tClass);
+        if (values == null) {
+            return data;
+        }
+        for (Dto item : values.values()) {
+            A a = ClassUtil.getInstance(asClass);
+            if (a != null) {
+                a.set(item);
+                data.add(a);
+            }
         }
         return data;
     }
@@ -57,6 +95,22 @@ public class ServiceDtoCache implements Services.Service {
             return null;
         }
         return (T) data.get(id);
+    }
+
+    public <A extends Dto> A getDto(Class<? extends Dto> tClass, Class<A> asClass, Long id) {
+        if (id == null) {
+            return null;
+        }
+        Map<Long, Dto> data = cache.get(tClass);
+        if (data == null) {
+            return null;
+        }
+        A a = ClassUtil.getInstance(asClass);
+        if (a == null) {
+            return null;
+        }
+        a.set(data.get(id));
+        return a;
     }
 
     public void update(String dtoName) {

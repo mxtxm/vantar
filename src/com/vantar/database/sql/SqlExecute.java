@@ -7,7 +7,7 @@ import com.vantar.exception.DatabaseException;
 import com.vantar.locale.VantarKey;
 import com.vantar.util.collection.CollectionUtil;
 import com.vantar.util.datetime.DateTime;
-import com.vantar.util.json.Json;
+import com.vantar.util.json.*;
 import com.vantar.util.string.*;
 import org.slf4j.*;
 import java.sql.*;
@@ -107,7 +107,7 @@ public class SqlExecute extends SqlQueryHelper {
                 if (value instanceof DateTime) {
                     value = SqlUtil.getDateTimeAsSql(value);
                 } else if (value instanceof Collection || value instanceof Map) {
-                    value = Json.toJson(value);
+                    value = Json.d.toJson(value);
                 }
             }
 
@@ -182,7 +182,7 @@ public class SqlExecute extends SqlQueryHelper {
                 if (value instanceof DateTime) {
                     value = SqlUtil.getDateTimeAsSql(value);
                 } else if (value instanceof Collection || value instanceof Map) {
-                    value = Json.toJson(value);
+                    value = Json.d.toJson(value);
                 }
                 values[i++] = value;
             }

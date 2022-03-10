@@ -14,7 +14,7 @@ import com.vantar.service.Services;
 import com.vantar.service.cache.ServiceDtoCache;
 import com.vantar.util.collection.CollectionUtil;
 import com.vantar.util.datetime.DateTime;
-import com.vantar.util.json.Json;
+import com.vantar.util.json.JsonOld;
 import com.vantar.util.object.*;
 import com.vantar.util.string.*;
 import org.bson.Document;
@@ -187,7 +187,7 @@ public class MongoQueryResult extends QueryResultBase implements QueryResult, Au
 
                     if (field.isAnnotationPresent(StoreString.class)) {
                         String v = document.getString(key);
-                        field.set(dto, v == null ? null : Json.fromJson(v, TypeToken.get(type).getType()));
+                        field.set(dto, v == null ? null : JsonOld.fromJson(v, TypeToken.get(type).getType()));
                         continue;
                     }
 
@@ -261,7 +261,7 @@ public class MongoQueryResult extends QueryResultBase implements QueryResult, Au
                             }
                             field.set(dto, type == Set.class ? new HashSet<>(list) : list);
                         } else {
-                            v = Json.listFromJson(Json.toJson(document.get(key)), listType);
+                            v = JsonOld.listFromJson(JsonOld.toJson(document.get(key)), listType);
                             field.set(dto, v != null && type == Set.class ? new HashSet<>(v) : v);
                         }
                         continue;
@@ -348,14 +348,14 @@ public class MongoQueryResult extends QueryResultBase implements QueryResult, Au
                 }
                 mapRecordToObject((Document) entry.getValue(), (Dto) vDto, ((Dto) vDto).getFields());
                 map.put(
-                    ObjectUtil.convert(entry.getKey(), kClass),
+                    ObjectUtil.convert(Mongo.Escape.keyForView(entry.getKey()), kClass),
                     vDto
                 );
                 continue;
             }
 
             map.put(
-                ObjectUtil.convert(entry.getKey(), kClass),
+                ObjectUtil.convert(Mongo.Escape.keyForView(entry.getKey()), kClass),
                 ObjectUtil.convert(entry.getValue(), vClass)
             );
         }

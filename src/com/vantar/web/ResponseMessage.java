@@ -14,52 +14,51 @@ public class ResponseMessage {
     public boolean successful;
 
 
-    public ResponseMessage(String message, int code) {
-        this.code = code;
-        successful = false;
-        this.message = message;
+    public ResponseMessage() {
+
     }
 
-    public ResponseMessage(String message, Object value) {
-        code = 200;
-        successful = true;
-        this.message = message;
-        this.value = value;
+    public static ResponseMessage success(LangKey message) {
+        return get(200, Locale.getString(message, 200), null, null);
+    }
+    public static ResponseMessage success(String message) {
+        return get(200, message, null, null);
+    }
+    public static ResponseMessage success(String message, Object value) {
+        return get(200, Locale.getString(message, 200), value, null);
+    }
+    public static ResponseMessage success(LangKey message, Object value) {
+        return get(200, Locale.getString(message, 200), value, value instanceof Dto ? (Dto) value : null);
+    }
+    public static ResponseMessage success(LangKey message, Object value, Dto dto) {
+        return get(200, Locale.getString(message, 200), value, dto);
+    }
+    public static ResponseMessage success(String message, Object value, Dto dto) {
+        return get(200, message, value, dto);
     }
 
-    public ResponseMessage(String message) {
-        code = 200;
-        successful = true;
-        this.message = message;
+    public static ResponseMessage get(int code, LangKey message) {
+        return get(code, Locale.getString(message, 200), null, null);
     }
-
-    public ResponseMessage(LangKey message, int code) {
-        this.code = code;
-        successful = false;
-        this.message = Locale.getString(message, code);
+    public static ResponseMessage get(int code, String message) {
+        return get(code, message, null, null);
     }
-
-    public ResponseMessage(LangKey message, Object value) {
-        code = 200;
-        successful = true;
-        this.message = Locale.getString(message);
-        this.value = value;
-        if (value instanceof Dto) {
-            this.dto = (Dto) value;
-        }
+    public static ResponseMessage get(int code, String message, Object value) {
+        return get(code, Locale.getString(message, 200), value, null);
     }
-
-    public ResponseMessage(LangKey message) {
-        code = 200;
-        successful = true;
-        this.message = Locale.getString(message);
+    public static ResponseMessage get(int code, LangKey message, Object value) {
+        return get(code, Locale.getString(message, 200), value, value instanceof Dto ? (Dto) value : null);
     }
-
-    public ResponseMessage(LangKey message, Object value, Dto dto) {
-        code = 200;
-        successful = true;
-        this.message = Locale.getString(message, code);
-        this.value = value;
-        this.dto = dto;
+    public static ResponseMessage get(int code, LangKey message, Object value, Dto dto) {
+        return get(code, Locale.getString(message, 200), value, dto);
+    }
+    public static ResponseMessage get(int code, String message, Object value, Dto dto) {
+        ResponseMessage r = new ResponseMessage();
+        r.code = code;
+        r.successful = code >= 200 && code < 300;
+        r.message = message;
+        r.value = value;
+        r.dto = dto;
+        return r;
     }
 }

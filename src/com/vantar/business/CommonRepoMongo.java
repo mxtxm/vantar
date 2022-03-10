@@ -76,7 +76,7 @@ public class CommonRepoMongo extends Mongo {
                 log.error("! {}", dto, e);
             }
         }
-        return new ResponseMessage(VantarKey.DELETE_SUCCESS, i);
+        return ResponseMessage.success(VantarKey.DELETE_SUCCESS, i);
     }
 
     public static void undoDelete(Dto dto) throws DatabaseException {
@@ -199,7 +199,7 @@ public class CommonRepoMongo extends Mongo {
     }
 
     public static void purge(String collection) throws DatabaseException {
-        deleteAll(collection);
+        Mongo.deleteAll(collection);
         Mongo.Index.remove(collection);
         Mongo.Sequence.remove(collection);
     }

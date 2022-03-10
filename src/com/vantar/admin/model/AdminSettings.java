@@ -6,7 +6,7 @@ import com.vantar.locale.Locale;
 import com.vantar.locale.*;
 import com.vantar.service.Services;
 import com.vantar.util.file.FileUtil;
-import com.vantar.util.json.Json;
+import com.vantar.util.json.*;
 import com.vantar.util.string.*;
 import com.vantar.web.*;
 import javax.servlet.http.HttpServletResponse;
@@ -89,13 +89,13 @@ public class AdminSettings {
                 settings.put(item, properties.getProperty(item));
             }
 
-            String json = Json.toJson(settings);
+            String json = Json.d.toJson(settings);
             if (updateProperties(json, properties, propertiesInterface)) {
                 ui.addMessage(Locale.getString(VantarKey.ADMIN_SETTINGS_UPDATED));
                 reloadSettings();
                 ui.addMessage(Locale.getString(VantarKey.ADMIN_SETTINGS_LOADED));
                 if (propertiesInterface.equals(Settings.configClass)) {
-                    Services.messaging.broadcast(VantarParam.MESSAGE_UPDATE_CONFIG_SETTINGS, json);
+                    Services.messaging.broadcast(VantarParam.MESSAGE_UPDATE_SETTINGS, json);
                     ui.addMessage(Locale.getString(VantarKey.ADMIN_SETTINGS_UPDATE_MSG_SENT));
                 }
             } else {
@@ -128,7 +128,7 @@ public class AdminSettings {
     }
 
     public static boolean updateProperties(String json, org.aeonbits.owner.Accessible properties, Class<?> propertiesInterface) {
-        Map<String, String> updatedSettings = Json.mapFromJson(json, String.class, String.class);
+        Map<String, String> updatedSettings = Json.d.mapFromJson(json, String.class, String.class);
         if (updatedSettings == null) {
             return false;
         }

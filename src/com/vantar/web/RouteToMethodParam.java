@@ -1,9 +1,11 @@
 package com.vantar.web;
 
+import com.vantar.common.Settings;
 import com.vantar.exception.*;
 import com.vantar.locale.*;
 import com.vantar.service.Services;
 import com.vantar.service.auth.ServiceAuth;
+import com.vantar.service.log.ServiceUserActionLog;
 import com.vantar.util.string.StringUtil;
 import org.slf4j.*;
 import javax.servlet.http.*;
@@ -18,7 +20,14 @@ import java.io.IOException;
 public class RouteToMethodParam extends HttpServlet {
 
     private static final Logger log = LoggerFactory.getLogger(RouteToMethodParam.class);
-    public static RequestCallback requestCallback;
+    private static boolean logRequest;
+
+    static {
+        if (Settings.web() != null) {
+            logRequest = Settings.web().logRequest();
+        }
+    }
+
 
     @Override
     public void service(HttpServletRequest request, HttpServletResponse response) throws IOException {
@@ -39,6 +48,7 @@ public class RouteToMethodParam extends HttpServlet {
             }
 
             Params params = new Params(request);
+            Params.setThreadParams(params);
 
             String[] dParams = StringUtil.split(request.getPathInfo(), '/');
             if (dParams != null) {
@@ -47,8 +57,9 @@ public class RouteToMethodParam extends HttpServlet {
                 }
             }
 
-            if (requestCallback != null) {
-                requestCallback.catchRequest(params);
+            if (logRequest) {
+                ServiceUserActionLog.add("REQUEST", null);
+                log.debug(" > {}", request.getRequestURI());
             }
 
             Locale.setSelectedLocale(params);
@@ -97,6 +108,7 @@ public class RouteToMethodParam extends HttpServlet {
                 }
             } finally {
                 Locale.removeThreadLocale(Thread.currentThread().getId());
+                Params.removeThreadParams();
             }
         }
     }

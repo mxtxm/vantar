@@ -1,14 +1,14 @@
 package com.vantar.common;
 
-import com.vantar.database.common.BackupSettings;
 import com.vantar.database.nosql.elasticsearch.ElasticConfig;
 import com.vantar.database.nosql.mongo.MongoConfig;
 import com.vantar.database.sql.SqlConfig;
 import com.vantar.exception.DateTimeException;
-import com.vantar.locale.LocaleSettings;
+import com.vantar.locale.LocaleConfig;
 import com.vantar.queue.QueueConfig;
 import com.vantar.util.datetime.DateTime;
 import com.vantar.util.string.StringUtil;
+import com.vantar.web.WebConfig;
 import java.util.*;
 
 
@@ -84,16 +84,6 @@ public class Settings {
         return null;
     }
 
-    public static BackupSettings backup() {
-        if (config instanceof BackupSettings) {
-            return (BackupSettings) config;
-        }
-        if (tune instanceof BackupSettings) {
-            return (BackupSettings) tune;
-        }
-        return null;
-    }
-
     public static MongoConfig mongo() {
         if (config instanceof MongoConfig) {
             return (MongoConfig) config;
@@ -134,12 +124,22 @@ public class Settings {
         return null;
     }
 
-    public static LocaleSettings locale() {
-        if (config instanceof LocaleSettings) {
-            return (LocaleSettings) config;
+    public static LocaleConfig locale() {
+        if (config instanceof LocaleConfig) {
+            return (LocaleConfig) config;
         }
-        if (tune instanceof LocaleSettings) {
-            return (LocaleSettings) tune;
+        if (tune instanceof LocaleConfig) {
+            return (LocaleConfig) tune;
+        }
+        return null;
+    }
+
+    public static WebConfig web() {
+        if (config instanceof WebConfig) {
+            return (WebConfig) config;
+        }
+        if (tune instanceof MongoConfig) {
+            return (WebConfig) tune;
         }
         return null;
     }

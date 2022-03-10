@@ -43,9 +43,51 @@ public class DateTimeNormalizer {
         "سی ام",
         "سی و یکم",
     };
-    protected static final String[] MONTH_NAMES_FA = {"", "فروردین", "اردیبهشت", "خرداد", "تیر", "مرداد", "شهریور", "مهر", "آبان", "آذر", "دی", "بهمن", "اسفند"};
-    protected static final String[] MONTH_NAMES_EN = {"", "january", "february", "march", "april", "may", "june", "july", "august", "september", "october", "november", "december"};
-    protected static final String[] MONTH_NAMES_EN_SHORT = {"", "jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "ocx", "nov", "dec"};
+    protected static final String[] MONTH_NAMES_FA = {
+        "",
+        "فروردین",
+        "اردیبهشت",
+        "خرداد",
+        "تیر",
+        "مرداد",
+        "شهریور",
+        "مهر",
+        "آبان",
+        "آذر",
+        "دی",
+        "بهمن",
+        "اسفند",
+    };
+    protected static final String[] MONTH_NAMES_EN = {
+        "",
+        "january",
+        "february",
+        "march",
+        "april",
+        "may",
+        "june",
+        "july",
+        "august",
+        "september",
+        "october",
+        "november",
+        "december",
+    };
+    protected static final String[] MONTH_NAMES_EN_SHORT = {
+        "",
+        "jan",
+        "feb",
+        "mar",
+        "apr",
+        "may",
+        "jun",
+        "jul",
+        "aug",
+        "sep",
+        "ocx",
+        "nov",
+        "dec",
+    };
     private static final String[] REMOVE_TOKENS = {
         "monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday",
         "mon", "tue", "wed", "thu", "fri", "sat", "sun",

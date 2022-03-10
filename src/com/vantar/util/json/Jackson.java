@@ -1,0 +1,339 @@
+package com.vantar.util.json;
+
+import com.fasterxml.jackson.annotation.*;
+import com.fasterxml.jackson.core.*;
+import com.fasterxml.jackson.databind.*;
+import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
+import com.fasterxml.jackson.databind.json.JsonMapper;
+import com.fasterxml.jackson.databind.module.SimpleModule;
+import com.fasterxml.jackson.databind.ser.std.StdSerializer;
+import com.vantar.database.datatype.Location;
+import com.vantar.exception.DateTimeException;
+import com.vantar.util.datetime.DateTime;
+import org.slf4j.*;
+import java.io.*;
+import java.util.*;
+
+/**
+ * static: ignored
+ * null-properties-to-json: ignored (default)
+ * null-properties-from-json: sets property to null
+ * not-existing-json-properties: ignored (object property value or default value is preserved)
+ * methods/getter/setter: ignored (default)
+ * private: ignored (default)
+ * protected: ignored (default)
+ * interface: addPolymorphism(interface, class)
+ * string-to-number: works ("12.3" > double works) ("12.3" > int/long not works)
+ * number-to-string: works
+ * number-to-number: works (double to int/long works)
+ * bool: (works true false "true" "false" 0 1 2 3) ("1", "0" not works)
+ * Map: works
+ * List: works
+ * Set: woeks
+ * Enum: string
+ * DateTime: string
+ * Location-from-json: string or {latitude, longitude, height, countryCode}
+ * Location-to-json: {latitude, longitude, height, countryCode}
+ */
+public class Jackson {
+
+    private static final Logger log = LoggerFactory.getLogger(Jackson.class);
+    private final ObjectMapper mapper;
+
+
+    public Jackson() {
+        this(new Json.Config());
+    }
+
+    public Jackson(Json.Config config) {
+        JsonAutoDetect.Visibility propertyAccess;
+        if (config.propertyPrivate) {
+            propertyAccess = JsonAutoDetect.Visibility.ANY;
+        } else if (config.propertyProtected) {
+            propertyAccess = JsonAutoDetect.Visibility.PROTECTED_AND_PUBLIC;
+        } else {
+            propertyAccess = JsonAutoDetect.Visibility.PUBLIC_ONLY;
+        }
+
+        mapper = JsonMapper.builder()
+            .visibility(PropertyAccessor.FIELD, propertyAccess)
+            .visibility(PropertyAccessor.GETTER, config.getter ? JsonAutoDetect.Visibility.PUBLIC_ONLY : JsonAutoDetect.Visibility.NONE)
+            .visibility(PropertyAccessor.IS_GETTER, config.getter ? JsonAutoDetect.Visibility.PUBLIC_ONLY : JsonAutoDetect.Visibility.NONE)
+            .visibility(PropertyAccessor.SETTER, config.setter ? JsonAutoDetect.Visibility.PUBLIC_ONLY : JsonAutoDetect.Visibility.NONE)
+            .visibility(PropertyAccessor.CREATOR, JsonAutoDetect.Visibility.NONE)
+            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+            .configure(DeserializationFeature.FAIL_ON_NULL_FOR_PRIMITIVES, false)
+            .configure(MapperFeature.PROPAGATE_TRANSIENT_MARKER, true)
+            .build();
+
+        if (config.skipNulls) {
+            mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+        }
+
+        SimpleModule mDateTime = new SimpleModule();
+        mDateTime.addDeserializer(DateTime.class, new DateTimeDeserializer());
+        mDateTime.addSerializer(DateTime.class, new DateTimeSerializer());
+        mapper.registerModule(mDateTime);
+
+        SimpleModule mLocation = new SimpleModule();
+        mLocation.addDeserializer(Location.class, new LocationDeserializer());
+        mLocation.addSerializer(Location.class, new LocationSerializer());
+        mapper.registerModule(mLocation);
+
+        mapper.registerModule(mLocation);
+    }
+
+    public <T> void addPolymorphism(Class<T> typeClass, Class<? extends T> objectClass) {
+        mapper.registerModule(new SimpleModule().addAbstractTypeMapping(typeClass, objectClass));
+    }
+
+
+    // > > > TO JSON
+
+    public String toJson(Object object) {
+        try {
+            return mapper.writeValueAsString(object);
+        } catch (Exception e) {
+            log.warn("! failed to create JSON ({})\n", object, e);
+            return null;
+        }
+    }
+
+    public String toJsonPretty(Object object) {
+        if (object instanceof String) {
+            try {
+                object = mapper.readTree((String) object);
+            } catch (IOException e) {
+                log.warn("! failed to open JSON ({})\n", object, e);
+                return null;
+            }
+        }
+        try {
+            return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(object);
+        } catch (Exception e) {
+            log.warn("! failed to create JSON ({})\n", object, e);
+            return null;
+        }
+    }
+
+    public void toJson(Object object, OutputStream stream) {
+        try {
+            mapper.writeValue(stream, object);
+        } catch (Exception e) {
+            log.warn("! failed to create JSON ({})\n", object, e);
+        }
+    }
+
+    public void toJsonPretty(Object object, OutputStream stream) {
+        try {
+            object = mapper.readTree((String) object);
+        } catch (IOException e) {
+            log.warn("! failed to open JSON ({})\n", object, e);
+            return;
+        }
+        try {
+            mapper.writerWithDefaultPrettyPrinter().writeValue(stream, object);
+        } catch (Exception e) {
+            log.warn("! failed to create JSON ({})\n", object, e);
+        }
+    }
+
+    // TO JSON < < <
+
+    // > > > FROM JSON
+
+    public <T> T fromJson(String json, Class<T> typeClass) {
+        try {
+            return mapper.readValue(json, typeClass);
+        } catch (Exception e) {
+            log.warn("! failed to get object ({} > {})\n", json, typeClass.getName(), e);
+            return null;
+        }
+    }
+
+    public <K, V> Map<K, V> mapFromJson(String json, Class<K> k, Class<V> v) {
+        try {
+            return mapper.readValue(json, mapper.getTypeFactory().constructMapType(Map.class, k, v));
+        } catch (Exception e) {
+            log.warn("! failed to get object ({} > Map<{},{}>)\n", json, k.getName(), v.getName(), e);
+            return null;
+        }
+    }
+
+
+    public <V> List<V> listFromJson(String json, Class<V> v) {
+        try {
+            return mapper.readValue(json, mapper.getTypeFactory().constructCollectionType(List.class, v));
+        } catch (Exception e) {
+            log.warn("! failed to get object ({} > List<{}>)\n", json, v.getName(), e);
+            return null;
+        }
+    }
+
+    public <V> Set<V> setFromJson(String json, Class<V> v) {
+        try {
+            return mapper.readValue(json, mapper.getTypeFactory().constructCollectionType(Set.class, v));
+        } catch (Exception e) {
+            log.warn("! failed to get object ({} > List<{}>)\n", json, v.getName(), e);
+            return null;
+        }
+    }
+
+    public String extractString(String json, String key) {
+        try {
+            return mapper.readTree(json).get(key).asText();
+        } catch (JsonProcessingException e) {
+            return null;
+        }
+    }
+
+    public Long extractLong(String json, String key) {
+        try {
+            return mapper.readTree(json).get(key).asLong();
+        } catch (JsonProcessingException e) {
+            return null;
+        }
+    }
+
+    public Integer extractInteger(String json, String key) {
+        try {
+            return mapper.readTree(json).get(key).asInt();
+        } catch (JsonProcessingException e) {
+            return null;
+        }
+    }
+
+    public Boolean extractBoolean(String json, String key) {
+        try {
+            return mapper.readTree(json).get(key).asBoolean();
+        } catch (JsonProcessingException e) {
+            return null;
+        }
+    }
+
+    public Double extractDouble(String json, String key) {
+        try {
+            return mapper.readTree(json).get(key).asDouble();
+        } catch (JsonProcessingException e) {
+            return null;
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    public <T> T extract(String json, String key, Class<T> type) {
+        if (json == null) {
+            return null;
+        }
+        if (type.equals(String.class)) {
+            return (T) extractString(json, key);
+        }
+        if (type.equals(Long.class)) {
+            return (T) extractLong(json, key);
+        }
+        if (type.equals(Integer.class)) {
+            return (T) extractInteger(json, key);
+        }
+        if (type.equals(Double.class)) {
+            return (T) extractDouble(json, key);
+        }
+        if (type.equals(Boolean.class)) {
+            return (T) extractBoolean(json, key);
+        }
+        return null;
+    }
+
+    // < < < FROM JSON
+
+
+
+    // > > > DATETIME
+
+    public static class DateTimeDeserializer extends StdDeserializer<DateTime> {
+
+        public DateTimeDeserializer() {
+            this(null);
+        }
+
+        public DateTimeDeserializer(Class<?> vc) {
+            super(vc);
+        }
+
+        @Override
+        public DateTime deserialize(JsonParser parser, DeserializationContext context) throws IOException {
+            try {
+                return new DateTime(parser.getValueAsString());
+            } catch (DateTimeException e) {
+                return null;
+            }
+        }
+    }
+
+    public static class DateTimeSerializer extends StdSerializer<DateTime> {
+
+        public DateTimeSerializer() {
+            this(null);
+        }
+
+        public DateTimeSerializer(Class<DateTime> t) {
+            super(t);
+        }
+
+        @Override
+        public void serialize(DateTime dateTime, JsonGenerator generator, SerializerProvider provider) throws IOException {
+            if (dateTime == null) {
+                generator.writeNull();
+                return;
+            }
+            generator.writeString(dateTime.toString());
+        }
+    }
+
+    // > > > LOCATION
+
+    public static class LocationDeserializer extends StdDeserializer<Location> {
+
+        public LocationDeserializer() {
+            this(null);
+        }
+
+        public LocationDeserializer(Class<?> vc) {
+            super(vc);
+        }
+
+        @Override
+        public Location deserialize(JsonParser parser, DeserializationContext context) throws IOException {
+            Location location = new Location();
+            ObjectCodec codec = parser.getCodec();
+            JsonNode node = codec.readTree(parser);
+            JsonNode v = node.get("latitude");
+            location.latitude = v == null ? null : v.asDouble();
+            v = node.get("longitude");
+            location.longitude = v == null ? null : v.asDouble();
+            v = node.get("height");
+            location.height = v == null ? null : v.asDouble();
+            v = node.get("countryCode");
+            location.countryCode = v == null ? null : v.asText();
+            return location.isEmpty() || !location.isValid() ? null : location;
+        }
+    }
+
+    public static class LocationSerializer extends StdSerializer<Location> {
+
+        public LocationSerializer() {
+            this(null);
+        }
+
+        protected LocationSerializer(Class<Location> t) {
+            super(t);
+        }
+
+        @Override
+        public void serialize(Location location, JsonGenerator generator, SerializerProvider provider) throws IOException {
+            if (location == null || location.isEmpty() || !location.isValid()) {
+                generator.writeNull();
+                return;
+            }
+            generator.writeString(location.toString());
+        }
+    }
+}

@@ -10,9 +10,9 @@ import java.lang.reflect.*;
 import java.util.*;
 
 
-public class JsonAllPropsWithNulls {
+public class JsonOld {
 
-    private static final Logger log = LoggerFactory.getLogger(JsonAllPropsWithNulls.class);
+    private static final Logger log = LoggerFactory.getLogger(JsonOld.class);
     private static Gson gson;
 
 
@@ -35,8 +35,7 @@ public class JsonAllPropsWithNulls {
             .registerTypeAdapterFactory(TypeAdapters.newFactory(DateTime.class, GsonCustom.typeAdapterDateTime))
             .registerTypeAdapterFactory(TypeAdapters.newFactory(Location.class, GsonCustom.typeAdapterLocation))
             .setDateFormat("yyyy-MM-dd hh:mm:ss")
-            .excludeFieldsWithModifiers(Modifier.STATIC)
-            .serializeNulls();
+            .excludeFieldsWithModifiers(Modifier.STATIC, Modifier.PRIVATE, Modifier.PROTECTED);
     }
 
     public static void reset() {
@@ -46,7 +45,7 @@ public class JsonAllPropsWithNulls {
     public static void addInterface(Class<?>... interfaces) {
         GsonBuilder builder = gson().newBuilder();
         for (Class<?> i : interfaces) {
-//            builder.registerTypeAdapter(i, new GsonCustom.InterfaceAdapter());
+            //builder.registerTypeAdapter(i, new GsonCustom.InterfaceAdapter());
         }
         gson = builder.create();
     }
@@ -101,7 +100,10 @@ public class JsonAllPropsWithNulls {
     }
 
     public static <T> List<T> listFromJson(String value, Class<T> typeClass) {
-        if (StringUtil.isNotEmpty(value) && !value.trim().startsWith("[")) {
+        if (StringUtil.isEmpty(value)) {
+            return null;
+        }
+        if(!value.trim().startsWith("[")) {
             log.warn("! invalid JSON list (List<{}>, {})\n", typeClass, value);
             return null;
         }

@@ -139,7 +139,10 @@ public class MongoMapping {
         Document document = new Document();
         data.forEach((k, v) -> {
             if (k !=null && v != null) {
-                document.put(k, getValueForDocument(new StorableData(v.getClass(), v, false), action));
+                document.put(
+                    Mongo.Escape.keyForStore(k),
+                    getValueForDocument(new StorableData(v.getClass(), v, false), action)
+                );
             }
         });
         return document;
@@ -149,7 +152,10 @@ public class MongoMapping {
         Document document = new Document();
         data.forEach((k, v) -> {
             if (k !=null && v != null) {
-                document.put(k.toString(), getValueForDocument(new StorableData(v.getClass(), v, false), action));
+                document.put(
+                    Mongo.Escape.keyForStore(k.toString()),
+                    getValueForDocument(new StorableData(v.getClass(), v, false), action)
+                );
             }
         });
         return document;

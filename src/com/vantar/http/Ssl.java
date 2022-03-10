@@ -10,9 +10,6 @@ import java.security.cert.X509Certificate;
 
 public class Ssl {
 
-    private static final Logger log = LoggerFactory.getLogger(Ssl.class);
-
-
     public static void disable() {
         TrustManager[] trustAllCerts = new TrustManager[] {
 
@@ -23,10 +20,12 @@ public class Ssl {
 
                 @Override
                 public void checkClientTrusted(X509Certificate[] arg0, String arg1) {
+
                 }
 
                 @Override
                 public void checkServerTrusted(X509Certificate[] arg0, String arg1) {
+
                 }
             }
         };
@@ -35,8 +34,8 @@ public class Ssl {
             SSLContext sc = SSLContext.getInstance("SSL");
             sc.init(null, trustAllCerts, new java.security.SecureRandom());
             HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
-        } catch (NoSuchAlgorithmException | KeyManagementException e) {
-            log.error("! failed to disable ssl certificate verification", e);
+        } catch (NoSuchAlgorithmException | KeyManagementException ignore) {
+
         }
 
         // Create all-trusting host name verifier

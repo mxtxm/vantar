@@ -6,6 +6,7 @@ import com.vantar.locale.Locale;
 import com.vantar.locale.*;
 import com.vantar.service.Services;
 import com.vantar.service.cache.ServiceDtoCache;
+import com.vantar.util.number.NumberUtil;
 import com.vantar.util.object.*;
 import com.vantar.web.*;
 import javax.servlet.http.HttpServletResponse;
@@ -30,6 +31,14 @@ public class AdminCache {
             ui.addErrorMessage(Locale.getString(VantarKey.NO_CONTENT)).finish();
             return;
         }
+
+        ui  .addKeyValue("Max memory", NumberUtil.round(Runtime.getRuntime().maxMemory() / 1024D, 1) + "KB")
+            .addKeyValue("Total memory", NumberUtil.round(Runtime.getRuntime().totalMemory() / 1024D, 1) + "KB")
+            .addKeyValue("Free memory", NumberUtil.round(Runtime.getRuntime().freeMemory() / 1024D, 1) + "KB")
+            .addKeyValue(
+                "Used memory",
+                NumberUtil.round((Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1024D, 1) + "KB"
+            );
 
         long sum = 0L;
         for (Class<?> c : classes) {

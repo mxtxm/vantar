@@ -8,6 +8,7 @@ import com.vantar.database.query.QueryBuilder;
 import com.vantar.exception.DatabaseException;
 import com.vantar.queue.QueueExceptionHandler;
 import com.vantar.service.log.dto.Log;
+import com.vantar.util.collection.CollectionUtil;
 import com.vantar.util.datetime.DateTime;
 import com.vantar.util.object.ObjectUtil;
 import org.bson.Document;
@@ -18,43 +19,47 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class LogEvent {
 
-    private static final Logger log = LoggerFactory.getLogger(LogEvent.class);
+    public static final Logger log = LoggerFactory.getLogger(LogEvent.class);
+    private static final Map<Class<?>, Map<String, DateTime>> beats = new ConcurrentHashMap<>(14);
     private static final int MAX_ERROR_FETCH = 100;
+    private static final String DEFAULT_BEAT_TAG = "run";
     private static final String DEBUG = "DEBUG";
     private static final String INFO = "INFO";
     private static final String ERROR = "ERROR";
     private static final String FATAL = "FATAL";
-    private static final String DEFAULT_BEAT_TAG = "run";
-    private static final Map<String, Map<String, DateTime>> beats = new ConcurrentHashMap<>();
 
+
+    // > > > BEAT
 
     public static void beat(Class<?> service) {
         beat(service, DEFAULT_BEAT_TAG);
     }
 
     public static void beat(Class<?> service, String tag) {
-        String key = service.getSimpleName();
         synchronized (beats) {
-            Map<String, DateTime> logs = beats.get(key);
+            Map<String, DateTime> logs = beats.get(service);
             if (logs == null) {
                 logs = new ConcurrentHashMap<>();
+                beats.put(service, logs);
             }
             logs.put(tag, new DateTime());
-            beats.put(key, logs);
         }
     }
 
-    public static Map<String, Map<String, DateTime>> getBeats() {
+    public static Map<Class<?>, Map<String, DateTime>> getBeats() {
         return beats;
     }
 
     public static Map<String, DateTime> getBeats(Class<?> service) {
-        return beats.get(service.getSimpleName());
+        return beats.get(service);
     }
 
     public static DateTime getBeat(Class<?> service, String tag) {
-        return beats.get(service.getSimpleName()).get(tag);
+        return beats.get(service).get(tag);
     }
+
+    // BEAT < < <
+
 
     public static void debug(Class<?> tag, Object... values) {
         log(DEBUG, tag.getSimpleName(), values);
@@ -89,29 +94,22 @@ public class LogEvent {
     }
 
     private static void log(String level, String tag, Object... values) {
-        //todo fix log. message
         try {
-            StringBuilder storeMessage = new StringBuilder();
-            StringBuilder logMessage = new StringBuilder(">>> " + tag + "\n");
+            StringBuilder message = new StringBuilder("! " + tag + ":\n");
             for (Object value : values) {
-                String message;
                 if (value == null) {
-                    message = "null";
+                    message.append("null\n");
+                } else if (value.getClass().isArray()) {
+                    message.append("array\n");
+                } else if (value instanceof Throwable) {
+                    message.append(ObjectUtil.throwableToString((Throwable) value));
                 } else {
-                    if (value.getClass().isArray()) {
-                        message = "array";
-                    } else if (value instanceof Throwable) {
-                        message = ObjectUtil.throwableToString((Throwable) value);
-                    } else {
-                        message = value.toString();
-                        logMessage.append("{}\n");
-                    }
+                    message.append(value).append('\n');
                 }
-                storeMessage.append(message).append("\n");
             }
-
-            log.error(logMessage.toString(), values);
-            CommonRepoMongo.insert(new Log(tag, level, storeMessage.toString()));
+            String m = message.toString();
+            log.error(m);
+            CommonRepoMongo.insert(new Log(tag, level, m));
         } catch (Exception e) {
             log.error("! {} {}", tag, values, e);
         }
@@ -123,11 +121,10 @@ public class LogEvent {
 
     public static List<String> get(String tag) {
         Log log = new Log();
-        log.tag = tag;
         QueryBuilder q = new QueryBuilder(log)
             .sort("id:desc")
             .page(1, MAX_ERROR_FETCH);
-        q.setConditionFromDtoEqualTextMatch();
+        q.condition().equal("tag", tag);
 
         List<String> logs = new ArrayList<>();
         try {
@@ -138,7 +135,6 @@ public class LogEvent {
         } catch (Exception e) {
             // pass
         }
-
         return logs;
     }
 

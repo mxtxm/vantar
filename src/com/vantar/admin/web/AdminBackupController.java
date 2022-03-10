@@ -1,13 +1,13 @@
 package com.vantar.admin.web;
 
 import com.vantar.admin.model.AdminBackup;
-import com.vantar.common.Settings;
 import com.vantar.database.dto.DtoDictionary;
-import com.vantar.exception.FinishException;
+import com.vantar.exception.*;
+import com.vantar.service.Services;
+import com.vantar.service.backup.ServiceBackup;
 import com.vantar.web.*;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServletResponse;
-
 
 @WebServlet({
     "/admin/data/backup/sql",
@@ -23,7 +23,6 @@ import javax.servlet.http.HttpServletResponse;
     "/admin/data/backup/files/elastic",
 
     "/admin/data/backup/download",
-    "/admin/data/backup/delete",
 })
 public class AdminBackupController extends RouteToMethod {
 
@@ -73,10 +72,12 @@ public class AdminBackupController extends RouteToMethod {
 
     public void dataBackupDownload(Params params, HttpServletResponse response) {
         String filename = params.getString("file");
-        Response.download(response, Settings.backup().getBackupDir() + filename, filename + ".zip");
-    }
-
-    public void dataBackupDelete(Params params, HttpServletResponse response) throws FinishException {
-        AdminBackup.deleteFile(params, response);
+        ServiceBackup backup;
+        try {
+            backup = Services.get(ServiceBackup.class);
+        } catch (ServiceException e) {
+            return;
+        }
+        Response.download(response, backup.getPath() + filename, filename + ".zip");
     }
 }
