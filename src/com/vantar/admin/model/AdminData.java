@@ -552,13 +552,13 @@ public class AdminData {
                                         if (dto.getClass().equals(info.dtoClass)) {
                                             break;
                                         }
-                                        PasswordField pf = Json.d.fromJson(params.getString("asjson"), PasswordField.class);
-                                        if (pf == null || StringUtil.isEmpty(pf.password)) {
+                                        String password = params.extractFromJson("password", String.class);
+                                        if (StringUtil.isEmpty(password)) {
                                             break;
                                         }
                                         CommonUserPassword userPassword = (CommonUserPassword) info.getDtoInstance();
                                         userPassword.setId(dto.getId());
-                                        userPassword.setPassword(pf.password);
+                                        userPassword.setPassword(password);
                                         try {
                                             if (MongoSearch.existsById(userPassword)) {
                                                 CommonModelMongo.update(userPassword);
@@ -653,14 +653,14 @@ public class AdminData {
                                         if (dto.getClass().equals(info.dtoClass)) {
                                             break;
                                         }
-                                        PasswordField pf = Json.d.fromJson(params.getString("asjson"), PasswordField.class);
-                                        if (pf == null || StringUtil.isEmpty(pf.password)) {
+                                        String password = params.extractFromJson("password", String.class);
+                                        if (StringUtil.isEmpty(password)) {
                                             break;
                                         }
                                         CommonUserPassword userPassword = (CommonUserPassword) info.getDtoInstance();
                                         CommonModelMongo.insert(userPassword);
                                         userPassword.setId(dto.getId());
-                                        userPassword.setPassword(pf.password);
+                                        userPassword.setPassword(password);
                                         CommonModelMongo.insert(userPassword);
                                         break;
                                     }
@@ -844,19 +844,13 @@ public class AdminData {
         void afterDelete(Dto dto);
     }
 
-
-    private static class PasswordField {
-        public String password;
-    }
-
     private static Event getEvent() {
         String appPackage = Settings.getAppPackage();
-        String adminApp = StringUtil.isEmpty(appPackage) ? null : appPackage + ".business.admin.model.AdminApp";
+        String adminApp = StringUtil.isEmpty(appPackage) ? null : (appPackage + ".business.admin.model.AdminApp");
         if (StringUtil.isNotEmpty(adminApp)) {
             try {
-                Method method = Class.forName(adminApp).getMethod("getAdminDataEvent");
-                return (Event) method.invoke(null);
-            } catch (ClassNotFoundException | NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+                return (Event) ObjectUtil.callStaticMethod(adminApp + ".getAdminDataEvent");
+            } catch (Throwable e) {
                 Admin.log.error("! AdminData '{}.getAdminDataEvent()'", adminApp, e);
             }
         }

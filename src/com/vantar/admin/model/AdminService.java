@@ -8,6 +8,7 @@ import com.vantar.locale.Locale;
 import com.vantar.queue.Queue;
 import com.vantar.service.Services;
 import com.vantar.util.collection.CollectionUtil;
+import com.vantar.util.number.NumberUtil;
 import com.vantar.util.string.StringUtil;
 import com.vantar.web.*;
 import javax.servlet.http.HttpServletResponse;
@@ -258,5 +259,39 @@ public class AdminService {
         });
 
         ui.containerEnd();
+    }
+
+    public static void gc(Params params, HttpServletResponse response) throws FinishException {
+        WebUi ui = Admin.getUi("GC", params, response, true);
+
+        if ("run".equals(params.getString("gc"))) {
+            ui  .addEmptyLine()
+                .addHeading(3, "Before GC")
+                .addKeyValue("Designated memory", NumberUtil.round(Runtime.getRuntime().maxMemory() / (1024D * 1024D), 1) + "MB")
+                .addKeyValue("Allocated memory", NumberUtil.round(Runtime.getRuntime().totalMemory() / (1024D * 1024D), 1) + "MB")
+                .addKeyValue("Free memory", NumberUtil.round(Runtime.getRuntime().freeMemory() / (1024D * 1024D), 1) + "MB")
+                .addKeyValue(
+                    "Used memory",
+                    NumberUtil.round((Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / (1024D * 1024D), 1) + "MB"
+                )
+                .addEmptyLine(3)
+                .addHeading(3, "After GC");
+
+            System.gc();
+        } else {
+            ui  .addHeading(3, Locale.getString(VantarKey.ADMIN_MEMORY));
+        }
+
+        ui  .addKeyValue("Designated memory", NumberUtil.round(Runtime.getRuntime().maxMemory() / (1024D * 1024D), 1) + "MB")
+            .addKeyValue("Allocated memory", NumberUtil.round(Runtime.getRuntime().totalMemory() / (1024D * 1024D), 1) + "MB")
+            .addKeyValue("Free memory", NumberUtil.round(Runtime.getRuntime().freeMemory() / (1024D * 1024D), 1) + "MB")
+            .addKeyValue(
+                "Used memory",
+                NumberUtil.round((Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / (1024D * 1024D), 1) + "MB"
+            )
+            .addEmptyLine()
+            .addBlockLink("GarbageCollect", "?gc=run");
+
+        ui.finish();
     }
 }

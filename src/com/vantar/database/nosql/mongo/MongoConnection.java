@@ -59,9 +59,9 @@ public class MongoConnection {
             database = mongoClient.getDatabase(config.getMongoDatabase());
             database.getCollection(Mongo.Sequence.COLLECTION).countDocuments();
             isUp = true;
-            Mongo.log.info("success connection to mongo");
+            Mongo.log.info(" >> successfully connected to mongo");
         } catch (Exception e) {
-            Mongo.log.error("! FAILED CONNECT TO MONGO (is mongo up?)", e);
+            Mongo.log.error(" !! FAILED TO CONNECT TO MONGO (is mongo up)", e);
             mongoClient.close();
         }
 
@@ -98,7 +98,7 @@ public class MongoConnection {
 
     public static void shutdown() {
         mongoClient.close();
-        Mongo.log.info("closed mongo connection");
+        Mongo.log.info(" >> closed mongo connection");
     }
 
     public static MongoIterable<String> getCollections() throws DatabaseException {

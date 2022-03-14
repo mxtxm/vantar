@@ -5,9 +5,10 @@ import java.util.*;
 
 public class DefaultStringsEn {
 
-    private static final Map<LangKey, String> tokens = new HashMap<>(290);
+    private static final Map<LangKey, String> tokens;
 
     static {
+        tokens = new HashMap<>(290);
         // auth
         tokens.put(VantarKey.USER_PASSWORD_EMPTY, "Username or password is empty");
         tokens.put(VantarKey.USER_NOT_EXISTS, "User does not exists");
@@ -278,6 +279,8 @@ public class DefaultStringsEn {
 
         tokens.put(VantarKey.ADMIN_ACTION_LOG_USER, "User actions");
         tokens.put(VantarKey.ADMIN_ACTION_LOG_REQUEST, "Request/Response logs");
+        tokens.put(VantarKey.ADMIN_MEMORY, "Memory");
+
     }
 
     public static String getString(LangKey key) {

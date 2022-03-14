@@ -202,7 +202,7 @@ public class ServiceUserActionLog implements Services.Service {
             return;
         }
 
-        log.info("> logged {} items ", packets.size());
+        log.info(" >> logged {} items ", packets.size());
         LogEvent.beat(this.getClass(), "insert");
     }
 
@@ -225,7 +225,7 @@ public class ServiceUserActionLog implements Services.Service {
             return;
         }
 
-        log.info("> logged {} items ", packets.size());
+        log.info(" >> logged {} items ", packets.size());
         LogEvent.beat(this.getClass(), "insert");
     }
 

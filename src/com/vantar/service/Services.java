@@ -44,7 +44,7 @@ public class Services {
     public static Service get(String serviceClass) throws ServiceException {
         ServiceInfo service = upServices.get(serviceClass);
         if (service == null) {
-            log.error("! service '{}' not registered", serviceClass);
+            log.error(" !! service '{}' not registered", serviceClass);
             throw new ServiceException(serviceClass);
         }
         return service.instance;
@@ -53,7 +53,7 @@ public class Services {
     public static <T extends Service> T get(Class<T> serviceClass) throws ServiceException {
         ServiceInfo service = upServices.get(serviceClass.getSimpleName());
         if (service == null) {
-            log.error("! service '{}' not registered", serviceClass.getSimpleName());
+            log.error(" !! service '{}' not registered", serviceClass.getSimpleName());
             throw new ServiceException(serviceClass);
         }
         return (T) service.instance;
@@ -82,7 +82,7 @@ public class Services {
                 try {
                     dependencies.add(Class.forName(className));
                 } catch (ClassNotFoundException e) {
-                    log.error("! dependency('{}') not supported", className);
+                    log.error(" !! dependency('{}') not supported", className);
                 }
             }
         }
@@ -107,7 +107,7 @@ public class Services {
                 String className = StringUtil.toStudlyCase(key);
                 Service service = ClassUtil.getInstance(packageName + '.' + className);
                 if (service == null) {
-                    log.error("! service('{}.{}') could not create instance", packageName, className);
+                    log.error(" !! failed to create service instance '{}.{}'", packageName, className);
                     continue;
                 }
 
@@ -205,9 +205,9 @@ public class Services {
             setServiceStarted(className, null, service);
             messaging.broadcast(VantarParam.MESSAGE_SERVICE_STARTED, className);
 
-            log.info(className + " started");
+            log.info(" >> '{}' started", className);
         } catch (Exception e) {
-            log.error("! {} failed to start", className, e);
+            log.error(" !! '{}' failed to start", className, e);
         }
     }
 
@@ -277,10 +277,10 @@ public class Services {
             setServiceStopped(className, null);
             messaging.broadcast(VantarParam.MESSAGE_SERVICE_STOPPED, className);
 
-            log.info(className + " stopped gracefully");
+            log.info(" >> '{}' stopped gracefully", className);
 
         } catch (Exception e) {
-            log.error(className + " failed to stop gracefully", e);
+            log.info(" !! '{}' failed to stopped gracefully", className);
         }
     }
 

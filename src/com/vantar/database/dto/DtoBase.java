@@ -531,7 +531,7 @@ public abstract class DtoBase implements Dto {
                     }
                 } else if (field.isAnnotationPresent(StoreString.class)) {
                     type = String.class;
-                    value = JsonOld.toJson(value);
+                    value = Json.d.toJson(value);
                 } else if (type.isEnum()) {
                     type = String.class;
                     value = ((Enum<?>) value).name();
@@ -699,9 +699,9 @@ public abstract class DtoBase implements Dto {
             return errors;
         }
 
-        Dto dto = JsonOld.fromJson(json, getClass());
+        Dto dto = Json.d.fromJson(json, getClass());
         if (dto != null) {
-            DtoSetConfigs dtoSetConfigs = JsonOld.fromJson(json, DtoSetConfigs.class);
+            DtoSetConfigs dtoSetConfigs = Json.d.fromJson(json, DtoSetConfigs.class);
             if (dtoSetConfigs != null) {
                 setDtoSetConfigs(
                     dtoSetConfigs.__excludeProperties,
@@ -713,8 +713,8 @@ public abstract class DtoBase implements Dto {
             return set(dto);
         }
 
-        log.info("^^^ ignore the above error ^^^");
-        return set(JsonOld.mapFromJson(json, String.class, Object.class), action);
+        log.info(" ^^^ ignore the above error");
+        return set(Json.d.mapFromJson(json, String.class, Object.class), action);
     }
 
     /**

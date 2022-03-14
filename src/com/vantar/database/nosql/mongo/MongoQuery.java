@@ -51,7 +51,7 @@ class MongoQuery {
                 return MongoConnection.getDatabase().getCollection(dto.getStorage()).countDocuments(matches);
             }
         } catch (Exception e) {
-            Mongo.log.error("! count({})", dto, e);
+            Mongo.log.error(" !! count({})", dto, e);
             throw new DatabaseException(e);
         }
     }
@@ -77,7 +77,7 @@ class MongoQuery {
 
             return new MongoQueryResult(find, dtoResult);
         } catch (Exception e) {
-            Mongo.log.error("! query {}", dto.getStorage(), e);
+            Mongo.log.error(" !! query {}", dto.getStorage(), e);
             throw new DatabaseException(e);
         }
     }
@@ -108,7 +108,7 @@ class MongoQuery {
             return new MongoQueryResult(MongoConnection.getDatabase().getCollection(dto.getStorage()).aggregate(query), dtoResult);
 
         } catch (Exception e) {
-            Mongo.log.error("! aggr {}", dto, e);
+            Mongo.log.error(" !! aggr {}", dto, e);
             throw new DatabaseException(e);
         }
     }
@@ -136,7 +136,7 @@ class MongoQuery {
         try {
             return MongoConnection.getDatabase().getCollection(dto.getStorage()).aggregate(query).allowDiskUse(true);
         } catch (Exception e) {
-            Mongo.log.error("! aggr {}", dto, e);
+            Mongo.log.error(" !! aggr {}", dto, e);
             throw new DatabaseException(e);
         }
     }

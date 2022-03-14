@@ -180,15 +180,15 @@ public class ObjectUtil {
                 field.set(obj, new Location(value.toString()));
 
             } else if (type.equals(List.class) || type.equals(ArrayList.class)) {
-                field.set(obj, JsonOld.listFromJson(value.toString(), ClassUtil.getGenericTypes(field)[0]));
+                field.set(obj, Json.d.listFromJson(value.toString(), ClassUtil.getGenericTypes(field)[0]));
 
             } else if (type.equals(Set.class)) {
-                List<?> list = JsonOld.listFromJson(value.toString(), ClassUtil.getGenericTypes(field)[0]);
+                List<?> list = Json.d.listFromJson(value.toString(), ClassUtil.getGenericTypes(field)[0]);
                 field.set(obj, list == null ? null : new HashSet<>(list));
 
             } else if (type.equals(Map.class)) {
                 Class<?>[] types = ClassUtil.getGenericTypes(field);
-                field.set(obj, JsonOld.mapFromJson(value.toString(), types[0], types[1]));
+                field.set(obj, Json.d.mapFromJson(value.toString(), types[0], types[1]));
             } else if (type.isEnum()) {
                 field.set(obj, EnumUtil.getEnumValue(value.toString(), type));
             }
@@ -213,7 +213,7 @@ public class ObjectUtil {
 
         String[] strings;
         if (type.isArray()) {
-            strings = JsonOld.fromJson(JsonOld.toJson(object), String[].class);
+            strings = Json.d.fromJson(Json.d.toJson(object), String[].class);
         } else {
             if (!type.equals(String.class)) {
                 object = object.toString();
@@ -227,7 +227,7 @@ public class ObjectUtil {
             }
 
             if (value.startsWith("[") && value.endsWith("]")) {
-                List<T> list = JsonOld.listFromJson(value, genericType);
+                List<T> list = Json.d.listFromJson(value, genericType);
                 return list == null ? new ArrayList<>() : list;
             }
             strings = StringUtil.split(value, VantarParam.SEPARATOR_COMMON);
@@ -294,7 +294,7 @@ public class ObjectUtil {
     @SuppressWarnings("unchecked")
     public static <K, V> Map<K, V> toMap(Object object, Class<K> k, Class<V> v) {
         if (object instanceof String) {
-            return JsonOld.mapFromJson((String) object, k, v);
+            return Json.d.mapFromJson((String) object, k, v);
         } else if (object instanceof Map) {
             return (Map<K, V>) object;
         }

@@ -13,7 +13,6 @@ public class AdminAdvanced {
 
         // > > >
         ui.beginBox(Locale.getString(VantarKey.ADMIN_BACKUP));
-
         ui  .beginFloatBox("system-box", "SQL")
             .addBlockLink(Locale.getString(VantarKey.ADMIN_BACKUP_CREATE), "/admin/data/backup/sql")
             .addBlockLink(Locale.getString(VantarKey.ADMIN_BACKUP_RESTORE), "/admin/data/restore/sql")
@@ -37,7 +36,6 @@ public class AdminAdvanced {
 
         // > > >
         ui.beginBox(Locale.getString(VantarKey.ADMIN_DATABASE));
-
         ui  .beginFloatBox("system-box", "SQL")
             .addBlockLink(Locale.getString(VantarKey.ADMIN_DATABASE_STATUS), "/admin/data/sql/status")
             .addBlockLink(Locale.getString(VantarKey.ADMIN_DATABASE_CREATE_INDEX), "/admin/database/sql/index/create")
@@ -66,7 +64,6 @@ public class AdminAdvanced {
 
         // > > >
         ui.beginBox(Locale.getString(VantarKey.ADMIN_QUEUE));
-
         ui  .beginFloatBox("system-box", "RabbitMQ")
             .addBlockLink(Locale.getString(VantarKey.ADMIN_DATABASE_STATUS), "/admin/queue/status")
             .addBlockLink(Locale.getString(VantarKey.ADMIN_DATABASE_DELETE_OPTIONAL), "/admin/queue/purge/selective")
@@ -77,18 +74,17 @@ public class AdminAdvanced {
 
         // > > >
         ui.beginBox(Locale.getString(VantarKey.ADMIN_SYSTEM_AND_SERVICES));
-
         ui  .beginFloatBox("system-box", Locale.getString(VantarKey.ADMIN_STARTUP))
             .addBlockLink(Locale.getString(VantarKey.ADMIN_SERVICE_STOP), "/admin/system/services/stop")
             .addBlockLink(Locale.getString(VantarKey.ADMIN_SERVICE_START), "/admin/system/services/start")
             .addBlockLink(Locale.getString(VantarKey.ADMIN_FACTORY_RESET), "/admin/system/factory/reset")
+            .addBlockLink("GC", "/admin/system/gc")
             .containerEnd();
 
         ui.containerEnd();
 
         // > > >
         ui.beginBox(Locale.getString(VantarKey.ADMIN_SETTINGS));
-
         ui  .beginFloatBox("system-box", Locale.getString(VantarKey.ADMIN_SETTINGS))
             .addBlockLink(Locale.getString(VantarKey.ADMIN_SETTINGS_RELOAD), "/admin/system/settings/reload")
             .addBlockLink(Locale.getString(VantarKey.ADMIN_SETTINGS_EDIT_CONFIG), "/admin/system/settings/edit/config")

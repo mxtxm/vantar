@@ -128,12 +128,12 @@ public class Admin {
                 Method method = tClass.getMethod("extendShortcuts", Params.class, Map.class);
                 method.invoke(null, ui.params, shortcuts);
             } catch (ClassNotFoundException | NoSuchMethodException | IllegalAccessException | InvocationTargetException ignore) {
-                log.info("> > > admin dashboard title not set '{}.extendShortcuts()'", adminApp);
+                log.info(" ! admin dashboard title not set '{}.extendShortcuts()'", adminApp);
             }
         }
 
         shortcuts.forEach((cat, items) -> {
-            ui.addHeading(cat);
+            ui.addHeading(3, cat);
             for (String item : items) {
                 if (StringUtil.isEmpty(item)) {
                     ui.addEmptyLine();
@@ -147,6 +147,17 @@ public class Admin {
         ui.addEmptyLine(2);
 
         if (AdminAuth.isRoot(ui)) {
+            ui  .addEmptyLine()
+                .addHeading(3, Locale.getString(VantarKey.ADMIN_MEMORY))
+                .addKeyValue("Designated memory", NumberUtil.round(Runtime.getRuntime().maxMemory() / (1024D * 1024D), 1) + "MB")
+                .addKeyValue("Allocated memory", NumberUtil.round(Runtime.getRuntime().totalMemory() / (1024D * 1024D), 1) + "MB")
+                .addKeyValue("Free memory", NumberUtil.round(Runtime.getRuntime().freeMemory() / (1024D * 1024D), 1) + "MB")
+                .addKeyValue(
+                    "Used memory",
+                    NumberUtil.round((Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / (1024D * 1024D), 1) + "MB"
+                )
+                .addEmptyLine();
+
             synchronized (Services.upServices) {
                 ui  .addEmptyLine()
                     .addHeading(3, Locale.getString(VantarKey.ADMIN_RUNNING_SERVICES))
@@ -162,17 +173,8 @@ public class Admin {
             ui  .addKeyValue("Mongo ", MongoConnection.isUp ? "on" : "off")
                 .addKeyValue("ElasticSearch ", ElasticConnection.isUp ? "on" : "off")
                 .addKeyValue("Sql ", SqlConnection.isUp ? "on" : "off")
-                .addKeyValue("RabbitMQ ", Queue.isUp ? "on" : "off")
+                .addKeyValue("RabbitMQ ", Queue.isUp ? "on" : "off");
 
-                .addEmptyLine()
-
-                .addKeyValue("Designated memory", NumberUtil.round(Runtime.getRuntime().maxMemory() / (1024D * 1024D), 1) + "MB")
-                .addKeyValue("Allocated memory", NumberUtil.round(Runtime.getRuntime().totalMemory() / (1024D * 1024D), 1) + "MB")
-                .addKeyValue("Free memory", NumberUtil.round(Runtime.getRuntime().freeMemory() / (1024D * 1024D), 1) + "MB")
-                .addKeyValue(
-                    "Used memory",
-                    NumberUtil.round((Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / (1024D * 1024D), 1) + "MB"
-                );
         }
 
         ui.addEmptyLine(8).addHeading(3, "Vantar system administration: " + VantarParam.VERSION).finish();

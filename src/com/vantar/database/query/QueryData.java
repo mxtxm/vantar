@@ -346,7 +346,7 @@ public class QueryData {
     }
 
 
-    public class Condition {
+    public static class Condition {
 
         public String operator;
         public List<QueryData.Condition.Item> items;
@@ -360,7 +360,7 @@ public class QueryData {
         }
 
 
-        public class Item {
+        public static class Item {
 
             public String col;
             public String type;
@@ -419,7 +419,7 @@ public class QueryData {
                     try {
                         return new DateTime(value.toString());
                     } catch (DateTimeException e) {
-                        errors.add(new ValidationError(col, VantarKey.INVALID_DATE));
+                        //errors.add(new ValidationError(col, VantarKey.INVALID_DATE));
                     }
                 }
                 return value;

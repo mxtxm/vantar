@@ -151,9 +151,15 @@ public class AdminDocument {
     }
 
     public static void createAllDocuments() {
-        Admin.log.info("> creating documents");
+        Admin.log.info(" >> creating documents");
         AdminDocument.createDtoDocument();
-        Admin.log.info("created dto document");
+        Admin.log.info(" created dto document <<");
+
+        if (!FileUtil.exists(Settings.config.getProperty("documents.dir.release"))) {
+            Admin.log.info(" >> not released all documents");
+            Admin.log.info(" << finished creating documents");
+            return;
+        }
 
         try {
             DirUtil.removeDirectory(Settings.config.getProperty("documents.dir.release"));
@@ -168,11 +174,11 @@ public class AdminDocument {
                 file -> FileUtil.write(file.getAbsolutePath(), AdminDocument.getParsedDocument(file.getAbsolutePath(), false))
             );
         } catch (Exception e) {
-            Admin.log.info("< !!! failed to released all documents");
+            Admin.log.info(" !! failed to released all documents");
             return;
         }
 
-        Admin.log.info("released all documents");
-        Admin.log.info("< finished creating documents");
+        Admin.log.info(" >> released all documents");
+        Admin.log.info(" << finished creating documents");
     }
 }

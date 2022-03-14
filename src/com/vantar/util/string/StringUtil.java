@@ -960,11 +960,63 @@ public class StringUtil {
         return result;
     }
 
+    public static int compare(String sA, String sB) {
+        if (sA == null) {
+            if (sB == null) {
+                return 0;
+            }
+            return -1;
+        }
+        if (sB == null) {
+            return 1;
+        }
+
+        int lenA = sA.length();
+        int lenB = sB.length();
+        for (int i = 0, l = Math.min(lenA, lenB) ; i < l ; ++i) {
+            if (sA.charAt(i) < sB.charAt(i)) {
+                return -1;
+            } else if (sA.charAt(i) > sB.charAt(i)) {
+                return 1;
+            }
+        }
+        return Integer.compare(lenA, lenB);
+    }
+
+    public static int compareCi(String sA, String sB) {
+        if (sA == null) {
+            if (sB == null) {
+                return 0;
+            }
+            return -1;
+        }
+        if (sB == null) {
+            return 1;
+        }
+
+        int lenA = sA.length();
+        int lenB = sB.length();
+        sA = sA.toLowerCase();
+        sB = sB.toLowerCase();
+        for (int i = 0, l = Math.min(lenA, lenB) ; i < l ; ++i) {
+            if (sA.charAt(i) < sB.charAt(i)) {
+                return -1;
+            } else if (sA.charAt(i) > sB.charAt(i)) {
+                return 1;
+            }
+        }
+        return Integer.compare(lenA, lenB);
+    }
+
 
     private static class MinMax {
 
         public int min;
         public int max;
+
+        public MinMax() {
+
+        }
 
         public MinMax(int min, int max) {
             this.min = min;
@@ -974,5 +1026,5 @@ public class StringUtil {
         public boolean inRange(int value) {
             return value >= min && value <= max;
         }
-        }
+    }
 }

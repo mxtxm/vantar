@@ -16,9 +16,13 @@ import java.util.*;
 public class FileType {
 
     private MediaType mediaType;
-    private final TikaInputStream stream;
+    private TikaInputStream stream;
     private String filepath;
 
+
+    public FileType() {
+
+    }
 
     public FileType(String filepath) throws FileNotFoundException {
         this.filepath = filepath;

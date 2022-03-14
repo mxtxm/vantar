@@ -5,9 +5,10 @@ import java.util.*;
 
 public class DefaultStringsFa {
 
-    private static final Map<LangKey, String> tokens = new HashMap<>(290);
+    private static final Map<LangKey, String> tokens;
 
     static {
+        tokens = new HashMap<>(290);
         // auth
         tokens.put(VantarKey.USER_PASSWORD_EMPTY, "نام کاربری و یا رمز عبور خالی است");
         tokens.put(VantarKey.USER_NOT_EXISTS, "کاربر در سیستم وجود ندارد");
@@ -279,6 +280,7 @@ public class DefaultStringsFa {
 
         tokens.put(VantarKey.ADMIN_ACTION_LOG_USER, "لاگ کاربران");
         tokens.put(VantarKey.ADMIN_ACTION_LOG_REQUEST, "لاگ درخواست ها");
+        tokens.put(VantarKey.ADMIN_MEMORY, "حافظه");
     }
 
     public static String getString(LangKey key) {

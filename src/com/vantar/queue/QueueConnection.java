@@ -48,9 +48,9 @@ public class QueueConnection {
             try {
                 connection = factory.newConnection();
                 isUp = true;
-                log.info("> rabbitmq connected");
+                log.info(" >> rabbitmq connected");
             } catch (TimeoutException | IOException e) {
-                log.error("! rabbitmq connect failed", e);
+                log.error(" !! rabbitmq connect failed", e);
                 isUp = false;
                 return null;
             }

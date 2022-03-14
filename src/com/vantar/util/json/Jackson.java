@@ -10,6 +10,7 @@ import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 import com.vantar.database.datatype.Location;
 import com.vantar.exception.DateTimeException;
 import com.vantar.util.datetime.DateTime;
+import com.vantar.util.string.StringUtil;
 import org.slf4j.*;
 import java.io.*;
 import java.util.*;
@@ -70,6 +71,10 @@ public class Jackson {
             mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
         }
 
+        SimpleModule mBoolean = new SimpleModule();
+        mBoolean.addDeserializer(Boolean.class, new BooleanDeserializer());
+        mapper.registerModule(mBoolean);
+
         SimpleModule mDateTime = new SimpleModule();
         mDateTime.addDeserializer(DateTime.class, new DateTimeDeserializer());
         mDateTime.addSerializer(DateTime.class, new DateTimeSerializer());
@@ -78,8 +83,6 @@ public class Jackson {
         SimpleModule mLocation = new SimpleModule();
         mLocation.addDeserializer(Location.class, new LocationDeserializer());
         mLocation.addSerializer(Location.class, new LocationSerializer());
-        mapper.registerModule(mLocation);
-
         mapper.registerModule(mLocation);
     }
 
@@ -333,7 +336,39 @@ public class Jackson {
                 generator.writeNull();
                 return;
             }
-            generator.writeString(location.toString());
+            generator.writeStartObject();
+            if (location.latitude != null) {
+                generator.writeNumberField("latitude", location.latitude);
+            }
+            if (location.longitude != null) {
+                generator.writeNumberField("longitude", location.longitude);
+            }
+            if (location.height != null) {
+                generator.writeNumberField("height", location.height);
+            }
+            if (location.countryCode != null) {
+                generator.writeStringField("countryCode", location.countryCode);
+            }
+            generator.writeEndObject();
         }
     }
+
+    // > > > BOOLEAN
+
+    public static class BooleanDeserializer extends StdDeserializer<Boolean> {
+
+        public BooleanDeserializer() {
+            this(null);
+        }
+
+        public BooleanDeserializer(Class<?> vc) {
+            super(vc);
+        }
+
+        @Override
+        public Boolean deserialize(JsonParser parser, DeserializationContext context) throws IOException {
+            return StringUtil.toBoolean(parser.getValueAsString());
+        }
+    }
+
 }

@@ -57,7 +57,7 @@ public class ServiceAuth extends Permit implements Services.Service {
                 json.toJson(oneTimeTokens) + VantarParam.SEPARATOR_BLOCK_COMPLEX +
                 json.toJson(verifyTokens)
             );
-            log.info("> > > auth-data backed-up");
+            log.info(" >> auth-data backed-up");
         }
         schedule.shutdown();
     }
@@ -133,7 +133,7 @@ public class ServiceAuth extends Permit implements Services.Service {
                 verifyTokens.putAll(x);
             }
         }
-        log.info("> > > auth-data restored");
+        log.info(" >> auth-data restored");
         return this;
     }
 

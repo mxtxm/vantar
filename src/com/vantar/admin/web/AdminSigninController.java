@@ -43,11 +43,11 @@ public class AdminSigninController extends RouteToMethod {
             try {
                 CommonUser user = auth.signin(params);
                 ui.setAuthToken(user.getToken());
-                Admin.log.info("! admin dashboard signed in: {}'", user.getUsername());
+                Admin.log.info(" > admin dashboard signed in: {}'", user.getUsername());
                 ui.redirect("/admin/index");
                 return;
             } catch (AuthException e) {
-                Admin.log.error("! admin dashboard rejected: ", e);
+                Admin.log.info(" ! admin dashboard rejected: ", e);
                 ui.addErrorMessage(e);
             }
         }

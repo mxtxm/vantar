@@ -1,7 +1,6 @@
 package com.vantar.database.nosql.mongo;
 
-import com.google.gson.reflect.TypeToken;
-import com.mongodb.*;
+import com.mongodb.MongoException;
 import com.mongodb.client.*;
 import com.vantar.common.VantarParam;
 import com.vantar.database.common.*;
@@ -14,11 +13,11 @@ import com.vantar.service.Services;
 import com.vantar.service.cache.ServiceDtoCache;
 import com.vantar.util.collection.CollectionUtil;
 import com.vantar.util.datetime.DateTime;
-import com.vantar.util.json.JsonOld;
+import com.vantar.util.json.Json;
 import com.vantar.util.object.*;
-import com.vantar.util.string.*;
+import com.vantar.util.string.StringUtil;
 import org.bson.Document;
-import java.lang.reflect.*;
+import java.lang.reflect.Field;
 import java.util.*;
 
 
@@ -187,7 +186,7 @@ public class MongoQueryResult extends QueryResultBase implements QueryResult, Au
 
                     if (field.isAnnotationPresent(StoreString.class)) {
                         String v = document.getString(key);
-                        field.set(dto, v == null ? null : JsonOld.fromJson(v, TypeToken.get(type).getType()));
+                        field.set(dto, v == null ? null : Json.d.fromJson(v, type));
                         continue;
                     }
 
@@ -261,7 +260,7 @@ public class MongoQueryResult extends QueryResultBase implements QueryResult, Au
                             }
                             field.set(dto, type == Set.class ? new HashSet<>(list) : list);
                         } else {
-                            v = JsonOld.listFromJson(JsonOld.toJson(document.get(key)), listType);
+                            v = Json.d.listFromJson(Json.d.toJson(document.get(key)), listType);
                             field.set(dto, v != null && type == Set.class ? new HashSet<>(v) : v);
                         }
                         continue;

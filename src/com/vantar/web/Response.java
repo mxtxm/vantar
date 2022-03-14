@@ -3,7 +3,7 @@ package com.vantar.web;
 import com.vantar.common.*;
 import com.vantar.service.log.ServiceUserActionLog;
 import com.vantar.util.collection.CollectionUtil;
-import com.vantar.util.json.JsonOld;
+import com.vantar.util.json.*;
 import org.slf4j.*;
 import javax.servlet.*;
 import javax.servlet.http.HttpServletResponse;
@@ -118,11 +118,7 @@ public class Response {
 
     public static void writeJson(HttpServletResponse response, Object data) {
         setJsonHeaders(response);
-        writeGson(response, data);
-    }
-
-    public static void writeGson(HttpServletResponse response, Object data) {
-        String json = JsonOld.toJson(data);
+        String json = Json.d.toJson(data);
         try {
             response.getWriter().append(json);
         } catch (IOException e) {
@@ -181,7 +177,7 @@ public class Response {
         setOriginHeaders(response);
         if (jsonError) {
             response.setContentType("application/json");
-            msg = JsonOld.toJson(ResponseMessage.get(status, msg));
+            msg = Json.d.toJson(ResponseMessage.get(status, msg));
         } else {
             response.setContentType("text/html;charset=UTF-8");
         }

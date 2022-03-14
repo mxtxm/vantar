@@ -6,7 +6,5 @@ import org.slf4j.LoggerFactory;
 
 public class Sms {
 
-    private static final Logger log = LoggerFactory.getLogger(Sms.class);
-
 
 }

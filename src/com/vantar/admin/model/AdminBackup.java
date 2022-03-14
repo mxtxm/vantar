@@ -132,7 +132,7 @@ public class AdminBackup {
             return;
         }
 
-        ui.addPageTitle(dbms.toString() + Locale.getString(VantarKey.ADMIN_BACKUP_FILES));
+        ui.beginBox(dbms.toString() + Locale.getString(VantarKey.ADMIN_BACKUP_FILES));
 
         List<String> paths = params.getStringList("delete");
         if (!CollectionUtil.isEmpty(paths) && params.isChecked(WebUi.PARAM_CONFIRM)) {

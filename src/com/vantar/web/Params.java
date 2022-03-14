@@ -1,6 +1,5 @@
 package com.vantar.web;
 
-import com.google.gson.JsonSyntaxException;
 import com.vantar.common.VantarParam;
 import com.vantar.database.datatype.Location;
 import com.vantar.database.query.QueryData;
@@ -410,8 +409,7 @@ public class Params {
     private <T> List<T> getListFromJson(String value, Class<T> typeClass) {
         try {
             return Json.d.listFromJson(value, typeClass);
-        } catch (JsonSyntaxException e) {
-            log.error("!", e);
+        } catch (Exception e) {
             typeMisMatch = true;
             return new ArrayList<>();
         }
