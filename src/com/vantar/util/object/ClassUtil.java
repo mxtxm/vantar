@@ -1,14 +1,24 @@
 package com.vantar.util.object;
 
+import com.vantar.database.dto.DtoBase;
+import com.vantar.util.collection.CollectionUtil;
 import com.vantar.util.string.StringUtil;
+import org.slf4j.LoggerFactory;
 import java.io.*;
 import java.lang.reflect.*;
 import java.net.URL;
 import java.util.*;
 
-
+/**
+ * Class utilities
+ */
 public class ClassUtil {
 
+    /**
+     * Convert type to class
+     * @param type to convert
+     * @return converted
+     */
     public static Class<?> typeToClass(Type type) {
         if (type instanceof Class<?>) {
             return (Class<?>) type;
@@ -40,10 +50,21 @@ public class ClassUtil {
         return instance == null ? null : instance.getClass();
     }
 
+    /**
+     * Check type equality
+     * @param type1 type to check
+     * @param type2 type to check
+     * @return true if types are the same
+     */
     public static boolean equals(Type type1, Type type2) {
         return typeToClass(type1) == typeToClass(type2);
     }
 
+    /**
+     * Get generic types of a generic field
+     * @param field field to get generics from (if is a generic type)
+     * @return array of generic types (null if field == null or field is not generic)
+     */
     public static Class<?>[] getGenericTypes(Field field) {
         if (field == null) {
             return null;
@@ -51,7 +72,7 @@ public class ClassUtil {
 
         Type t = field.getGenericType();
         if (!(t instanceof ParameterizedType)) {
-            ObjectUtil.log.warn("! field({}) does not have generics.", field.getName());
+            ObjectUtil.log.warn(" ! field({}, {}) does not have generics.", field.getName(), field.getType());
             return null;
         }
 
@@ -63,6 +84,11 @@ public class ClassUtil {
         return classes;
     }
 
+    /**
+     * Get class from class name
+     * @param className package.className
+     * @return class type
+     */
     public static Class<?> getClass(String className) {
         try {
             return Class.forName(className);
@@ -71,59 +97,119 @@ public class ClassUtil {
         }
     }
 
+    /**
+     * Get instance from class name
+     * @param className package.className
+     * @return instance
+     */
     @SuppressWarnings("unchecked")
     public static <T> T getInstance(String className) {
         try {
             return (T) Class.forName(className).getConstructor().newInstance(new Object[] {});
         } catch (ClassNotFoundException | NoSuchMethodException | IllegalAccessException | InvocationTargetException
             | InstantiationException e) {
-
             return null;
         }
     }
 
-    public static <T> T getInstance(Class<T> tClass) {
+    /**
+     * Get instance from class
+     * @param classType the class
+     * @return instance
+     */
+    public static <T> T getInstance(Class<T> classType) {
         try {
-            return (T) tClass.getConstructor().newInstance(new Object[] {});
+            return (T) classType.getConstructor().newInstance(new Object[] {});
         } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException | InstantiationException e) {
             return null;
         }
     }
 
-    public static boolean extendsClass(Class<?> theClass, Class<?> superClass) {
+    /**
+     * Check if a class can be morphed by a class or interface
+     * @param theClass base class
+     * @param superClass super class/interface to check against
+     * @return
+     * true if theClass == superClass
+     * true if theClass extends superClass (recursive)
+     * true if theClass implements superClass (recursive)
+     */
+    public static boolean isInstantiable(Class<?> theClass, Class<?> superClass) {
         if (theClass == superClass) {
             return true;
         }
         return superClass.isAssignableFrom(theClass);
     }
 
-    public static boolean implementsInterface(Class<?> type, Class<?> i) {
-        if (type == i) {
+    /**
+     * Check if a class extends a class
+     * @param theClass base class
+     * @param superClass super class to check against
+     * @return
+     * true if theClass == superClass
+     * true if theClass extends superClass (recursive)
+     * false if theClass implements superClass (recursive)
+     */
+    public static boolean extendsClass(Class<?> theClass, Class<?> superClass) {
+        if (theClass == superClass) {
+            return true;
+        }
+        Class<?> s = theClass.getSuperclass();
+        if (s == null) {
+            return false;
+        }
+        if (s.equals(superClass)) {
+            return true;
+        }
+        return extendsClass(s, superClass);
+    }
+
+    /**
+     * Check if a class implements an interface
+     * @param theClass base class
+     * @param theInterface super class to check against
+     * @return
+     * true if theClass == theInterface
+     * false if theClass extends theInterface (recursive)
+     * true if any superClass of theClass implements theInterface (recursive)
+     * true if theClass implements theInterface (recursive)
+     */
+    public static boolean implementsInterface(Class<?> theClass, Class<?> theInterface) {
+        if (theClass == theInterface) {
             return true;
         }
 
-        for (Class<?> c : type.getInterfaces()) {
-            if (c == i) {
+        for (Class<?> i : theClass.getInterfaces()) {
+            if (i.equals(theInterface)) {
+                return true;
+            }
+            boolean impls = implementsInterface(i, theInterface);
+            if (impls) {
                 return true;
             }
         }
 
-        Class<?> c = type.getSuperclass();
-        while (c != null) {
-            if (c == i) {
-                return true;
-            }
-            for (Class<?> t : c.getInterfaces()) {
-                if (t == i) {
+        Class<?> c = theClass.getSuperclass();
+        if (c != null) {
+            for (Class<?> i : c.getInterfaces()) {
+                if (i.equals(theInterface)) {
+                    return true;
+                }
+                boolean impls = implementsInterface(i, theInterface);
+                if (impls) {
                     return true;
                 }
             }
-            c = c.getSuperclass();
         }
 
         return false;
     }
 
+    /**
+     * Get a list of classes that are in a package
+     * @param packageName package name
+     * @return list of classes
+     */
     public static List<Class<?>> getClasses(String packageName) {
         ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
         if (classLoader == null) {
@@ -134,7 +220,7 @@ public class ClassUtil {
         try {
             resources = classLoader.getResources(packageName.replace('.', '/'));
         } catch (IOException e) {
-            ObjectUtil.log.error("! package({})", packageName, e);
+            ObjectUtil.log.error(" !! package({})\n", packageName, e);
             return new ArrayList<>();
         }
 
@@ -171,7 +257,7 @@ public class ClassUtil {
                 try {
                     classes.add(Class.forName(packageName + '.' + file.getName().substring(0, file.getName().length() - 6)));
                 } catch (ClassNotFoundException e) {
-                    ObjectUtil.log.error("! package({}) class not found", packageName, e);
+                    ObjectUtil.log.error(" !! package({}) class not found\n", packageName, e);
                 }
             }
         }
@@ -179,9 +265,14 @@ public class ClassUtil {
         return classes;
     }
 
-    public static int sizeOfStatic(Class<?> tClass) {
+    /**
+     * Get memory size of a class static data
+     * @param theClass the class
+     * @return bytes
+     */
+    public static int sizeOfStatic(Class<?> theClass) {
         int size = 0;
-        for (Field field : tClass.getDeclaredFields()) {
+        for (Field field : theClass.getDeclaredFields()) {
             if (!Modifier.isStatic(field.getModifiers())) {
                 continue;
             }
@@ -192,5 +283,83 @@ public class ClassUtil {
             }
         }
         return size;
+    }
+
+    /**
+     * Get class by class name (search in all packages)
+     * @param className the class name
+     * @return the class or null if not found
+     */
+    public static Class<?> getClassFromPackage(String className) {
+        return getClassFromPackage(className, null);
+    }
+
+    /**
+     * Get class by class name and part of package name
+     * @param className the class name
+     * @param packageNameStartsWith part of package name
+     * @return the class or null if not found
+     */
+    public static Class<?> getClassFromPackage(String className, String packageNameStartsWith) {
+        Package[] ps = Package.getPackages();
+        for (Package p : ps) {
+            String pName = p.getName();
+            if (packageNameStartsWith != null && !pName.startsWith(packageNameStartsWith)) {
+                continue;
+            }
+            Class<?> c = ClassUtil.getClass(pName + "." + className);
+            if (c != null) {
+                return c;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Call static method on a class
+     * @param packageClassMethod package.name.ClassName.methodName
+     * @param params method params
+     * @return method return value
+     * @throws Throwable
+     */
+    public static Object callStaticMethod(String packageClassMethod, Object... params) throws Throwable {
+        String[] parts = StringUtil.split(packageClassMethod, '.');
+        Class<?>[] types = new Class[params.length];
+        for (int i = 0, paramsLength = params.length; i < paramsLength; i++) {
+            types[i] = params[i].getClass();
+        }
+        try {
+            Class<?> tClass = Class.forName(CollectionUtil.join(parts, '.', parts.length - 1));
+            Method method = tClass.getMethod(parts[parts.length - 1], types);
+            return method.invoke(null, params);
+        } catch (ClassNotFoundException | NoSuchMethodException | IllegalAccessException e) {
+            ObjectUtil.log.error(" !! {}\n", packageClassMethod, e);
+            return null;
+        } catch (InvocationTargetException e) {
+            throw e.getCause();
+        }
+    }
+
+    /**
+     * Call static method on a class
+     * @param theClass the class
+     * @param params method params
+     * @return method return value
+     * @throws Throwable
+     */
+    public static Object callStaticMethod(Class<?> theClass, String methodName, Object... params) throws Throwable {
+        Class<?>[] types = new Class[params.length];
+        for (int i = 0, paramsLength = params.length; i < paramsLength; i++) {
+            types[i] = params[i].getClass();
+        }
+        try {
+            Method method = theClass.getMethod(methodName, types);
+            return method.invoke(null, params);
+        } catch (NoSuchMethodException | IllegalAccessException e) {
+            ObjectUtil.log.error(" !! {}.{}\n", theClass.getSimpleName(), methodName, e);
+            return null;
+        } catch (InvocationTargetException e) {
+            throw e.getCause();
+        }
     }
 }

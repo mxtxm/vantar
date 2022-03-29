@@ -180,12 +180,7 @@ public class ServiceScheduler implements Services.Service {
                 method.invoke(null);
                 LogEvent.beat(this.getClass(), "run:" + classNameMethodName);
             } catch (Exception e) {
-                log.error(
-                    "! runnable error (class={}, static-method={})",
-                    CollectionUtil.join(cm, '.', cm.length-1),
-                    cm[cm.length-1],
-                    e
-                );
+                log.error(" !! runnable failed ({})\n", classNameMethodName, e);
             }
         };
     }

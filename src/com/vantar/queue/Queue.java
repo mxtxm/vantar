@@ -43,7 +43,7 @@ public class Queue {
                 log.info(" >> rabbitmq deleted '{}'", queueName);
                 return true;
             } catch (AlreadyClosedException | IOException e) {
-                log.error(" !! rabbitmq delete failed {} times. queue({})", MAX_TRIES-i, queueName, e);
+                log.error(" !! rabbitmq delete failed {} times. queue({})\n", MAX_TRIES-i, queueName, e);
             } finally {
                 connection.putBack(queueName, channel);
             }
@@ -70,7 +70,7 @@ public class Queue {
                 log.info(" >> rabbitmq emptied '{}'", queueName);
                 return true;
             } catch (AlreadyClosedException | IOException e) {
-                log.error(" !! rabbitmq empty failed {} times. queue({})", MAX_TRIES-i, queueName, e);
+                log.error(" !! rabbitmq empty failed {} times. queue({})\n", MAX_TRIES-i, queueName, e);
             } finally {
                 connection.putBack(queueName, channel);
             }
@@ -109,7 +109,7 @@ public class Queue {
                 channel.basicPublish("", queueName, null, packet.getString().getBytes());
                 return;
             } catch (AlreadyClosedException | IOException e) {
-                log.error(" !! rabbitmq add failed {} times. queue({}, {})", MAX_TRIES-i, queueName, workerId, e);
+                log.error(" !! rabbitmq add failed {} times. queue({}, {})\n", MAX_TRIES-i, queueName, workerId, e);
             } finally {
                 connection.putBack(queueName, channel);
             }
@@ -140,7 +140,7 @@ public class Queue {
                     }
                 }
             } catch (AlreadyClosedException | IOException e) {
-                log.error(" !! rabbitmq takeAll failed. queue({}, {})", MAX_TRIES-i, queueName, e);
+                log.error(" !! rabbitmq takeAll failed. queue({}, {})\n", MAX_TRIES-i, queueName, e);
             } finally {
                 connection.putBack(queueName, channel);
             }
@@ -167,7 +167,7 @@ public class Queue {
             }
             log.error(" !! invalid packet queue({})", queueName);
         } catch (AlreadyClosedException | IOException e) {
-            log.error(" !! rabbitmq get failed. queue({})", queueName, e);
+            log.error(" !! rabbitmq get failed. queue({})\n", queueName, e);
         } finally {
             connection.putBack(queueName, channel);
         }
@@ -199,7 +199,7 @@ public class Queue {
                 reachedEmptyCallback.reached();
                 return;
             } catch (AlreadyClosedException | IOException e) {
-                log.error(" !! rabbitmq takeUntilEmpty failed. queue({}, {})", MAX_TRIES-i, queueName, e);
+                log.error(" !! rabbitmq takeUntilEmpty failed. queue({}, {})\n", MAX_TRIES-i, queueName, e);
             } finally {
                 connection.putBack(queueName, channel);
             }
@@ -242,7 +242,7 @@ public class Queue {
                                     channel.basicReject(envelope.getDeliveryTag(), true);
                                 }
                             } catch (AlreadyClosedException | IOException e) {
-                                log.error(" !! rabbitmq take ack failed. queue({}, {})", queueName, takerId, e);
+                                log.error(" !! rabbitmq take ack failed. queue({}, {})\n", queueName, takerId, e);
                             }
                         }
 
@@ -261,7 +261,7 @@ public class Queue {
                 channels.put(tag, channel);
                 return tag;
             } catch (AlreadyClosedException | IOException e) {
-                log.error(" !! rabbitmq take failed. queue({}, {}, {})", MAX_TRIES-i, queueName, takerId, e);
+                log.error(" !! rabbitmq take failed. queue({}, {}, {})\n", MAX_TRIES-i, queueName, takerId, e);
             }
         }
         return null;
@@ -284,7 +284,7 @@ public class Queue {
                 channel.basicPublish(exchangeName, "", null, packet.getString().getBytes(StandardCharsets.UTF_8));
                 return;
             } catch (AlreadyClosedException | IOException e) {
-                log.error(" !! rabbitmq emmit failed. exchange({}, {}, {})", MAX_TRIES-i, exchangeName, workerId, e);
+                log.error(" !! rabbitmq emmit failed. exchange({}, {}, {})\n", MAX_TRIES-i, exchangeName, workerId, e);
             } finally {
                 connection.putBack(exchangeName, channel);
             }
@@ -334,7 +334,7 @@ public class Queue {
                 channels.put(tag, channel);
                 return tag;
             } catch (AlreadyClosedException | IOException e) {
-                log.error(" !! rabbitmq receive failed. exchange({}, {}, {})", MAX_TRIES-i, exchangeName, takerId, e);
+                log.error(" !! rabbitmq receive failed. exchange({}, {}, {})\n", MAX_TRIES-i, exchangeName, takerId, e);
             }
         }
         return null;
@@ -346,17 +346,17 @@ public class Queue {
             try {
                 channel.basicCancel(workerTag);
             } catch (IOException e) {
-                log.error(" !! rabbitmq channel basicCancel abort failed", e);
+                log.error(" !! rabbitmq channel basicCancel abort failed\n", e);
             }
             try {
                 channel.abort();
             } catch (IOException e) {
-                log.error(" !! rabbitmq channel abort failed", e);
+                log.error(" !! rabbitmq channel abort failed\n", e);
             }
             try {
                 channel.close();
             } catch (IOException | TimeoutException e) {
-                log.error(" !! rabbitmq channel close failed", e);
+                log.error(" !! rabbitmq channel close failed\n", e);
             }
             channels.remove(workerTag);
         }

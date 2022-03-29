@@ -84,7 +84,7 @@ public class Packet {
         try {
             return (T) Json.d.fromJson(data, getClassType());
         } catch (NullPointerException e) {
-            log.error("! class={}", tClass, e);
+            log.error(" ! get object failed '{}'\n", tClass, e);
             return null;
         }
     }

@@ -51,7 +51,7 @@ public class ServiceMessaging {
 
         LogEvent.beat(ServiceMessaging.class, "broadcast");
         Queue.emmit(QUEUE_NAME_MESSAGE, new Packet(new Message(message), type));
-        log.debug("> broadcasted({}, {})", type, message);
+        log.debug(" > broadcasted({}, {})", type, message);
     }
 
     private void receive() {
@@ -96,7 +96,7 @@ public class ServiceMessaging {
                         try {
                             Services.setServiceStarted(message.getString(), message.serverId, null);
                         } catch (Exception e) {
-                            log.error("! MESSAGE_SERVICE_STARTED ({})", message);
+                            log.error(" !! MESSAGE_SERVICE_STARTED ({})\n", message, e);
                         }
                         break;
 
@@ -104,7 +104,7 @@ public class ServiceMessaging {
                         try {
                             Services.setServiceStopped(message.getString(), message.serverId);
                         } catch (Exception e) {
-                            log.error("! MESSAGE_SERVICE_STOPPED ({})", message);
+                            log.error(" !! MESSAGE_SERVICE_STOPPED ({})\n", message, e);
                         }
                         break;
 
@@ -129,7 +129,7 @@ public class ServiceMessaging {
                             try {
                                 Services.get(ServiceDtoCache.class).update(message.getString());
                             } catch (ServiceException e) {
-                                log.error("! cache not updated", e);
+                                log.error(" !! failed to update cache\n", e);
                             }
                         }
                         break;

@@ -105,7 +105,7 @@ public class Params {
             try {
                 return InetAddress.getLocalHost().getHostAddress();
             } catch (UnknownHostException e) {
-                log.error("getIp failed", e);
+                log.error(" !! getIp failed\n", e);
             }
         }
         return ip;
@@ -499,7 +499,7 @@ public class Params {
                 buffer.append(line);
             }
         } catch (Exception e) {
-            log.error("!", e);
+            log.error(" !! JSON input\n", e);
             return "";
         }
 
@@ -686,7 +686,7 @@ public class Params {
             uploadFiles.add(upload.getOriginalFilename());
             return upload;
         } catch (IOException | ServletException e) {
-            log.warn("! IO ERROR / is request multi-part?");
+            log.warn(" ! ({}) multi-part?\n", name, e);
             return new Uploaded(VantarKey.IO_ERROR);
         }
     }
@@ -782,8 +782,8 @@ public class Params {
             try {
                 Files.copy(filePart.getInputStream(), p);
                 return true;
-            } catch (IOException e) {
-                log.error("!", e);
+            } catch (Exception e) {
+                log.error(" !! upload inputStream > ({}/{})\n", path, filename, e);
                 error = VantarKey.IO_ERROR;
                 return false;
             }
@@ -796,7 +796,7 @@ public class Params {
         public void close() {
             try {
                 filePart.getInputStream().close();
-            } catch (IOException ignore) {
+            } catch (Exception ignore) {
 
             }
         }

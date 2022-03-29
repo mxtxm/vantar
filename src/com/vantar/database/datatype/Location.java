@@ -3,6 +3,7 @@ package com.vantar.database.datatype;
 import com.vantar.util.json.*;
 import com.vantar.util.number.NumberUtil;
 import com.vantar.util.string.StringUtil;
+import java.util.Map;
 
 
 public class Location {
@@ -78,6 +79,22 @@ public class Location {
                 countryCode = parts[2];
             }
         }
+    }
+
+    public Location(Map<String, Object> map) {
+        Double lat = NumberUtil.toDouble(map.get("latitude"));
+        Double lng = NumberUtil.toDouble(map.get("longitude"));
+        if (lat == null || lng == null) {
+            return;
+        }
+        latitude = lat;
+        longitude = lng;
+        height = NumberUtil.toDouble(map.get("height"));
+        Object cc = map.get("countryCode");
+        if (cc == null) {
+            return;
+        }
+        countryCode = cc.toString();
     }
 
     public void round(int decimals) {

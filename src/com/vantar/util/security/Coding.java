@@ -28,7 +28,7 @@ public class Coding {
             byte[] salt = SecureRandom.getInstance("SHA1PRNG").generateSeed(saltLen);
             return Base64.encodeBase64String(salt) + "$" + hash(password, salt);
         } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
-            log.error("! password({})", password, e);
+            log.error(" !! password({})\n", password, e);
             return null;
         }
     }
@@ -45,7 +45,7 @@ public class Coding {
         try {
             return hash(password, Base64.decodeBase64(saltAndHash[0])).equals(saltAndHash[1]);
         } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
-            log.error("! equals({}, {})", password, stored, e);
+            log.error(" !! equals({}, {})\n", password, stored, e);
             return false;
         }
     }
@@ -62,7 +62,7 @@ public class Coding {
             }
             return hashtext.toString();
         } catch (NoSuchAlgorithmException e) {
-            log.error("! md5({})", text, e);
+            log.error(" !! md5 failed ({})\n", text, e);
             return "";
         }
     }

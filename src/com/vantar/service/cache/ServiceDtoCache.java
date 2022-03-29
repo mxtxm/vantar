@@ -135,7 +135,7 @@ public class ServiceDtoCache implements Services.Service {
             } catch (NoContentException ignore) {
 
             } catch (Exception e) {
-                log.error("! dto cache failed {}", dto.getClass().getSimpleName(), e);
+                log.error(" !! dto cache failed ({})\n", dto.getClass().getSimpleName(), e);
             }
         } else if (info.dtoClass.isAnnotationPresent(Sql.class)) {
             try (SqlConnection connection = new SqlConnection()) {
@@ -144,7 +144,7 @@ public class ServiceDtoCache implements Services.Service {
             } catch (NoContentException ignore) {
 
             } catch (Exception e) {
-                log.error("! dto cache failed {}", dto.getClass().getSimpleName(), e);
+                log.error(" !! dto cache failed ({})\n", dto.getClass().getSimpleName(), e);
             }
         } else if (info.dtoClass.isAnnotationPresent(Elastic.class)) {
             try {
@@ -152,7 +152,7 @@ public class ServiceDtoCache implements Services.Service {
             } catch (NoContentException ignore) {
 
             } catch (Exception e) {
-                log.error("! dto cache failed {}", dto.getClass().getSimpleName(), e);
+                log.error(" !! dto cache failed ({})\n", dto.getClass().getSimpleName(), e);
             }
         } else {
             return;

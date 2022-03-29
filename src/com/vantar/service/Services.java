@@ -193,7 +193,7 @@ public class Services {
                 field.set(object, new DateTime(value));
             }
         } catch (NoSuchFieldException | IllegalAccessException | IllegalArgumentException | DateTimeException e) {
-            log.error("! set({}: {} < {})", object.getClass().getSimpleName(), name.trim(), value, e);
+            log.error(" !! setFieldValue({}: {} < {})\n", object.getClass().getSimpleName(), name.trim(), value, e);
         }
     }
 
@@ -207,7 +207,7 @@ public class Services {
 
             log.info(" >> '{}' started", className);
         } catch (Exception e) {
-            log.error(" !! '{}' failed to start", className, e);
+            log.error(" !! '{}' failed to start\n", className, e);
         }
     }
 
@@ -278,9 +278,8 @@ public class Services {
             messaging.broadcast(VantarParam.MESSAGE_SERVICE_STOPPED, className);
 
             log.info(" >> '{}' stopped gracefully", className);
-
         } catch (Exception e) {
-            log.info(" !! '{}' failed to stopped gracefully", className);
+            log.info(" !! '{}' failed to stopped gracefully\n", className, e);
         }
     }
 

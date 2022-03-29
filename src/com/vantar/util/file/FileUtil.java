@@ -70,15 +70,15 @@ public class FileUtil {
         } catch (NoSuchFileException ignore) {
 
         } catch (IOException e) {
-            log.error("! {}", path, e);
+            log.error(" !! {}\n", path, e);
         }
         return false;
     }
 
     public static String getFileContentFromClassPath(String... paths) {
-        for (String filepath : paths) {
+        for (String path : paths) {
             try {
-                URL url = FileUtil.class.getResource(filepath);
+                URL url = FileUtil.class.getResource(path);
                 if (url == null) {
                     continue;
                 }
@@ -87,7 +87,7 @@ public class FileUtil {
                     return value;
                 }
             } catch (IOException | URISyntaxException | NullPointerException e) {
-                log.error("! {}", filepath, e);
+                log.error(" !! {}", path, e);
             }
         }
         return "";
@@ -109,7 +109,7 @@ public class FileUtil {
         try {
             return new String(Files.readAllBytes(Paths.get(path)), StandardCharsets.UTF_8);
         } catch (IOException e) {
-            log.error("! {}", path, e);
+            log.error(" !! {}", path, e);
         }
         return "";
     }
@@ -129,7 +129,7 @@ public class FileUtil {
             Files.write(filePath, content.getBytes(charset));
             return true;
         } catch (IOException e) {
-            log.error("! replace({} > {})", filePath, tokens, e);
+            log.error(" !! replace({} > {})\n", filePath, tokens, e);
         }
         return false;
     }
@@ -139,7 +139,7 @@ public class FileUtil {
             Files.write(Paths.get(path), content.getBytes());
             return true;
         } catch (IOException e) {
-            log.error("! {}", path, e);
+            log.error(" !! {}", path, e);
             return false;
         }
     }
@@ -167,7 +167,7 @@ public class FileUtil {
             writer.close();
 
         } catch (FileNotFoundException | UnsupportedEncodingException e) {
-            log.error("! config({} < {})", filename, properties, e);
+            log.error(" !! config({} < {})\n", filename, properties, e);
             return false;
         }
 
@@ -197,17 +197,17 @@ public class FileUtil {
                                 zip.write(bytes, 0, bytes.length);
                                 zip.closeEntry();
                             } catch (IOException e) {
-                                log.error("! ziping({} > {})", dir, zipPath, e);
+                                log.error(" !! ziping ({} > {})\n", dir, zipPath, e);
                             }
                         }
                     } catch (IOException e) {
-                        log.error("! ziping({} > {})", dir, zipPath, e);
+                        log.error(" !! ziping ({} > {})\n", dir, zipPath, e);
                     }
                     return FileVisitResult.CONTINUE;
                 }
             });
         } catch (IOException e) {
-            log.error("! ziping({} > {})", dir, zipPath, e);
+            log.error(" !! ziping ({} > {})\n", dir, zipPath, e);
             return false;
         }
         return true;
@@ -246,7 +246,7 @@ public class FileUtil {
             }
             return true;
         } catch (Exception e) {
-            log.error("! ({} > {})", zipPath, dir, e);
+            log.error(" !! unzip ({} > {})\n", zipPath, dir, e);
             return false;
         }
     }
@@ -325,7 +325,7 @@ public class FileUtil {
                 Files.createDirectories(Paths.get(path));
                 return true;
             } catch (IOException e) {
-                log.error("! {}", path, e);
+                log.error(" !! {}", path, e);
                 return false;
             }
         }
@@ -346,7 +346,7 @@ public class FileUtil {
             Files.setPosixFilePermissions(Paths.get(path), fullPermission);
             return true;
         } catch (IOException e) {
-            log.error("! {}", path, e);
+            log.error(" !! {}", path, e);
             return false;
         }
     }
@@ -375,7 +375,7 @@ public class FileUtil {
         } catch (NoSuchFileException ignore) {
 
         } catch (IOException e) {
-            log.error("! {}", path, e);
+            log.error(" !! {}", path, e);
         }
         return false;
     }
@@ -402,7 +402,7 @@ public class FileUtil {
                 Files.setPosixFilePermissions(Paths.get(file), fullPermission);
             }
         } catch (IOException e) {
-            log.error("! {}", path, e);
+            log.error(" !! {}", path, e);
         }
     }
 

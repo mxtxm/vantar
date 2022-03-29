@@ -92,7 +92,7 @@ public class CommonModelMongo extends CommonModel {
                 throw new InputException(errors);
             }
         } catch (DatabaseException e) {
-            log.error("! {}", dto, e);
+            log.error(" !! {} : {}\n", dto.getClass().getSimpleName(), dto, e);
             throw new ServerException(VantarKey.INSERT_FAIL);
         }
 
@@ -104,7 +104,7 @@ public class CommonModelMongo extends CommonModel {
         try {
             dto = CommonRepoMongo.getById(dto);
         } catch (DatabaseException e) {
-            log.error("! {}", dto, e);
+            log.error(" !! {} : {}\n", dto.getClass().getSimpleName(), dto, e);
         } catch (NoContentException e) {
             throw new ServerException(VantarKey.INSERT_FAIL);
         }
@@ -148,7 +148,7 @@ public class CommonModelMongo extends CommonModel {
                 throw new InputException(errors);
             }
         } catch (DatabaseException e) {
-            log.error("! {}", dto, e);
+            log.error(" !! {} : {}\n", dto.getClass().getSimpleName(), dto, e);
             throw new ServerException(VantarKey.INSERT_FAIL);
         }
 
@@ -160,7 +160,7 @@ public class CommonModelMongo extends CommonModel {
         try {
             dto = CommonRepoMongo.getById(dto);
         } catch (DatabaseException e) {
-            log.error("! {}", dto, e);
+            log.error(" !! {} : {}\n", dto.getClass().getSimpleName(), dto, e);
         } catch (NoContentException e) {
             throw new ServerException(VantarKey.INSERT_FAIL);
         }
@@ -238,7 +238,7 @@ public class CommonModelMongo extends CommonModel {
             }
             Mongo.update(dto);
         } catch (DatabaseException e) {
-            log.error("! {}", dto, e);
+            log.error(" !! {} : {}\n", dto.getClass().getSimpleName(), dto, e);
             throw new ServerException(VantarKey.UPDATE_FAIL);
         }
 
@@ -250,7 +250,7 @@ public class CommonModelMongo extends CommonModel {
         try {
             dto = CommonRepoMongo.getById(dto);
         } catch (DatabaseException e) {
-            log.error("! {}", dto, e);
+            log.error(" !! {} : {}\n", dto.getClass().getSimpleName(), dto, e);
         } catch (NoContentException e) {
             throw new ServerException(VantarKey.UPDATE_FAIL);
         }
@@ -323,7 +323,7 @@ public class CommonModelMongo extends CommonModel {
                 Mongo.update(q);
             }
         } catch (DatabaseException e) {
-            log.error("! {}", dto, e);
+            log.error(" !! {} : {}\n", dto.getClass().getSimpleName(), dto, e);
             throw new ServerException(VantarKey.UPDATE_FAIL);
         }
 
@@ -335,7 +335,7 @@ public class CommonModelMongo extends CommonModel {
         try {
             dto = CommonRepoMongo.getById(dto);
         } catch (DatabaseException e) {
-            log.error("! {}", dto, e);
+            log.error(" !! {} : {}\n", dto.getClass().getSimpleName(), dto, e);
         } catch (NoContentException e) {
             throw new ServerException(VantarKey.UPDATE_FAIL);
         }
@@ -388,7 +388,7 @@ public class CommonModelMongo extends CommonModel {
 
             return r;
         } catch (DatabaseException e) {
-            log.error("! {}", e.getMessage());
+            log.error(" !! {} : {}\n", dto.getClass().getSimpleName(), dto, e);
             throw new ServerException(VantarKey.DELETE_FAIL);
         }
     }
@@ -447,7 +447,7 @@ public class CommonModelMongo extends CommonModel {
 
             return r;
         } catch (DatabaseException e) {
-            log.error("! {}", e.getMessage());
+            log.error(" !! {} : {}\n", dto.getClass().getSimpleName(), dto, e);
             throw new ServerException(VantarKey.DELETE_FAIL);
         }
     }
@@ -501,7 +501,7 @@ public class CommonModelMongo extends CommonModel {
                 afterDataChange(dto);
             }
         } catch (DatabaseException e) {
-            log.error("! {}", e.getMessage());
+            log.error(" !! {} : {}\n", dto.getClass().getSimpleName(), dto, e);
             throw new ServerException(VantarKey.DELETE_FAIL);
         }
 
@@ -552,7 +552,7 @@ public class CommonModelMongo extends CommonModel {
             }
 
         } catch (DatabaseException e) {
-            log.error("! {}", e.getMessage());
+            log.error(" !! {} : {}\n", dto.getClass().getSimpleName(), dto, e);
             throw new ServerException(VantarKey.UPDATE_FAIL);
         }
 
@@ -577,7 +577,7 @@ public class CommonModelMongo extends CommonModel {
             ServiceUserActionLog.add(Dto.Action.PURGE, dto);
             return ResponseMessage.success(VantarKey.DELETE_SUCCESS);
         } catch (DatabaseException e) {
-            log.error("! {}", e.getMessage());
+            log.error(" !! {} : {}\n", dto.getClass().getSimpleName(), dto, e);
             throw new ServerException(VantarKey.DELETE_FAIL);
         }
     }
@@ -600,7 +600,7 @@ public class CommonModelMongo extends CommonModel {
                 CommonRepoMongo.purge(dto.getStorage());
             } catch (DatabaseException e) {
                 ui.addErrorMessage(e);
-                log.error("! batch import failed", e);
+                log.error(" !! {} : {} > {}\n", dto.getClass().getSimpleName(), dto, data, e);
                 return;
             }
             ui.addPre(Locale.getString(VantarKey.DELETE_SUCCESS)).write();
@@ -735,7 +735,7 @@ public class CommonModelMongo extends CommonModel {
             }
             return result.first();
         } catch (DatabaseException e) {
-            log.error("! {}>{}", dto.getClass().getSimpleName(), dto, e);
+            log.error(" !! {} : {}\n", dto.getClass().getSimpleName(), dto, e);
             throw new ServerException(VantarKey.FETCH_FAIL);
         }
     }
@@ -754,7 +754,7 @@ public class CommonModelMongo extends CommonModel {
         try {
             return CommonRepoMongo.getById(dto);
         } catch (DatabaseException e) {
-            log.error("! {}>{}", dto.getClass().getSimpleName(), dto, e);
+            log.error(" !! {} : {}\n", dto.getClass().getSimpleName(), dto, e);
             throw new ServerException(VantarKey.FETCH_FAIL);
         }
     }
@@ -803,7 +803,7 @@ public class CommonModelMongo extends CommonModel {
             try {
                 localizedDto = localizedDtoClass.getConstructor().newInstance();
             } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
-                log.warn("! ({}, {}) < {}", dto, localizedDtoClass, d, e);
+                log.warn(" ! ({}, {}) < {}\n", dto, localizedDtoClass, d, e);
                 continue;
             }
             localizedDto.set(d, lang);

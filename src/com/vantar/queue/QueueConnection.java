@@ -50,7 +50,7 @@ public class QueueConnection {
                 isUp = true;
                 log.info(" >> rabbitmq connected");
             } catch (TimeoutException | IOException e) {
-                log.error(" !! rabbitmq connect failed", e);
+                log.error(" !! rabbitmq connect failed\n", e);
                 isUp = false;
                 return null;
             }
@@ -89,10 +89,10 @@ public class QueueConnection {
                 return null;
             }
             channel.queueDeclare(queueName, false, false, false, null);
-            log.debug("> rabbitmq created channel to '{}'", queueName);
+            log.debug(" > rabbitmq created channel to '{}'", queueName);
             return channel;
         } catch (IOException e) {
-            log.error("! rabbitmq channel to '{}' failed\n", queueName, e);
+            log.error(" !! rabbitmq channel to '{}' failed\n", queueName, e);
             return null;
         }
     }
@@ -135,9 +135,9 @@ public class QueueConnection {
             removeChannels();
             connection.close();
             isUp = false;
-            log.error("> rabbitmq is shutdown");
+            log.error(" > rabbitmq is shutdown");
         } catch (AlreadyClosedException | IOException e) {
-            log.error("! rabbitmq failed to shutdown", e);
+            log.error(" !! rabbitmq failed to shutdown\n", e);
         }
     }
 

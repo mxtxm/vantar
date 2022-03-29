@@ -9,6 +9,7 @@ import com.vantar.util.collection.CollectionUtil;
 import com.vantar.util.datetime.DateTime;
 import com.vantar.util.number.NumberUtil;
 import com.vantar.util.object.ObjectUtil;
+import com.vantar.util.string.StringUtil;
 import org.slf4j.*;
 import java.util.*;
 
@@ -476,7 +477,7 @@ public class QueryData {
             public Character[] getValuesAsCharacter() {
                 Character[] items = new Character[values.length];
                 for (int i = 0; i < values.length; i++) {
-                    items[i] = ObjectUtil.toCharacter(values[i].toString());
+                    items[i] = StringUtil.toCharacter(values[i].toString());
                 }
                 return items;
             }

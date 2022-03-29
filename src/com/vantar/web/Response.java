@@ -59,7 +59,7 @@ public class Response {
         try {
             response.sendRedirect(url);
         } catch (IOException e) {
-            log.error("! redirect failed ({})", url, e);
+            log.error(" !! redirect failed ({})\n", url, e);
             return;
         }
         if (logResponse) {
@@ -95,7 +95,7 @@ public class Response {
                 out.write(buffer, 0, length);
             }
         } catch (IOException e) {
-            log.error("! download failed ({}, {})", filepath, filename, e);
+            log.error(" !! download failed ({}, {})\n", filepath, filename, e);
         }
 
         if (logResponse) {
@@ -108,7 +108,7 @@ public class Response {
         try {
             response.getWriter().append(data);
         } catch (IOException e) {
-            log.error("! write json failed ({})", data, e);
+            log.error(" !! write json failed ({})\n", data, e);
             return;
         }
         if (logResponse) {
@@ -122,7 +122,7 @@ public class Response {
         try {
             response.getWriter().append(json);
         } catch (IOException e) {
-            log.error("! write json failed ({})", data, e);
+            log.error(" ! write json failed ({})\n", data, e);
             return;
         }
         if (logResponse) {
@@ -147,7 +147,7 @@ public class Response {
         try {
             response.getWriter().append(data);
         } catch (IOException e) {
-            log.error("! write string failed ({})", data, e);
+            log.error(" !! write string failed ({})\n", data, e);
             return;
         }
         if (logResponse) {
@@ -160,7 +160,7 @@ public class Response {
         try {
             response.getWriter().append(data);
         } catch (IOException e) {
-            log.error("! write string failed ({})", "HTML", e);
+            log.error(" !! write string failed ({})\n", "HTML", e);
             return;
         }
         if (logResponse) {
@@ -189,7 +189,7 @@ public class Response {
             writer.flush();
             writer.close();
         } catch (IOException e) {
-            log.error("! set error failed ({}, {})", status, msg, e);
+            log.error(" !! set error failed ({}, {})\n", status, msg, e);
             return;
         }
         if (logResponse) {
@@ -269,7 +269,7 @@ public class Response {
         try {
             rd.forward(params.request, response);
         } catch (ServletException | IOException e) {
-            log.error("! show template failed ({})", template, e);
+            log.error(" !! show template failed ({})\n", template, e);
             return;
         }
         if (logResponse) {

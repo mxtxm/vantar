@@ -27,6 +27,9 @@ public class Json {
         return tagged == null ? null : tagged.get(tag);
     }
 
+    public static Jackson getNewDefault() {
+        return new Jackson(defaultConfig);
+    }
 
     // > > > PRESET
 

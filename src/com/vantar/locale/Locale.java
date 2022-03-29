@@ -116,7 +116,7 @@ public class Locale {
         try {
             return MessageFormat.format(value, messageParams);
         } catch (Exception e) {
-            log.error("! can not replace params in text ('{}', {})", value, CollectionUtil.join(messageParams, ", "));
+            log.error(" !! can not replace params in text ('{}', {})\n", value, CollectionUtil.join(messageParams, ", "), e);
             return "!!!!";
         }
     }
@@ -145,7 +145,7 @@ public class Locale {
         try {
             return MessageFormat.format(value, messageParams);
         } catch (Exception e) {
-            log.error("! can not replace params in text ('{}', {})", value, CollectionUtil.join(messageParams, ", "));
+            log.error(" !! can not replace params in text ('{}', {})\n", value, CollectionUtil.join(messageParams, ", "), e);
             return "!!!!";
         }
     }

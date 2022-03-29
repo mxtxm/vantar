@@ -23,7 +23,7 @@ public class StopWord {
         try {
             words = stopWords.get(lang);
         } catch (Exception e) {
-            log.warn("! StopWord.get {}", lang, e);
+            log.warn(" ! StopWord.get lang='{}'\n", lang, e);
             return new String[] {};
         }
 
@@ -39,7 +39,7 @@ public class StopWord {
         if (Locale.stopWordPath == null) {
             String path = "/data/stopword/" + lang;
             if (!FileUtil.resourceExists(path)) {
-                log.warn("-----> stopword file not exists ({})", path);
+                log.warn(" ! stop word file not exists ({})", path);
                 return new String[] {};
             }
             set = StringUtil.splitToSet(FileUtil.getFileContentFromClassPath(path), '\n');
@@ -49,7 +49,7 @@ public class StopWord {
 
         set.removeIf(element -> element.startsWith(COMMENT_INDICATOR) && element.endsWith(COMMENT_INDICATOR));
 
-        log.debug("-----> stopword file loaded {}", lang);
+        log.debug(" > stop word file loaded lang={}", lang);
         return set.toArray(new String[0]);
     }
 

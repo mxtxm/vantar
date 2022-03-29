@@ -210,7 +210,7 @@ public class ServiceAuth extends Permit implements Services.Service {
         } catch (NoContentException e) {
             throw new AuthException(VantarKey.USER_NOT_EXISTS);
         } catch (Exception e) {
-            log.error("! failed to get signinBundle", e);
+            log.warn(" ! failed to get signinBundle\n", e);
             throw new ServerException(VantarKey.FETCH_FAIL);
         }
 
@@ -291,7 +291,7 @@ public class ServiceAuth extends Permit implements Services.Service {
                     onlineUsers.remove(tokenToDelete);
                 }
             } catch (Exception e) {
-                log.error("!  token={} online={}\n", info, onlineUsers);
+                log.error(" !! token={} online={}\n", info, onlineUsers, e);
             }
 
             onlineUsers.put(token, info);

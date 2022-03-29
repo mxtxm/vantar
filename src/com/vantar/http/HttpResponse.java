@@ -57,8 +57,8 @@ public class HttpResponse {
                     response.close();
                 }
                 client.close();
-            } catch (IOException e) {
-                log.error("! response close failed", e);
+            } catch (Exception e) {
+                log.error(" !! response.close failed\n", e);
             }
         }
     }
@@ -143,8 +143,8 @@ public class HttpResponse {
     public InputStream toStream() {
         try {
             return entity.getContent();
-        } catch (IOException e) {
-            log.error("! failed to read stream ({})", url, e);
+        } catch (Exception e) {
+            log.error(" ! failed to read stream ({})\n", url, e);
             return null;
         }
     }

@@ -1,8 +1,15 @@
 package com.vantar.util.string;
 
-
+/**
+ * Persian language utilities
+ */
 public class Persian {
 
+    /**
+     * Check if a string contains latin chars
+     * @param word string to check
+     * @return true -> contains
+     */
     public static boolean containsLatin(String word) {
         for (char c : word.toCharArray()) {
             if (c >= 65 && c <= 90 || c >= 97 && c <= 122) {
@@ -12,6 +19,11 @@ public class Persian {
         return false;
     }
 
+    /**
+     * Check if a string contains persian chars
+     * @param word string to check
+     * @return true -> contains
+     */
     public static boolean containsPersian(String word) {
         for (int i = 0; i < Character.codePointCount(word, 0, word.length()); ++i) {
             int c = word.codePointAt(i);
@@ -22,17 +34,22 @@ public class Persian {
         return false;
     }
 
-
+    /**
+     * Persian numbers
+     */
     public static class Number {
 
+        /**
+         * Replace persian number chars to latin number chars
+         * @param string string to check
+         * @return updated string ("" if string == null)
+         */
         public static String toLatin(String string) {
             if (StringUtil.isEmpty(string)) {
-                return string;
+                return "";
             }
-
             StringBuilder sb = new StringBuilder();
             char[] charArr = string.toCharArray();
-
             for (char c : charArr) {
                 switch (c) {
                     case '۰':
@@ -69,18 +86,20 @@ public class Persian {
                         sb.append(c);
                 }
             }
-
             return sb.toString();
         }
 
+        /**
+         * Replace number chars to persian number chars
+         * @param string string to check
+         * @return updated string ("" if string == null)
+         */
         public static String toPersian(String string) {
             if (StringUtil.isEmpty(string)) {
                 return "";
             }
-
             StringBuilder sb = new StringBuilder();
             char[] charArr = string.toCharArray();
-
             for (char c : charArr) {
                 switch (c) {
                     case '0':
@@ -117,12 +136,19 @@ public class Persian {
                         sb.append(c);
                 }
             }
-
             return sb.toString();
         }
     }
 
+    /**
+     * Persian numbers to latin numbers, non persian chars to respecting persian chars
+     * @param string string to normalize
+     * @return updated string ("" if string == null)
+     */
     public static String normalize(String string) {
+        if (StringUtil.isEmpty(string)) {
+            return "";
+        }
         return StringUtil.replace(
             string,
             new char[] {

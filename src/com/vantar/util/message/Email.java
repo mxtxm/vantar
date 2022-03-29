@@ -29,7 +29,7 @@ public class Email {
             message.setText(body);
             Transport.send(message);
         } catch (MessagingException e) {
-            log.error("! failed to send email({} < {})", recipient, subject, e);
+            log.error(" !! send email failed ({} > {})\n", subject, recipient, e);
         }
     }
 

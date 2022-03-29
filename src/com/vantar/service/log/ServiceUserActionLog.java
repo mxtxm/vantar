@@ -105,7 +105,7 @@ public class ServiceUserActionLog implements Services.Service {
 
         if (userLogService.delayedStoreEnabled && Queue.isUp) {
             Queue.add(VantarParam.QUEUE_NAME_USER_ACTION_LOG, new Packet(userLog));
-            log.debug("userLog > queue({})", VantarParam.QUEUE_NAME_USER_ACTION_LOG);
+            log.debug(" ! userLog > queue({})", VantarParam.QUEUE_NAME_USER_ACTION_LOG);
         } else {
             if (userLogService.dbms.equalsIgnoreCase(DtoDictionary.Dbms.ELASTIC.name())) {
                 saveOnElastic(userLog);
@@ -131,7 +131,7 @@ public class ServiceUserActionLog implements Services.Service {
         Params params = Params.getThreadParams();
         if (params != null) {
             userLog.url = params.request.getRequestURI();
-            log.debug(" {} <", userLog.url);
+            log.debug(" ! {} <", userLog.url);
         }
 
         if (object != null) {
@@ -145,7 +145,7 @@ public class ServiceUserActionLog implements Services.Service {
 
         if (userLogService.delayedStoreEnabled && Queue.isUp) {
             Queue.add(VantarParam.QUEUE_NAME_USER_ACTION_LOG, new Packet(userLog));
-            log.debug("userLog > queue({})", VantarParam.QUEUE_NAME_USER_ACTION_LOG);
+            log.debug(" ! userLog > queue({})", VantarParam.QUEUE_NAME_USER_ACTION_LOG);
         } else {
             if (userLogService.dbms.equalsIgnoreCase(DtoDictionary.Dbms.ELASTIC.name())) {
                 saveOnElastic(userLog);
@@ -202,7 +202,7 @@ public class ServiceUserActionLog implements Services.Service {
             return;
         }
 
-        log.info(" >> logged {} items ", packets.size());
+        log.info(" >> logged {} items", packets.size());
         LogEvent.beat(this.getClass(), "insert");
     }
 
@@ -225,7 +225,7 @@ public class ServiceUserActionLog implements Services.Service {
             return;
         }
 
-        log.info(" >> logged {} items ", packets.size());
+        log.info(" >> logged {} items", packets.size());
         LogEvent.beat(this.getClass(), "insert");
     }
 

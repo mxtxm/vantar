@@ -1,6 +1,7 @@
 package com.vantar.admin.model.document;
 
-import com.vantar.admin.model.*;
+import com.vantar.admin.model.Admin;
+import com.vantar.common.Settings;
 import com.vantar.database.datatype.Location;
 import com.vantar.database.dto.*;
 import com.vantar.util.collection.CollectionUtil;
@@ -29,7 +30,6 @@ public class DtoDocumentData {
 
 
     public String get() {
-
         // > > >
 
         if (enumClass != null) {
@@ -215,7 +215,15 @@ public class DtoDocumentData {
                     sb.append(" value is set based on selected locale.");
                 }
                 if (prop.endsWith("Id")) {
-                    Object foreignObj = ClassUtil.getInstance(StringUtil.firstCharToUpperCase(StringUtil.remove(prop, "Id")));
+                    String dtoPackage = Settings.config.getProperty("documents.dto.package");
+                    String fClassName = StringUtil.firstCharToUpperCase(StringUtil.remove(prop, "Id"));
+                    Object foreignObj = ClassUtil.getInstance(fClassName);
+                    if (foreignObj == null && dtoPackage != null) {
+                        Class<?> fClass = ClassUtil.getClassFromPackage(fClassName, dtoPackage);
+                        if (fClass != null) {
+                            foreignObj = ClassUtil.getInstance(fClass);
+                        }
+                    }
                     if (foreignObj != null) {
                         sb.append(" id reference to ");
                         setReference(sb, foreignObj.getClass(), obj.getClass());
@@ -283,13 +291,13 @@ public class DtoDocumentData {
                 }
                 json.setLength(json.length() - 2);
 
-            } else if (ClassUtil.implementsInterface(genericType, Dto.class)) {
+            } else if (ClassUtil.isInstantiable(genericType, Dto.class)) {
                 if (genericType.equals(dto)) {
                     json.append("{\"RECURSIVE\":\"RECURSIVE\"}");
                 } else {
                     json.append(getAsJsonExampleDto(genericType));
                 }
-            } else if (ClassUtil.extendsClass(genericType, Number.class)) {
+            } else if (ClassUtil.isInstantiable(genericType, Number.class)) {
                 json.append("0");
             } else if (genericType == String.class) {
                 json.append("\"STRING\"");
@@ -315,7 +323,7 @@ public class DtoDocumentData {
         Class<?>[] g = ClassUtil.getGenericTypes(f);
         if (g.length == 2) {
             Class<?> genericTypeK = g[0];
-            if (ClassUtil.extendsClass(genericTypeK, Number.class)) {
+            if (ClassUtil.isInstantiable(genericTypeK, Number.class)) {
                 json.append("0:");
             } else if (genericTypeK == String.class) {
                 json.append("\"STRING\":");
@@ -330,9 +338,9 @@ public class DtoDocumentData {
                 }
                 json.setLength(json.length() - 2);
 
-            } else if (ClassUtil.implementsInterface(genericType, Dto.class)) {
+            } else if (ClassUtil.isInstantiable(genericType, Dto.class)) {
                 json.append(getAsJsonExampleDto(genericType));
-            } else if (ClassUtil.extendsClass(genericType, Number.class)) {
+            } else if (ClassUtil.isInstantiable(genericType, Number.class)) {
                 json.append("0");
             } else if (genericType == String.class) {
                 json.append("\"STRING\"");
@@ -402,7 +410,7 @@ public class DtoDocumentData {
                 continue;
             }
 
-            if (ClassUtil.extendsClass(propType, Number.class)) {
+            if (ClassUtil.isInstantiable(propType, Number.class)) {
                 json.append("0,");
                 continue;
             }
@@ -439,7 +447,7 @@ public class DtoDocumentData {
                 json.append(getAsJsonExampleMap(f)).append(',');
                 continue;
             }
-            if (ClassUtil.implementsInterface(propType, Dto.class)) {
+            if (ClassUtil.isInstantiable(propType, Dto.class)) {
                 if (propType.equals(gType)) {
                     json.append("{\"RECURSIVE\":\"RECURSIVE\"},");
                     continue;

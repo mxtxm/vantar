@@ -73,7 +73,7 @@ public class CommonRepoMongo extends Mongo {
                 CommonRepoMongo.delete(dto);
                 ++i;
             } catch (DatabaseException e) {
-                log.error("! {}", dto, e);
+                log.error(" !! {} : {} < {}\n", dto.getClass().getSimpleName(), dto, ids, e);
             }
         }
         return ResponseMessage.success(VantarKey.DELETE_SUCCESS, i);
@@ -163,7 +163,7 @@ public class CommonRepoMongo extends Mongo {
             if (value != null) {
                 if (value instanceof Long) {
                     checkRelation(dto, name, (Long) value, errors);
-                } else if (ClassUtil.implementsInterface(value.getClass(), Collection.class)) {
+                } else if (ClassUtil.isInstantiable(value.getClass(), Collection.class)) {
                     if (ClassUtil.getGenericTypes(dto.getField(name))[0].equals(Long.class)) {
                         for (Long v : (Collection<Long>) value) {
                             checkRelation(dto, name, v, errors);
@@ -194,7 +194,7 @@ public class CommonRepoMongo extends Mongo {
                 errors.add(new ValidationError(name, VantarKey.REFERENCE, value));
             }
         } catch (DatabaseException e) {
-            log.error("! could not check reference dto={} field={} value={}", dto, name, value, e);
+            log.error(" !! could not check reference dto={} field={} value={}", dto, name, value, e);
         }
     }
 

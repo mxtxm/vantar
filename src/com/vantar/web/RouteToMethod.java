@@ -94,7 +94,7 @@ public class RouteToMethod extends HttpServlet {
                     Response.serverError(response, e.getMessage());
 
                 } else {
-                    log.error("! unhandled error", e);
+                    log.error(" !! unhandled error ({} > {})\n", request.getRequestURL(), methodName, e);
                     Response.serverError(response, Locale.getString(VantarKey.UNEXPECTED_ERROR));
                 }
             } finally {

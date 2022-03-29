@@ -8,7 +8,6 @@ import com.vantar.database.query.QueryBuilder;
 import com.vantar.exception.DatabaseException;
 import com.vantar.queue.QueueExceptionHandler;
 import com.vantar.service.log.dto.Log;
-import com.vantar.util.collection.CollectionUtil;
 import com.vantar.util.datetime.DateTime;
 import com.vantar.util.object.ObjectUtil;
 import org.bson.Document;
@@ -111,7 +110,7 @@ public class LogEvent {
             log.error(m);
             CommonRepoMongo.insert(new Log(tag, level, m));
         } catch (Exception e) {
-            log.error("! {} {}", tag, values, e);
+            log.error(" !! {} {}\n", tag, values, e);
         }
     }
 
@@ -149,9 +148,8 @@ public class LogEvent {
             }
 
             return result;
-
         } catch (DatabaseException e) {
-            log.error("! ! ! error tags", e);
+            log.error(" !! getErrorTags", e);
             return new ArrayList<>();
         }
     }

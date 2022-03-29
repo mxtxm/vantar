@@ -876,7 +876,7 @@ public class WebUi {
                 value = dto.getDefaultValue(name);
             }
 
-            if (ClassUtil.implementsInterface(type, Number.class)) {
+            if (ClassUtil.isInstantiable(type, Number.class)) {
                 addInput(name, name, value == null ? null : value.toString());
 
             } else if (type == Boolean.class) {
@@ -891,7 +891,7 @@ public class WebUi {
                 }
                 addSelect(name, name, values, value == null ? null : value.toString());
 
-            } else if (ClassUtil.implementsInterface(type, CollectionUtil.class) && dto.getPropertyGenericTypes(name)[0].isEnum()) {
+            } else if (ClassUtil.isInstantiable(type, CollectionUtil.class) && dto.getPropertyGenericTypes(name)[0].isEnum()) {
                 final Class<? extends Enum<?>> enumType = (Class<? extends Enum<?>>) dto.getPropertyGenericTypes(name)[0];
                 String[] values = new String[enumType.getEnumConstants().length];
                 int i = 0;
@@ -913,7 +913,7 @@ public class WebUi {
             } else if (CollectionUtil.isCollection(type)) {
                 Class<?>[] g = ClassUtil.getGenericTypes(field);
                 if (CollectionUtil.isNotEmpty(g)) {
-                    if (ClassUtil.implementsInterface(g[0], Dto.class)) {
+                    if (ClassUtil.isInstantiable(g[0], Dto.class)) {
                         Object obj = ClassUtil.getInstance(g[0]);
                         if (obj != null) {
                             setAdditive("<pre class='format'>[" + Json.getWithNulls().toJsonPretty(obj) + "]</pre>");
@@ -941,7 +941,7 @@ public class WebUi {
                     "small json"
                 );
 
-            } else if (ClassUtil.implementsInterface(type, Dto.class)) {
+            } else if (ClassUtil.isInstantiable(type, Dto.class)) {
                 DtoDictionary.Info info = DtoDictionary.get(type);
                 if (info == null) {
                     log.error("! dto not in dictionary? ({})", type);
@@ -1143,7 +1143,7 @@ public class WebUi {
             .append("<td class='dto-list-form-option'>")
             .append("<select name='" + VantarParam.SEARCH_FIELD + "'><option value='all'>all</option>");
         for (String name : dto.getProperties()) {
-            if (ClassUtil.implementsInterface(dto.getPropertyType(name), Dto.class)) {
+            if (ClassUtil.isInstantiable(dto.getPropertyType(name), Dto.class)) {
                 DtoDictionary.Info obj = DtoDictionary.get(name);
                 if (obj == null) {
                     continue;
@@ -1222,7 +1222,7 @@ public class WebUi {
                 for (String name : fields) {
                     Class<?> type = dto.getPropertyType(name);
                     if ((!name.equals("name") && !name.equals("title")) &&
-                        (CollectionUtil.isCollectionAndMap(type) || ClassUtil.implementsInterface(type, Dto.class))) {
+                        (CollectionUtil.isCollectionAndMap(type) || ClassUtil.isInstantiable(type, Dto.class))) {
                         continue;
                     }
 
@@ -1266,7 +1266,7 @@ public class WebUi {
                 Class<?> type = dto.getPropertyType(name);
 
                 if ((!name.equals("name") && !name.equals("title")) &&
-                    (CollectionUtil.isCollectionAndMap(type) || ClassUtil.implementsInterface(type, Dto.class))) {
+                    (CollectionUtil.isCollectionAndMap(type) || ClassUtil.isInstantiable(type, Dto.class))) {
                     continue;
                 }
 

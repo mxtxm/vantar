@@ -13,7 +13,6 @@ import com.vantar.locale.Locale;
 import com.vantar.locale.*;
 import com.vantar.service.Services;
 import com.vantar.service.auth.*;
-import com.vantar.util.json.*;
 import com.vantar.util.object.*;
 import com.vantar.util.string.*;
 import com.vantar.web.*;
@@ -548,7 +547,7 @@ public class AdminData {
                         public void afterWrite(Dto dto) throws InputException, ServerException {
                             if (dto instanceof CommonUser) {
                                 for (DtoDictionary.Info info: DtoDictionary.getAll()) {
-                                    if (ClassUtil.implementsInterface(info.dtoClass, CommonUserPassword.class)) {
+                                    if (ClassUtil.isInstantiable(info.dtoClass, CommonUserPassword.class)) {
                                         if (dto.getClass().equals(info.dtoClass)) {
                                             break;
                                         }
@@ -649,7 +648,7 @@ public class AdminData {
                         public void afterWrite(Dto dto) throws ServerException, InputException {
                             if (dto instanceof CommonUser) {
                                 for (DtoDictionary.Info info: DtoDictionary.getAll()) {
-                                    if (ClassUtil.implementsInterface(info.dtoClass, CommonUserPassword.class)) {
+                                    if (ClassUtil.isInstantiable(info.dtoClass, CommonUserPassword.class)) {
                                         if (dto.getClass().equals(info.dtoClass)) {
                                             break;
                                         }
@@ -849,7 +848,7 @@ public class AdminData {
         String adminApp = StringUtil.isEmpty(appPackage) ? null : (appPackage + ".business.admin.model.AdminApp");
         if (StringUtil.isNotEmpty(adminApp)) {
             try {
-                return (Event) ObjectUtil.callStaticMethod(adminApp + ".getAdminDataEvent");
+                return (Event) ClassUtil.callStaticMethod(adminApp + ".getAdminDataEvent");
             } catch (Throwable e) {
                 Admin.log.error("! AdminData '{}.getAdminDataEvent()'", adminApp, e);
             }

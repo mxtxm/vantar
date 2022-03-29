@@ -79,7 +79,7 @@ public class RouteToMethodParam extends HttpServlet {
                 method.invoke(this, params, response);
 
             } catch (NoSuchMethodException e) {
-                log.error("! no method or 404 ({})", methodName.toString());
+                log.error(" !! no-handler-method/404 ({} > {})\n", request.getRequestURL(), methodName, e);
                 Response.notFound(response, request.getRequestURL().toString());
 
             } catch (Throwable e) {
@@ -103,7 +103,7 @@ public class RouteToMethodParam extends HttpServlet {
                     Response.serverError(response, e.getMessage());
 
                 } else {
-                    log.error("! unhandled error", e);
+                    log.error(" !! unhandled error ({} > {})\n", request.getRequestURL(), methodName, e);
                     Response.serverError(response, Locale.getString(VantarKey.UNEXPECTED_ERROR));
                 }
             } finally {

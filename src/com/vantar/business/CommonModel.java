@@ -123,8 +123,8 @@ public abstract class CommonModel {
             String[] cols = StringUtil.split(row, ',');
 
             if (cols.length != fieldCount) {
-                ui.addKeyValueFail(row, "invalid data. columns and fields mismatch (" + dataArray[0] + " : " + row + ")");
-                log.error("! ! ! import failed columns and fields mismatch > ({} : {})", dataArray[0], row);
+                ui.addKeyValueFail(row, "invalid data. column/field mismatch (" + dataArray[0] + " : " + row + ")");
+                log.error(" !! import failed column/field mismatch > ({} : {})", dataArray[0], row);
                 continue;
             }
 

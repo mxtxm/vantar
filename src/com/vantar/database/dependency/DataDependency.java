@@ -117,7 +117,7 @@ public class DataDependency {
          * (2) field is Dto where
          *     Dto-class="target dto".class and the object is a copy of a "target dto" record
          */
-        if (ClassUtil.implementsInterface(hostFieldType, Dto.class)) {
+        if (ClassUtil.isInstantiable(hostFieldType, Dto.class)) {
             Dependants d = getDependantDataEquals(hostFieldName + ".id");
             if (d != null) {
                 dependencies.add(d);
@@ -142,7 +142,7 @@ public class DataDependency {
             /*
              * (8) field is Collection<Dto>
              */
-            if (ClassUtil.implementsInterface(gClass, Dto.class)) {
+            if (ClassUtil.isInstantiable(gClass, Dto.class)) {
                 if (endRecursion(gClass)) {
                     return;
                 }
@@ -154,7 +154,7 @@ public class DataDependency {
         /*
          * (7) field is a Dto > crawl inside it until a "target dto" dependency is found
          */
-        if (ClassUtil.implementsInterface(hostFieldType, Dto.class)) {
+        if (ClassUtil.isInstantiable(hostFieldType, Dto.class)) {
             if (!endRecursion(hostFieldType)) {
                 putCrawlDependencies(hostField.getType(), prefix + hostFieldName + '.');
             }
@@ -203,10 +203,10 @@ public class DataDependency {
             }
 
             Class<?> innerFieldType = innerField.getType();
-            if (!ClassUtil.implementsInterface(innerField.getType(), Dto.class)) {
+            if (!ClassUtil.isInstantiable(innerField.getType(), Dto.class)) {
                 if (CollectionUtil.isCollection(innerFieldType)) {
                     Class<?> gClass = ClassUtil.getGenericTypes(innerField)[0];
-                    if (!ClassUtil.implementsInterface(gClass, Dto.class)) {
+                    if (!ClassUtil.isInstantiable(gClass, Dto.class)) {
                         continue;
                     }
                 } else {

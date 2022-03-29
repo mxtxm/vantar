@@ -4,7 +4,9 @@ import com.vantar.common.VantarParam;
 import com.vantar.database.common.ValidationError;
 import com.vantar.database.datatype.Location;
 import com.vantar.exception.DateTimeException;
+import com.vantar.locale.Locale;
 import com.vantar.locale.VantarKey;
+import com.vantar.util.bool.BoolUtil;
 import com.vantar.util.collection.CollectionUtil;
 import com.vantar.util.datetime.DateTime;
 import com.vantar.util.json.*;
@@ -201,7 +203,7 @@ public abstract class DtoBase implements Dto {
                 }
             }
         } catch (IllegalAccessException e) {
-            log.error("! dto reset", e);
+            log.error(" !! ({}, {})\n", getClass().getName(), this, e);
         }
     }
 
@@ -248,7 +250,7 @@ public abstract class DtoBase implements Dto {
                 field.set(this, getDefaultValue(field));
             }
         } catch (IllegalAccessException e) {
-            log.error("! dto({})", this, e);
+            log.error(" !! ({}, {})\n", getClass().getName(), this, e);
         }
     }
 
@@ -383,7 +385,7 @@ public abstract class DtoBase implements Dto {
             sb.setLength(sb.length() - separator.length());
             return sb.toString();
         } catch (IllegalAccessException e) {
-            log.error("! dto({})", this, e);
+            log.error(" !! ({}, {})\n", getClass().getName(), this, e);
         }
         return null;
     }
@@ -482,7 +484,7 @@ public abstract class DtoBase implements Dto {
             try {
                 value = field.get(this);
             } catch (IllegalAccessException e) {
-                log.error("! {}", fieldName, e);
+                log.error(" !! ({}, {}, {})\n", getClass().getName(), fieldName, this, e);
                 continue;
             }
 
@@ -512,7 +514,6 @@ public abstract class DtoBase implements Dto {
                 if (isNotDataField(field)) {
                     continue;
                 }
-
                 String name = field.getName();
                 if (isExcluded(name)) {
                     continue;
@@ -539,18 +540,17 @@ public abstract class DtoBase implements Dto {
                     type = String.class;
                     String dataType = field.getAnnotation(DataType.class).value();
                     if (dataType.equals("keyword")) {
-                        value = StringUtil.normalizeKeywords(value.toString());
+                        value = SearchUtil.normalizeKeywords(value.toString());
                     } else if (dataType.equals("text")) {
-                        value = StringUtil.normalizeFullText(value.toString(), getLang());
+                        value = SearchUtil.normalizeFullText(value.toString(), getLang());
                     }
                 }
 
                 data.add(new StorableData(StringUtil.toSnakeCase(name), type, value, isNull, field.getAnnotations()));
             }
         } catch (IllegalAccessException e) {
-            log.error("! {}", this, e);
+            log.error(" !! ({}, {})\n", getClass().getName(), this, e);
         }
-
         return data;
     }
 
@@ -558,7 +558,6 @@ public abstract class DtoBase implements Dto {
     @SuppressWarnings({"unchecked"})
     public List<ManyToManyDefinition> getManyToManyFieldValues(long id) {
         String dtoFk = StringUtil.toSnakeCase(getStorage()) + "_id";
-
         List<ManyToManyDefinition> params = null;
         try {
             for (Field field : getClass().getFields()) {
@@ -582,9 +581,8 @@ public abstract class DtoBase implements Dto {
                 params.add(manyToManyDefinition);
             }
         } catch (IllegalAccessException e) {
-            log.error("! {}", this, e);
+            log.error(" !! ({}, {})\n", getClass().getName(), this, e);
         }
-
         return params;
     }
 
@@ -647,12 +645,12 @@ public abstract class DtoBase implements Dto {
 
                 if (field.isAnnotationPresent(DeLocalized.class)) {
                     if (!(value instanceof Map)) {
-                        log.error("! invalid DeLocalized ({}.{}) is not localized as Map<String, String> but is >> ({})",
+                        log.error(" !! @invalid DeLocalized ({}.{}) is not localized as Map<String, String> but is >> ({})",
                             dto.getClass(), field.getName(), value);
                         continue;
                     }
                     if (locales == null || locales.length == 0) {
-                        log.error("! invalid DeLocalized (no locale has been provided) ({}.{} = {})",
+                        log.error(" !! invalid @DeLocalized (no locale) ({}.{} = {})",
                             dto.getClass(), field.getName(), value);
                         continue;
                     }
@@ -678,7 +676,7 @@ public abstract class DtoBase implements Dto {
                 field.set(this, value);
             }
         } catch (IllegalAccessException e) {
-            log.error("! {}", this, e);
+            log.error(" !! ({}, {})\n", getClass().getName(), this, e);
         }
         return validate(action);
     }
@@ -699,7 +697,7 @@ public abstract class DtoBase implements Dto {
             return errors;
         }
 
-        Dto dto = Json.d.fromJson(json, getClass());
+        Dto dto = Json.d.fromJsonSilent(json, getClass());
         if (dto != null) {
             DtoSetConfigs dtoSetConfigs = Json.d.fromJson(json, DtoSetConfigs.class);
             if (dtoSetConfigs != null) {
@@ -713,7 +711,6 @@ public abstract class DtoBase implements Dto {
             return set(dto);
         }
 
-        log.info(" ^^^ ignore the above error");
         return set(Json.d.mapFromJson(json, String.class, Object.class), action);
     }
 
@@ -796,12 +793,13 @@ public abstract class DtoBase implements Dto {
             }
 
             if (field.getType().equals(Location.class)) {
-                value = map.containsKey(key) ?
-                    new Location((String) map.get(key)) :
-                    new Location(
+                Object v = map.get(key);
+                if (v == null) {
+                    value = new Location(
                         NumberUtil.toNumber(map.get(key + "_latitude"), Double.class),
                         NumberUtil.toNumber(map.get(key + "_longitude"), Double.class)
                     );
+                }
             } else if (value == null) {
                 value = map.get(StringUtil.toSnakeCase(key));
             }
@@ -854,6 +852,7 @@ public abstract class DtoBase implements Dto {
     private void setPropertyValue(Field field, Object value, Action action, List<ValidationError> errors) {
         Class<?> type = field.getType();
         String name = field.getName();
+
         try {
             if (isNull(name)) {
                 field.set(this, null);
@@ -867,18 +866,20 @@ public abstract class DtoBase implements Dto {
                     if (StringUtil.isEmpty((String) value)) {
                         value = null;
                     }
-                } else if (ClassUtil.extendsClass(type, Number.class)) {
+                } else if (ClassUtil.isInstantiable(type, Number.class)) {
                     value = NumberUtil.toNumber(value, type);
                 } else if (type.equals(Boolean.class)) {
-                    value = ObjectUtil.toBoolean(value);
+                    value = BoolUtil.toBoolean(value);
                 } else if (type.equals(Character.class)) {
-                    value = ObjectUtil.toCharacter(value);
+                    value = StringUtil.toCharacter(value);
                 } else if (type.equals(DateTime.class)) {
-                    try {
-                        value = DateTime.toDateTime(value);
-                    } catch (DateTimeException e) {
-                        errors.add(new ValidationError(name, VantarKey.DATA_TYPE));
-                        return;
+                    if (!(value instanceof DateTime)) {
+                        try {
+                            value = DateTime.toDateTime(value);
+                        } catch (DateTimeException e) {
+                            errors.add(new ValidationError(name, VantarKey.DATA_TYPE));
+                            return;
+                        }
                     }
                 } else if (type.isEnum()) {
                     try {
@@ -887,13 +888,56 @@ public abstract class DtoBase implements Dto {
                         errors.add(new ValidationError(name, VantarKey.INVALID_VALUE));
                         return;
                     }
-                } else if (ClassUtil.implementsInterface(type, List.class)) {
+                } else if (type.equals(Location.class)) {
+                    if (!(value instanceof Location)) {
+                        if (value instanceof String) {
+                            value = new Location((String) value);
+                            if (!((Location) value).isValid()) {
+                                value = null;
+                            }
+                        } else if (value instanceof Map) {
+                            value = new Location((Map) value);
+                            if (!((Location) value).isValid()) {
+                                value = null;
+                            }
+                        } else {
+                            value = null;
+                            log.warn(" ! trying to set invalid location value {}>{} ({}, {})"
+                                , value, name, this.getClass().getName(), this);
+                        }
+                    }
+                } else if (ClassUtil.isInstantiable(type, List.class)) {
                     value = ObjectUtil.toList(value, getPropertyGenericTypes(name)[0]);
-                } else if (ClassUtil.implementsInterface(type, Set.class)) {
+                } else if (ClassUtil.isInstantiable(type, Set.class)) {
                     value = new HashSet<>(ObjectUtil.toList(value, getPropertyGenericTypes(name)[0]));
-                } else if (ClassUtil.implementsInterface(type, Map.class)) {
-                    Class<?>[] types = getPropertyGenericTypes(name);
-                    value = ObjectUtil.toMap(value, types[0], types[1]);
+                } else if (ClassUtil.isInstantiable(type, Map.class)) {
+                    if (field.isAnnotationPresent(Localized.class) && value instanceof String) {
+                        Map<String, String> v = (Map<String, String>) field.get(this);
+                        if (v == null) {
+                            v = new HashMap<>(1);
+                        }
+                        v.put(Locale.getSelectedLocale(), (String) value);
+                        value = v;
+                    } else {
+                        Class<?>[] types = getPropertyGenericTypes(name);
+                        value = ObjectUtil.toMap(value, types[0], types[1]);
+                    }
+                } else if (ClassUtil.isInstantiable(type, Dto.class) && !(value instanceof Dto)) {
+                    if (value instanceof Map) {
+                        Dto innerDto = (Dto) field.get(this);
+                        if (innerDto == null) {
+                            innerDto = DtoDictionary.get(type).getDtoInstance();
+                        }
+                        innerDto.set((Map<String, Object>) value, action);
+                        value = innerDto;
+                    } else {
+                        log.error(" !! type mismatch {}>{} ({}, {})\n", name, value, getClass().getName(), this);
+                        return;
+                    }
+                } else if (!(ClassUtil.isInstantiable(type, value.getClass())
+                    || ClassUtil.isInstantiable(value.getClass(), type))) {
+                    log.error(" !! type mismatch {}>{} ({}, {})\n", name, value, getClass().getName(), this);
+                    return;
                 }
             }
 
@@ -922,8 +966,8 @@ public abstract class DtoBase implements Dto {
             } else {
                 field.set(this, value);
             }
-        } catch (IllegalAccessException | IllegalArgumentException e) {
-            log.error("! {}>{}", name, value, e);
+        } catch (Exception e) {
+            log.error(" !! {}>{} ({}, {})\n", name, value, getClass().getName(), this, e);
             errors.add(new ValidationError(name, VantarKey.ILLEGAL));
         }
 
@@ -1031,13 +1075,8 @@ public abstract class DtoBase implements Dto {
             value = null;
         }
 
-        boolean valueIsEmpty = value == null
-            || StringUtil.isEmpty(value.toString())
-            || (value instanceof List && ((List<?>) value).isEmpty())
-            || (value instanceof Map && ((Map<?, ?>) value).isEmpty());
-
-        if (valueIsEmpty) {
-            if (paramValue != null && !isNull(name)) {
+        if (ObjectUtil.isEmpty(value)) {
+            if (ObjectUtil.isNotEmpty(paramValue) && !isNull(name)) {
                 errors.add(new ValidationError(name, VantarKey.DATA_TYPE));
             } else if (
                 (action.equals(Action.INSERT) || action.equals(Action.UPDATE_ALL_COLS))

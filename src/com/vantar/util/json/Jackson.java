@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.*;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
+import com.fasterxml.jackson.databind.ser.impl.*;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 import com.vantar.database.datatype.Location;
 import com.vantar.exception.DateTimeException;
@@ -90,6 +91,11 @@ public class Jackson {
         mapper.registerModule(new SimpleModule().addAbstractTypeMapping(typeClass, objectClass));
     }
 
+    public void ignore(String... properties) {
+        SimpleBeanPropertyFilter filter = SimpleBeanPropertyFilter.serializeAllExcept(properties);
+        mapper.setFilterProvider(new SimpleFilterProvider().addFilter("ignoreFilter", filter));
+    }
+
 
     // > > > TO JSON
 
@@ -97,7 +103,7 @@ public class Jackson {
         try {
             return mapper.writeValueAsString(object);
         } catch (Exception e) {
-            log.warn("! failed to create JSON ({})\n", object, e);
+            log.warn(" ! failed to create JSON ({})\n", object, e);
             return null;
         }
     }
@@ -107,14 +113,14 @@ public class Jackson {
             try {
                 object = mapper.readTree((String) object);
             } catch (IOException e) {
-                log.warn("! failed to open JSON ({})\n", object, e);
+                log.warn(" ! failed to open JSON ({})\n", object, e);
                 return null;
             }
         }
         try {
             return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(object);
         } catch (Exception e) {
-            log.warn("! failed to create JSON ({})\n", object, e);
+            log.warn(" ! failed to create JSON ({})\n", object, e);
             return null;
         }
     }
@@ -150,6 +156,14 @@ public class Jackson {
             return mapper.readValue(json, typeClass);
         } catch (Exception e) {
             log.warn("! failed to get object ({} > {})\n", json, typeClass.getName(), e);
+            return null;
+        }
+    }
+
+    public <T> T fromJsonSilent(String json, Class<T> typeClass) {
+        try {
+            return mapper.readValue(json, typeClass);
+        } catch (Exception e) {
             return null;
         }
     }

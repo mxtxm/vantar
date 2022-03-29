@@ -209,7 +209,7 @@ public class MongoQueryResult extends QueryResultBase implements QueryResult, Au
                     if (type == List.class || type == Set.class) {
                         Class<?>[] g = ClassUtil.getGenericTypes(field);
                         if (g == null || g.length != 1) {
-                            log.warn("! type/value miss-match ({}.{})", dto.getClass().getName(), field.getName());
+                            log.warn(" ! type/value miss-match ({}.{})", dto.getClass().getName(), field.getName());
                             continue;
                         }
                         Class<?> listType = g[0];
@@ -229,8 +229,8 @@ public class MongoQueryResult extends QueryResultBase implements QueryResult, Au
                                 field.set(dto, v != null && type == Set.class ? new HashSet<>(v) : v);
                             } catch (Exception e) {
                                 log.error(
-                                    "! can not get List<{}> from database ({}={})",
-                                    listType.getSimpleName(), key, document.get(key), e
+                                    " !! can not get List<{}> from database ({}:{}) > ({}, {})\n",
+                                    listType.getSimpleName(), key, document.get(key), dto.getClass().getName(), dto, e
                                 );
                             }
 
@@ -241,7 +241,10 @@ public class MongoQueryResult extends QueryResultBase implements QueryResult, Au
                                 docs = document.getList(key, Document.class);
                             } catch (Exception e) {
                                 docs = null;
-                                log.error("! can not get List<Dto> from database ({}={})", key, document.get(key), e);
+                                log.error(
+                                    " ! can not get List<{}> from database ({}:{}) > ({}, {})\n",
+                                    listType.getSimpleName(), key, document.get(key), dto.getClass().getName(), dto, e
+                                );
                             }
 
                             if (docs == null) {
@@ -273,7 +276,7 @@ public class MongoQueryResult extends QueryResultBase implements QueryResult, Au
                         } else {
                             Class<?>[] g = ClassUtil.getGenericTypes(field);
                             if (g == null || g.length != 2) {
-                                log.warn("! type/value miss-match ({}.{})", dto.getClass().getName(), field.getName());
+                                log.warn(" ! type/value miss-match ({}.{})", dto.getClass().getName(), field.getName());
                                 continue;
                             }
                             field.set(dto, documentToMap(v, g[0], g[1]));
@@ -303,7 +306,7 @@ public class MongoQueryResult extends QueryResultBase implements QueryResult, Au
                         continue;
                     }
 
-                    if (ClassUtil.implementsInterface(type, Dto.class)) {
+                    if (ClassUtil.isInstantiable(type, Dto.class)) {
                         Dto obj = (Dto) ClassUtil.getInstance(type);
                         if (obj != null) {
                             mapRecordToObject((Document) value, obj, obj.getFields());
@@ -314,14 +317,8 @@ public class MongoQueryResult extends QueryResultBase implements QueryResult, Au
 
                     field.set(dto, value);
 
-                } catch (NullPointerException e) {
-                    dto.setPropertyValue(field.getName(), null);
-                    log.warn("! data > {}({}:{})", dto.getClass(), key, document.get(key), e);
-                } catch (IllegalArgumentException e) {
-                    dto.setPropertyValue(field.getName(), value);
-                    log.warn("! data > {}({}:{})", dto.getClass(), key, document.get(key), e);
-                } catch (DateTimeException | ClassCastException e) {
-                    log.error("! data > {}({}:{})", dto.getClass(), key, document.get(key), e);
+                } catch (Exception e) {
+                    log.error(" !! ({}:{}) > ({}, {})\n", key, document.get(key), dto.getClass(), dto, e);
                     field.set(dto, null);
                 }
             }
@@ -329,7 +326,7 @@ public class MongoQueryResult extends QueryResultBase implements QueryResult, Au
             dto.afterFetchData();
             dto.afterFetchData(++i);
         } catch (IllegalAccessException e) {
-            log.error("! data > dto", e);
+            log.error(" !! data > dto({})\n", dto, e);
         }
     }
 
@@ -340,7 +337,7 @@ public class MongoQueryResult extends QueryResultBase implements QueryResult, Au
 
         Map<K, V> map = new HashMap<>();
         for (Map.Entry<String, Object> entry : document.entrySet()) {
-            if (ClassUtil.implementsInterface(vClass, Dto.class)) {
+            if (ClassUtil.isInstantiable(vClass, Dto.class)) {
                 V vDto = ClassUtil.getInstance(vClass);
                 if (vDto == null) {
                     continue;
@@ -375,7 +372,7 @@ public class MongoQueryResult extends QueryResultBase implements QueryResult, Au
         try {
             cache = Services.get(ServiceDtoCache.class);
         } catch (ServiceException e) {
-            log.warn("! cache service is off");
+            log.warn(" ! cache service is off");
             return false;
         }
 
@@ -396,7 +393,7 @@ public class MongoQueryResult extends QueryResultBase implements QueryResult, Au
         if (isListSet) {
             Class<?>[] types = ClassUtil.getGenericTypes(fieldX);
             if (types == null || types.length == 0) {
-                log.warn("! can not get generic type to fetch d={} dto={} f={} t={}", document, dtoX, fieldX, type);
+                log.warn(" ! can not get generic type to fetch d={} dto={} f={} t={}", document, dtoX, fieldX, type);
                 return true;
             }
             if (straightFromCache) {
@@ -407,7 +404,7 @@ public class MongoQueryResult extends QueryResultBase implements QueryResult, Au
         }
 
         if (!cachedClass.isAnnotationPresent(Cache.class)) {
-            log.warn("! ({}) is not cached", cachedClass);
+            log.warn(" ! ({}) is not cached", cachedClass);
             return false;
         }
 
@@ -429,12 +426,12 @@ public class MongoQueryResult extends QueryResultBase implements QueryResult, Au
 
                 Dto baseDto = (Dto) ClassUtil.getInstance(type);
                 if (baseDto == null) {
-                    log.warn("! can not create object ({})", type);
+                    log.warn(" ! can not create object ({})", type);
                     return true;
                 }
                 Dto targetDto = cache.getDto(cachedClass, id);
                 if (targetDto == null) {
-                    log.warn("! data missing ({}, id={})", cachedClass, id);
+                    log.warn(" ! data missing ({}, id={})", cachedClass, id);
                     return true;
                 }
 
@@ -473,13 +470,13 @@ public class MongoQueryResult extends QueryResultBase implements QueryResult, Au
 
         Dto baseDto = (Dto) ClassUtil.getInstance(fieldX.getType());
         if (baseDto == null) {
-            log.warn("! can not create object ({})", type);
+            log.warn(" ! can not create object ({})", type);
             return true;
         }
         Dto targetDto = cache.getDto(cachedClass, id);
 
         if (targetDto == null) {
-            log.warn("! data missing ({}, id={})", cachedClass, id);
+            log.warn(" ! data missing ({}, id={})", cachedClass, id);
             return true;
         }
 
@@ -508,7 +505,7 @@ public class MongoQueryResult extends QueryResultBase implements QueryResult, Au
         if (type == List.class || type == Set.class) {
             Class<?>[] types = ClassUtil.getGenericTypes(fieldX);
             if (types == null || types.length == 0) {
-                log.warn("! can not get generic type to fetch d={} dto={} f={} t={}", document, dtoX, fieldX, type);
+                log.warn(" ! can not get generic type to fetch d={} dto={} f={} t={}", document, dtoX, fieldX, type);
                 return;
             }
             type = types[0];
