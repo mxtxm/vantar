@@ -3,7 +3,7 @@ package com.vantar.service.scheduler;
 import com.vantar.service.log.LogEvent;
 import com.vantar.common.VantarParam;
 import com.vantar.service.Services;
-import com.vantar.util.collection.CollectionUtil;
+import com.vantar.util.collection.*;
 import com.vantar.util.string.StringUtil;
 import org.slf4j.*;
 import java.lang.reflect.*;
@@ -175,7 +175,7 @@ public class ServiceScheduler implements Services.Service {
         return () -> {
             String[] cm = StringUtil.split(classNameMethodName, '.');
             try {
-                Class<?> tClass = Class.forName(CollectionUtil.join(cm, '.', cm.length-1));
+                Class<?> tClass = Class.forName(ExtraUtils.join(cm, '.', cm.length-1));
                 Method method = tClass.getMethod(cm[cm.length-1]);
                 method.invoke(null);
                 LogEvent.beat(this.getClass(), "run:" + classNameMethodName);
@@ -195,7 +195,7 @@ public class ServiceScheduler implements Services.Service {
             String[] cm = StringUtil.split(classNameOptions[0], '.');
 
             ScheduleInfo c = new ScheduleInfo();
-            c.className = CollectionUtil.join(cm, '.', cm.length-1);
+            c.className = ExtraUtils.join(cm, '.', cm.length-1);
             c.methodName = cm[cm.length-1];
 
             if (classNameOptions.length == 2) {

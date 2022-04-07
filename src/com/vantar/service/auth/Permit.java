@@ -5,7 +5,7 @@ import com.vantar.exception.*;
 import com.vantar.locale.VantarKey;
 import com.vantar.service.Services;
 import com.vantar.service.cache.ServiceDtoCache;
-import com.vantar.util.collection.CollectionUtil;
+import com.vantar.util.object.ObjectUtil;
 import com.vantar.util.string.StringUtil;
 import com.vantar.web.Params;
 import com.vantar.web.dto.Permission;
@@ -47,7 +47,7 @@ public class Permit {
 
         // multi role
         List<? extends CommonUserRole> roles = token.user.getRoles();
-        if (CollectionUtil.isEmpty(roles)) {
+        if (ObjectUtil.isEmpty(roles)) {
             throw new AuthException(VantarKey.NO_ACCESS);
         }
         for (CommonUserRole r : roles) {
@@ -82,7 +82,7 @@ public class Permit {
 
         // multi role
         List<? extends CommonUserRole> roles = token.user.getRoles();
-        if (CollectionUtil.isEmpty(roles)) {
+        if (ObjectUtil.isEmpty(roles)) {
             throw new AuthException(VantarKey.NO_ACCESS);
         }
         for (CommonUserRole r : roles) {
@@ -148,7 +148,7 @@ public class Permit {
 
         // multi role
         List<? extends CommonUserRole> roles = token.user.getRoles();
-        if (CollectionUtil.isEmpty(roles)) {
+        if (ObjectUtil.isEmpty(roles)) {
             throw new AuthException(VantarKey.NO_ACCESS);
         }
         for (CommonUserRole r : roles) {
@@ -204,7 +204,7 @@ public class Permit {
             return;
         }
 
-        if (CollectionUtil.isNotEmpty(methodPermissionRules.allowedRoles)) {
+        if (ObjectUtil.isNotEmpty(methodPermissionRules.allowedRoles)) {
             // single role
             if (role != null) {
                 if (getUserByMatchedRolesSet(role, token, methodPermissionRules.allowedRoles)) {
@@ -215,7 +215,7 @@ public class Permit {
 
             // multi role
             List<? extends CommonUserRole> roles = token.user.getRoles();
-            if (CollectionUtil.isEmpty(roles)) {
+            if (ObjectUtil.isEmpty(roles)) {
                 throw new AuthException(VantarKey.NO_ACCESS);
             }
             for (CommonUserRole r : roles) {
@@ -237,7 +237,7 @@ public class Permit {
 
             // multi feature
             List<? extends CommonUserRole> roles = token.user.getRoles();
-            if (CollectionUtil.isEmpty(roles)) {
+            if (ObjectUtil.isEmpty(roles)) {
                 throw new AuthException(VantarKey.NO_ACCESS);
             }
             for (CommonUserRole r : roles) {

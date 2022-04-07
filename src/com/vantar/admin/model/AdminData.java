@@ -7,6 +7,7 @@ import com.vantar.database.dto.*;
 import com.vantar.database.nosql.elasticsearch.*;
 import com.vantar.database.nosql.mongo.*;
 import com.vantar.database.query.*;
+import com.vantar.database.query.data.QueryData;
 import com.vantar.database.sql.*;
 import com.vantar.exception.*;
 import com.vantar.locale.Locale;

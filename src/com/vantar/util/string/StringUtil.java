@@ -3,7 +3,6 @@ package com.vantar.util.string;
 import com.vantar.database.datatype.Location;
 import com.vantar.database.dto.Dto;
 import com.vantar.exception.DateTimeException;
-import com.vantar.util.collection.CollectionUtil;
 import com.vantar.util.datetime.DateTime;
 import com.vantar.util.json.Json;
 import com.vantar.util.number.NumberUtil;
@@ -34,7 +33,7 @@ public class StringUtil {
      * @return values == null or values == [] or all items are (null or "" or "      ")
      */
     public static boolean areEmpty(String... values) {
-        if (CollectionUtil.isEmpty(values)) {
+        if (ObjectUtil.isEmpty(values)) {
             return true;
         }
         for (String value : values) {
@@ -60,7 +59,7 @@ public class StringUtil {
      * @return values != null and values != [] and all items are not (null or "" or "      ")
      */
     public static boolean areNotEmpty(String... values) {
-        if (CollectionUtil.isEmpty(values)) {
+        if (ObjectUtil.isEmpty(values)) {
             return false;
         }
         for (String value : values) {
@@ -536,7 +535,7 @@ public class StringUtil {
     }
 
     /**
-     * Trim(remove) chars from left and right side of a string
+     * Trim(remove) chars and whitespace from left and right side of a string
      * @param string to trim
      * @param trimChars chars to trim
      * @return updated string (null if string == null)
@@ -546,7 +545,7 @@ public class StringUtil {
     }
 
     /**
-     * Trim(remove) chars from left
+     * Trim(remove) chars and whitespace from left
      * @param string to trim
      * @param trimChars chars to trim
      * @return updated string (null if string == null)
@@ -575,7 +574,7 @@ public class StringUtil {
     }
 
     /**
-     * Trim(remove) chars from right side of a string
+     * Trim(remove) chars and whitespace from right side of a string
      * @param string to trim
      * @param trimChars chars to trim
      * @return updated string (null if string == null)
@@ -585,7 +584,7 @@ public class StringUtil {
             return string;
         }
         int i = string.length() - 1;
-        for (; i > 0; --i) {
+        for (; i >= 0; --i) {
             char c = string.charAt(i);
             boolean contains = Character.isWhitespace(c);
             if (!contains) {

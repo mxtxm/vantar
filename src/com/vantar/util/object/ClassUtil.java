@@ -1,9 +1,7 @@
 package com.vantar.util.object;
 
-import com.vantar.database.dto.DtoBase;
-import com.vantar.util.collection.CollectionUtil;
+import com.vantar.util.collection.*;
 import com.vantar.util.string.StringUtil;
-import org.slf4j.LoggerFactory;
 import java.io.*;
 import java.lang.reflect.*;
 import java.net.URL;
@@ -329,7 +327,7 @@ public class ClassUtil {
             types[i] = params[i].getClass();
         }
         try {
-            Class<?> tClass = Class.forName(CollectionUtil.join(parts, '.', parts.length - 1));
+            Class<?> tClass = Class.forName(ExtraUtils.join(parts, '.', parts.length - 1));
             Method method = tClass.getMethod(parts[parts.length - 1], types);
             return method.invoke(null, params);
         } catch (ClassNotFoundException | NoSuchMethodException | IllegalAccessException e) {
@@ -360,6 +358,20 @@ public class ClassUtil {
             return null;
         } catch (InvocationTargetException e) {
             throw e.getCause();
+        }
+    }
+
+    /**
+     * Check if a method belongs to the class and is not inherited
+     * @param theClass class
+     * @param method method name
+     * @return trye if method is defined in the class
+     */
+    public static boolean isClassMethod(Class<?> theClass, String method) {
+        try {
+            return theClass.equals(theClass.getMethod(method).getDeclaringClass());
+        } catch (NoSuchMethodException e) {
+            return false;
         }
     }
 }

@@ -11,7 +11,7 @@ import com.vantar.database.query.*;
 import com.vantar.exception.*;
 import com.vantar.service.Services;
 import com.vantar.service.cache.ServiceDtoCache;
-import com.vantar.util.collection.CollectionUtil;
+import com.vantar.util.collection.*;
 import com.vantar.util.datetime.DateTime;
 import com.vantar.util.json.Json;
 import com.vantar.util.object.*;
@@ -364,7 +364,7 @@ public class MongoQueryResult extends QueryResultBase implements QueryResult, Au
             return;
         }
         Map<String, String> v = (Map<String, String>) document.get(key);
-        fieldX.set(dtoX, v == null ? null : CollectionUtil.getStringFromMap(v, getLocales()));
+        fieldX.set(dtoX, v == null ? null : ExtraUtils.getStringFromMap(v, getLocales()));
     }
 
     private boolean fetchFromCache(Document document, Dto dtoX, Field fieldX, Class<?> type) throws IllegalAccessException {

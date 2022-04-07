@@ -1,19 +1,33 @@
 package com.vantar.util.datetime;
 
-
+/**
+ * Persian date utilities
+ */
 public class PersianDateUtil {
 
     public static final int PERSIAN_YEAR_UPPER_LIMIT = 1500;
     private static final int[] breaks = new int[] {-61, 9, 38, 199, 426, 686, 756, 818, 1111, 1181, 1210, 1635, 2060,
         2097, 2192, 2262, 2324, 2394, 2456, 3178};
 
-
+    /**
+     * Check if persian date is valid
+     * @param year year
+     * @param month month
+     * @param day day
+     * @return true if valid
+     */
     public static boolean isValid(int year, int month, int day) {
         return  year >= -61 && year <= 3177 &&
             month >= 1 && month <= 12 &&
             day >= 1 && day <= getMonthDays(year, month);
     }
 
+    /**
+     * Get number months days
+     * @param year year
+     * @param month month
+     * @return number of days
+     */
     public static int getMonthDays(int year, int month) {
         if (month <= 6) {
             return 31;
@@ -28,14 +42,31 @@ public class PersianDateUtil {
         return 29;
     }
 
+    /**
+     * Convert date
+     * @param dateTimeFormatter date time formatter
+     * @return gregorian date
+     */
     public static DateTimeFormatter toGregorian(DateTimeFormatter dateTimeFormatter) {
         return toGregorian(dateTimeFormatter.year, dateTimeFormatter.month, dateTimeFormatter.day);
     }
 
+    /**
+     * Convert date
+     * @param dateTimeFormatter date time formatter
+     * @return persian date
+     */
     public static DateTimeFormatter toPersian(DateTimeFormatter dateTimeFormatter) {
         return toPersian(dateTimeFormatter.year, dateTimeFormatter.month, dateTimeFormatter.day);
     }
 
+    /**
+     * Convert date
+     * @param year year
+     * @param month month
+     * @param day day
+     * @return persian date
+     */
     public static DateTimeFormatter toPersian(int year, int month, int day) {
         int jdn = getJulianDayNumber(year, month, day);
 
@@ -71,6 +102,13 @@ public class PersianDateUtil {
         return new DateTimeFormatter(jy, jm, jd);
     }
 
+    /**
+     * Convert date
+     * @param year year
+     * @param month month
+     * @param day day
+     * @return gregorian date
+     */
     public static DateTimeFormatter toGregorian(int year, int month, int day) {
         JCal r = jalCal(year, true);
         return getGregorianDate(getJulianDayNumber(r.gy, 3, r.march) + (month - 1) * 31 - div(month, 7) * (month - 7) + day - 1);

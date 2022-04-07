@@ -12,6 +12,7 @@ import com.vantar.service.backup.ServiceBackup;
 import com.vantar.util.collection.CollectionUtil;
 import com.vantar.util.datetime.*;
 import com.vantar.util.file.FileUtil;
+import com.vantar.util.object.ObjectUtil;
 import com.vantar.util.string.StringUtil;
 import com.vantar.web.*;
 import javax.servlet.http.HttpServletResponse;
@@ -135,7 +136,7 @@ public class AdminBackup {
         ui.beginBox(dbms.toString() + Locale.getString(VantarKey.ADMIN_BACKUP_FILES));
 
         List<String> paths = params.getStringList("delete");
-        if (!CollectionUtil.isEmpty(paths) && params.isChecked(WebUi.PARAM_CONFIRM)) {
+        if (!ObjectUtil.isEmpty(paths) && params.isChecked(WebUi.PARAM_CONFIRM)) {
             for (String path : paths) {
                 String[] parts = StringUtil.split(path, '/');
                 String filename = parts[parts.length - 1];

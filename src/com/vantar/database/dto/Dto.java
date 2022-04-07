@@ -47,8 +47,10 @@ public interface Dto {
     Field[] getFields();
 
     Class<?> getPropertyType(String name);
+    Class<?> getPropertyType(Field field);
     Map<String, Class<?>> getPropertyTypes();
     Class<?>[] getPropertyGenericTypes(String name);
+    Class<?>[] getPropertyGenericTypes(Field field);
 
     String[] getProperties();
     String[] getProperties(String... exclude);

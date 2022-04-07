@@ -7,13 +7,13 @@ import com.vantar.database.dto.*;
 import com.vantar.database.nosql.mongo.Mongo;
 import com.vantar.database.nosql.mongo.*;
 import com.vantar.database.query.*;
+import com.vantar.database.query.data.QueryData;
 import com.vantar.exception.*;
 import com.vantar.locale.Locale;
 import com.vantar.locale.*;
 import com.vantar.service.Services;
 import com.vantar.service.cache.ServiceDtoCache;
 import com.vantar.service.log.ServiceUserActionLog;
-import com.vantar.util.collection.CollectionUtil;
 import com.vantar.util.number.NumberUtil;
 import com.vantar.util.object.*;
 import com.vantar.util.string.StringUtil;
@@ -67,7 +67,7 @@ public class CommonModelMongo extends CommonModel {
             dto.set((String) params, Dto.Action.INSERT) :
             dto.set((Params) params, Dto.Action.INSERT);
 
-        if (CollectionUtil.isNotEmpty(errors)) {
+        if (ObjectUtil.isNotEmpty(errors)) {
             throw new InputException(errors);
         }
 
@@ -123,7 +123,7 @@ public class CommonModelMongo extends CommonModel {
         }
 
         List<ValidationError> errors = dto.validate(Dto.Action.INSERT);
-        if (CollectionUtil.isNotEmpty(errors)) {
+        if (ObjectUtil.isNotEmpty(errors)) {
             throw new InputException(errors);
         }
 
@@ -214,7 +214,7 @@ public class CommonModelMongo extends CommonModel {
             dto.set((String) params, action) :
             dto.set((Params) params, action);
 
-        if (CollectionUtil.isNotEmpty(errors)) {
+        if (ObjectUtil.isNotEmpty(errors)) {
             throw new InputException(errors);
         }
 
@@ -295,7 +295,7 @@ public class CommonModelMongo extends CommonModel {
         }
 
         List<ValidationError> errors = dto.validate(action);
-        if (CollectionUtil.isNotEmpty(errors)) {
+        if (ObjectUtil.isNotEmpty(errors)) {
             throw new InputException(errors);
         }
 
@@ -362,7 +362,7 @@ public class CommonModelMongo extends CommonModel {
         }
 
         List<ValidationError> errors = dto.set(params, Dto.Action.DELETE);
-        if (CollectionUtil.isNotEmpty(errors)) {
+        if (ObjectUtil.isNotEmpty(errors)) {
             throw new InputException(errors);
         }
 
@@ -417,7 +417,7 @@ public class CommonModelMongo extends CommonModel {
 
         if (q == null) {
             List<ValidationError> errors = dto.validate(Dto.Action.DELETE);
-            if (CollectionUtil.isNotEmpty(errors)) {
+            if (ObjectUtil.isNotEmpty(errors)) {
                 throw new InputException(errors);
             }
         }

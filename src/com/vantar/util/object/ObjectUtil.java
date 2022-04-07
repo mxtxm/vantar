@@ -1,10 +1,10 @@
 package com.vantar.util.object;
 
-import com.vantar.common.VantarParam;
 import com.vantar.database.datatype.Location;
 import com.vantar.database.dto.*;
 import com.vantar.exception.DateTimeException;
 import com.vantar.util.bool.BoolUtil;
+import com.vantar.util.collection.CollectionUtil;
 import com.vantar.util.datetime.DateTime;
 import com.vantar.util.json.Json;
 import com.vantar.util.number.NumberUtil;
@@ -15,7 +15,6 @@ import java.lang.reflect.*;
 import java.util.*;
 import static com.carrotsearch.sizeof.RamUsageEstimator.humanSizeOf;
 import static com.carrotsearch.sizeof.RamUsageEstimator.sizeOfAll;
-
 
 /**
  * Object utilities
@@ -39,20 +38,20 @@ public class ObjectUtil {
         if (obj == null) {
             return true;
         }
-        if (obj instanceof String) {
-            return StringUtil.isEmpty((String) obj);
-        }
         if (obj instanceof Collection) {
-            return ((Collection) obj).isEmpty();
+            return ((Collection<?>) obj).isEmpty();
         }
         if (obj instanceof Map) {
-            return ((Map) obj).isEmpty();
-        }
-        if (obj instanceof CharSequence) {
-            return ((CharSequence) obj).length() == 0;
+            return ((Map<?, ?>) obj).isEmpty();
         }
         if (obj.getClass().isArray()) {
             return Array.getLength(obj) == 0;
+        }
+        if (obj instanceof String) {
+            return StringUtil.isEmpty((String) obj);
+        }
+        if (obj instanceof CharSequence) {
+            return ((CharSequence) obj).length() == 0;
         }
         try {
             Method method = obj.getClass().getMethod("isEmpty");
@@ -88,7 +87,7 @@ public class ObjectUtil {
      */
     public static String toString(Object object) {
         if (object == null) {
-            return null;
+            return "null";
         } else if (object instanceof String) {
             return (String) object;
         } else if (object instanceof Number || object instanceof Boolean || object instanceof DateTime
@@ -97,11 +96,6 @@ public class ObjectUtil {
         } else if (object instanceof Throwable) {
             return throwableToString((Throwable) object);
         }
-
-        if (isClassMethod(object.getClass(), "toString")) {
-            return object.toString();
-        }
-
         try {
             String s = Json.d.toJsonPretty(object);
             return s == null ? object.toString() : s;
@@ -191,6 +185,7 @@ public class ObjectUtil {
         }
     }
 
+
     /**
      * Get a dictionary of the properties and values of an object
      * @param object the object
@@ -268,20 +263,6 @@ public class ObjectUtil {
     }
 
     /**
-     * Check if a method belongs to the class and is not inherited
-     * @param theClass class
-     * @param method method name
-     * @return trye if method is defined in the class
-     */
-    public static boolean isClassMethod(Class<?> theClass, String method) {
-        try {
-            return theClass.equals(theClass.getMethod(method).getDeclaringClass());
-        } catch (NoSuchMethodException e) {
-            return false;
-        }
-    }
-
-    /**
      * Convert object to the given type
      * @param object object to be converted
      * @param classType type to convert
@@ -296,28 +277,8 @@ public class ObjectUtil {
         if (ClassUtil.isInstantiable(classType, Number.class)) {
             return NumberUtil.toNumber(object, classType);
         }
-        if (classType == Character.class) {
-            return (T) StringUtil.toCharacter(object);
-        }
-        if (classType == Boolean.class) {
-            return (T) BoolUtil.toBoolean(object);
-        }
-        if (classType == DateTime.class) {
-            try {
-                return (T) new DateTime(object.toString());
-            } catch (DateTimeException e) {
-                return null;
-            }
-        }
-        if (classType == Location.class) {
-            Location location = new Location(object.toString());
-            return location.isValid() ? (T) location : null;
-        }
         if (classType == String.class) {
             return (T) toString(object);
-        }
-        if (classType.isEnum()) {
-            return EnumUtil.getEnumValue(object.toString(), classType);
         }
         if (ClassUtil.isInstantiable(classType, Dto.class)) {
             Dto dto = DtoDictionary.get(classType).getDtoInstance();
@@ -337,11 +298,11 @@ public class ObjectUtil {
         }
         if (ClassUtil.isInstantiable(classType, List.class)) {
             Class<?> g = generics == null || generics.length != 1 ? String.class : generics[0];
-            return (T) toList(object, g);
+            return (T) CollectionUtil.toList(object, g);
         }
         if (ClassUtil.isInstantiable(classType, Set.class)) {
             Class<?> g = generics == null || generics.length != 1 ? String.class : generics[0];
-            return (T) toSet(object, g);
+            return (T) CollectionUtil.toSet(object, g);
         }
         if (ClassUtil.isInstantiable(classType, Map.class)) {
             Class<?> g1;
@@ -353,143 +314,33 @@ public class ObjectUtil {
                 g1 = generics[0];
                 g2 = generics[1];
             }
-            return (T) toMap(object, g1, g2);
+            return (T) CollectionUtil.toMap(object, g1, g2);
+        }
+        if (classType == DateTime.class) {
+            try {
+                return (T) new DateTime(object.toString());
+            } catch (DateTimeException e) {
+                return null;
+            }
+        }
+        if (classType.isEnum()) {
+            return EnumUtil.getEnumValue(object.toString(), classType);
+        }
+        if (classType == Location.class) {
+            Location location = new Location(object.toString());
+            return location.isValid() ? (T) location : null;
+        }
+        if (classType == Boolean.class) {
+            return (T) BoolUtil.toBoolean(object);
+        }
+        if (classType == Character.class) {
+            return (T) StringUtil.toCharacter(object);
+        }
+        if (classType.isArray()) {
+            Class<?> g = generics == null || generics.length != 1 ? String.class : generics[0];
+            return (T) CollectionUtil.toArray(object, g);
         }
 
         return (T) object;
     }
-
-    /**
-     * Convert object to a sett
-     * @param object the object
-     * @param genericType set generic type
-     * @return a set of generic type
-     */
-    public static <T> Set<T> toSet(Object object, Class<T> genericType) {
-        return new HashSet<>(toList(object, genericType));
-    }
-
-    /**
-     * Convert object to a list
-     * @param object the object
-     * @param genericType list generic type
-     * @return a list of generic type
-     */
-    @SuppressWarnings({"unchecked"})
-    public static <T> List<T> toList(Object object, Class<T> genericType) {
-        if (object == null) {
-            return null;
-        }
-
-        if (object instanceof Collection) {
-            if (isEmpty(object)) {
-                return new ArrayList<>(1);
-            }
-            List<T> items = new ArrayList<>(((Collection<?>) object).size());
-            for (Object item : (Collection<?>) object) {
-                items.add(convert(item, genericType));
-            }
-            return items;
-        }
-
-        Class<?> type = object.getClass();
-        if (type.isArray()) {
-            int length = Array.getLength(object);
-            if (length == 0) {
-                return new ArrayList<>(1);
-            }
-            List<T> items = new ArrayList<>(length);
-            for (int i = 0; i < length; i++) {
-                items.add(convert(Array.get(object, i), genericType));
-            }
-            return items;
-        }
-
-        String[] strings;
-        if (!type.equals(String.class)) {
-            object = toString(object);
-        }
-        String value = ((String) object).trim();
-        if (ClassUtil.isInstantiable(type, Number.class)) {
-            value = Persian.Number.toLatin(value);
-        }
-        if (value.isEmpty()) {
-            return new ArrayList<>();
-        }
-
-        if (value.startsWith("[") && value.endsWith("]")) {
-            List<T> list = Json.d.listFromJson(value, genericType);
-            return list == null ? new ArrayList<>() : list;
-        }
-        strings = StringUtil.split(value, VantarParam.SEPARATOR_COMMON);
-        if (strings == null) {
-            return new ArrayList<>();
-        }
-
-        List<T> values = new ArrayList<>();
-
-        if (ClassUtil.isInstantiable(genericType, Number.class)) {
-            for (String n : strings) {
-                T x = NumberUtil.toNumber(n, genericType);
-                if (x != null) {
-                    values.add(x);
-                }
-            }
-        } else if (genericType.equals(String.class)) {
-            for (String s : strings) {
-                if (s != null) {
-                    values.add((T) s);
-                }
-            }
-        } else if (genericType.equals(DateTime.class)) {
-            for (String s : strings) {
-                if (s != null) {
-                    try {
-                        values.add((T) new DateTime(s));
-                    } catch (DateTimeException ignore) {
-
-                    }
-                }
-            }
-        } else if (genericType.equals(Location.class)) {
-            for (String s : strings) {
-                if (s != null) {
-                    Location l = new Location(s);
-                    if (l.isValid()) {
-                        values.add((T) l);
-                    }
-                }
-            }
-        } else if (genericType.isEnum()) {
-            for (String s : strings) {
-                if (s != null) {
-                    try {
-                        T e = EnumUtil.getEnumValue(s, genericType);
-                        if (e != null) {
-                            values.add(e);
-                        }
-                    } catch (IllegalArgumentException ignore) {
-
-                    }
-                }
-            }
-        } else {
-            return new ArrayList<>();
-        }
-
-        return values;
-    }
-
-    // todo complete this
-    @SuppressWarnings("unchecked")
-    public static <K, V> Map<K, V> toMap(Object object, Class<K> k, Class<V> v) {
-        if (object instanceof String) {
-            return Json.d.mapFromJson((String) object, k, v);
-        } else if (object instanceof Map) {
-            return (Map<K, V>) object;
-        }
-        return null;
-    }
-
-
 }

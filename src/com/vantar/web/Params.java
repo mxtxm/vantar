@@ -2,7 +2,7 @@ package com.vantar.web;
 
 import com.vantar.common.VantarParam;
 import com.vantar.database.datatype.Location;
-import com.vantar.database.query.QueryData;
+import com.vantar.database.query.data.QueryData;
 import com.vantar.exception.DateTimeException;
 import com.vantar.locale.Locale;
 import com.vantar.locale.*;
@@ -392,7 +392,7 @@ public class Params {
             object = getParameter(key);
             isEmpty = StringUtil.isEmpty((String) object);
         }
-        List<T> list = ObjectUtil.toList(object, type);
+        List<T> list = CollectionUtil.toList(object, type);
         typeMisMatch = (list == null || list.isEmpty()) && isEmpty;
         return list;
     }
@@ -528,6 +528,7 @@ public class Params {
     public <T> T extractFromJson(String key, Class<T> type) {
         return Json.d.extract(getJson(), key, type);
     }
+
 
     // > > > GET DATABASE QUERY
 

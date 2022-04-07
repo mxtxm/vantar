@@ -3,7 +3,7 @@ package com.vantar.database.query;
 import com.vantar.database.dto.Dto;
 import com.vantar.exception.*;
 import com.vantar.locale.Locale;
-import com.vantar.util.collection.CollectionUtil;
+import com.vantar.util.object.ObjectUtil;
 import org.slf4j.*;
 import java.lang.reflect.*;
 import java.util.*;
@@ -30,14 +30,14 @@ abstract public class QueryResultBase {
     }
 
     protected String[] getLocales() {
-        if (CollectionUtil.isEmpty(locales)) {
+        if (ObjectUtil.isEmpty(locales)) {
             locales = new String[] { Locale.getDefaultLocale() };
         }
         return locales;
     }
 
     protected String getLocale() {
-        return CollectionUtil.isEmpty(locales) ? null : locales[0];
+        return ObjectUtil.isEmpty(locales) ? null : locales[0];
     }
 
     public <T extends Dto> T get() {

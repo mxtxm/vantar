@@ -5,6 +5,7 @@ import com.vantar.database.dto.*;
 import com.vantar.database.query.*;
 import com.vantar.exception.*;
 import com.vantar.util.collection.CollectionUtil;
+import com.vantar.util.object.ObjectUtil;
 import org.slf4j.*;
 import java.sql.*;
 import java.util.List;
@@ -137,7 +138,7 @@ public class SqlSearch extends SqlQueryHelper {
 
             return new SqlQueryResult(statement, statement.executeQuery(), dto);
         } catch (SQLException e) {
-            log.error("! failed to get data ({}, {})", sql, CollectionUtil.toString(params), e);
+            log.error("! failed to get data ({}, {})", sql, ObjectUtil.toString(params), e);
             close(statement);
             throw new DatabaseException(e);
         }

@@ -912,7 +912,7 @@ public class WebUi {
 
             } else if (CollectionUtil.isCollection(type)) {
                 Class<?>[] g = ClassUtil.getGenericTypes(field);
-                if (CollectionUtil.isNotEmpty(g)) {
+                if (ObjectUtil.isNotEmpty(g)) {
                     if (ClassUtil.isInstantiable(g[0], Dto.class)) {
                         Object obj = ClassUtil.getInstance(g[0]);
                         if (obj != null) {
@@ -931,7 +931,7 @@ public class WebUi {
 
             } else if (CollectionUtil.isMap(type)) {
                 Class<?>[] g = ClassUtil.getGenericTypes(field);
-                if (CollectionUtil.isNotEmpty(g) && g.length == 2) {
+                if (ObjectUtil.isNotEmpty(g) && g.length == 2) {
                     setAdditive("<pre class='format'>{" + g[0].getSimpleName() + ": " + g[1].getSimpleName() + "}</pre>");
                 }
                 addTextArea(

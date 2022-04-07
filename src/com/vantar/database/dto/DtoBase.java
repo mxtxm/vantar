@@ -395,8 +395,16 @@ public abstract class DtoBase implements Dto {
         return field == null ? null : field.getType();
     }
 
+    public Class<?> getPropertyType(Field field) {
+        return field == null ? null : field.getType();
+    }
+
     public Class<?>[] getPropertyGenericTypes(String name) {
         return ClassUtil.getGenericTypes(getField(name));
+    }
+
+    public Class<?>[] getPropertyGenericTypes(Field field) {
+        return ClassUtil.getGenericTypes(field);
     }
 
     public Map<String, Class<?>> getPropertyTypes() {
@@ -907,9 +915,9 @@ public abstract class DtoBase implements Dto {
                         }
                     }
                 } else if (ClassUtil.isInstantiable(type, List.class)) {
-                    value = ObjectUtil.toList(value, getPropertyGenericTypes(name)[0]);
+                    value = CollectionUtil.toList(value, getPropertyGenericTypes(name)[0]);
                 } else if (ClassUtil.isInstantiable(type, Set.class)) {
-                    value = new HashSet<>(ObjectUtil.toList(value, getPropertyGenericTypes(name)[0]));
+                    value = new HashSet<>(CollectionUtil.toList(value, getPropertyGenericTypes(name)[0]));
                 } else if (ClassUtil.isInstantiable(type, Map.class)) {
                     if (field.isAnnotationPresent(Localized.class) && value instanceof String) {
                         Map<String, String> v = (Map<String, String>) field.get(this);
@@ -920,7 +928,7 @@ public abstract class DtoBase implements Dto {
                         value = v;
                     } else {
                         Class<?>[] types = getPropertyGenericTypes(name);
-                        value = ObjectUtil.toMap(value, types[0], types[1]);
+                        value = CollectionUtil.toMap(value, types[0], types[1]);
                     }
                 } else if (ClassUtil.isInstantiable(type, Dto.class) && !(value instanceof Dto)) {
                     if (value instanceof Map) {

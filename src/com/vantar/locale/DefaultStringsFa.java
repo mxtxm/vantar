@@ -51,6 +51,8 @@ public class DefaultStringsFa {
         tokens.put(VantarKey.INVALID_METHOD, "متد درخواست نادرست است");
         tokens.put(VantarKey.SEARCH_PARAM_INVALID_CONDITION_TYPE, "شرط جستجو باید نوع شرط داشته باشد");
         tokens.put(VantarKey.SEARCH_PARAM_COL_MISSING, "شرط جستجو باید فیلد جستجو داشته باشد");
+        tokens.put(VantarKey.SEARCH_PARAM_VALUE_INVALID, "مقدار شرط جستجو چا افتاده است");
+        tokens.put(VantarKey.SEARCH_PARAM_VALUE_MISSING, "مقدار شرط جستحو نادرست است");
         tokens.put(VantarKey.INVALID_GEO_LOCATION, "مکان جغرافیایی نادرست است");
 
         // data fetch

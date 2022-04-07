@@ -5,7 +5,7 @@ import com.vantar.database.dto.Dto;
 import com.vantar.database.query.QueryResult;
 import com.vantar.database.query.QueryResultBase;
 import com.vantar.exception.NoContentException;
-import com.vantar.util.collection.CollectionUtil;
+import com.vantar.util.collection.*;
 import com.vantar.util.json.*;
 import com.vantar.util.string.StringUtil;
 import org.elasticsearch.search.SearchHit;
@@ -97,7 +97,7 @@ public class ElasticQueryResult extends QueryResultBase implements QueryResult, 
             Map<String, String> value = (Map<String, String>) dto.getPropertyValue(valueField);
             result.put(
                 key == null ? null : key.toString(),
-                value == null ? null : CollectionUtil.getStringFromMap(value, locales)
+                value == null ? null : ExtraUtils.getStringFromMap(value, locales)
             );
         }
         if (result.isEmpty()) {

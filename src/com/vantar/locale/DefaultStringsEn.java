@@ -53,6 +53,8 @@ public class DefaultStringsEn {
         tokens.put(VantarKey.INVALID_METHOD, "invalid HTTP method");
         tokens.put(VantarKey.SEARCH_PARAM_INVALID_CONDITION_TYPE, "search condition requires condition type");
         tokens.put(VantarKey.SEARCH_PARAM_COL_MISSING, "search condition requires search column");
+        tokens.put(VantarKey.SEARCH_PARAM_VALUE_INVALID, "search condition value is missing");
+        tokens.put(VantarKey.SEARCH_PARAM_VALUE_MISSING, "search condition value is invalid");
         tokens.put(VantarKey.INVALID_GEO_LOCATION, "invalid location");
 
         // data fetch

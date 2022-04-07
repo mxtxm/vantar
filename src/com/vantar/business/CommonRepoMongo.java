@@ -6,10 +6,10 @@ import com.vantar.database.dto.*;
 import com.vantar.database.nosql.mongo.Mongo;
 import com.vantar.database.nosql.mongo.*;
 import com.vantar.database.query.*;
+import com.vantar.database.query.data.QueryData;
 import com.vantar.exception.*;
 import com.vantar.locale.VantarKey;
-import com.vantar.util.collection.CollectionUtil;
-import com.vantar.util.object.ClassUtil;
+import com.vantar.util.object.*;
 import com.vantar.util.string.StringUtil;
 import com.vantar.web.ResponseMessage;
 import java.util.*;
@@ -210,7 +210,7 @@ public class CommonRepoMongo extends Mongo {
         QueryBuilder q = new QueryBuilder(dto);
         q.condition().equal(Mongo.ID, dto.getId());
         QueryResult result = MongoSearch.getData(q);
-        if (CollectionUtil.isNotEmpty(locales)) {
+        if (ObjectUtil.isNotEmpty(locales)) {
             result.setLocale(locales);
         }
         return result.first();
@@ -220,7 +220,7 @@ public class CommonRepoMongo extends Mongo {
         QueryBuilder q = new QueryBuilder(dto);
         q.setConditionFromDtoEqualTextMatch(QueryOperator.AND);
         QueryResult result = MongoSearch.getData(q);
-        if (CollectionUtil.isNotEmpty(locales)) {
+        if (ObjectUtil.isNotEmpty(locales)) {
             result.setLocale(locales);
         }
         return result.first();
@@ -230,7 +230,7 @@ public class CommonRepoMongo extends Mongo {
         QueryBuilder q = new QueryBuilder(dto);
         q.setConditionFromDtoEqualTextMatch(QueryOperator.AND);
         QueryResult result = MongoSearch.getData(q);
-        if (CollectionUtil.isNotEmpty(locales)) {
+        if (ObjectUtil.isNotEmpty(locales)) {
             result.setLocale(locales);
         }
         return result.asList();
@@ -238,7 +238,7 @@ public class CommonRepoMongo extends Mongo {
 
     public static <T extends Dto> List<T> getAll(Dto dto, String... locales) throws NoContentException, DatabaseException {
         QueryResult result = MongoSearch.getAllData(dto);
-        if (CollectionUtil.isNotEmpty(locales)) {
+        if (ObjectUtil.isNotEmpty(locales)) {
             result.setLocale(locales);
         }
         return result.asList();
@@ -254,7 +254,7 @@ public class CommonRepoMongo extends Mongo {
 
     public static <T extends Dto> T getFirst(QueryBuilder q, String... locales) throws DatabaseException, NoContentException {
         QueryResult result = MongoSearch.getData(q);
-        if (CollectionUtil.isNotEmpty(locales)) {
+        if (ObjectUtil.isNotEmpty(locales)) {
             result.setLocale(locales);
         }
         return result.first();
@@ -262,7 +262,7 @@ public class CommonRepoMongo extends Mongo {
 
     public static <T extends Dto> List<T> getData(QueryBuilder q, String... locales) throws DatabaseException, NoContentException {
         QueryResult result = MongoSearch.getData(q);
-        if (CollectionUtil.isNotEmpty(locales)) {
+        if (ObjectUtil.isNotEmpty(locales)) {
             result.setLocale(locales);
         }
         return result.asList();
@@ -296,7 +296,7 @@ public class CommonRepoMongo extends Mongo {
             if (event != null) {
                 result.setEvent(event);
             }
-            if (CollectionUtil.isNotEmpty(locales)) {
+            if (ObjectUtil.isNotEmpty(locales)) {
                 result.setLocale(locales);
             }
             return result.asList();

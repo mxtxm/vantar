@@ -93,7 +93,7 @@ public class QueryMatchItem {
     }
 
 
-    // NUMBER > > >
+    // OBJECT > > >
 
     public QueryMatchItem(QueryOperator type, String fieldName, Object[] values) {
         this.type = type;

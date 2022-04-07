@@ -3,6 +3,7 @@ package com.vantar.database.dto;
 import com.vantar.common.*;
 import com.vantar.database.query.QueryBuilder;
 import com.vantar.util.file.FileUtil;
+import com.vantar.util.object.ClassUtil;
 import com.vantar.util.string.StringUtil;
 import org.slf4j.*;
 import java.lang.reflect.InvocationTargetException;
@@ -12,6 +13,7 @@ import java.util.*;
 public class DtoDictionary {
 
     private static final Logger log = LoggerFactory.getLogger(DtoDictionary.class);
+
 
     public enum Dbms {
         MONGO,
@@ -197,6 +199,14 @@ public class DtoDictionary {
         return get(type.getSimpleName());
     }
 
+    public static <T> T getInstance(Class<T> fieldType) {
+        T instance = ClassUtil.getInstance(fieldType);
+        if (!(instance instanceof Dto)) {
+            return null;
+        }
+        return instance;
+    }
+
 
     public static class Info {
 
@@ -224,8 +234,8 @@ public class DtoDictionary {
                 return dtoClass.getConstructor().newInstance();
             } catch (NoSuchMethodException | InstantiationException | IllegalAccessException | InvocationTargetException e) {
                 log.error("! failed to create dto instance ({})", dtoClass, e);
+                return null;
             }
-            return null;
         }
 
         public String getDtoClassName() {

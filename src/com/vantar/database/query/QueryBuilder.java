@@ -1,7 +1,9 @@
 package com.vantar.database.query;
 
 import com.vantar.common.VantarParam;
+import com.vantar.database.common.ValidationError;
 import com.vantar.database.dto.*;
+import com.vantar.database.query.data.*;
 import com.vantar.exception.InputException;
 import com.vantar.util.datetime.DateTime;
 import com.vantar.util.object.ObjectUtil;
@@ -13,6 +15,7 @@ import java.util.*;
 public class QueryBuilder {
 
     private static final Logger log = LoggerFactory.getLogger(QueryBuilder.class);
+    private List<ValidationError> errors;
 
     private QueryCondition condition;
     private QueryCondition conditionGroup;
@@ -45,13 +48,22 @@ public class QueryBuilder {
     }
 
     public QueryBuilder(QueryData queryData) throws InputException {
-        if (queryData == null /*|| queryData.isEmpty()*/) {
-            //throw new InputException(VantarKey.NO_SEARCH_COMMAND);
-            queryData = new QueryData();
+        if (queryData == null) {
+            return;
         }
+
+        errors = queryData.getErrors();
 
         dto = queryData.getDto();
         dtoResult = queryData.getDtoResult();
+
+        condition = queryData.getCondition();
+        conditionGroup = queryData.getGroupCondition();
+        columns = queryData.columns;
+
+        if (queryData.sort != null) {
+            sort(queryData.sort);
+        }
 
         isPagination = queryData.isPagination();
         Integer page = queryData.page;
@@ -69,15 +81,9 @@ public class QueryBuilder {
         if (queryData.total != null) {
             setTotal(queryData.total);
         }
-        if (queryData.sort != null) {
-            sort(queryData.sort);
-        }
-        condition = queryData.getCondition();
-        conditionGroup = queryData.getGroupCondition();
-        columns = queryData.columns;
 
         if (queryData.joins != null) {
-            for (QueryData.JoinDef joinDef: queryData.joins) {
+            for (JoinDef joinDef: queryData.joins) {
                 if (StringUtil.isEmpty(joinDef.joinType)) {
                     // error
                     continue;
@@ -115,7 +121,7 @@ public class QueryBuilder {
         }
 
         if (queryData.group != null) {
-            for (QueryData.GroupDef groupDef : queryData.group) {
+            for (GroupDef groupDef : queryData.group) {
                 if (StringUtil.isEmpty(groupDef.column)) {
                     // error
                     continue;
@@ -322,7 +328,6 @@ public class QueryBuilder {
     }
 
     public boolean conditionIsEmpty() {
-        if (dto == null) log.error(">>>>>>>>>>{}");
         if (dto.isDeleteLogicalEnabled()) {
             return false;
         }

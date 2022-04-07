@@ -1,24 +1,43 @@
 package com.vantar.util.datetime;
 
-import com.vantar.database.dto.Dto;
+import com.vantar.util.object.ObjectUtil;
 import java.util.*;
 
-
+/**
+ * Date-time range data structure
+ */
 public class DateTimeRange {
 
+    /**
+     * lower bound
+     */
     public DateTime dateMin;
+    /**
+     * upper bound
+     */
     public DateTime dateMax;
 
+    /**
+     * Set data
+     * @param dateMin lower bound
+     * @param dateMax upper bound
+     */
     public DateTimeRange(DateTime dateMin, DateTime dateMax) {
         this.dateMin = dateMin;
         this.dateMax = dateMax;
     }
 
+    /**
+     * Set data, lower bound=not upper bound=tomorrow
+     */
     public DateTimeRange() {
         this.dateMin = new DateTime();
         this.dateMax = new DateTime().addDays(1);
     }
 
+    /**
+     * Truncate time and normalize the range
+     */
     public void adjustDateRange() {
         if (dateMin == null || dateMax == null) {
             return;
@@ -38,11 +57,13 @@ public class DateTimeRange {
         dateMax.decreaseSeconds(1);
     }
 
+    /**
+     * Normalize the range
+     */
     public void adjustDateTimeRange() {
         if (dateMin == null || dateMax == null) {
             return;
         }
-
         if (dateMax.equals(dateMin)) {
             dateMax.addDays(1);
             if (dateMax.equals(dateMin)) {
@@ -53,10 +74,18 @@ public class DateTimeRange {
         dateMax.decreaseSeconds(1);
     }
 
+    /**
+     * Check if the range is valid (values are set and lower bound is before upper bound)
+     * @return true if range is valid
+     */
     public boolean isValid() {
         return dateMin != null && dateMax != null && dateMax.isAfter(dateMin);
     }
 
+    /**
+     * Get a list of years between the bounds
+     * @return list of years
+     */
     public List<Integer> getYearsBetween() {
         List<Integer> values = new ArrayList<>();
         for (int i = dateMin.formatter().year; i <= dateMax.formatter().year; ++i) {
@@ -65,6 +94,10 @@ public class DateTimeRange {
         return values;
     }
 
+    /**
+     * Get a list of months between the bounds
+     * @return list of months
+     */
     public List<Integer> getMonthsBetween() {
         List<Integer> values = new ArrayList<>();
         if (dateMin.formatter().year == dateMax.formatter().year) {
@@ -89,7 +122,7 @@ public class DateTimeRange {
     }
 
     public String toString() {
-        return "(" + (dateMin == null ? "null" : dateMin.toString()) + ", " + (dateMax == null ? "null" : dateMax.toString()) + ")";
+        return ObjectUtil.toString(this);
     }
 
     public boolean equals(Object obj) {

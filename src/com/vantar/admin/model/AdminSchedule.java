@@ -5,7 +5,7 @@ import com.vantar.locale.*;
 import com.vantar.service.Services;
 import com.vantar.service.log.LogEvent;
 import com.vantar.service.scheduler.ServiceScheduler;
-import com.vantar.util.collection.CollectionUtil;
+import com.vantar.util.collection.*;
 import com.vantar.util.datetime.*;
 import com.vantar.util.string.StringUtil;
 import com.vantar.web.*;
@@ -90,7 +90,7 @@ public class AdminSchedule {
 
         String[] cm = StringUtil.split(classNameMethodName, '.');
         try {
-            Class<?> tClass = Class.forName(CollectionUtil.join(cm, '.', cm.length-1));
+            Class<?> tClass = Class.forName(ExtraUtils.join(cm, '.', cm.length-1));
             Method method = tClass.getMethod(cm[cm.length-1]);
             method.invoke(null);
 
