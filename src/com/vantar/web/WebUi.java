@@ -1023,7 +1023,9 @@ public class WebUi {
             .append(" <a href='").append(getCompleteLink("/admin/data/insert?dto=" + className))
             .append("'>").append(Locale.getString(VantarKey.ADMIN_NEW_RECORD)).append("</a>")
             .append(" | <a href='").append(getCompleteLink("/admin/data/import?dto=" + className))
-            .append("'>").append(Locale.getString(VantarKey.ADMIN_IMPORT)).append("</a>");
+            .append("'>").append(Locale.getString(VantarKey.ADMIN_IMPORT)).append("</a>")
+            .append(" | <a href='").append(getCompleteLink("/admin/data/export?dto=" + className))
+            .append("'>").append(Locale.getString(VantarKey.ADMIN_EXPORT)).append("</a>");
 
         if (data != null) {
             html.append(" | <a href='").append(getCompleteLink("/admin/data/update?dto=" + className))

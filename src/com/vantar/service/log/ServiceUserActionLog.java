@@ -71,13 +71,13 @@ public class ServiceUserActionLog implements Services.Service {
         }
 
         UserLog userLog = new UserLog();
-        userLog.action = action;
-        userLog.threadId = Thread.currentThread().getId();
-
         Params params = Params.getThreadParams();
         if (params != null) {
-            userLog.headers = params.getHeaders();
             userLog.url = params.request.getRequestURI();
+            if (userLog.url.startsWith("/admin/")) {
+                return;
+            }
+            userLog.headers = params.getHeaders();
             userLog.requestType = params.getMethod() + ": " +  params.type.name();
             userLog.ip = params.getIp();
             userLog.uploadedFiles = params.getUploadFiles();
@@ -87,6 +87,8 @@ public class ServiceUserActionLog implements Services.Service {
                 userLog.userId = null;
             }
         }
+        userLog.action = action;
+        userLog.threadId = Thread.currentThread().getId();
 
         if (object == null && params != null) {
             userLog.className = "Request";
@@ -124,15 +126,17 @@ public class ServiceUserActionLog implements Services.Service {
         }
 
         UserLog userLog = new UserLog();
-        userLog.action = "RESPONSE";
-        userLog.threadId = Thread.currentThread().getId();
-        userLog.headers = Response.getHeaders(response);
-
         Params params = Params.getThreadParams();
         if (params != null) {
             userLog.url = params.request.getRequestURI();
+            if (userLog.url.startsWith("/admin/")) {
+                return;
+            }
             log.debug(" ! {} <", userLog.url);
         }
+        userLog.action = "RESPONSE";
+        userLog.threadId = Thread.currentThread().getId();
+        userLog.headers = Response.getHeaders(response);
 
         if (object != null) {
             if (object instanceof String) {

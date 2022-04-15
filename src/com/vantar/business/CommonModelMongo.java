@@ -27,6 +27,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class CommonModelMongo extends CommonModel {
 
     private static final Logger log = LoggerFactory.getLogger(CommonModelMongo.class);
+    public static boolean SEARCH_POLICY_ALLOW_EMPTY_CONDITION = true;
+    public static boolean SEARCH_POLICY_THROW_ON_CONDITION_ERROR = true;
 
 
     // INSERT > > >
@@ -666,16 +668,60 @@ public class CommonModelMongo extends CommonModel {
 
     public static Object search(Params params, Dto dto, Dto dtoView, QueryEvent event) throws ServerException, NoContentException, InputException {
         QueryData queryData = params.getQueryData();
-        if (queryData == null /*|| queryData.isEmpty()*/) {
-//            throw new InputException(VantarKey.NO_SEARCH_COMMAND);
+        if (queryData == null) {
+            if (!SEARCH_POLICY_ALLOW_EMPTY_CONDITION) {
+                throw new InputException(VantarKey.NO_SEARCH_COMMAND);
+            }
+            if (event == null) {
+                return getAll(params, dtoView, null);
+            }
             queryData = new QueryData();
         }
+
         queryData.setDto(dto, dtoView);
 
-        try {
-            return CommonRepoMongo.search(queryData, event, params.getLang());
-        } catch (DatabaseException e) {
-            throw new ServerException(VantarKey.FETCH_FAIL);
+        QueryBuilder q = new QueryBuilder(queryData);
+        List<ValidationError> errors = q.getErrors();
+        if (ObjectUtil.isNotEmpty(errors) && SEARCH_POLICY_THROW_ON_CONDITION_ERROR) {
+            throw new InputException(errors);
+        }
+
+        if (event != null) {
+            event.beforeQuery(q);
+        }
+
+        return search(q, event, params.getLang());
+    }
+
+    public static Object search(QueryBuilder q, String... locales) throws NoContentException, ServerException {
+        return search(q, null, locales);
+    }
+
+    public static Object search(QueryBuilder q, QueryResultBase.Event event, String... locales) throws NoContentException, ServerException {
+        if (q.isPagination()) {
+            try {
+                return MongoSearch.getPage(q, event, locales);
+            } catch (DatabaseException e) {
+                throw new ServerException(VantarKey.FETCH_FAIL);
+            }
+        } else {
+            QueryResult result;
+            try {
+                result = MongoSearch.getData(q);
+            } catch (DatabaseException e) {
+                throw new ServerException(VantarKey.FETCH_FAIL);
+            }
+            if (event != null) {
+                result.setEvent(event);
+            }
+            if (ObjectUtil.isNotEmpty(locales)) {
+                result.setLocale(locales);
+            }
+            try {
+                return result.asList();
+            } catch (DatabaseException e) {
+                throw new ServerException(VantarKey.FETCH_FAIL);
+            }
         }
     }
 
@@ -760,7 +806,11 @@ public class CommonModelMongo extends CommonModel {
     }
 
     public static <T extends Dto> List<T> getAll(T dto) throws NoContentException, ServerException {
-        return getAll(null, dto);
+        return getAll(null, dto, null);
+    }
+
+    public static <T extends Dto> List<T> getAll(T dto, String... locales) throws NoContentException, ServerException {
+        return getAll(null, dto, locales);
     }
 
     /**
@@ -768,7 +818,10 @@ public class CommonModelMongo extends CommonModel {
      * lang only for database
      */
     public static <T extends Dto> List<T> getAll(Params params, T dto) throws NoContentException, ServerException {
-        String lang = params == null ? null : params.getLang();
+        return getAll(params, dto, null);
+    }
+
+    private static <T extends Dto> List<T> getAll(Params params, T dto, String[] locales) throws NoContentException, ServerException {
         if (dto.hasAnnotation(Cache.class)) {
             List<T> d = (List<T>) Services.get(ServiceDtoCache.class).getList(dto.getClass());
             if (d == null) {
@@ -778,8 +831,13 @@ public class CommonModelMongo extends CommonModel {
         }
         try {
             QueryResult result = MongoSearch.getAllData(dto);
-            if (StringUtil.isNotEmpty(lang)) {
-                result.setLocale(lang);
+            if (locales != null && locales.length > 0) {
+                result.setLocale(locales);
+            } else {
+                String lang = params == null ? null : params.getLang();
+                if (StringUtil.isNotEmpty(lang)) {
+                    result.setLocale(lang);
+                }
             }
             return result.asList();
         } catch (DatabaseException e) {

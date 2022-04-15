@@ -6,6 +6,7 @@ import com.vantar.database.dependency.DataDependency;
 import com.vantar.database.dto.*;
 import com.vantar.database.nosql.elasticsearch.*;
 import com.vantar.database.nosql.mongo.*;
+import com.vantar.database.nosql.mongo.Mongo;
 import com.vantar.database.query.*;
 import com.vantar.database.query.data.QueryData;
 import com.vantar.database.sql.*;
@@ -14,9 +15,13 @@ import com.vantar.locale.Locale;
 import com.vantar.locale.*;
 import com.vantar.service.Services;
 import com.vantar.service.auth.*;
+import com.vantar.util.datetime.DateTime;
+import com.vantar.util.file.FileUtil;
+import com.vantar.util.json.Json;
 import com.vantar.util.object.*;
 import com.vantar.util.string.*;
 import com.vantar.web.*;
+import org.slf4j.LoggerFactory;
 import javax.servlet.http.HttpServletResponse;
 import java.lang.reflect.*;
 import java.util.*;
@@ -58,6 +63,10 @@ public class AdminData {
                     .addBlockLink(
                         Locale.getString(VantarKey.ADMIN_IMPORT),
                         "/admin/data/import?" + VantarParam.DTO + "=" + dtoName
+                    )
+                    .addBlockLink(
+                        Locale.getString(VantarKey.ADMIN_EXPORT),
+                        "/admin/data/export?" + VantarParam.DTO + "=" + dtoName
                     )
                     .addBlockLink(
                         Locale.getString(VantarKey.ADMIN_DATABASE_DELETE_ALL),
@@ -696,6 +705,35 @@ public class AdminData {
 
         ui.finish();
     }
+
+    public static void exportData(Params params, HttpServletResponse response, DtoDictionary.Info dtoIndex) throws ServerException, NoContentException {
+        Dto dto = dtoIndex.getDtoInstance();
+
+        if (dtoIndex.dbms.equals(DtoDictionary.Dbms.SQL)) {
+            if (SqlConnection.isUp) {
+
+            }
+        } else if (dtoIndex.dbms.equals(DtoDictionary.Dbms.MONGO)) {
+            if (MongoConnection.isUp) {
+                List<Dto> data = CommonModelMongo.getAll(dto);
+                String json = Json.d.toJson(data);
+                String filepath = FileUtil.getTempFilename();
+                FileUtil.write(filepath, json);
+                Response.download(
+                    response,
+                    filepath,
+                    StringUtil.toKababCase(dto.getClass().getSimpleName()) + "-" + new DateTime().formatter().getDateTimeAsFilename() + ".json"
+                );
+            }
+        } else if (dtoIndex.dbms.equals(DtoDictionary.Dbms.ELASTIC)) {
+            if (ElasticConnection.isUp) {
+
+            }
+        }
+
+
+    }
+
 
     public static void importData(Params params, HttpServletResponse response, DtoDictionary.Info dtoIndex) throws FinishException {
         if (dtoIndex == null) {

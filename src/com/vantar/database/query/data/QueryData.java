@@ -3,8 +3,9 @@ package com.vantar.database.query.data;
 import com.vantar.database.common.ValidationError;
 import com.vantar.database.datatype.Location;
 import com.vantar.database.dto.*;
-import com.vantar.database.query.*;
+import com.vantar.database.query.QueryCondition;
 import com.vantar.locale.VantarKey;
+import com.vantar.util.bool.BoolUtil;
 import com.vantar.util.datetime.DateTime;
 import com.vantar.util.number.NumberUtil;
 import com.vantar.util.object.*;
@@ -19,7 +20,6 @@ public class QueryData {
 
     private final List<ValidationError> errors = new ArrayList<>(10);
 
-    public Boolean all;
     public String dto;
     public String dtoResult;
     public String lang;
@@ -38,6 +38,7 @@ public class QueryData {
 
     private Dto xDto;
     private Dto xDtoResult;
+    private String mainCol;
 
 
     public QueryData setDto(Dto dto) {
@@ -84,7 +85,7 @@ public class QueryData {
     }
 
     public boolean isPagination() {
-        return pagination != null && pagination;
+        return BoolUtil.isTrue(pagination);
     }
 
     public QueryCondition getCondition() {
@@ -121,7 +122,10 @@ public class QueryData {
 
             item.separateCols();
 
-            Class<?> dataType = DtoUtil.getLastTraversedPropertyType(dto, item.col);
+            Class<?> dataType = DtoUtil.getLastTraversedPropertyType(
+                dto,
+                mainCol == null ? item.col : (mainCol + '.' + item.col)
+            );
             if (dataType == null) {
                 dataType = item.getValueDataType();
             }
@@ -130,58 +134,68 @@ public class QueryData {
             }
 
             switch (conditionType) {
-                case "CONDITION":
+                case "CONDITION": {
                     if (item.condition == null) {
                         errors.add(new ValidationError("condition", VantarKey.SEARCH_PARAM_VALUE_MISSING));
                         return null;
                     }
-                    queryCondition.addCondition(getCondition(item.condition));
+                    QueryCondition cond = getCondition(item.condition);
+                    if (cond != null) {
+                        queryCondition.addCondition(cond);
+                    }
                     break;
-                case "EXISTS":
+                }
+                case "EXISTS": {
                     if (item.condition == null) {
                         errors.add(new ValidationError("condition", VantarKey.SEARCH_PARAM_VALUE_MISSING));
                         return null;
                     }
-                    queryCondition.exists(getCondition(item.condition));
-                    break;
-
-                case "EQUAL":
-                    try {
-                        queryCondition.equal(item.col, getValue(item, dataType));
-                    } catch (Exception e) {
-                        return null;
+                    QueryCondition cond = getCondition(item.condition);
+                    if (cond != null) {
+                        queryCondition.exists(cond);
                     }
                     break;
-                case "NOT_EQUAL":
-                    try {
-                        queryCondition.notEqual(item.col, getValue(item, dataType));
-                    } catch (Exception e) {
+                }
+                case "EQUAL": {
+                    Object v = getValue(item, dataType);
+                    if (v == null) {
                         return null;
                     }
+                    queryCondition.equal(item.col, v);
                     break;
-                case "LIKE":
-                    try {
-                        queryCondition.like(item.col, (String) getValue(item, String.class));
-                    } catch (Exception e) {
+                }
+                case "NOT_EQUAL": {
+                    Object v = getValue(item, dataType);
+                    if (v == null) {
                         return null;
                     }
+                    queryCondition.notEqual(item.col, v);
                     break;
-                case "NOT_LIKE":
-                    try {
-                        queryCondition.notLike(item.col, (String) getValue(item, String.class));
-                    } catch (Exception e) {
+                }
+                case "LIKE": {
+                    Object v = getValue(item, dataType);
+                    if (v == null) {
                         return null;
                     }
+                    queryCondition.like(item.col, (String) v);
                     break;
-
-                case "FULL_SEARCH":
-                    try {
-                        queryCondition.phrase((String) getValue(item, String.class));
-                    } catch (Exception e) {
+                }
+                case "NOT_LIKE": {
+                    Object v = getValue(item, dataType);
+                    if (v == null) {
                         return null;
                     }
+                    queryCondition.notLike(item.col, (String) v);
                     break;
-
+                }
+                case "FULL_SEARCH": {
+                    Object v = getValue(item, dataType);
+                    if (v == null) {
+                        return null;
+                    }
+                    queryCondition.phrase((String) v);
+                    break;
+                }
                 case "IS_NULL":
                     queryCondition.isNull(item.col);
                     break;
@@ -308,7 +322,7 @@ public class QueryData {
                     }
                     break;
 
-                case "NEAR":
+                case "NEAR": {
                     if (item.values.length < 3 || item.values.length > 4) {
                         errors.add(new ValidationError(item.col, VantarKey.SEARCH_PARAM_VALUE_INVALID));
                         break;
@@ -330,20 +344,21 @@ public class QueryData {
                         queryCondition.near(item.col, location, maxDistance, minDistance);
                     }
                     break;
-                case "FAR":
+                }
+                case "FAR": {
                     if (item.values.length != 3) {
                         errors.add(new ValidationError(item.col, VantarKey.SEARCH_PARAM_VALUE_INVALID));
                         break;
                     }
-                    Location location2 = new Location(NumberUtil.toDouble(item.values[0]), NumberUtil.toDouble(item.values[1]));
-                    Double minDistance2 = NumberUtil.toDouble(item.values[2]);
-                    if (!location2.isValid() || minDistance2 == null) {
+                    Location location = new Location(NumberUtil.toDouble(item.values[0]), NumberUtil.toDouble(item.values[1]));
+                    Double minDistance = NumberUtil.toDouble(item.values[2]);
+                    if (!location.isValid() || minDistance == null) {
                         errors.add(new ValidationError(item.col, VantarKey.SEARCH_PARAM_VALUE_INVALID));
                         break;
                     }
-                    queryCondition.far(item.col, location2, minDistance2);
+                    queryCondition.far(item.col, location, minDistance);
                     break;
-
+                }
                 case "WITHIN":
                     int l = item.values.length;
                     if (l < 6 || l % 2 != 0) {
@@ -357,6 +372,38 @@ public class QueryData {
                     queryCondition.within(item.col, polygon);
                     break;
 
+                case "IN_LIST": {
+                    if (item.condition == null) {
+                        errors.add(new ValidationError("condition", VantarKey.SEARCH_PARAM_VALUE_MISSING));
+                        return null;
+                    }
+                    mainCol = item.col;
+                    QueryCondition cond = getCondition(item.condition);
+                    if (cond != null) {
+                        queryCondition.inList(item.col, cond);
+                    }
+                    mainCol = null;
+                    break;
+                }
+
+                case "IN_DTO": {
+                    if (item.condition == null) {
+                        errors.add(new ValidationError("condition", VantarKey.SEARCH_PARAM_VALUE_MISSING));
+                        return null;
+                    }
+                    Dto xDtoTemp = xDto;
+                    Dto xDtoResultTemp = xDtoResult;
+                    xDto = item.getDto();
+                    xDtoResult = xDto;
+                    QueryCondition cond = getCondition(item.condition);
+                    xDto = xDtoTemp;
+                    xDtoResult = xDtoResultTemp;
+                    if (cond != null) {
+                        queryCondition.inDto(item.col, item.getDto(), cond);
+                    }
+                    break;
+                }
+
                 default:
                     errors.add(new ValidationError(item.col, VantarKey.SEARCH_PARAM_INVALID_CONDITION_TYPE));
             }
@@ -365,11 +412,10 @@ public class QueryData {
         return queryCondition;
     }
 
-    private Object getValue(ConditionItem item, Class<?> dataType) throws Exception {
+    private Object getValue(ConditionItem item, Class<?> dataType) {
         Object v = item.getValue(dataType);
         if (v == null) {
             errors.add(new ValidationError(item.col, VantarKey.SEARCH_PARAM_VALUE_INVALID));
-            throw new Exception();
         }
         return v;
     }
@@ -405,7 +451,7 @@ public class QueryData {
         if (ObjectUtil.isNotEmpty(joins)) {
             return false;
         }
-        return all == null || !all;
+        return true;
     }
 
     public boolean isNotEmpty() {

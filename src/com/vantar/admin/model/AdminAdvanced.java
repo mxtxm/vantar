@@ -39,7 +39,7 @@ public class AdminAdvanced {
         ui  .beginFloatBox("system-box", "SQL")
             .addBlockLink(Locale.getString(VantarKey.ADMIN_DATABASE_STATUS), "/admin/data/sql/status")
             .addBlockLink(Locale.getString(VantarKey.ADMIN_DATABASE_CREATE_INDEX), "/admin/database/sql/index/create")
-            .addBlockLink(Locale.getString(VantarKey.ADMIN_DATABASE_IMPORT), "/admin/database/sql/import")
+            .addBlockLink(Locale.getString(VantarKey.ADMIN_IMPORT), "/admin/database/sql/import")
             .addBlockLink(Locale.getString(VantarKey.ADMIN_DATABASE_DELETE_ALL), "/admin/database/sql/purge")
             .addBlockLink(Locale.getString(VantarKey.ADMIN_DATABASE_SYNCH), "/admin/database/sql/synch")
             .containerEnd();
@@ -47,13 +47,13 @@ public class AdminAdvanced {
         ui  .beginFloatBox("system-box", "MONGO")
             .addBlockLink(Locale.getString(VantarKey.ADMIN_DATABASE_STATUS), "/admin/data/mongo/status")
             .addBlockLink(Locale.getString(VantarKey.ADMIN_DATABASE_CREATE_INDEX), "/admin/database/mongo/index/create")
-            .addBlockLink(Locale.getString(VantarKey.ADMIN_DATABASE_IMPORT), "/admin/database/mongo/import")
+            .addBlockLink(Locale.getString(VantarKey.ADMIN_IMPORT), "/admin/database/mongo/import")
             .addBlockLink(Locale.getString(VantarKey.ADMIN_DATABASE_DELETE_ALL), "/admin/database/mongo/purge")
             .containerEnd();
 
         ui  .beginFloatBox("system-box", "ELASTIC")
             .addBlockLink(Locale.getString(VantarKey.ADMIN_DATABASE_STATUS), "/admin/data/elastic/status")
-            .addBlockLink(Locale.getString(VantarKey.ADMIN_DATABASE_IMPORT), "/admin/database/elastic/import")
+            .addBlockLink(Locale.getString(VantarKey.ADMIN_IMPORT), "/admin/database/elastic/import")
             .addBlockLink(Locale.getString(VantarKey.ADMIN_DATABASE_INDEX_DEF), "/admin/database/elastic/mapping/get")
             .addBlockLink(Locale.getString(VantarKey.ADMIN_DATABASE_INDEX_SETTINGS), "/admin/database/elastic/actions")
             .addBlockLink(Locale.getString(VantarKey.ADMIN_DATABASE_DELETE_ALL), "/admin/database/elastic/purge")

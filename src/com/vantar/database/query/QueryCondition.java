@@ -1,6 +1,7 @@
 package com.vantar.database.query;
 
 import com.vantar.database.datatype.Location;
+import com.vantar.database.dto.Dto;
 import com.vantar.util.datetime.*;
 import com.vantar.util.object.*;
 import java.util.*;
@@ -45,6 +46,21 @@ public class QueryCondition {
     public QueryCondition addCondition(QueryCondition c) {
         q.add(new QueryMatchItem(QueryOperator.QUERY, c));
         return this;
+    }
+
+
+    // IN LIST
+
+    public QueryCondition inList(String fieldName, QueryCondition c) {
+        q.add(new QueryMatchItem(QueryOperator.IN_LIST, fieldName, c));
+        return this;
+    }
+
+
+    // IN DTO
+
+    public void inDto(String col, Dto dto, QueryCondition c) {
+        q.add(new QueryMatchItem(QueryOperator.IN_DTO, col, c, dto));
     }
 
 
@@ -609,4 +625,5 @@ public class QueryCondition {
     public String toString() {
         return ObjectUtil.toString(this);
     }
+
 }

@@ -28,4 +28,7 @@ public enum QueryOperator {
     CONTAINS_ALL,
     NEAR,
     WITHIN,
+
+    IN_LIST,
+    IN_DTO,
 }

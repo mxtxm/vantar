@@ -197,43 +197,28 @@ public class Jackson {
     }
 
     public String extractString(String json, String key) {
-        try {
-            return mapper.readTree(json).get(key).asText();
-        } catch (JsonProcessingException e) {
-            return null;
-        }
+        JsonNode node = getNode(json, key);
+        return node == null ? null : node.asText();
     }
 
     public Long extractLong(String json, String key) {
-        try {
-            return mapper.readTree(json).get(key).asLong();
-        } catch (JsonProcessingException e) {
-            return null;
-        }
+        JsonNode node = getNode(json, key);
+        return node == null ? null : node.asLong();
     }
 
     public Integer extractInteger(String json, String key) {
-        try {
-            return mapper.readTree(json).get(key).asInt();
-        } catch (JsonProcessingException e) {
-            return null;
-        }
+        JsonNode node = getNode(json, key);
+        return node == null ? null : node.asInt();
     }
 
     public Boolean extractBoolean(String json, String key) {
-        try {
-            return mapper.readTree(json).get(key).asBoolean();
-        } catch (JsonProcessingException e) {
-            return null;
-        }
+        JsonNode node = getNode(json, key);
+        return node == null ? null : node.asBoolean();
     }
 
     public Double extractDouble(String json, String key) {
-        try {
-            return mapper.readTree(json).get(key).asDouble();
-        } catch (JsonProcessingException e) {
-            return null;
-        }
+        JsonNode node = getNode(json, key);
+        return node == null ? null : node.asDouble();
     }
 
     @SuppressWarnings("unchecked")
@@ -257,6 +242,19 @@ public class Jackson {
             return (T) extractBoolean(json, key);
         }
         return null;
+    }
+
+    private JsonNode getNode(String json, String key) {
+        try {
+            JsonNode t = mapper.readTree(json);
+            if (t == null) {
+                return null;
+            }
+            JsonNode v = t.get(key);
+            return v == null ? null : t.get(key);
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     // < < < FROM JSON

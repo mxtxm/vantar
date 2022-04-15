@@ -238,7 +238,6 @@ public class Mongo {
         if (dto.getId() == null) {
             dto.setId(Sequence.getNext(dto));
         }
-
         if (!dto.beforeInsert()) {
             throw new DatabaseException(VantarKey.EVENT_REJECT);
         }

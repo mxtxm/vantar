@@ -529,6 +529,11 @@ public class Params {
         return Json.d.extract(getJson(), key, type);
     }
 
+    public <T> T extractFromJson(String key, Class<T> type, Object defaultValue) {
+        T value = Json.d.extract(getJson(), key, type);
+        return value == null ? (T) defaultValue : value;
+    }
+
 
     // > > > GET DATABASE QUERY
 

@@ -1,5 +1,6 @@
 package com.vantar.database.query;
 
+import com.vantar.database.dto.Dto;
 import com.vantar.util.datetime.DateTime;
 import java.util.List;
 
@@ -31,11 +32,26 @@ public class QueryMatchItem {
 
     boolean returnDatetimeAsString = false;
 
+    public Dto dto;
+
     // QUERY > > >
 
     public QueryMatchItem(QueryOperator type, QueryCondition value) {
         this.type = type;
         queryValue = value;
+    }
+
+    public QueryMatchItem(QueryOperator type, String fieldName, QueryCondition value) {
+        this.type = type;
+        this.fieldName = fieldName;
+        queryValue = value;
+    }
+
+    public QueryMatchItem(QueryOperator type, String fieldName, QueryCondition value, Dto dto) {
+        this.type = type;
+        this.fieldName = fieldName;
+        queryValue = value;
+        this.dto = dto;
     }
 
 

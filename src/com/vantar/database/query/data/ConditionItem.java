@@ -1,5 +1,6 @@
 package com.vantar.database.query.data;
 
+import com.vantar.database.dto.*;
 import com.vantar.exception.DateTimeException;
 import com.vantar.util.collection.CollectionUtil;
 import com.vantar.util.datetime.DateTime;
@@ -20,6 +21,7 @@ public class ConditionItem {
     public Object[] values;
     public Map<String, Object> objects;
     public Condition condition;
+    public String dto;
 
 
     public Class<?> getValueDataType() {
@@ -92,5 +94,10 @@ public class ConditionItem {
             col = parts[0];
             colB = parts[1];
         }
+    }
+
+    public Dto getDto() {
+        DtoDictionary.Info info = DtoDictionary.get(dto);
+        return info == null ? null : info.getDtoInstance();
     }
 }

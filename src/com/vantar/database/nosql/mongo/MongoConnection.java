@@ -86,7 +86,7 @@ public class MongoConnection {
 //        }
     }
 
-    protected static MongoDatabase getDatabase() throws DatabaseException {
+    public static MongoDatabase getDatabase() throws DatabaseException {
         if (!isUp || mongoClient == null || database == null) {
             connect(config);
         }

@@ -51,10 +51,10 @@ public class DefaultStringsEn {
         tokens.put(VantarKey.FILE_TYPE, "{0}: unsupported file type, allowed file-type ({1})");
         tokens.put(VantarKey.NO_SEARCH_COMMAND, "no search commands");
         tokens.put(VantarKey.INVALID_METHOD, "invalid HTTP method");
-        tokens.put(VantarKey.SEARCH_PARAM_INVALID_CONDITION_TYPE, "search condition requires condition type");
-        tokens.put(VantarKey.SEARCH_PARAM_COL_MISSING, "search condition requires search column");
-        tokens.put(VantarKey.SEARCH_PARAM_VALUE_INVALID, "search condition value is missing");
-        tokens.put(VantarKey.SEARCH_PARAM_VALUE_MISSING, "search condition value is invalid");
+        tokens.put(VantarKey.SEARCH_PARAM_INVALID_CONDITION_TYPE, "{0}: search condition requires condition type");
+        tokens.put(VantarKey.SEARCH_PARAM_COL_MISSING, "{0}: search condition requires search column");
+        tokens.put(VantarKey.SEARCH_PARAM_VALUE_INVALID, "{0}: search condition value is invalid");
+        tokens.put(VantarKey.SEARCH_PARAM_VALUE_MISSING, "{0}: search condition value is missing");
         tokens.put(VantarKey.INVALID_GEO_LOCATION, "invalid location");
 
         // data fetch
@@ -116,7 +116,6 @@ public class DefaultStringsEn {
         tokens.put(VantarKey.ADMIN_DATABASE_STATUS, "status");
         tokens.put(VantarKey.ADMIN_DATABASE_STATUS_PARAM, "status {0}");
         tokens.put(VantarKey.ADMIN_DATABASE_CREATE_INDEX, "Create indexes");
-        tokens.put(VantarKey.ADMIN_DATABASE_IMPORT, "Import init data");
         tokens.put(VantarKey.ADMIN_DATABASE_DELETE_ALL, "Delete all data");
         tokens.put(VantarKey.ADMIN_DATABASE_DELETE_OPTIONAL, "Delete selected data");
         tokens.put(VantarKey.ADMIN_DATABASE_SYNCH, "Synch");
@@ -153,6 +152,7 @@ public class DefaultStringsEn {
         tokens.put(VantarKey.ADMIN_DATA_LIST, "List");
         tokens.put(VantarKey.ADMIN_NEW_RECORD, "New");
         tokens.put(VantarKey.ADMIN_IMPORT, "Import");
+        tokens.put(VantarKey.ADMIN_EXPORT, "Export");
         tokens.put(VantarKey.ADMIN_DATABASE_TITLE, "Database");
         tokens.put(VantarKey.ADMIN_DELETE, "Delete");
         tokens.put(VantarKey.ADMIN_UPDATE, "Update");

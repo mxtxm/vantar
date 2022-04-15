@@ -33,6 +33,10 @@ public class QueryBuilder {
     private List<String> union;
 
 
+    public List<ValidationError> getErrors() {
+        return errors;
+    }
+
     public QueryBuilder() {
 
     }
@@ -68,6 +72,14 @@ public class QueryBuilder {
         isPagination = queryData.isPagination();
         Integer page = queryData.page;
         Integer length = queryData.length;
+        if (isPagination) {
+            if (page == null) {
+                page = 1;
+            }
+            if (length == null) {
+                length = 20;
+            }
+        }
         if (page != null && length != null) {
             page(page, length);
         } else {

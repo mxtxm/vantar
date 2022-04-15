@@ -1,5 +1,6 @@
 package com.vantar.database.dto;
 
+import com.vantar.util.object.ObjectUtil;
 import java.lang.annotation.Annotation;
 import java.util.*;
 
@@ -61,6 +62,6 @@ public class StorableData {
 
     @Override
     public String toString() {
-        return "type:" + type.getSimpleName() + " name:" + name + " value:" + value;
+        return ObjectUtil.toString(this);
     }
 }

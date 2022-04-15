@@ -2,7 +2,7 @@ package com.vantar.admin.web;
 
 import com.vantar.admin.model.*;
 import com.vantar.database.dto.DtoDictionary;
-import com.vantar.exception.FinishException;
+import com.vantar.exception.*;
 import com.vantar.web.*;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServletResponse;
@@ -18,6 +18,7 @@ import javax.servlet.http.HttpServletResponse;
     "/admin/data/purge",
     "/admin/data/insert",
     "/admin/data/import",
+    "/admin/data/export",
     "/admin/data/log",
 
     "/admin/data/sql/status",
@@ -60,6 +61,10 @@ public class AdminDataController extends RouteToMethod {
 
     public void dataImport(Params params, HttpServletResponse response) throws FinishException {
         AdminData.importData(params, response, DtoDictionary.get(params.getString("dto")));
+    }
+
+    public void dataExport(Params params, HttpServletResponse response) throws ServerException, NoContentException {
+        AdminData.exportData(params, response, DtoDictionary.get(params.getString("dto")));
     }
 
     public void dataLog(Params params, HttpServletResponse response) throws FinishException {

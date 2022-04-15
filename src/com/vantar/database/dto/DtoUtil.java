@@ -105,6 +105,10 @@ public class DtoUtil {
      * todo: travers collections
      */
     public static Class<?> getLastTraversedPropertyType(Dto dto, String traversable) {
+        if (traversable == null) {
+            return null;
+        }
+
         Field field;
         if (!StringUtil.contains(traversable, '.')) {
             field = dto.getField(traversable);

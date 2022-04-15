@@ -1,5 +1,6 @@
 package com.vantar.database.nosql.mongo;
 
+import com.mongodb.client.FindIterable;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.geojson.*;
 import com.vantar.common.VantarParam;
@@ -7,6 +8,7 @@ import com.vantar.database.datatype.Location;
 import com.vantar.database.dto.Date;
 import com.vantar.database.dto.*;
 import com.vantar.database.query.*;
+import com.vantar.exception.DatabaseException;
 import com.vantar.util.datetime.DateTime;
 import com.vantar.util.object.ObjectUtil;
 import com.vantar.util.string.StringUtil;
@@ -44,6 +46,9 @@ public class MongoMapping {
         for (StorableData info : dto.getStorableData()) {
             if (info.name.equals("id")) {
                 info.name = Mongo.ID;
+                if (action.equals(Dto.Action.INSERT)) {
+                    info.isNull = false;
+                }
             }
             if (info.isNull) {
                 document.put(info.name, null);
@@ -296,24 +301,32 @@ public class MongoMapping {
                 case NOT_EQUAL:
                     matches.add(new Document(fieldName, new Document("$ne", item.getValue())));
                     break;
+
                 case LIKE:
-                    matches.add(new Document(fieldName, new Document("$regex", "(?i)" + Pattern.quote(item.stringValue) + ".*")));
+                    matches.add(new Document(
+                        fieldName,
+                        new Document("$regex", "(?i)" + Pattern.quote(item.stringValue) + ".*")
+                    ));
                     break;
                 case NOT_LIKE:
-                    matches.add(new Document(fieldName, new Document("$ne", new Document("$regex", "(?i)" + Pattern.quote(item.stringValue) + ".*"))));
+                    matches.add(new Document(
+                        fieldName,
+                        new Document("$ne", new Document("$regex", "(?i)" + Pattern.quote(item.stringValue) + ".*"))
+                    ));
                     break;
+
                 case IN:
                     matches.add(new Document(fieldName, new Document("$in", Arrays.asList(item.getValues()))));
                     break;
                 case NOT_IN:
                     matches.add(new Document(fieldName, new Document("$nin", Arrays.asList(item.getValues()))));
                     break;
+
                 case FULL_SEARCH:
                     if (StringUtil.isNotEmpty(fieldName)) {
                         matches.add(new Document(fieldName, new Document("$text", new Document("$search", item.getValue()))));
                         break;
                     }
-
                     List<Document> textMatches = new ArrayList<>();
                     String p = Pattern.quote(item.stringValue);
                     dto.getPropertyTypes().forEach((name, tClass) -> {
@@ -321,20 +334,25 @@ public class MongoMapping {
                             textMatches.add(new Document(name, new Document("$regex", "(?i)" + p + ".*")));
                         }
                     });
-
                     matches.add(new Document("$or", textMatches));
                     break;
-                case BETWEEN:
+
+                case BETWEEN: {
                     Object[] values = item.getValues();
-                    matches.add(new Document(fieldName, new Document("$gte", values[0]).append("$lte", values[1])));
+                    List<Document>  bConditions = new ArrayList<>(2);
+                    bConditions.add(new Document(fieldName, new Document("$gte", values[0])));
+                    bConditions.add(new Document(fieldName, new Document("$lte", values[1])));
+                    matches.add(new Document("$and",  bConditions));
                     break;
-                case NOT_BETWEEN:
-                    Object[] values2 = item.getValues();
-                    List<Document> ors = new ArrayList<>(2);
-                    ors.add(new Document(fieldName, new Document("$lt", values2[0])));
-                    ors.add(new Document(fieldName, new Document("$gt", values2[1])));
-                    matches.add(new Document("$or", ors));
+                }
+                case NOT_BETWEEN: {
+                    Object[] values = item.getValues();
+                    List<Document> bConditions = new ArrayList<>(2);
+                    bConditions.add(new Document(fieldName, new Document("$lt", values[0])));
+                    bConditions.add(new Document(fieldName, new Document("$gt", values[1])));
+                    matches.add(new Document("$or", bConditions));
                     break;
+                }
                 case LESS_THAN:
                     matches.add(new Document(fieldName, new Document("$lt", item.getValue())));
                     break;
@@ -354,13 +372,26 @@ public class MongoMapping {
                 case IS_NOT_NULL:
                     matches.add(new Document(fieldName, new Document("$ne", null)));
                     break;
-                case IS_EMPTY:
-                    matches.add(new Document(fieldName, new Document("$in", new Object[] {null, ""})));
+                case IS_EMPTY: {
+                    List<Document> neConditions = new ArrayList<>(5);
+                    neConditions.add(new Document(fieldName, new Document("$eq", null)));
+                    neConditions.add(new Document(fieldName, new Document("$eq", "")));
+                    neConditions.add(new Document(fieldName, new Document("$eq", new ArrayList<>(1))));
+                    neConditions.add(new Document(fieldName, new Document("$eq", new HashMap<>(1))));
+                    neConditions.add(new Document(fieldName, new Document("$exists", false)));
+                    matches.add(new Document("$or", neConditions));
                     break;
-                case IS_NOT_EMPTY:
-                    matches.add(new Document(fieldName, new Document("$nin", new Object[] {null, ""})));
+                }
+                case IS_NOT_EMPTY: {
+                    List<Document> neConditions = new ArrayList<>(5);
+                    neConditions.add(new Document(fieldName, new Document("$ne", null)));
+                    neConditions.add(new Document(fieldName, new Document("$ne", "")));
+                    neConditions.add(new Document(fieldName, new Document("$ne", new ArrayList<>(1))));
+                    neConditions.add(new Document(fieldName, new Document("$ne", new HashMap<>(1))));
+                    neConditions.add(new Document(fieldName, new Document("$exists", true)));
+                    matches.add(new Document("$and", neConditions));
                     break;
-
+                }
                 case CONTAINS_ALL:
                     matches.add(new Document(fieldName, new Document("$all", normalizeList(item.itemList))));
                     break;
@@ -370,9 +401,10 @@ public class MongoMapping {
                     List<Double> point = new ArrayList<>(2);
                     point.add((Double) numbers[0]);
                     point.add((Double) numbers[1]);
-
-                    Document geometry = new Document("$geometry", new Document("type", "Point").append(VantarParam.COORDINATE, point));
-
+                    Document geometry = new Document(
+                        "$geometry",
+                        new Document("type", "Point").append(VantarParam.COORDINATE, point)
+                    );
                     if (numbers[2] != null) {
                         geometry.append("$maxDistance", numbers[2]);
                     }
@@ -385,7 +417,6 @@ public class MongoMapping {
                             new Document("$near", geometry)
                         )
                     );
-
                     break;
 
                 case WITHIN:
@@ -397,11 +428,41 @@ public class MongoMapping {
                         pt.add(location.longitude);
                         polygon.add(pt);
                     }
-
                     matches.add(
                         Filters.geoWithinPolygon(fieldName, polygon)
                     );
                     break;
+
+                case IN_LIST: {
+                    matches.add(new Document(
+                        fieldName,
+                        new Document("$elemMatch", getMongoMatches(item.queryValue, dto))
+                    ));
+                    break;
+                }
+
+                case IN_DTO: {
+                    Document innerMatch = getMongoMatches(item.queryValue, item.dto);
+                    if (innerMatch == null || innerMatch.isEmpty()) {
+                        continue;
+                    }
+                    MongoQuery q = new MongoQuery(item.dto, item.dto);
+                    q.matches = innerMatch;
+                    q.columns = new String[] {"_id"};
+                    FindIterable<Document> cursor;
+                    try {
+                        cursor = q.getResult();
+                    } catch (DatabaseException e) {
+                        Mongo.log.error("!! IN_DTO error {}", item, e);
+                        continue;
+                    }
+                    List<Long> ids = new ArrayList<>(100);
+                    for (Document document : cursor) {
+                        ids.add(document.getLong("_id"));
+                    }
+                    matches.add(new Document(fieldName, new Document("$in", ids)));
+                    break;
+                }
             }
         }
 

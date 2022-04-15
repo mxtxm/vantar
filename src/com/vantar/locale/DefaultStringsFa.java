@@ -49,10 +49,10 @@ public class DefaultStringsFa {
         tokens.put(VantarKey.FILE_TYPE, "{0}: خطای آپلود فایل - فایل های مجاز برای آپلود ({1})");
         tokens.put(VantarKey.NO_SEARCH_COMMAND, "دستورات جستجتو فرستاده نشدند");
         tokens.put(VantarKey.INVALID_METHOD, "متد درخواست نادرست است");
-        tokens.put(VantarKey.SEARCH_PARAM_INVALID_CONDITION_TYPE, "شرط جستجو باید نوع شرط داشته باشد");
-        tokens.put(VantarKey.SEARCH_PARAM_COL_MISSING, "شرط جستجو باید فیلد جستجو داشته باشد");
-        tokens.put(VantarKey.SEARCH_PARAM_VALUE_INVALID, "مقدار شرط جستجو چا افتاده است");
-        tokens.put(VantarKey.SEARCH_PARAM_VALUE_MISSING, "مقدار شرط جستحو نادرست است");
+        tokens.put(VantarKey.SEARCH_PARAM_INVALID_CONDITION_TYPE, "{0}: شرط جستجو باید نوع شرط داشته باشد");
+        tokens.put(VantarKey.SEARCH_PARAM_COL_MISSING, "{0}: شرط جستجو باید فیلد جستجو داشته باشد");
+        tokens.put(VantarKey.SEARCH_PARAM_VALUE_INVALID, "{0}: مقدار شرط جستحو نادرست است");
+        tokens.put(VantarKey.SEARCH_PARAM_VALUE_MISSING, "{0}: مقدار شرط جستجو چا افتاده است");
         tokens.put(VantarKey.INVALID_GEO_LOCATION, "مکان جغرافیایی نادرست است");
 
         // data fetch
@@ -114,7 +114,6 @@ public class DefaultStringsFa {
         tokens.put(VantarKey.ADMIN_DATABASE_STATUS, "وضعیت");
         tokens.put(VantarKey.ADMIN_DATABASE_STATUS_PARAM, "وضعیت {0}");
         tokens.put(VantarKey.ADMIN_DATABASE_CREATE_INDEX, "ساختن ایندکس ها");
-        tokens.put(VantarKey.ADMIN_DATABASE_IMPORT, "ایمپورت داده های اولیه");
         tokens.put(VantarKey.ADMIN_DATABASE_DELETE_ALL, "پاک سازی تمام داده ها");
         tokens.put(VantarKey.ADMIN_DATABASE_DELETE_OPTIONAL, "پاک سازی انتخابی داده ها");
         tokens.put(VantarKey.ADMIN_DATABASE_SYNCH, "همگام سازی");
@@ -152,6 +151,7 @@ public class DefaultStringsFa {
         tokens.put(VantarKey.ADMIN_DATA_LIST, "لیست داده ها");
         tokens.put(VantarKey.ADMIN_NEW_RECORD, "رکورد جدید");
         tokens.put(VantarKey.ADMIN_IMPORT, "ایمپورت");
+        tokens.put(VantarKey.ADMIN_EXPORT, "اکسپورت");
         tokens.put(VantarKey.ADMIN_DATABASE_TITLE, "دیتابیس");
         tokens.put(VantarKey.ADMIN_DELETE, "پاک کردن");
         tokens.put(VantarKey.ADMIN_UPDATE, "بروز رسانی");
