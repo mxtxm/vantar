@@ -175,17 +175,15 @@ public abstract class CommonModel {
 
     public interface WriteEvent {
 
-        void beforeSet(Dto dto) throws InputException, ServerException;
-
-        void beforeWrite(Dto dto) throws InputException, ServerException;
-
-        void afterWrite(Dto dto) throws InputException, ServerException;
+        void beforeSet(Dto dto) throws InputException, ServerException, NoContentException;
+        void beforeWrite(Dto dto) throws InputException, ServerException, NoContentException;
+        void afterWrite(Dto dto) throws InputException, ServerException, NoContentException;
     }
 
 
     public interface QueryEvent extends QueryResultBase.Event {
 
-        void beforeQuery(QueryBuilder q) throws InputException, ServerException;
+        void beforeQuery(QueryBuilder q) throws InputException, ServerException, NoContentException;
 
     }
 
@@ -193,9 +191,7 @@ public abstract class CommonModel {
     public interface BatchEvent {
 
         boolean beforeInsert(Dto dto);
-
         boolean beforeUpdate(Dto dto);
-
         boolean beforeDelete(Dto dto);
     }
 }

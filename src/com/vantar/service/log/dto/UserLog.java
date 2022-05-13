@@ -14,20 +14,21 @@ public class UserLog extends DtoBase {
     public Long userId;
     public Long threadId;
     public String action;
+    public Integer status;
     public String requestType;
-
-    public String className;
-    public Long objectId;
-    public String object;
-
-    @StoreString
-    public Map<String, String> headers;
     public String url;
     public String ip;
-    public List<String> uploadedFiles;
-
     @Timestamp
     @CreateTime
     public DateTime time;
 
+    public String className;
+
+    public List<String> uploadedFiles;
+    @StoreString
+    public Map<String, String> headers;
+
+
+    public Long objectId;
+    public String object;
 }

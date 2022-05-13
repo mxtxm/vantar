@@ -15,9 +15,12 @@ public class SqlConnection implements AutoCloseable {
     private boolean isCommitted;
     private static SqlConfig config;
     private static SqlDbms dbms;
+    private static boolean isUp;
 
-    public static boolean isUp;
 
+    public static boolean isUp() {
+        return isUp;
+    }
 
     public static SqlConfig getConfig() {
         return config;

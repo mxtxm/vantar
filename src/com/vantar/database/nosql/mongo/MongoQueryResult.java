@@ -25,6 +25,9 @@ import java.util.*;
 public class MongoQueryResult extends QueryResultBase implements QueryResult, AutoCloseable {
 
     private final Iterator<Document> iterator;
+    private boolean newIteration;
+    private Map<String, Dto> fetchByFkCache;
+
     public FindIterable<Document> cursor;
     public MongoCursor<Document> cursorA;
 
@@ -151,15 +154,14 @@ public class MongoQueryResult extends QueryResultBase implements QueryResult, Au
     }
 
     private void mapRecordToObject(Document document, Dto dto, Field[] fields) {
+        newIteration = true;
+        long i = 0;
         try {
-            long i = 0;
-            Object value;
             for (Field field : fields) {
                 String name = field.getName();
                 if (DtoBase.isNotDataField(field) || (exclude != null && exclude.contains(name))) {
                     continue;
                 }
-                value = null;
 
                 if (name.equals(VantarParam.ID) && document.containsKey(Mongo.ID)) {
                     name = Mongo.ID;
@@ -176,6 +178,11 @@ public class MongoQueryResult extends QueryResultBase implements QueryResult, Au
 
                     if (field.isAnnotationPresent(Fetch.class)) {
                         fetchFromDatabase(document, dto, field, type);
+                        continue;
+                    }
+
+                    if (field.isAnnotationPresent(FetchByFk.class)) {
+                        fetchByFk(document, field);
                         continue;
                     }
 
@@ -235,7 +242,6 @@ public class MongoQueryResult extends QueryResultBase implements QueryResult, Au
                             }
 
                         } else if (listType == Dto.class || listType.getSuperclass() == DtoBase.class) {
-                            List<Dto> list;
                             List<Document> docs;
                             try {
                                 docs = document.getList(key, Document.class);
@@ -252,7 +258,7 @@ public class MongoQueryResult extends QueryResultBase implements QueryResult, Au
                                 continue;
                             }
 
-                            list = new ArrayList<>();
+                            Collection<Dto> list = type == List.class ? new ArrayList<>(docs.size()) : new HashSet<>(docs.size());
                             for (Document d : docs) {
                                 Dto obj = (Dto) ClassUtil.getInstance(listType);
                                 if (obj == null) {
@@ -261,7 +267,7 @@ public class MongoQueryResult extends QueryResultBase implements QueryResult, Au
                                 mapRecordToObject(d, obj, obj.getFields());
                                 list.add(obj);
                             }
-                            field.set(dto, type == Set.class ? new HashSet<>(list) : list);
+                            field.set(dto, list);
                         } else {
                             v = Json.d.listFromJson(Json.d.toJson(document.get(key)), listType);
                             field.set(dto, v != null && type == Set.class ? new HashSet<>(v) : v);
@@ -284,7 +290,7 @@ public class MongoQueryResult extends QueryResultBase implements QueryResult, Au
                         continue;
                     }
 
-                    value = document.get(key);
+                    Object value = document.get(key);
                     if (value == null) {
                         field.set(dto, null);
                         continue;
@@ -417,7 +423,7 @@ public class MongoQueryResult extends QueryResultBase implements QueryResult, Au
                 return true;
             }
 
-            List<Object> dtos = new ArrayList<>(ids.size());
+            Collection<Object> dtos = type == List.class ? new ArrayList<>(ids.size()) : new HashSet<>(ids.size());
             for (Long id : ids) {
                 if (straightFromCache) {
                     dtos.add(cache.getDto(cachedClass, id));
@@ -521,7 +527,7 @@ public class MongoQueryResult extends QueryResultBase implements QueryResult, Au
                 return;
             }
 
-            List<Object> dtos = new ArrayList<>(ids.size());
+            Collection<Object> dtos = type == List.class ? new ArrayList<>(ids.size()) : new HashSet<>(ids.size());
             for (Long id : ids) {
                 try {
                     dtos.add(MongoSearch.getDto((Class<? extends Dto>) type, id, getLocales()));
@@ -546,5 +552,30 @@ public class MongoQueryResult extends QueryResultBase implements QueryResult, Au
         } catch (NoContentException e) {
             fieldX.set(dtoX, null);
         }
+    }
+
+    private void fetchByFk(Document document, Field field) throws IllegalAccessException {
+        FetchByFk fkData = field.getAnnotation(FetchByFk.class);
+        if (newIteration) {
+            newIteration = false;
+            Long id = document.getLong(StringUtil.toSnakeCase(fkData.fk()));
+            if (id == null) {
+                id = document.getLong(fkData.fk());
+            }
+            if (fetchByFkCache == null) {
+                fetchByFkCache = new HashMap<>(4);
+            }
+
+            if (id != null) {
+                try {
+                    fetchByFkCache.put(fkData.fk(), MongoSearch.getDto(fkData.dto(), id, getLocales()));
+                } catch (NoContentException ignore) {
+
+                }
+            }
+        }
+
+        Dto dtoX = fetchByFkCache.get(fkData.fk());
+        field.set(dto, dtoX == null ? null : dtoX.getPropertyValue(fkData.field()));
     }
 }

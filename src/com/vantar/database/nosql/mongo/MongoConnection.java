@@ -14,8 +14,12 @@ public class MongoConnection {
     private static MongoConfig config;
     private static MongoClient mongoClient;
     private static MongoDatabase database;
-    public static boolean isUp;
+    private static boolean isUp;
 
+
+    public static boolean isUp() {
+        return isUp;
+    }
 
     public static void connect(MongoConfig config) {
         MongoConnection.config = config;

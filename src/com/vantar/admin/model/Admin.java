@@ -170,10 +170,10 @@ public class Admin {
                     ui.addKeyValue(service + " (" + info.instanceCount + ")", info.isEnabledOnThisServer));
             }
 
-            ui  .addKeyValue("Mongo ", MongoConnection.isUp ? "on" : "off")
-                .addKeyValue("ElasticSearch ", ElasticConnection.isUp ? "on" : "off")
-                .addKeyValue("Sql ", SqlConnection.isUp ? "on" : "off")
-                .addKeyValue("RabbitMQ ", Queue.isUp ? "on" : "off");
+            ui  .addKeyValue("Mongo ", MongoConnection.isUp() ? "on" : "off")
+                .addKeyValue("ElasticSearch ", ElasticConnection.isUp() ? "on" : "off")
+                .addKeyValue("Sql ", SqlConnection.isUp() ? "on" : "off")
+                .addKeyValue("RabbitMQ ", Queue.isUp() ? "on" : "off");
 
         }
 

@@ -18,7 +18,7 @@ public class AdminQueue {
 
 
     public static void purge(Params params, HttpServletResponse response) throws FinishException {
-        if (!Queue.isUp) {
+        if (!Queue.isUp()) {
             return;
         }
 
@@ -38,7 +38,7 @@ public class AdminQueue {
     }
 
     public static void purgeSelective(Params params, HttpServletResponse response) throws FinishException {
-        if (!Queue.isUp) {
+        if (!Queue.isUp()) {
             return;
         }
 
@@ -70,7 +70,7 @@ public class AdminQueue {
     }
 
     public static void purge(WebUi ui, int delay, int maxTries, Set<String> exclude) {
-        if (!Queue.isUp) {
+        if (!Queue.isUp()) {
             return;
         }
 
@@ -106,7 +106,7 @@ public class AdminQueue {
     }
 
     public static void purgeSelective(WebUi ui, int delay, int maxTries, Set<String> include) {
-        if (!Queue.isUp) {
+        if (!Queue.isUp()) {
             return;
         }
 
@@ -131,7 +131,7 @@ public class AdminQueue {
     public static void status(Params params, HttpServletResponse response) throws FinishException {
         WebUi ui = Admin.getUi(Locale.getString(VantarKey.ADMIN_QUEUE_STATUS), params, response, true);
 
-        if (Queue.isUp) {
+        if (Queue.isUp()) {
             ui.addMessage(Locale.getString(VantarKey.ADMIN_RABBIT_IS_ON));
         } else {
             ui.addErrorMessage(Locale.getString(VantarKey.ADMIN_RABBIT_IS_OFF));

@@ -268,14 +268,13 @@ public class CommonRepoMongo extends Mongo {
         return result.asList();
     }
 
-    public static Object search(QueryData queryData, String... locales) throws DatabaseException, NoContentException,
-        InputException, ServerException {
+    public static Object search(QueryData queryData, String... locales) throws DatabaseException, VantarException {
 
         return search(queryData, null, locales);
     }
 
     public static Object search(QueryData queryData, CommonModel.QueryEvent event, String... locales)
-        throws DatabaseException, NoContentException, InputException, ServerException {
+        throws DatabaseException, VantarException {
 
         QueryBuilder q = new QueryBuilder(queryData);
         if (event != null) {

@@ -42,7 +42,7 @@ public class AdminDatabase {
     }
 
     public static void synchSql(WebUi ui) {
-        if (!SqlConnection.isUp) {
+        if (!SqlConnection.isUp()) {
             return;
         }
 
@@ -61,7 +61,7 @@ public class AdminDatabase {
     }
 
     public static void createSqlIndex(Params params, HttpServletResponse response) throws FinishException {
-        if (!SqlConnection.isUp) {
+        if (!SqlConnection.isUp()) {
             return;
         }
 
@@ -83,7 +83,7 @@ public class AdminDatabase {
     }
 
     public static void createSqlIndex(WebUi ui, boolean deleteIfExists) {
-        if (!SqlConnection.isUp) {
+        if (!SqlConnection.isUp()) {
             return;
         }
 
@@ -103,7 +103,7 @@ public class AdminDatabase {
     }
 
     public static void listSqlIndexes(Params params, HttpServletResponse response) throws FinishException {
-        if (!SqlConnection.isUp) {
+        if (!SqlConnection.isUp()) {
             return;
         }
 
@@ -133,7 +133,7 @@ public class AdminDatabase {
     }
 
     public static void purgeSql(Params params, HttpServletResponse response) throws FinishException {
-        if (!SqlConnection.isUp) {
+        if (!SqlConnection.isUp()) {
             return;
         }
 
@@ -154,7 +154,7 @@ public class AdminDatabase {
     }
 
     public static void purgeSql(WebUi ui, int delay, boolean dropTable, Set<String> exclude) {
-        if (!SqlConnection.isUp) {
+        if (!SqlConnection.isUp()) {
             return;
         }
         ui.beginBox(Locale.getString(VantarKey.ADMIN_DATABASE_REMOVE, "SQL")).write().sleep(delay);
@@ -223,7 +223,7 @@ public class AdminDatabase {
     }
 
     public static void importSql(Params params, HttpServletResponse response) throws FinishException {
-        if (!SqlConnection.isUp) {
+        if (!SqlConnection.isUp()) {
             return;
         }
 
@@ -244,7 +244,7 @@ public class AdminDatabase {
     }
 
     public static void importSql(WebUi ui, int delay, boolean deleteAll, Set<String> exclude) {
-        if (!SqlConnection.isUp) {
+        if (!SqlConnection.isUp()) {
             return;
         }
         ui.beginBox(Locale.getString(VantarKey.ADMIN_IMPORT_TITLE, "SQL")).write().sleep(delay);
@@ -276,7 +276,7 @@ public class AdminDatabase {
     // > > > MONGO
 
     public static void createMongoIndex(Params params, HttpServletResponse response) throws FinishException {
-        if (!MongoConnection.isUp) {
+        if (!MongoConnection.isUp()) {
             return;
         }
 
@@ -297,7 +297,7 @@ public class AdminDatabase {
     }
 
     public static void createMongoIndex(WebUi ui, boolean deleteIfExists) {
-        if (!MongoConnection.isUp) {
+        if (!MongoConnection.isUp()) {
             return;
         }
 
@@ -315,7 +315,7 @@ public class AdminDatabase {
     }
 
     public static void listMongoIndexes(Params params, HttpServletResponse response) throws FinishException {
-        if (!MongoConnection.isUp) {
+        if (!MongoConnection.isUp()) {
             return;
         }
 
@@ -340,7 +340,7 @@ public class AdminDatabase {
     }
 
     public static void purgeMongo(Params params, HttpServletResponse response) throws FinishException {
-        if (!MongoConnection.isUp) {
+        if (!MongoConnection.isUp()) {
             return;
         }
 
@@ -360,7 +360,7 @@ public class AdminDatabase {
     }
 
     public static void purgeMongo(WebUi ui, int delay, Set<String> exclude) {
-        if (!MongoConnection.isUp) {
+        if (!MongoConnection.isUp()) {
             return;
         }
         ui.beginBox(Locale.getString(VantarKey.ADMIN_DATABASE_REMOVE, "MONGO")).write().sleep(delay);
@@ -384,7 +384,7 @@ public class AdminDatabase {
                     count = CommonRepoMongo.count(dto.getStorage());
                 }
                 msg = Locale.getString(count == 0 ? VantarKey.DELETE_SUCCESS : VantarKey.DELETE_FAIL);
-            } catch (DatabaseException | ServerException e) {
+            } catch (DatabaseException | VantarException e) {
                 msg = Locale.getString(VantarKey.DELETE_FAIL);
             }
 
@@ -395,7 +395,7 @@ public class AdminDatabase {
     }
 
     public static void listMongoSequences(Params params, HttpServletResponse response) throws FinishException {
-        if (!MongoConnection.isUp) {
+        if (!MongoConnection.isUp()) {
             return;
         }
 
@@ -411,7 +411,7 @@ public class AdminDatabase {
     }
 
     public static void importMongo(Params params, HttpServletResponse response) throws FinishException {
-        if (!MongoConnection.isUp) {
+        if (!MongoConnection.isUp()) {
             return;
         }
 
@@ -432,7 +432,7 @@ public class AdminDatabase {
     }
 
     public static void importMongo(WebUi ui, int delay, boolean deleteAll, Set<String> exclude) {
-        if (!MongoConnection.isUp) {
+        if (!MongoConnection.isUp()) {
             return;
         }
         ui.beginBox(Locale.getString(VantarKey.ADMIN_IMPORT_TITLE, "MONGO")).write().sleep(delay);
@@ -464,7 +464,7 @@ public class AdminDatabase {
     // > > > ELASTIC
 
     public static void synchElastic(Params params, HttpServletResponse response) throws FinishException {
-        if (!ElasticConnection.isUp) {
+        if (!ElasticConnection.isUp()) {
             return;
         }
 
@@ -483,7 +483,7 @@ public class AdminDatabase {
     }
 
     public static void synchElastic(WebUi ui) {
-        if (!ElasticConnection.isUp) {
+        if (!ElasticConnection.isUp()) {
             return;
         }
 
@@ -500,7 +500,7 @@ public class AdminDatabase {
     }
 
     public static void purgeElastic(Params params, HttpServletResponse response) throws FinishException {
-        if (!ElasticConnection.isUp) {
+        if (!ElasticConnection.isUp()) {
             return;
         }
 
@@ -521,7 +521,7 @@ public class AdminDatabase {
     }
 
     public static void purgeElastic(WebUi ui, int delay, boolean dropCollection, Set<String> exclude) {
-        if (!ElasticConnection.isUp) {
+        if (!ElasticConnection.isUp()) {
             return;
         }
         ui.beginBox(Locale.getString(VantarKey.ADMIN_DATABASE_REMOVE, "Elastic")).sleep(delay).write();
@@ -559,7 +559,7 @@ public class AdminDatabase {
     }
 
     public static void importElastic(Params params, HttpServletResponse response) throws FinishException {
-        if (!ElasticConnection.isUp) {
+        if (!ElasticConnection.isUp()) {
             return;
         }
 
@@ -580,7 +580,7 @@ public class AdminDatabase {
     }
 
     public static void importElastic(WebUi ui, int delay, boolean deleteAll, Set<String> exclude) {
-        if (!ElasticConnection.isUp) {
+        if (!ElasticConnection.isUp()) {
             return;
         }
         ui.beginBox(Locale.getString(VantarKey.ADMIN_IMPORT_TITLE, "Elastic")).sleep(delay).write();
@@ -610,7 +610,7 @@ public class AdminDatabase {
     }
 
     public static void getMappingElastic(Params params, HttpServletResponse response) throws FinishException {
-        if (!ElasticConnection.isUp) {
+        if (!ElasticConnection.isUp()) {
             return;
         }
 
@@ -640,7 +640,7 @@ public class AdminDatabase {
     }
 
     public static void actionsElastic(Params params, HttpServletResponse response) throws FinishException {
-        if (!ElasticConnection.isUp) {
+        if (!ElasticConnection.isUp()) {
             return;
         }
 

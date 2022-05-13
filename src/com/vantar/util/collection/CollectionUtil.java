@@ -239,7 +239,7 @@ public class CollectionUtil {
             return false;
         }
 
-        if (!array.getClass().isArray()) {
+        if (array.getClass().isArray()) {
             for (int i = 0, length = Array.getLength(array); i < length; ++i) {
                 if (needle.equals(Array.get(array, i))) {
                     return true;

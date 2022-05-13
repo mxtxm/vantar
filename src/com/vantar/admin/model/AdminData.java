@@ -6,7 +6,6 @@ import com.vantar.database.dependency.DataDependency;
 import com.vantar.database.dto.*;
 import com.vantar.database.nosql.elasticsearch.*;
 import com.vantar.database.nosql.mongo.*;
-import com.vantar.database.nosql.mongo.Mongo;
 import com.vantar.database.query.*;
 import com.vantar.database.query.data.QueryData;
 import com.vantar.database.sql.*;
@@ -21,9 +20,8 @@ import com.vantar.util.json.Json;
 import com.vantar.util.object.*;
 import com.vantar.util.string.*;
 import com.vantar.web.*;
-import org.slf4j.LoggerFactory;
 import javax.servlet.http.HttpServletResponse;
-import java.lang.reflect.*;
+import java.lang.reflect.Field;
 import java.util.*;
 
 
@@ -79,15 +77,15 @@ public class AdminData {
         });
 
         ui.beginBox("NOSTORE");
-        noStores.forEach(info -> {
+        noStores.forEach(info ->
             ui.beginFloatBox("db-box-nostore", info.getDtoClassName(), info.title)
                 .addTag("")
                 .addBlockLink(
                     Locale.getString(VantarKey.ADMIN_DATA_FIELDS),
                     "/admin/data/fields?" + VantarParam.DTO + "=" + info.getDtoClassName()
                 )
-                .containerEnd();
-        });
+                .containerEnd()
+        );
         ui.containerEnd();
 
         // > > >
@@ -156,7 +154,7 @@ public class AdminData {
 
             String field = params.getString(VantarParam.SEARCH_FIELD);
             String string = Persian.Number.toLatin(params.getString(VantarParam.SEARCH_VALUE));
-            if (field != null && string != null) {
+            if (field != null) {
                 if (field.equals("all")) {
                     q.condition().phrase(string);
                 } else {
@@ -190,7 +188,7 @@ public class AdminData {
         PageData data = null;
         try {
             if (dtoInfo.dbms.equals(DtoDictionary.Dbms.SQL)) {
-                if (SqlConnection.isUp) {
+                if (SqlConnection.isUp()) {
                     try (SqlConnection connection = new SqlConnection()) {
                         SqlSearch search = new SqlSearch(connection);
                         data = search.getPage(q);
@@ -199,13 +197,13 @@ public class AdminData {
                     ui.addMessage(Locale.getString(VantarKey.ADMIN_SERVICE_IS_OFF, "SQL"));
                 }
             } else if (dtoInfo.dbms.equals(DtoDictionary.Dbms.MONGO)) {
-                if (MongoConnection.isUp) {
+                if (MongoConnection.isUp()) {
                     data = MongoSearch.getPage(q, null);
                 } else {
                     ui.addMessage(Locale.getString(VantarKey.ADMIN_SERVICE_IS_OFF, "Mongo"));
                 }
             } else if (dtoInfo.dbms.equals(DtoDictionary.Dbms.ELASTIC)) {
-                if (ElasticConnection.isUp) {
+                if (ElasticConnection.isUp()) {
                     data = ElasticSearch.getPage(q);
                 } else {
                     ui.addMessage(Locale.getString(VantarKey.ADMIN_SERVICE_IS_OFF, "ElasticSearch"));
@@ -223,6 +221,7 @@ public class AdminData {
         ui.finish();
     }
 
+    @SuppressWarnings("unchecked")
     public static void delete(Params params, HttpServletResponse response, DtoDictionary.Info dtoInfo) throws FinishException {
         if (dtoInfo == null) {
             return;
@@ -238,7 +237,7 @@ public class AdminData {
             q.condition().inNumber("id", params.getLongList(VantarParam.ID));
 
             if (dtoInfo.dbms.equals(DtoDictionary.Dbms.SQL)) {
-                if (SqlConnection.isUp) {
+                if (SqlConnection.isUp()) {
                     try (SqlConnection connection = new SqlConnection()) {
                         CommonRepoSql repo = new CommonRepoSql(connection);
                         ui.addDeleteForm(repo.getData(q), dtoInfo.present);
@@ -252,12 +251,12 @@ public class AdminData {
                     ui.addMessage(Locale.getString(VantarKey.ADMIN_SERVICE_IS_OFF, "SQL"));
                 }
             } else if (dtoInfo.dbms.equals(DtoDictionary.Dbms.MONGO)) {
-                if (MongoConnection.isUp) {
+                if (MongoConnection.isUp()) {
                     try {
                         ui.addDeleteForm(CommonModelMongo.getData(q), dtoInfo.present);
                     } catch (NoContentException x) {
                         ui.addMessage(Locale.getString(VantarKey.NO_CONTENT));
-                    } catch (ServerException e) {
+                    } catch (VantarException e) {
                         ui.addErrorMessage(e);
                         Admin.log.error("! {}", dto, e);
                     }
@@ -265,7 +264,7 @@ public class AdminData {
                     ui.addMessage(Locale.getString(VantarKey.ADMIN_SERVICE_IS_OFF, "Mongo"));
                 }
             } else if (dtoInfo.dbms.equals(DtoDictionary.Dbms.ELASTIC)) {
-                if (ElasticConnection.isUp) {
+                if (ElasticConnection.isUp()) {
                     try {
                         ui.addDeleteForm(CommonRepoElastic.getData(q), dtoInfo.present);
                     } catch (NoContentException x) {
@@ -290,13 +289,13 @@ public class AdminData {
 
         try {
             if (dtoInfo.dbms.equals(DtoDictionary.Dbms.SQL)) {
-                if (SqlConnection.isUp) {
+                if (SqlConnection.isUp()) {
                     ui.addMessage(CommonModelSql.deleteBatch(params, dto.getClass()).message);
                 } else {
                     ui.addMessage(Locale.getString(VantarKey.ADMIN_SERVICE_IS_OFF, "SQL"));
                 }
             } else if (dtoInfo.dbms.equals(DtoDictionary.Dbms.MONGO)) {
-                if (MongoConnection.isUp) {
+                if (MongoConnection.isUp()) {
                     if (params.isChecked(VantarParam.LOGICAL_DELETED_UNDO)) {
                         ui.addMessage(CommonModelMongo.unDeleteBatch(params, dto.getClass()).message);
                     } else {
@@ -319,7 +318,7 @@ public class AdminData {
                     ui.addMessage(Locale.getString(VantarKey.ADMIN_SERVICE_IS_OFF, "Mongo"));
                 }
             } else if (dtoInfo.dbms.equals(DtoDictionary.Dbms.ELASTIC)) {
-                if (ElasticConnection.isUp) {
+                if (ElasticConnection.isUp()) {
                     ui.addMessage(CommonModelElastic.deleteBatch(params, dto.getClass()).message);
                 } else {
                     ui.addMessage(Locale.getString(VantarKey.ADMIN_SERVICE_IS_OFF, "ElasticSearch"));
@@ -330,7 +329,7 @@ public class AdminData {
                 event.afterDelete(dto);
             }
 
-        } catch (ServerException | InputException e) {
+        } catch (VantarException e) {
             ui.addErrorMessage(e);
             Admin.log.error("! {}", dto, e);
         }
@@ -342,6 +341,7 @@ public class AdminData {
         ui.finish();
     }
 
+    @SuppressWarnings("unchecked")
     public static void deleteMany(Params params, HttpServletResponse response, DtoDictionary.Info dtoInfo) throws FinishException {
         if (dtoInfo == null) {
             return;
@@ -366,7 +366,7 @@ public class AdminData {
 
             try {
                 if (dtoInfo.dbms.equals(DtoDictionary.Dbms.MONGO)) {
-                    if (MongoConnection.isUp) {
+                    if (MongoConnection.isUp()) {
                         if (params.isChecked(VantarParam.LOGICAL_DELETED_UNDO)) {
                             ui.addMessage(CommonModelMongo.unDeleteBatch(params, dto.getClass()).message);
                         } else {
@@ -389,14 +389,14 @@ public class AdminData {
                     }
 
                 } else if (dtoInfo.dbms.equals(DtoDictionary.Dbms.SQL)) {
-                    if (SqlConnection.isUp) {
+                    if (SqlConnection.isUp()) {
                         ui.addMessage(CommonModelSql.deleteBatch(params, dto.getClass()).message);
                     } else {
                         ui.addMessage(Locale.getString(VantarKey.ADMIN_SERVICE_IS_OFF, "SQL"));
                     }
 
                 } else if (dtoInfo.dbms.equals(DtoDictionary.Dbms.ELASTIC)) {
-                    if (ElasticConnection.isUp) {
+                    if (ElasticConnection.isUp()) {
                         ui.addMessage(CommonModelElastic.deleteBatch(params, dto.getClass()).message);
                     } else {
                         ui.addMessage(Locale.getString(VantarKey.ADMIN_SERVICE_IS_OFF, "ElasticSearch"));
@@ -406,7 +406,7 @@ public class AdminData {
                 if (event != null) {
                     event.afterDelete(dto);
                 }
-            } catch (ServerException | InputException e) {
+            } catch (VantarException e) {
                 ui.addErrorMessage(e);
                 Admin.log.error("! {}", dto, e);
             }
@@ -432,25 +432,25 @@ public class AdminData {
         } else {
             try {
                 if (dtoInfo.dbms.equals(DtoDictionary.Dbms.SQL)) {
-                    if (SqlConnection.isUp) {
+                    if (SqlConnection.isUp()) {
                         ui.addMessage(CommonModelSql.purgeData(dto.getStorage()).message);
                     } else {
                         ui.addMessage(Locale.getString(VantarKey.ADMIN_SERVICE_IS_OFF, "SQL"));
                     }
                 } else if (dtoInfo.dbms.equals(DtoDictionary.Dbms.MONGO)) {
-                    if (MongoConnection.isUp) {
+                    if (MongoConnection.isUp()) {
                         ui.addMessage(CommonModelMongo.purge(dto).message);
                     } else {
                         ui.addMessage(Locale.getString(VantarKey.ADMIN_SERVICE_IS_OFF, "Mongo"));
                     }
                 } else if (dtoInfo.dbms.equals(DtoDictionary.Dbms.ELASTIC)) {
-                    if (ElasticConnection.isUp) {
+                    if (ElasticConnection.isUp()) {
                         ui.addMessage(CommonModelElastic.purgeData(dto.getStorage()).message);
                     } else {
                         ui.addMessage(Locale.getString(VantarKey.ADMIN_SERVICE_IS_OFF, "ElasticSearch"));
                     }
                 }
-            } catch (ServerException e) {
+            } catch (VantarException e) {
                 ui.addErrorMessage(e);
                 Admin.log.error("! {}", dto, e);
             }
@@ -474,7 +474,7 @@ public class AdminData {
         if (!params.contains("f")) {
             dto.setId(params.getLong(VantarParam.ID));
             if (dtoInfo.dbms.equals(DtoDictionary.Dbms.SQL)) {
-                if (SqlConnection.isUp) {
+                if (SqlConnection.isUp()) {
                     try (SqlConnection connection = new SqlConnection()) {
                         CommonRepoSql repo = new CommonRepoSql(connection);
                         ui.addDtoUpdateForm(
@@ -491,7 +491,7 @@ public class AdminData {
                     ui.addMessage(Locale.getString(VantarKey.ADMIN_SERVICE_IS_OFF, "SQL"));
                 }
             } else if (dtoInfo.dbms.equals(DtoDictionary.Dbms.MONGO)) {
-                if (MongoConnection.isUp) {
+                if (MongoConnection.isUp()) {
                     try {
                         ui.addDtoUpdateForm(
                             CommonModelMongo.getById(dto),
@@ -499,7 +499,7 @@ public class AdminData {
                         );
                     } catch (NoContentException e) {
                         ui.addMessage(Locale.getString(VantarKey.NO_CONTENT));
-                    } catch (ServerException | InputException e) {
+                    } catch (VantarException e) {
                         ui.addErrorMessage(e);
                         Admin.log.error("! {}", dto, e);
                     }
@@ -507,7 +507,7 @@ public class AdminData {
                     ui.addMessage(Locale.getString(VantarKey.ADMIN_SERVICE_IS_OFF, "Mongo"));
                 }
             } else if (dtoInfo.dbms.equals(DtoDictionary.Dbms.ELASTIC)) {
-                if (ElasticConnection.isUp) {
+                if (ElasticConnection.isUp()) {
                     try {
                         ui.addDtoUpdateForm(
                             CommonRepoElastic.getById(dto),
@@ -535,13 +535,13 @@ public class AdminData {
 
         try {
             if (dtoInfo.dbms.equals(DtoDictionary.Dbms.SQL)) {
-                if (SqlConnection.isUp) {
+                if (SqlConnection.isUp()) {
                     CommonModelSql.updateJson(params.getString("asjson"), dto);
                 } else {
                     ui.addMessage(Locale.getString(VantarKey.ADMIN_SERVICE_IS_OFF, "SQL"));
                 }
             } else if (dtoInfo.dbms.equals(DtoDictionary.Dbms.MONGO)) {
-                if (MongoConnection.isUp) {
+                if (MongoConnection.isUp()) {
                     CommonModelMongo.updateJson(params, "asjson", dto, new CommonModel.WriteEvent() {
                         @Override
                         public void beforeSet(Dto dto) {
@@ -554,14 +554,14 @@ public class AdminData {
                         }
 
                         @Override
-                        public void afterWrite(Dto dto) throws InputException, ServerException {
+                        public void afterWrite(Dto dto) throws ServerException {
                             if (dto instanceof CommonUser) {
                                 for (DtoDictionary.Info info: DtoDictionary.getAll()) {
                                     if (ClassUtil.isInstantiable(info.dtoClass, CommonUserPassword.class)) {
                                         if (dto.getClass().equals(info.dtoClass)) {
                                             break;
                                         }
-                                        String password = params.extractFromJson("password", String.class);
+                                        String password = Json.d.extract(params.getString("asjson"), "password", String.class);
                                         if (StringUtil.isEmpty(password)) {
                                             break;
                                         }
@@ -574,7 +574,7 @@ public class AdminData {
                                             } else {
                                                 CommonModelMongo.insert(userPassword);
                                             }
-                                        } catch (DatabaseException e) {
+                                        } catch (DatabaseException | VantarException e) {
                                             throw new ServerException(VantarKey.FETCH_FAIL);
                                         }
                                         break;
@@ -587,7 +587,7 @@ public class AdminData {
                     ui.addMessage(Locale.getString(VantarKey.ADMIN_SERVICE_IS_OFF, "Mongo"));
                 }
             } else if (dtoInfo.dbms.equals(DtoDictionary.Dbms.ELASTIC)) {
-                if (ElasticConnection.isUp) {
+                if (ElasticConnection.isUp()) {
                     CommonModelElastic.updateJson(params.getString("asjson"), dto);
                 } else {
                     ui.addMessage(Locale.getString(VantarKey.ADMIN_SERVICE_IS_OFF, "ElasticSearch"));
@@ -600,7 +600,7 @@ public class AdminData {
 
             ui.addMessage(Locale.getString(VantarKey.UPDATE_SUCCESS));
 
-        } catch (InputException | ServerException e) {
+        } catch (VantarException e) {
             ui.addErrorMessage(e);
             Admin.log.error("! {}", dto, e);
         }
@@ -636,13 +636,13 @@ public class AdminData {
 
         try {
             if (dtoInfo.dbms.equals(DtoDictionary.Dbms.SQL)) {
-                if (SqlConnection.isUp) {
+                if (SqlConnection.isUp()) {
                     CommonModelSql.insert(params, dto);
                 } else {
                     ui.addMessage(Locale.getString(VantarKey.ADMIN_SERVICE_IS_OFF, "SQL"));
                 }
             } else if (dtoInfo.dbms.equals(DtoDictionary.Dbms.MONGO)) {
-                if (MongoConnection.isUp) {
+                if (MongoConnection.isUp()) {
                     CommonModelMongo.insertJson(params, "asjson", dto, new CommonModel.WriteEvent() {
                         @Override
                         public void beforeSet(Dto dto) {
@@ -655,14 +655,15 @@ public class AdminData {
                         }
 
                         @Override
-                        public void afterWrite(Dto dto) throws ServerException, InputException {
+                        public void afterWrite(Dto dto) throws InputException, ServerException {
                             if (dto instanceof CommonUser) {
                                 for (DtoDictionary.Info info: DtoDictionary.getAll()) {
                                     if (ClassUtil.isInstantiable(info.dtoClass, CommonUserPassword.class)) {
                                         if (dto.getClass().equals(info.dtoClass)) {
                                             break;
                                         }
-                                        String password = params.extractFromJson("password", String.class);
+                                            String password =
+                                                Json.d.extract(params.getString("asjson"), "password", String.class);
                                         if (StringUtil.isEmpty(password)) {
                                             break;
                                         }
@@ -681,7 +682,7 @@ public class AdminData {
                     ui.addMessage(Locale.getString(VantarKey.ADMIN_SERVICE_IS_OFF, "Mongo"));
                 }
             } else if (dtoInfo.dbms.equals(DtoDictionary.Dbms.ELASTIC)) {
-                if (ElasticConnection.isUp) {
+                if (ElasticConnection.isUp()) {
                     CommonModelElastic.insert(params, dto);
                 } else {
                     ui.addMessage(Locale.getString(VantarKey.ADMIN_SERVICE_IS_OFF, "ElasticSearch"));
@@ -694,7 +695,7 @@ public class AdminData {
 
             ui.addMessage(Locale.getString(VantarKey.INSERT_SUCCESS));
 
-        } catch (InputException | ServerException e) {
+        } catch (VantarException e) {
             ui.addErrorMessage(e);
             Admin.log.error("! {}", dto, e);
         }
@@ -706,15 +707,17 @@ public class AdminData {
         ui.finish();
     }
 
-    public static void exportData(Params params, HttpServletResponse response, DtoDictionary.Info dtoIndex) throws ServerException, NoContentException {
+    public static void exportData(Params params, HttpServletResponse response, DtoDictionary.Info dtoIndex)
+        throws VantarException {
+
         Dto dto = dtoIndex.getDtoInstance();
 
         if (dtoIndex.dbms.equals(DtoDictionary.Dbms.SQL)) {
-            if (SqlConnection.isUp) {
+            if (SqlConnection.isUp()) {
 
             }
         } else if (dtoIndex.dbms.equals(DtoDictionary.Dbms.MONGO)) {
-            if (MongoConnection.isUp) {
+            if (MongoConnection.isUp()) {
                 List<Dto> data = CommonModelMongo.getAll(dto);
                 String json = Json.d.toJson(data);
                 String filepath = FileUtil.getTempFilename();
@@ -722,20 +725,21 @@ public class AdminData {
                 Response.download(
                     response,
                     filepath,
-                    StringUtil.toKababCase(dto.getClass().getSimpleName()) + "-" + new DateTime().formatter().getDateTimeAsFilename() + ".json"
+                    StringUtil.toKababCase(dto.getClass().getSimpleName()) + "-"
+                        + new DateTime().formatter().getDateTimeAsFilename() + ".json"
                 );
             }
         } else if (dtoIndex.dbms.equals(DtoDictionary.Dbms.ELASTIC)) {
-            if (ElasticConnection.isUp) {
+            if (ElasticConnection.isUp()) {
 
             }
         }
-
-
     }
 
 
-    public static void importData(Params params, HttpServletResponse response, DtoDictionary.Info dtoIndex) throws FinishException {
+    public static void importData(Params params, HttpServletResponse response, DtoDictionary.Info dtoIndex)
+        throws FinishException {
+
         if (dtoIndex == null) {
             return;
         }
@@ -749,7 +753,7 @@ public class AdminData {
         }
 
         if (dtoIndex.dbms.equals(DtoDictionary.Dbms.SQL)) {
-            if (SqlConnection.isUp) {
+            if (SqlConnection.isUp()) {
                 CommonModelSql.importDataAdmin(
                     params.getString("import"),
                     dto,
@@ -761,7 +765,7 @@ public class AdminData {
                 ui.addMessage(Locale.getString(VantarKey.ADMIN_SERVICE_IS_OFF, "SQL"));
             }
         } else if (dtoIndex.dbms.equals(DtoDictionary.Dbms.MONGO)) {
-            if (MongoConnection.isUp) {
+            if (MongoConnection.isUp()) {
                 CommonModelMongo.importDataAdmin(
                     params.getString("import"),
                     dto,
@@ -773,7 +777,7 @@ public class AdminData {
                 ui.addMessage(Locale.getString(VantarKey.ADMIN_SERVICE_IS_OFF, "Mongo"));
             }
         } else if (dtoIndex.dbms.equals(DtoDictionary.Dbms.ELASTIC)) {
-            if (ElasticConnection.isUp) {
+            if (ElasticConnection.isUp()) {
                 CommonModelElastic.importDataAdmin(
                     params.getString("import"),
                     dto,
@@ -800,7 +804,7 @@ public class AdminData {
     }
 
     public static void statusSql(WebUi ui) {
-        if (!SqlConnection.isUp) {
+        if (!SqlConnection.isUp()) {
             ui.addMessage(Locale.getString(VantarKey.ADMIN_SERVICE_IS_OFF, "SQL"));
             return;
         }
@@ -826,7 +830,7 @@ public class AdminData {
     }
 
     public static void statusMongo(WebUi ui) {
-        if (!MongoConnection.isUp) {
+        if (!MongoConnection.isUp()) {
             ui.addMessage(Locale.getString(VantarKey.ADMIN_SERVICE_IS_OFF, "Mongo"));
             return;
         }
@@ -834,7 +838,10 @@ public class AdminData {
 
         try {
             for (DtoDictionary.Info info : DtoDictionary.getAll(DtoDictionary.Dbms.MONGO)) {
-                ui.addKeyValue(info.dtoClass.getSimpleName(), CommonRepoMongo.count(info.getDtoInstance().getStorage()) + " records");
+                ui.addKeyValue(
+                    info.dtoClass.getSimpleName(),
+                    CommonRepoMongo.count(info.getDtoInstance().getStorage()) + " records"
+                );
             }
         } catch (DatabaseException e) {
             ui.addErrorMessage(e);
@@ -851,7 +858,7 @@ public class AdminData {
     }
 
     public static void statusElastic(WebUi ui) {
-        if (!ElasticConnection.isUp) {
+        if (!ElasticConnection.isUp()) {
             ui.addMessage(Locale.getString(VantarKey.ADMIN_SERVICE_IS_OFF, "ElasticSearch"));
             return;
         }
@@ -859,7 +866,10 @@ public class AdminData {
 
         try {
             for (DtoDictionary.Info info : DtoDictionary.getAll(DtoDictionary.Dbms.ELASTIC)) {
-                ui.addKeyValue(info.dtoClass.getSimpleName(), CommonRepoElastic.count(info.getDtoInstance().getStorage()) + " records");
+                ui.addKeyValue(
+                    info.dtoClass.getSimpleName(),
+                    CommonRepoElastic.count(info.getDtoInstance().getStorage()) + " records"
+                );
             }
         } catch (DatabaseException e) {
             ui.addErrorMessage(e);

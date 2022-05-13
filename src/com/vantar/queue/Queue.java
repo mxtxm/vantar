@@ -16,12 +16,14 @@ public class Queue {
 
     public static final int DEFAULT_TAKER_ID = 0;
     public static QueueConnection connection;
-    public static boolean isUp;
 
+
+    public static boolean isUp() {
+        return connection != null && connection.isUp();
+    }
 
     public static void connect(QueueConfig config, QueueExceptionHandler exceptionHandler) {
         connection = new QueueConnection(config, exceptionHandler);
-        isUp = connection.isUp;
     }
 
     public static void shutdown() {
@@ -29,7 +31,6 @@ public class Queue {
             cancelTake(tag);
         }
         connection.shutdown();
-        isUp = false;
     }
 
     public static boolean delete(String queueName) {

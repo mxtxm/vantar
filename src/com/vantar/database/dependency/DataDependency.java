@@ -237,10 +237,10 @@ public class DataDependency {
             try {
                 List<Dto> dtos = CommonModelMongo.getData(q);
                 return new Dependants(dtoToQuery.getClass().getName(), dtos);
-            } catch (ServerException e) {
-                log.error("! query failed {}({}, {})", dtoToQuery.getClass().getName(), fieldName, id);
             } catch (NoContentException ignore) {
 
+            } catch (VantarException e) {
+                log.error("! query failed {}({}, {})", dtoToQuery.getClass().getName(), fieldName, id);
             }
         }
         return null;

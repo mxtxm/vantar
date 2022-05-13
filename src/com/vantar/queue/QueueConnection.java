@@ -21,8 +21,12 @@ public class QueueConnection {
     private final QueueConfig config;
     private final QueueExceptionHandler exceptionHandler;
 
-    public boolean isUp;
+    private boolean isUp;
 
+
+    public boolean isUp() {
+        return isUp;
+    }
 
     public QueueConnection(QueueConfig config, QueueExceptionHandler exceptionHandler) {
         this.config = config;

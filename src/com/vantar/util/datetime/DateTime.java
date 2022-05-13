@@ -379,10 +379,18 @@ public class DateTime {
     }
 
     public boolean isAfter(DateTime dateTime) {
+        return dateTime.timestamp != null && timestamp > dateTime.timestamp;
+    }
+
+    public boolean isAfterOrEqual(DateTime dateTime) {
         return dateTime.timestamp != null && timestamp >= dateTime.timestamp;
     }
 
     public boolean isBefore(DateTime dateTime) {
+        return dateTime.timestamp != null && timestamp < dateTime.timestamp;
+    }
+
+    public boolean isBeforeOrEqual(DateTime dateTime) {
         return dateTime.timestamp != null && timestamp <= dateTime.timestamp;
     }
 

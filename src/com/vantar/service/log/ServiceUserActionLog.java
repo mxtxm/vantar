@@ -105,7 +105,7 @@ public class ServiceUserActionLog implements Services.Service {
             }
         }
 
-        if (userLogService.delayedStoreEnabled && Queue.isUp) {
+        if (userLogService.delayedStoreEnabled && Queue.isUp()) {
             Queue.add(VantarParam.QUEUE_NAME_USER_ACTION_LOG, new Packet(userLog));
             log.debug(" ! userLog > queue({})", VantarParam.QUEUE_NAME_USER_ACTION_LOG);
         } else {
@@ -135,6 +135,7 @@ public class ServiceUserActionLog implements Services.Service {
             log.debug(" ! {} <", userLog.url);
         }
         userLog.action = "RESPONSE";
+        userLog.status = response.getStatus();
         userLog.threadId = Thread.currentThread().getId();
         userLog.headers = Response.getHeaders(response);
 
@@ -147,7 +148,7 @@ public class ServiceUserActionLog implements Services.Service {
             }
         }
 
-        if (userLogService.delayedStoreEnabled && Queue.isUp) {
+        if (userLogService.delayedStoreEnabled && Queue.isUp()) {
             Queue.add(VantarParam.QUEUE_NAME_USER_ACTION_LOG, new Packet(userLog));
             log.debug(" ! userLog > queue({})", VantarParam.QUEUE_NAME_USER_ACTION_LOG);
         } else {

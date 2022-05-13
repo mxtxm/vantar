@@ -12,9 +12,12 @@ public class ElasticConnection {
 
     private static RestHighLevelClient client;
     private static ElasticConfig config;
+    private static boolean isUp;
 
-    public static boolean isUp;
 
+    public static boolean isUp() {
+        return isUp;
+    }
 
     public static void connect(ElasticConfig config) {
         ElasticConnection.config = config;

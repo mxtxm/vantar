@@ -68,6 +68,7 @@ public interface Dto {
     String getPresentationValue();
     String getPresentationValue(String separator);
 
+    void simpleSet(Dto dto, String... include);
     List<ValidationError> setPropertyValue(String name, Object value);
     List<ValidationError> setPropertyValue(String name, Object value, Action action);
     List<ValidationError> set(Dto dto, String... locales);

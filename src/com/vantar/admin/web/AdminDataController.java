@@ -63,7 +63,7 @@ public class AdminDataController extends RouteToMethod {
         AdminData.importData(params, response, DtoDictionary.get(params.getString("dto")));
     }
 
-    public void dataExport(Params params, HttpServletResponse response) throws ServerException, NoContentException {
+    public void dataExport(Params params, HttpServletResponse response) throws VantarException {
         AdminData.exportData(params, response, DtoDictionary.get(params.getString("dto")));
     }
 

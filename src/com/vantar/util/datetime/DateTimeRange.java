@@ -79,7 +79,7 @@ public class DateTimeRange {
      * @return true if range is valid
      */
     public boolean isValid() {
-        return dateMin != null && dateMax != null && dateMax.isAfter(dateMin);
+        return dateMin != null && dateMax != null && dateMax.isAfterOrEqual(dateMin);
     }
 
     /**

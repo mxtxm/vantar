@@ -598,6 +598,30 @@ public abstract class DtoBase implements Dto {
 
     /**
      * can do:
+     * sets include values from dto to current object
+     * 1. null values are set
+     * 2. nullProperties is ignored
+     * 3. excludeProperties is ignored
+     * 4. stops if exception
+     */
+    public void simpleSet(Dto dto, String... include) {
+        try {
+            for (Field field : getClass().getFields()) {
+                if (isNotDataField(field)) {
+                    continue;
+                }
+                String name = field.getName();
+                if (CollectionUtil.contains(include, name)) {
+                    field.set(this, dto.getPropertyValue(name));
+                }
+            }
+        } catch (IllegalAccessException e) {
+            log.error(" !! ({}, {})\n", getClass().getName(), this, e);
+        }
+    }
+
+    /**
+     * can do:
      * 1. null values are ignored
      * 2. nullProperties of both objects are used
      * 3. excludeProperties of both objects are used
@@ -920,12 +944,17 @@ public abstract class DtoBase implements Dto {
                     value = new HashSet<>(CollectionUtil.toList(value, getPropertyGenericTypes(name)[0]));
                 } else if (ClassUtil.isInstantiable(type, Map.class)) {
                     if (field.isAnnotationPresent(Localized.class) && value instanceof String) {
-                        Map<String, String> v = (Map<String, String>) field.get(this);
-                        if (v == null) {
-                            v = new HashMap<>(1);
+                        value = ((String) value).trim();
+                        if (((String) value).startsWith("{") && ((String) value).endsWith("}")) {
+                            value = Json.d.mapFromJson((String) value, String.class, String.class);
+                        } else {
+                            Map<String, String> v = (Map<String, String>) field.get(this);
+                            if (v == null) {
+                                v = new HashMap<>(1);
+                            }
+                            v.put(Locale.getSelectedLocale(), (String) value);
+                            value = v;
                         }
-                        v.put(Locale.getSelectedLocale(), (String) value);
-                        value = v;
                     } else {
                         Class<?>[] types = getPropertyGenericTypes(name);
                         value = CollectionUtil.toMap(value, types[0], types[1]);

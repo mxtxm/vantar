@@ -56,6 +56,9 @@ abstract public class QueryResultBase {
             List<T> data = new ArrayList<>();
             while (next()) {
                 data.add((T) dto);
+                if (event != null) {
+                    event.afterSetData(dto, data);
+                }
                 dto = dto.getClass().getConstructor().newInstance();
             }
 
@@ -73,7 +76,9 @@ abstract public class QueryResultBase {
         }
     }
 
+
     abstract public boolean next() throws DatabaseException;
+
 
     abstract public void close();
 
@@ -81,5 +86,7 @@ abstract public class QueryResultBase {
     public interface Event {
 
         void afterSetData(Dto dto);
+
+        void afterSetData(Dto dto, List<?> data);
     }
 }
