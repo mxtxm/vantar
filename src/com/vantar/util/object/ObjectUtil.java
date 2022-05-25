@@ -77,7 +77,7 @@ public class ObjectUtil {
     }
 
     /**
-     * Convert object to string
+     * Convert object to string for storage
      * @param object to convert
      * @return
      * (null if object == null)
@@ -86,6 +86,34 @@ public class ObjectUtil {
      * (json of properties for other types)
      */
     public static String toString(Object object) {
+        if (object == null) {
+            return null;
+        } else if (object instanceof String) {
+            return (String) object;
+        } else if (object instanceof Number || object instanceof Boolean || object instanceof DateTime
+            || object instanceof Character) {
+            return object.toString();
+        } else if (object instanceof Throwable) {
+            return throwableToString((Throwable) object);
+        }
+        try {
+            String s = Json.d.toJson(object);
+            return s == null ? object.toString() : s;
+        } catch (Exception e) {
+            return object.toString();
+        }
+    }
+
+    /**
+     * Convert object to string for view
+     * @param object to convert
+     * @return
+     * (null if object == "null")
+     * (string value if type == string or number)
+     * (exception message and stacktrace if type == throwable)
+     * (json of properties for other types)
+     */
+    public static String toStringViewable(Object object) {
         if (object == null) {
             return "null";
         } else if (object instanceof String) {

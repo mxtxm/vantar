@@ -158,7 +158,7 @@ public class ServiceDtoCache implements Services.Service {
             return;
         }
         if (dtos == null) {
-            dtos = new ArrayList<>();
+            dtos = new ArrayList<>(1);
         }
 
         Map<Long, Dto> data = Collections.synchronizedMap(new LinkedHashMap<>(dtos.size() + 15));
@@ -168,5 +168,30 @@ public class ServiceDtoCache implements Services.Service {
         }
 
         cache.put(info.dtoClass, data);
+        log.info("   >> cache loaded ({})", info.dtoClass.getSimpleName());
+    }
+
+    public static <T extends Dto> List<T> asList(Class<T> tClass) throws ServiceException {
+        return Services.get(ServiceDtoCache.class).getList(tClass);
+    }
+
+    public static <A extends Dto> List<A> asList(Class<? extends Dto> tClass, Class<A> asClass) throws ServiceException {
+        return Services.get(ServiceDtoCache.class).getList(tClass, asClass);
+    }
+
+    public static Map<Long, Dto> asMap(Class<? extends Dto> tClass) throws ServiceException {
+        return Services.get(ServiceDtoCache.class).getMap(tClass);
+    }
+
+    public static <A extends Dto> Map<Long, A> asMap(Class<? extends Dto> tClass, Class<A> asClass) throws ServiceException {
+        return Services.get(ServiceDtoCache.class).getMap(tClass, asClass);
+    }
+
+    public static <T extends Dto> T asDto(Class<T> tClass, Long id) throws ServiceException {
+        return Services.get(ServiceDtoCache.class).getDto(tClass, id);
+    }
+
+    public static <A extends Dto> A asDto(Class<? extends Dto> tClass, Class<A> asClass, Long id) throws ServiceException {
+        return Services.get(ServiceDtoCache.class).getDto(tClass, asClass, id);
     }
 }

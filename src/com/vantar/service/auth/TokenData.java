@@ -27,7 +27,7 @@ public class TokenData {
     }
 
     public String toString() {
-        return ObjectUtil.toString(this);
+        return ObjectUtil.toStringViewable(this);
     }
 
 

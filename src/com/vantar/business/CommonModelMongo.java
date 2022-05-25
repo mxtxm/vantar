@@ -35,40 +35,40 @@ public class CommonModelMongo extends CommonModel {
 
 
     public static ResponseMessage insert(Params params, Dto dto) throws InputException, ServerException {
-        return insertX(params, dto, null, null);
+        return insertX(params, dto, null);
     }
     public static ResponseMessage insert(Params params, Dto dto, WriteEvent event)
         throws InputException, ServerException {
 
-        return insertX(params, dto, event, null);
+        return insertX(params, dto, event);
     }
 
     public static ResponseMessage insertJson(Params params, Dto dto) throws InputException, ServerException {
-        return insertX(params.getJson(), dto, null, null);
+        return insertX(params.getJson(), dto, null);
     }
     public static ResponseMessage insertJson(Params params, Dto dto, WriteEvent event)
         throws InputException, ServerException {
 
-        return insertX(params.getJson(), dto, event, null);
+        return insertX(params.getJson(), dto, event);
     }
     public static ResponseMessage insertJson(Params params, String key, Dto dto) throws InputException, ServerException {
-        return insertX(params.getString(key), dto, null, params);
+        return insertX(params.getString(key), dto, null);
     }
     public static ResponseMessage insertJson(Params params, String key, Dto dto, WriteEvent event)
         throws InputException, ServerException {
 
-        return insertX(params.getString(key), dto, event, params);
+        return insertX(params.getString(key), dto, event);
     }
     public static ResponseMessage insertJson(String json, Dto dto) throws InputException, ServerException {
-        return insertX(json, dto, null, null);
+        return insertX(json, dto, null);
     }
     public static ResponseMessage insertJson(String json, Dto dto, WriteEvent event)
         throws InputException, ServerException {
 
-        return insertX(json, dto, event, null);
+        return insertX(json, dto, event);
     }
 
-    private static ResponseMessage insertX(Object params, Dto dto, WriteEvent event, Params requestParams)
+    private static ResponseMessage insertX(Object params, Dto dto, WriteEvent event)
         throws InputException, ServerException {
 
         if (event != null) {
@@ -133,7 +133,9 @@ public class CommonModelMongo extends CommonModel {
             throw new ServerException(VantarKey.INSERT_FAIL);
         }
 
-        ServiceUserActionLog.add(Dto.Action.INSERT, dto);
+        if (Services.isUp(ServiceUserActionLog.class)) {
+            ServiceUserActionLog.add(Dto.Action.INSERT, dto);
+        }
 
         return ResponseMessage.success(VantarKey.INSERT_SUCCESS, dto.getId(), dto);
     }
@@ -201,7 +203,9 @@ public class CommonModelMongo extends CommonModel {
             throw new ServerException(VantarKey.INSERT_FAIL);
         }
 
-        ServiceUserActionLog.add(Dto.Action.INSERT, dto);
+        if (Services.isUp(ServiceUserActionLog.class)) {
+            ServiceUserActionLog.add(Dto.Action.INSERT, dto);
+        }
 
         return ResponseMessage.success(VantarKey.INSERT_SUCCESS, dto.getId(), dto);
     }
@@ -306,7 +310,9 @@ public class CommonModelMongo extends CommonModel {
             throw new ServerException(VantarKey.UPDATE_FAIL);
         }
 
-        ServiceUserActionLog.add(action, dto);
+        if (Services.isUp(ServiceUserActionLog.class)) {
+            ServiceUserActionLog.add(action, dto);
+        }
 
         return ResponseMessage.success(VantarKey.UPDATE_SUCCESS, dto);
     }
@@ -407,7 +413,9 @@ public class CommonModelMongo extends CommonModel {
             throw new ServerException(VantarKey.UPDATE_FAIL);
         }
 
-        ServiceUserActionLog.add(action, dto);
+        if (Services.isUp(ServiceUserActionLog.class)) {
+            ServiceUserActionLog.add(action, dto);
+        }
 
         return ResponseMessage.success(VantarKey.UPDATE_SUCCESS, dto);
     }
@@ -463,7 +471,9 @@ public class CommonModelMongo extends CommonModel {
                 }
             }
 
-            ServiceUserActionLog.add(Dto.Action.DELETE, dto);
+            if (Services.isUp(ServiceUserActionLog.class)) {
+                ServiceUserActionLog.add(Dto.Action.DELETE, dto);
+            }
 
             return r;
         } catch (DatabaseException e) {
@@ -536,7 +546,9 @@ public class CommonModelMongo extends CommonModel {
                 }
             }
 
-            ServiceUserActionLog.add(Dto.Action.DELETE, dto);
+            if (Services.isUp(ServiceUserActionLog.class)) {
+                ServiceUserActionLog.add(Dto.Action.DELETE, dto);
+            }
 
             return r;
         } catch (DatabaseException e) {
@@ -595,7 +607,9 @@ public class CommonModelMongo extends CommonModel {
 
                 CommonRepoMongo.delete(dto);
 
-                ServiceUserActionLog.add(Dto.Action.DELETE, dto);
+                if (Services.isUp(ServiceUserActionLog.class)) {
+                    ServiceUserActionLog.add(Dto.Action.DELETE, dto);
+                }
             }
 
             if (!ids.isEmpty()) {
@@ -653,7 +667,9 @@ public class CommonModelMongo extends CommonModel {
                 CommonRepoMongo.unset(dto, Mongo.LOGICAL_DELETE_FIELD);
                 afterDataChange(dto);
 
-                ServiceUserActionLog.add(Dto.Action.UN_DELETE, dto);
+                if (Services.isUp(ServiceUserActionLog.class)) {
+                    ServiceUserActionLog.add(Dto.Action.UN_DELETE, dto);
+                }
             }
 
             if (!ids.isEmpty()) {
@@ -683,7 +699,9 @@ public class CommonModelMongo extends CommonModel {
             Mongo.Sequence.remove(collection);
             Mongo.Index.remove(collection);
             afterDataChange(dto);
-            ServiceUserActionLog.add(Dto.Action.PURGE, dto);
+            if (Services.isUp(ServiceUserActionLog.class)) {
+                ServiceUserActionLog.add(Dto.Action.PURGE, dto);
+            }
             return ResponseMessage.success(VantarKey.DELETE_SUCCESS);
         } catch (DatabaseException e) {
             log.error(" !! {} : {}\n", dto.getClass().getSimpleName(), dto, e);
@@ -700,7 +718,9 @@ public class CommonModelMongo extends CommonModel {
 
 
     public static void importDataAdmin(String data, Dto dto, List<String> presentField, boolean deleteAll, WebUi ui) {
-        ServiceUserActionLog.add(Dto.Action.IMPORT, dto);
+        if (Services.isUp(ServiceUserActionLog.class)) {
+            ServiceUserActionLog.add(Dto.Action.IMPORT, dto);
+        }
 
         ui.beginBox2(dto.getClass().getSimpleName()).write();
 

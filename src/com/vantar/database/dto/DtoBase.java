@@ -177,7 +177,7 @@ public abstract class DtoBase implements Dto {
     }
 
     public String toString() {
-        return ObjectUtil.toString(this);
+        return ObjectUtil.toStringViewable(this);
     }
 
     public Dto getClone() {
@@ -894,7 +894,7 @@ public abstract class DtoBase implements Dto {
 
             if (value != null) {
                 if (type.equals(String.class)) {
-                    value = value.toString();
+                    value = ObjectUtil.toString(value);
                     if (StringUtil.isEmpty((String) value)) {
                         value = null;
                     }
@@ -1250,7 +1250,7 @@ public abstract class DtoBase implements Dto {
         public String __action;
 
         public String toString() {
-            return ObjectUtil.toString(this);
+            return ObjectUtil.toStringViewable(this);
         }
     }
 }

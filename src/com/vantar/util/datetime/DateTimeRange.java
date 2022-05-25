@@ -122,7 +122,7 @@ public class DateTimeRange {
     }
 
     public String toString() {
-        return ObjectUtil.toString(this);
+        return ObjectUtil.toStringViewable(this);
     }
 
     public boolean equals(Object obj) {

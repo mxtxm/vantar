@@ -797,7 +797,7 @@ public class Params {
         }
 
         public String toString() {
-            return ObjectUtil.toString(this);
+            return ObjectUtil.toStringViewable(this);
         }
 
         public void close() {

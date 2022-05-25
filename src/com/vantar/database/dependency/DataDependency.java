@@ -186,12 +186,13 @@ public class DataDependency {
     private void putCrawlDependencies(Class<?> fieldType, String queryFieldName) {
         DtoDictionary.Info fieldInfo = DtoDictionary.get(fieldType);
         if (fieldInfo == null) {
-            log.error("! undefined dto({})", fieldType);
+            if (fieldType.isAnnotationPresent(NoStore.class)) {
+                log.debug("! ({}) not defined in DtoDictionary", fieldType);
+            }
             return;
         }
         Dto instance = fieldInfo.getDtoInstance();
         if (instance == null) {
-            log.error("! not instance from dto({})", fieldType);
             return;
         }
 

@@ -2,6 +2,7 @@ package com.vantar.util.json;
 
 import com.fasterxml.jackson.annotation.*;
 import com.fasterxml.jackson.core.*;
+import com.fasterxml.jackson.core.util.*;
 import com.fasterxml.jackson.databind.*;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import com.fasterxml.jackson.databind.json.JsonMapper;
@@ -31,7 +32,7 @@ import java.util.*;
  * bool: (works true false "true" "false" 0 1 2 3) ("1", "0" not works)
  * Map: works
  * List: works
- * Set: woeks
+ * Set: works
  * Enum: string
  * DateTime: string
  * Location-from-json: string or {latitude, longitude, height, countryCode}
@@ -96,6 +97,18 @@ public class Jackson {
         mapper.setFilterProvider(new SimpleFilterProvider().addFilter("ignoreFilter", filter));
     }
 
+    public boolean isJson(Object value) {
+        if (!(value instanceof String)) {
+            return false;
+        }
+        try {
+            mapper.readTree((String) value);
+            return true;
+        } catch (IOException e) {
+            return false;
+        }
+    }
+
 
     // > > > TO JSON
 
@@ -117,8 +130,9 @@ public class Jackson {
                 return null;
             }
         }
+
         try {
-            return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(object);
+            return mapper.writer(getPrettyPrinter()).writeValueAsString(object);
         } catch (Exception e) {
             log.warn(" ! failed to create JSON ({})\n", object, e);
             return null;
@@ -141,10 +155,18 @@ public class Jackson {
             return;
         }
         try {
-            mapper.writerWithDefaultPrettyPrinter().writeValue(stream, object);
+            mapper.writer(getPrettyPrinter()).writeValue(stream, object);
         } catch (Exception e) {
             log.warn("! failed to create JSON ({})\n", object, e);
         }
+    }
+
+    private DefaultPrettyPrinter getPrettyPrinter() {
+        DefaultPrettyPrinter.Indenter indent = new DefaultIndenter("    ", "\n");
+        DefaultPrettyPrinter printer = new DefaultPrettyPrinter();
+        printer.indentObjectsWith(indent);
+        printer.indentArraysWith(indent);
+        return printer;
     }
 
     // TO JSON < < <

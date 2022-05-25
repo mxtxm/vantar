@@ -50,6 +50,7 @@ public class Services {
         return service.instance;
     }
 
+    @SuppressWarnings("unchecked")
     public static <T extends Service> T get(Class<T> serviceClass) throws ServiceException {
         ServiceInfo service = upServices.get(serviceClass.getSimpleName());
         if (service == null) {
@@ -87,7 +88,7 @@ public class Services {
             }
         }
 
-        List<Service> orderedServices = new ArrayList<>();
+        Map<Integer, Service> orderedServices = new TreeMap<>();
         List<Service> notOrderedServices = new ArrayList<>();
 
         Set<String> usedKey = new HashSet<>();
@@ -129,7 +130,7 @@ public class Services {
                 if (priority == null) {
                     notOrderedServices.add(service);
                 } else {
-                    insertToList(orderedServices, priority, service);
+                    orderedServices.put(priority, service);
                 }
 
                 if (service instanceof Dependency) {
@@ -145,7 +146,8 @@ public class Services {
         messaging = new ServiceMessaging();
         messaging.start();
 
-        for (Service service : orderedServices) {
+
+        for (Service service : orderedServices.values()) {
             if (service != null) {
                 startService(service);
             }
@@ -157,13 +159,6 @@ public class Services {
         if (doEvents && event != null) {
             event.afterStart();
         }
-    }
-
-    private static void insertToList(List<Service> list, int i, Service service) {
-        while (i-- > list.size()) {
-            list.add(null);
-        }
-        list.add(service);
     }
 
     private static void setFieldValue(Object object, String name, String value) {

@@ -442,13 +442,21 @@ public class MongoMapping {
                 }
 
                 case IN_DTO: {
+                    String[] parts = StringUtil.split(fieldName, ':');
+                    fieldName = parts[0].trim();
+                    if (fieldName.equals("id")) {
+                        fieldName = Mongo.ID;
+                    }
+                    String fieldNameInner = parts.length == 2 ? parts[1].trim() : Mongo.ID;
+
                     Document innerMatch = getMongoMatches(item.queryValue, item.dto);
                     if (innerMatch == null || innerMatch.isEmpty()) {
                         continue;
                     }
+
                     MongoQuery q = new MongoQuery(item.dto, item.dto);
                     q.matches = innerMatch;
-                    q.columns = new String[] {"_id"};
+                    q.columns = new String[] { fieldNameInner };
                     FindIterable<Document> cursor;
                     try {
                         cursor = q.getResult();
@@ -456,9 +464,12 @@ public class MongoMapping {
                         Mongo.log.error("!! IN_DTO error {}", item, e);
                         continue;
                     }
-                    List<Long> ids = new ArrayList<>(100);
+                    Set<Long> ids = new HashSet<>(100);
                     for (Document document : cursor) {
-                        ids.add(document.getLong("_id"));
+                        ids.add(document.getLong(fieldNameInner));
+                    }
+                    if (ids.isEmpty()) {
+                        continue;
                     }
                     matches.add(new Document(fieldName, new Document("$in", ids)));
                     break;

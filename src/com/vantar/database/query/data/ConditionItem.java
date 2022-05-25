@@ -85,7 +85,7 @@ public class ConditionItem {
     }
 
     public String toString() {
-        return ObjectUtil.toString(this);
+        return ObjectUtil.toStringViewable(this);
     }
 
     public void separateCols() {

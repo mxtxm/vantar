@@ -156,184 +156,193 @@ public class MongoQueryResult extends QueryResultBase implements QueryResult, Au
     private void mapRecordToObject(Document document, Dto dto, Field[] fields) {
         newIteration = true;
         long i = 0;
-        try {
-            for (Field field : fields) {
-                String name = field.getName();
-                if (DtoBase.isNotDataField(field) || (exclude != null && exclude.contains(name))) {
+        for (Field field : fields) {
+            String name = field.getName();
+            if (DtoBase.isNotDataField(field) || (exclude != null && exclude.contains(name))) {
+                continue;
+            }
+
+            if (name.equals(VantarParam.ID) && document.containsKey(Mongo.ID)) {
+                name = Mongo.ID;
+            }
+            String key = StringUtil.toSnakeCase(name);
+            Class<?> type = field.getType();
+
+            try {
+                if (field.isAnnotationPresent(FetchCache.class)) {
+                    if (fetchFromCache(document, dto, field, type)) {
+                        continue;
+                    }
+                }
+
+                if (field.isAnnotationPresent(Fetch.class)) {
+                    fetchFromDatabase(document, dto, field, type);
                     continue;
                 }
 
-                if (name.equals(VantarParam.ID) && document.containsKey(Mongo.ID)) {
-                    name = Mongo.ID;
+                if (field.isAnnotationPresent(FetchByFk.class)) {
+                    fetchByFk(document, field);
+                    continue;
                 }
-                String key = StringUtil.toSnakeCase(name);
-                Class<?> type = field.getType();
 
-                try {
-                    if (field.isAnnotationPresent(FetchCache.class)) {
-                        if (fetchFromCache(document, dto, field, type)) {
+                if (field.isAnnotationPresent(DeLocalized.class)) {
+                    deLocalize(document, dto, field, key);
+                    continue;
+                }
+
+                if (field.isAnnotationPresent(StoreString.class)) {
+                    String v = document.getString(key);
+                    field.set(dto, v == null ? null : Json.d.fromJson(v, type));
+                    continue;
+                }
+
+                if (type.isEnum()) {
+                    EnumUtil.setEnumValue(document.getString(key), type, dto, field);
+                    continue;
+                }
+
+                if (type == Location.class) {
+                    Document point = (Document) document.get(key);
+                    if (point == null) {
+                        setFieldNullValue(dto, field);
+                        continue;
+                    }
+                    List<Double> coordinates = (List<Double>) point.get(VantarParam.COORDINATE);
+                    field.set(dto, new Location(coordinates.get(0), coordinates.get(1)));
+                    continue;
+                }
+
+                if (type == List.class || type == Set.class) {
+                    Class<?>[] g = ClassUtil.getGenericTypes(field);
+                    if (g == null || g.length != 1) {
+                        log.warn(" ! type/value miss-match ({}.{})", dto.getClass().getName(), field.getName());
+                        continue;
+                    }
+                    Class<?> listType = g[0];
+                    List<?> v;
+
+                    if (listType == String.class
+                        || listType.getSuperclass() == Number.class
+                        || listType == Number.class
+                        || listType == Character.class
+                        || listType == Boolean.class
+                        || listType.getSuperclass() == Integer.class
+                        || listType.getSuperclass() == Long.class
+                        || listType.getSuperclass() == Double.class) {
+
+                        try {
+                            v = document.getList(key, listType);
+                            field.set(dto, v != null && type == Set.class ? new HashSet<>(v) : v);
+                        } catch (Exception e) {
+                            log.error(
+                                " !! can not get List<{}> from database ({}:{}) > ({}, {})\n",
+                                listType.getSimpleName(), key, document.get(key), dto.getClass().getName(), dto, e
+                            );
+                        }
+
+                    } else if (listType == Dto.class || listType.getSuperclass() == DtoBase.class) {
+                        List<Document> docs;
+                        try {
+                            docs = document.getList(key, Document.class);
+                        } catch (Exception e) {
+                            docs = null;
+                            log.error(
+                                " ! can not get List<{}> from database ({}:{}) > ({}, {})\n",
+                                listType.getSimpleName(), key, document.get(key), dto.getClass().getName(), dto, e
+                            );
+                        }
+
+                        if (docs == null) {
+                            setFieldNullValue(dto, field);
                             continue;
                         }
-                    }
 
-                    if (field.isAnnotationPresent(Fetch.class)) {
-                        fetchFromDatabase(document, dto, field, type);
-                        continue;
-                    }
-
-                    if (field.isAnnotationPresent(FetchByFk.class)) {
-                        fetchByFk(document, field);
-                        continue;
-                    }
-
-                    if (field.isAnnotationPresent(DeLocalized.class)) {
-                        deLocalize(document, dto, field, key);
-                        continue;
-                    }
-
-                    if (field.isAnnotationPresent(StoreString.class)) {
-                        String v = document.getString(key);
-                        field.set(dto, v == null ? null : Json.d.fromJson(v, type));
-                        continue;
-                    }
-
-                    if (type.isEnum()) {
-                        EnumUtil.setEnumValue(document.getString(key), type, dto, field);
-                        continue;
-                    }
-
-                    if (type == Location.class) {
-                        Document point = (Document) document.get(key);
-                        if (point == null) {
-                            field.set(dto, null);
-                            continue;
+                        Collection<Dto> list = type == List.class ? new ArrayList<>(docs.size()) : new HashSet<>(docs.size());
+                        for (Document d : docs) {
+                            Dto obj = (Dto) ClassUtil.getInstance(listType);
+                            if (obj == null) {
+                                continue;
+                            }
+                            mapRecordToObject(d, obj, obj.getFields());
+                            list.add(obj);
                         }
-                        List<Double> coordinates = (List<Double>) point.get(VantarParam.COORDINATE);
-                        field.set(dto, new Location(coordinates.get(0), coordinates.get(1)));
-                        continue;
+                        field.set(dto, list);
+                    } else {
+                        v = Json.d.listFromJson(Json.d.toJson(document.get(key)), listType);
+                        field.set(dto, v != null && type == Set.class ? new HashSet<>(v) : v);
                     }
+                    continue;
+                }
 
-                    if (type == List.class || type == Set.class) {
+                if (type == Map.class) {
+                    Document v = (Document) document.get(key);
+                    if (v == null) {
+                        setFieldNullValue(dto, field);
+                    } else {
                         Class<?>[] g = ClassUtil.getGenericTypes(field);
-                        if (g == null || g.length != 1) {
+                        if (g == null || g.length != 2) {
                             log.warn(" ! type/value miss-match ({}.{})", dto.getClass().getName(), field.getName());
                             continue;
                         }
-                        Class<?> listType = g[0];
-                        List<?> v;
-
-                        if (listType == String.class
-                            || listType.getSuperclass() == Number.class
-                            || listType == Number.class
-                            || listType == Character.class
-                            || listType == Boolean.class
-                            || listType.getSuperclass() == Integer.class
-                            || listType.getSuperclass() == Long.class
-                            || listType.getSuperclass() == Double.class) {
-
-                            try {
-                                v = document.getList(key, listType);
-                                field.set(dto, v != null && type == Set.class ? new HashSet<>(v) : v);
-                            } catch (Exception e) {
-                                log.error(
-                                    " !! can not get List<{}> from database ({}:{}) > ({}, {})\n",
-                                    listType.getSimpleName(), key, document.get(key), dto.getClass().getName(), dto, e
-                                );
-                            }
-
-                        } else if (listType == Dto.class || listType.getSuperclass() == DtoBase.class) {
-                            List<Document> docs;
-                            try {
-                                docs = document.getList(key, Document.class);
-                            } catch (Exception e) {
-                                docs = null;
-                                log.error(
-                                    " ! can not get List<{}> from database ({}:{}) > ({}, {})\n",
-                                    listType.getSimpleName(), key, document.get(key), dto.getClass().getName(), dto, e
-                                );
-                            }
-
-                            if (docs == null) {
-                                field.set(dto, null);
-                                continue;
-                            }
-
-                            Collection<Dto> list = type == List.class ? new ArrayList<>(docs.size()) : new HashSet<>(docs.size());
-                            for (Document d : docs) {
-                                Dto obj = (Dto) ClassUtil.getInstance(listType);
-                                if (obj == null) {
-                                    continue;
-                                }
-                                mapRecordToObject(d, obj, obj.getFields());
-                                list.add(obj);
-                            }
-                            field.set(dto, list);
-                        } else {
-                            v = Json.d.listFromJson(Json.d.toJson(document.get(key)), listType);
-                            field.set(dto, v != null && type == Set.class ? new HashSet<>(v) : v);
-                        }
-                        continue;
+                        field.set(dto, documentToMap(v, g[0], g[1]));
                     }
+                    continue;
+                }
 
-                    if (type == Map.class) {
-                        Document v = (Document) document.get(key);
-                        if (v == null) {
-                            field.set(dto, null);
-                        } else {
-                            Class<?>[] g = ClassUtil.getGenericTypes(field);
-                            if (g == null || g.length != 2) {
-                                log.warn(" ! type/value miss-match ({}.{})", dto.getClass().getName(), field.getName());
-                                continue;
-                            }
-                            field.set(dto, documentToMap(v, g[0], g[1]));
-                        }
-                        continue;
+                Object value = document.get(key);
+                if (value == null) {
+                    setFieldNullValue(dto, field);
+                    continue;
+                }
+                if (type == Character.class) {
+                    field.set(dto, ((String) value).charAt(0));
+                    continue;
+                }
+                if (type == DateTime.class) {
+                    DateTime t = new DateTime(value.toString());
+                    if (field.isAnnotationPresent(Timestamp.class)) {
+                        t.setType(DateTime.TIMESTAMP);
+                    } else if (field.isAnnotationPresent(Date.class)) {
+                        t.setType(DateTime.DATE);
+                    } else if (field.isAnnotationPresent(Time.class)) {
+                        t.setType(DateTime.TIME);
                     }
+                    field.set(dto, t);
+                    continue;
+                }
 
-                    Object value = document.get(key);
-                    if (value == null) {
-                        field.set(dto, null);
-                        continue;
+                if (ClassUtil.isInstantiable(type, Dto.class)) {
+                    Dto obj = (Dto) ClassUtil.getInstance(type);
+                    if (obj != null) {
+                        mapRecordToObject((Document) value, obj, obj.getFields());
                     }
-                    if (type == Character.class) {
-                        field.set(dto, ((String) value).charAt(0));
-                        continue;
-                    }
-                    if (type == DateTime.class) {
-                        DateTime t = new DateTime(value.toString());
-                        if (field.isAnnotationPresent(Timestamp.class)) {
-                            t.setType(DateTime.TIMESTAMP);
-                        } else if (field.isAnnotationPresent(Date.class)) {
-                            t.setType(DateTime.DATE);
-                        } else if (field.isAnnotationPresent(Time.class)) {
-                            t.setType(DateTime.TIME);
-                        }
-                        field.set(dto, t);
-                        continue;
-                    }
+                    field.set(dto, obj);
+                    continue;
+                }
 
-                    if (ClassUtil.isInstantiable(type, Dto.class)) {
-                        Dto obj = (Dto) ClassUtil.getInstance(type);
-                        if (obj != null) {
-                            mapRecordToObject((Document) value, obj, obj.getFields());
-                        }
-                        field.set(dto, obj);
-                        continue;
-                    }
+                field.set(dto, value);
 
-                    field.set(dto, value);
+            } catch (Exception e) {
+                log.error(" !! ({}:{}) > ({}, {})\n", key, document.get(key), dto.getClass(), dto, e);
+                try {
+                    setFieldNullValue(dto, field);
+                } catch (Exception ignore) {
 
-                } catch (Exception e) {
-                    log.error(" !! ({}:{}) > ({}, {})\n", key, document.get(key), dto.getClass(), dto, e);
-                    field.set(dto, null);
                 }
             }
-
-            dto.afterFetchData();
-            dto.afterFetchData(++i);
-        } catch (IllegalAccessException e) {
-            log.error(" !! data > dto({})\n", dto, e);
         }
+
+        dto.afterFetchData();
+        dto.afterFetchData(++i);
+    }
+
+    private static void setFieldNullValue(Dto dto, Field field) throws IllegalAccessException {
+        Default annotation = field.getAnnotation(Default.class);
+        if (annotation == null) {
+            field.set(dto, null);
+            return;
+        }
+        field.set(dto, StringUtil.toObject(annotation.value(), field.getType()));
     }
 
     private <K, V> Map<K, V> documentToMap(Document document, Class<K> kClass, Class<V> vClass) {

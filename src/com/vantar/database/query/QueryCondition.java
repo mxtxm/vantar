@@ -59,6 +59,10 @@ public class QueryCondition {
 
     // IN DTO
 
+    /**
+     * "colA"      > outerDto.colA in (dto{condition}.id)
+     * "colA:colB" > outerDto.colA in (dto{condition}.colB)
+     */
     public void inDto(String col, Dto dto, QueryCondition c) {
         q.add(new QueryMatchItem(QueryOperator.IN_DTO, col, c, dto));
     }
@@ -623,7 +627,7 @@ public class QueryCondition {
     }
 
     public String toString() {
-        return ObjectUtil.toString(this);
+        return ObjectUtil.toStringViewable(this);
     }
 
 }

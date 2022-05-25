@@ -459,6 +459,6 @@ public class QueryData {
     }
 
     public String toString() {
-        return ObjectUtil.toString(this);
+        return ObjectUtil.toStringViewable(this);
     }
 }

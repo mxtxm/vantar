@@ -355,7 +355,7 @@ public class WebUi {
         }
         if (userLog.object == null) {
             // nothing
-        } else if (userLog.object.startsWith("[") || userLog.object.startsWith("{")) {
+        } else if (Json.isJsonShallow(userLog.object)) {
             html.append(escape(Json.d.toJsonPretty(userLog.object)));
         } else {
             html.append(escape(userLog.object));
@@ -659,8 +659,9 @@ public class WebUi {
 
     public WebUi addTextArea(String label, String name, Object defaultValue, String tClass) {
         return addWidgetRow(label, name,
-            "    <textarea autocomplete='off' class='" + (tClass == null ? "" : tClass) + "' name='" + name + "' id='" + name
-            + "' style='direction:" + alignValue + "'>\n" + (defaultValue == null ? "" : defaultValue) + "</textarea>\n");
+            "    <textarea autocomplete='off' class='vtx " + (tClass == null ? "" : tClass) + "' name='" + name
+            + "' id='" + name + "' style='direction:" + alignValue + "'>\n"
+            + (defaultValue == null ? "" : defaultValue) + "</textarea>\n");
     }
 
     public WebUi addSubmit() {
@@ -961,6 +962,16 @@ public class WebUi {
                 );
 
             } else {
+                if (Json.isJsonShallow(value)) {
+                    addTextArea(
+                        name,
+                        name,
+                        Json.getWithNulls().toJsonPretty(value),
+                        "small json"
+                    );
+                    continue;
+                }
+
                 String iType;
                 if (name.contains("password") || (tags != null && CollectionUtil.contains(tags.value(), "password"))) {
                     iType = "password";
@@ -993,7 +1004,7 @@ public class WebUi {
                     ((DateTime) item.getValue()).formatter().getDateTimePersianStyled() :
                     ((DateTime) item.getValue()).formatter().getDateTimeStyled();
             } else {
-                value = ObjectUtil.toString(dto.getPropertyValue(item.getKey()));
+                value = ObjectUtil.toStringViewable(dto.getPropertyValue(item.getKey()));
             }
 
             if (value.toLowerCase().contains("jpg") || value.toLowerCase().contains("png")) {
@@ -1283,7 +1294,7 @@ public class WebUi {
                     realValue = "";
                 }
 
-                Object value = ObjectUtil.toString(dto.getPropertyValue(name));
+                Object value = ObjectUtil.toStringViewable(dto.getPropertyValue(name));
                 if (value == null) {
                     value = "-";
                 }

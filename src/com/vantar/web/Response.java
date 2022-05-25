@@ -74,7 +74,7 @@ public class Response {
         response.setStatus(HttpServletResponse.SC_OK); // 200
     }
 
-    public static void download(HttpServletResponse response, String filepath, String filename) {
+    public static void setDownloadHeaders(HttpServletResponse response, String filename) {
         response.setCharacterEncoding("UTF-8");
         response.setContentType("application/octet-stream");
         response.setHeader("Expires", "0");
@@ -84,6 +84,10 @@ public class Response {
         response.setHeader("Content-Disposition", "attachment; filename=\"" + filename + "\"");
         response.setHeader("Content-Transfer-Encoding", "binary");
         setOriginHeaders(response);
+    }
+
+    public static void download(HttpServletResponse response, String filepath, String filename) {
+        setDownloadHeaders(response, filename);
 
         try (
             OutputStream out = response.getOutputStream();
@@ -214,7 +218,7 @@ public class Response {
     }
 
     public static void notAcceptable(HttpServletResponse response, String msg) {
-       setError(response, HttpServletResponse.SC_NOT_ACCEPTABLE, msg); // 406
+        setError(response, HttpServletResponse.SC_NOT_ACCEPTABLE, msg); // 406
     }
 
     public static void unsupportedMediaType(HttpServletResponse response, String msg) {

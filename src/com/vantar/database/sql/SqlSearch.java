@@ -138,7 +138,7 @@ public class SqlSearch extends SqlQueryHelper {
 
             return new SqlQueryResult(statement, statement.executeQuery(), dto);
         } catch (SQLException e) {
-            log.error("! failed to get data ({}, {})", sql, ObjectUtil.toString(params), e);
+            log.error("! failed to get data ({}, {})", sql, ObjectUtil.toStringViewable(params), e);
             close(statement);
             throw new DatabaseException(e);
         }

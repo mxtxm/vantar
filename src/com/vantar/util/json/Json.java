@@ -1,5 +1,6 @@
 package com.vantar.util.json;
 
+import java.io.IOException;
 import java.util.*;
 
 
@@ -62,6 +63,18 @@ public class Json {
         Config c = new Config();
         c.skipNulls = false;
         return put("null", c);
+    }
+
+    public static boolean isJsonShallow(Object value) {
+        if (!(value instanceof String)) {
+            return false;
+        }
+        String s = ((String) value).trim();
+        return (s.startsWith("{") && s.endsWith("}")) || (s.startsWith("[") && s.endsWith("]"));
+    }
+
+    public static boolean isJson(Object value) {
+        return d.isJson(value);
     }
 
 
