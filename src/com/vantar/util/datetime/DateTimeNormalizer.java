@@ -301,7 +301,7 @@ public class DateTimeNormalizer {
 
     private static int getParsedTimeZone(DateTimeFormatter dateTimeFormatter, String zone) {
         if (StringUtil.contains(zone, ':')) {
-            String[] hm = StringUtil.split(zone, ':');
+            String[] hm = StringUtil.splitTrim(zone, ':');
             if (hm.length == 2) {
                 Integer h = StringUtil.toInteger(hm[0]);
                 Integer m = StringUtil.toInteger(hm[1]);
@@ -344,7 +344,7 @@ public class DateTimeNormalizer {
 
         // (yy)yy-(m)m-(d)d in any order
         if (datePart.contains("-")) {
-            String[] parts = StringUtil.split(datePart, '-');
+            String[] parts = StringUtil.splitTrim(datePart, '-');
             if (parts.length != 3) {
                 dateTimeFormatter.addError(VantarKey.INVALID_DATE);
                 return;
@@ -444,7 +444,7 @@ public class DateTimeNormalizer {
         // 1 MONTH-NAME yyyyy
         // day, 1 MONTH-NAME yyyyy (day is removed earlier)
         // MONTH-NAME 1 yyyyy (day is removed earlier)
-        String[] parts = StringUtil.split(datePart.replaceAll(" +", " "), ' ');
+        String[] parts = StringUtil.splitTrim(datePart.replaceAll(" +", " "), ' ');
 
         if (parts.length != 3) {
             dateTimeFormatter.addError(VantarKey.INVALID_DATE);

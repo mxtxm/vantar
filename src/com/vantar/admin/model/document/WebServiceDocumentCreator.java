@@ -155,6 +155,13 @@ public class WebServiceDocumentCreator {
             if (e.getSimpleName().equals("NoContentException")) {
                 to.append("* **204** (no content) There is no data available for the request\n");
             }
+            if (e.getSimpleName().equals("VantaException")) {
+                to.append("* **204** (no content) There is no data available for the request\n");
+                to.append("* **400** (client side error) Invalid input params\n");
+                to.append("* **401** (client side error / unauthorized) user is not signed in or invalid/expired access token\n");
+                to.append("* **403** (client side error / forbidden) user does not have permission\n");
+                to.append("* **500** (server side error) Unexpected backend server error, must be reported\n");
+            }
         }
         content = StringUtil.replace(content, from, to.toString(), 1);
         return content;

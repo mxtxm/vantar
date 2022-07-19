@@ -4,6 +4,7 @@ import com.vantar.exception.*;
 import com.vantar.locale.*;
 import com.vantar.service.Services;
 import com.vantar.service.auth.*;
+import com.vantar.util.json.Json;
 import com.vantar.web.*;
 import javax.servlet.http.HttpServletResponse;
 
@@ -46,36 +47,38 @@ public class AdminAuth {
         ui.beginBox(Locale.getString(VantarKey.ADMIN_ONLINE_USERS));
         ui.addText("Token expire time: " + auth.tokenExpireMin + "mins");
 
-            auth.getOnlineUsers().forEach((code, info) -> {
-                long pending = -info.lastInteraction.secondsFromNow();
-                long remaining = (auth.tokenExpireMin * 60) - pending;
-                ui.addKeyValue(
-                    info.user.getFullName() + " (" + info.user.getId() + ")\n" + getRoleDescription(info.user),
-                    info.lastInteraction.toString() + " -> " + info.user.getToken()
-                        + " [pending=" + pending + "s, remaining=" + remaining + "s]"
-                );
-            });
+        auth.getOnlineUsers().forEach((code, info) -> {
+            long idle = -info.lastInteraction.secondsFromNow() / 60;
+            long remaining = (auth.tokenExpireMin) - idle;
+            ui.addKeyValueExtendable(
+                info.user.getUsername() + " (" + info.user.getId() + ")\n",
+                code
+                    + "  --  " +  info.lastInteraction.toString() + " --> "
+                    + " (idle=" + idle + "mins, remaining=" + remaining + "mins)",
+                "<label>" + Json.d.toJsonPretty(info) + "</label>"
+            );
+        });
 
         ui.containerEnd();
 
         ui.beginBox(Locale.getString(VantarKey.ADMIN_SIGNUP_TOKEN_TEMP));
         auth.getSignupVerifyTokens().forEach((code, info) -> ui.addKeyValue(
-            info.user.getFullName() + " (" + info.user.getId() + ") - " + getRoleDescription(info.user),
-            info.lastInteraction.toString() + " -> " + info.user.getToken()
+            info.user.getUsername() + " (" + info.user.getId() + ")\n" + getRoleDescription(info.user),
+            info.user.getToken() + "  --  " + info.lastInteraction.toString()
         ));
         ui.containerEnd();
 
         ui.beginBox(Locale.getString(VantarKey.ADMIN_SIGNIN_TOKEN_TEMP));
         auth.getOneTimeTokens().forEach((code, info) -> ui.addKeyValue(
-            info.user.getFullName() + " (" + info.user.getId() + ") - " + getRoleDescription(info.user),
-            info.lastInteraction.toString() + " -> " + info.user.getToken()
+            info.user.getUsername() + " (" + info.user.getId() + ")\n" + getRoleDescription(info.user),
+            info.user.getToken() + "  --  " + info.lastInteraction.toString()
         ));
         ui.containerEnd();
 
         ui.beginBox(Locale.getString(VantarKey.ADMIN_RECOVER_TOKEN_TEMP));
         auth.getVerifyTokens().forEach((code, info) -> ui.addKeyValue(
-            info.user.getFullName() + " (" + info.user.getId() + ") - " + getRoleDescription(info.user),
-            info.lastInteraction.toString() + " -> " + info.user.getToken()
+            info.user.getUsername() + " (" + info.user.getId() + ")\n" + getRoleDescription(info.user),
+            info.user.getToken() + "  --  " + info.lastInteraction.toString()
         ));
 
         ui.finish();
@@ -83,10 +86,10 @@ public class AdminAuth {
 
     private static String getRoleDescription(CommonUser user) {
         if (user.getRole() != null) {
-            return user.getRole().getName() + (user.getRole().isRoot() ? " *root*" : "");
+            return user.getRole().getName() + (user.getRole().isRoot() ? " (ROOT)" : "");
         }
         if (user.getRoles() == null) {
-            return "!!NO ROLE!!";
+            return "";
         }
         StringBuilder sb = new StringBuilder();
         for (CommonUserRole role : user.getRoles()) {

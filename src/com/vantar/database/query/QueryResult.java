@@ -23,6 +23,10 @@ public interface QueryResult {
 
     <T extends Dto> List<T> asList() throws NoContentException, DatabaseException;
 
+    void forEach(QueryResultBase.Event event) throws DatabaseException;
+
+    <T extends Dto> Map<Object, T> asMap(String keyField) throws NoContentException, DatabaseException;
+
     Map<String, String> asKeyValue(String keyField, String valueField) throws DatabaseException, NoContentException;
 
     Map<String, String> asKeyValue(KeyValueData definition) throws DatabaseException, NoContentException;

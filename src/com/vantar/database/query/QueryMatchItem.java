@@ -2,6 +2,7 @@ package com.vantar.database.query;
 
 import com.vantar.database.dto.Dto;
 import com.vantar.util.datetime.DateTime;
+import com.vantar.util.object.ObjectUtil;
 import java.util.List;
 
 
@@ -202,5 +203,9 @@ public class QueryMatchItem {
 
     public void setDatetimeAsTimestamp() {
         returnDatetimeAsString = false;
+    }
+
+    public String toString() {
+        return ObjectUtil.toString(this);
     }
 }

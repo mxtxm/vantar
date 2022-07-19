@@ -3,12 +3,13 @@ package com.vantar.database.query.data;
 import com.vantar.database.common.ValidationError;
 import com.vantar.database.datatype.Location;
 import com.vantar.database.dto.*;
-import com.vantar.database.query.QueryCondition;
+import com.vantar.database.query.*;
 import com.vantar.locale.VantarKey;
 import com.vantar.util.bool.BoolUtil;
 import com.vantar.util.datetime.DateTime;
 import com.vantar.util.number.NumberUtil;
 import com.vantar.util.object.*;
+import org.slf4j.*;
 import java.util.*;
 
 /**
@@ -18,6 +19,7 @@ import java.util.*;
  */
 public class QueryData {
 
+    private static final Logger log = LoggerFactory.getLogger(QueryBuilder.class);
     private final List<ValidationError> errors = new ArrayList<>(10);
 
     public String dto;
@@ -102,6 +104,7 @@ public class QueryData {
         }
         Dto dto = getDto();
         if (dto == null) {
+            log.error("! dto not set, condition not created > {}\n", this.toString());
             return null;
         }
 
@@ -239,38 +242,38 @@ public class QueryData {
                 case "BETWEEN":
                     if (item.colB == null) {
                         if (ClassUtil.isInstantiable(dataType, Number.class)) {
-                            queryCondition.between(item.col, item.colB, (Number) item.getValue(Number.class));
-                        } else if (DateTime.class.equals(dataType)) {
-                            queryCondition.between(item.col, item.colB, (DateTime) item.getValue(DateTime.class));
-                        } else {
-                            errors.add(new ValidationError(item.col + ":" + item.colB, VantarKey.SEARCH_PARAM_VALUE_INVALID));
-                        }
-                    } else {
-                        if (ClassUtil.isInstantiable(dataType, Number.class)) {
                             queryCondition.between(item.col, item.getValuesAsNumber());
                         } else if (DateTime.class.equals(dataType)) {
                             queryCondition.between(item.col, item.getValuesAsDateTime());
                         } else {
                             errors.add(new ValidationError(item.col, VantarKey.SEARCH_PARAM_VALUE_INVALID));
                         }
+                    } else {
+                        if (ClassUtil.isInstantiable(dataType, Number.class)) {
+                            queryCondition.between(item.col, item.colB, (Number) item.getValue(Number.class));
+                        } else if (DateTime.class.equals(dataType)) {
+                            queryCondition.between(item.col, item.colB, (DateTime) item.getValue(DateTime.class));
+                        } else {
+                            errors.add(new ValidationError(item.col + ":" + item.colB, VantarKey.SEARCH_PARAM_VALUE_INVALID));
+                        }
                     }
                     break;
                 case "NOT_BETWEEN":
                     if (item.colB == null) {
-                        if (ClassUtil.isInstantiable(dataType, Number.class)) {
-                            queryCondition.notBetween(item.col, item.colB, (Number) item.getValue(Number.class));
-                        } else if (DateTime.class.equals(dataType)) {
-                            queryCondition.notBetween(item.col, item.colB, (DateTime) item.getValue(DateTime.class));
-                        } else {
-                            errors.add(new ValidationError(item.col + ":" + item.colB, VantarKey.SEARCH_PARAM_VALUE_INVALID));
-                        }
-                    } else {
                         if (ClassUtil.isInstantiable(dataType, Number.class)) {
                             queryCondition.notBetween(item.col, item.getValuesAsNumber());
                         } else if (DateTime.class.equals(dataType)) {
                             queryCondition.notBetween(item.col, item.getValuesAsDateTime());
                         } else {
                             errors.add(new ValidationError(item.col, VantarKey.SEARCH_PARAM_VALUE_INVALID));
+                        }
+                    } else {
+                        if (ClassUtil.isInstantiable(dataType, Number.class)) {
+                            queryCondition.notBetween(item.col, item.colB, (Number) item.getValue(Number.class));
+                        } else if (DateTime.class.equals(dataType)) {
+                            queryCondition.notBetween(item.col, item.colB, (DateTime) item.getValue(DateTime.class));
+                        } else {
+                            errors.add(new ValidationError(item.col + ":" + item.colB, VantarKey.SEARCH_PARAM_VALUE_INVALID));
                         }
                     }
                     break;

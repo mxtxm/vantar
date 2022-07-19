@@ -97,7 +97,7 @@ public class MongoQueryResult extends QueryResultBase implements QueryResult, Au
         if (valueField.equals("id")) {
             valueField = Mongo.ID;
         }
-        Map<String, String> result = new HashMap<>();
+        Map<String, String> result = new HashMap<>(1000);
         String locale = getLocale();
         try {
             while (iterator.hasNext()) {
@@ -419,7 +419,7 @@ public class MongoQueryResult extends QueryResultBase implements QueryResult, Au
         }
 
         if (!cachedClass.isAnnotationPresent(Cache.class)) {
-            log.warn(" ! ({}) is not cached", cachedClass);
+            log.warn(" ! {}>{} is not cached", dtoX.getClass().getSimpleName(), cachedClass.getSimpleName());
             return false;
         }
 

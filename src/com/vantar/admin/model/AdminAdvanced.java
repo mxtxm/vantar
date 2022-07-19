@@ -17,18 +17,21 @@ public class AdminAdvanced {
             .addBlockLink(Locale.getString(VantarKey.ADMIN_BACKUP_CREATE), "/admin/data/backup/sql")
             .addBlockLink(Locale.getString(VantarKey.ADMIN_BACKUP_RESTORE), "/admin/data/restore/sql")
             .addBlockLink(Locale.getString(VantarKey.ADMIN_BACKUP_FILES), "/admin/data/backup/files/sql")
+            .addBlockLink(Locale.getString(VantarKey.ADMIN_BACKUP_UPLOAD), "/admin/data/backup/upload")
             .containerEnd();
 
         ui  .beginFloatBox("system-box", "MONGO")
             .addBlockLink(Locale.getString(VantarKey.ADMIN_BACKUP_CREATE), "/admin/data/backup/mongo")
             .addBlockLink(Locale.getString(VantarKey.ADMIN_BACKUP_RESTORE), "/admin/data/restore/mongo")
             .addBlockLink(Locale.getString(VantarKey.ADMIN_BACKUP_FILES), "/admin/data/backup/files/mongo")
+            .addBlockLink(Locale.getString(VantarKey.ADMIN_BACKUP_UPLOAD), "/admin/data/backup/upload")
             .containerEnd();
 
         ui  .beginFloatBox("system-box", "ELASTIC")
             .addBlockLink(Locale.getString(VantarKey.ADMIN_BACKUP_CREATE), "/admin/data/backup/elastic")
             .addBlockLink(Locale.getString(VantarKey.ADMIN_BACKUP_RESTORE), "/admin/data/restore/elastic")
             .addBlockLink(Locale.getString(VantarKey.ADMIN_BACKUP_FILES), "/admin/data/backup/files/elastic")
+            .addBlockLink(Locale.getString(VantarKey.ADMIN_BACKUP_UPLOAD), "/admin/data/backup/upload")
             .containerEnd();
 
         ui.containerEnd();

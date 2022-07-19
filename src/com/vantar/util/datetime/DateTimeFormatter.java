@@ -304,6 +304,32 @@ public class DateTimeFormatter {
         return sb.toString();
     }
 
+    public String getDateCompactYm() {
+        StringBuilder sb = new StringBuilder(6);
+        sb.append(year);
+        if (month < 10) {
+            sb.append('0');
+        }
+        sb.append(month);
+        pattern = "yyyyMM";
+        return sb.toString();
+    }
+
+    public String getDateCompactYmd() {
+        StringBuilder sb = new StringBuilder(8);
+        sb.append(year);
+        if (month < 10) {
+            sb.append('0');
+        }
+        sb.append(month);
+        if (day < 10) {
+            sb.append('0');
+        }
+        sb.append(day);
+        pattern = "yyyyMMdd";
+        return sb.toString();
+    }
+
     public String getDateTimeCompact() {
         StringBuilder sb = new StringBuilder(20);
         sb.append(year);

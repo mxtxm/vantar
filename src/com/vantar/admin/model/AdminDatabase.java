@@ -191,7 +191,7 @@ public class AdminDatabase {
 
                 for (Field field : dto.getFields()) {
                     if (field.isAnnotationPresent(ManyToManyStore.class)) {
-                        String[] parts = StringUtil.split(field.getAnnotation(ManyToManyStore.class).value(), VantarParam.SEPARATOR_NEXT);
+                        String[] parts = StringUtil.splitTrim(field.getAnnotation(ManyToManyStore.class).value(), VantarParam.SEPARATOR_NEXT);
                         String table = parts[0];
 
                         try {

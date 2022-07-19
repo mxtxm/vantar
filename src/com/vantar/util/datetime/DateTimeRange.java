@@ -87,7 +87,7 @@ public class DateTimeRange {
      * @return list of years
      */
     public List<Integer> getYearsBetween() {
-        List<Integer> values = new ArrayList<>();
+        List<Integer> values = new ArrayList<>(30);
         for (int i = dateMin.formatter().year; i <= dateMax.formatter().year; ++i) {
             values.add(i);
         }
@@ -99,24 +99,54 @@ public class DateTimeRange {
      * @return list of months
      */
     public List<Integer> getMonthsBetween() {
-        List<Integer> values = new ArrayList<>();
+        List<Integer> values = new ArrayList<>(30);
         if (dateMin.formatter().year == dateMax.formatter().year) {
-            for (int i = dateMin.formatter().month; i <= dateMax.formatter().month; ++i) {
+            for (int i = dateMin.formatter().month, l = dateMax.formatter().month ; i <= l ; ++i) {
                 values.add(i);
             }
             return values;
         }
 
-        for (int i = dateMin.formatter().month; i <= 12; ++i) {
+        for (int i = dateMin.formatter().month ; i <= 12 ; ++i) {
             values.add(i);
         }
-        for (int i = dateMin.formatter().year + 1; i < dateMax.formatter().year; ++i) {
+        for (int i = dateMin.formatter().year + 1, yMax = dateMax.formatter().year ; i < yMax ; ++i) {
             for (int j = 1; j <= 12; ++j) {
                 values.add(j);
             }
         }
-        for (int i = 1; i <= dateMax.formatter().month; ++i) {
+        for (int i = 1, mMax = dateMax.formatter().month ; i <= mMax ; ++i) {
             values.add(i);
+        }
+        return values;
+    }
+
+
+    /**
+     * Get a list of year-months between the bounds. e.i: 202201, 202202, ...
+     * @return list of months
+     */
+    public List<Integer> getYearMonthsBetween() {
+        List<Integer> values = new ArrayList<>(30);
+        int minY = dateMin.formatter().year;
+        if (minY == dateMax.formatter().year) {
+            for (int i = dateMin.formatter().month, l = dateMax.formatter().month ; i <= l ; ++i) {
+                values.add(minY * 100 + i);
+            }
+            return values;
+        }
+
+        for (int i = dateMin.formatter().month ; i <= 12 ; ++i) {
+            values.add(minY * 100 + i);
+        }
+        int yMax = dateMax.formatter().year;
+        for (int i = dateMin.formatter().year + 1 ; i < yMax ; ++i) {
+            for (int j = 1; j <= 12; ++j) {
+                values.add(i * 100 + j);
+            }
+        }
+        for (int i = 1, mMax = dateMax.formatter().month ; i <= mMax ; ++i) {
+            values.add(yMax * 100 + i);
         }
         return values;
     }

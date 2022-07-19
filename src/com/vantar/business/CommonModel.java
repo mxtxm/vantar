@@ -3,15 +3,20 @@ package com.vantar.business;
 import com.vantar.common.VantarParam;
 import com.vantar.database.common.ValidationError;
 import com.vantar.database.dto.*;
+import com.vantar.database.nosql.mongo.Mongo;
+import com.vantar.database.nosql.mongo.MongoSearch;
 import com.vantar.database.query.*;
 import com.vantar.exception.*;
+import com.vantar.locale.VantarKey;
 import com.vantar.service.Services;
+import com.vantar.service.auth.*;
 import com.vantar.service.cache.ServiceDtoCache;
 import com.vantar.util.json.*;
+import com.vantar.util.object.ClassUtil;
 import com.vantar.util.string.StringUtil;
 import com.vantar.web.*;
 import org.slf4j.*;
-import java.util.List;
+import java.util.*;
 
 
 public abstract class CommonModel {
@@ -64,6 +69,7 @@ public abstract class CommonModel {
                 continue;
             }
 
+            Map<String, Object> values = new HashMap<>(100);
             dto.reset();
             String key;
             String value;
@@ -93,11 +99,12 @@ public abstract class CommonModel {
                     value = null;
                 }
                 dto.setPropertyValue(key, value);
+                values.put(key, value);
             }
 
             List<ValidationError> errors = dto.validate(Dto.Action.INSERT);
             if (errors.isEmpty()) {
-                importCallback.execute(presentValue.toString());
+                importCallback.execute(presentValue.toString(), values);
                 continue;
             }
 
@@ -135,14 +142,16 @@ public abstract class CommonModel {
             dto.reset();
             dto.setToDefaults();
 
+            Map<String, Object> values = new HashMap<>(100);
             for (int j = 0; j < fieldCount; j++) {
                 dto.setPropertyValue(fields[j], cols[j].equals("-") ? null : cols[j]);
+                values.put(fields[j], cols[j].equals("-") ? null : cols[j]);
                 if (presentField.contains(fields[j])) {
                     presentValue = cols[j];
                 }
             }
 
-            importCallback.execute(presentValue);
+            importCallback.execute(presentValue, values);
         }
     }
 
@@ -158,7 +167,7 @@ public abstract class CommonModel {
             List<ValidationError> errors = dto.validate(Dto.Action.INSERT);
             String presentValue = dto.getPresentationValue();
             if (errors.isEmpty()) {
-                importCallback.execute(presentValue);
+                importCallback.execute(presentValue, new HashMap<>(1));
                 continue;
             }
 
@@ -166,10 +175,36 @@ public abstract class CommonModel {
         }
     }
 
+    public static void insertPassword(Dto dto, String password) throws ServerException {
+        if (StringUtil.isEmpty(password)) {
+            return;
+        }
+        for (DtoDictionary.Info info: DtoDictionary.getAll()) {
+            if (ClassUtil.isInstantiable(info.dtoClass, CommonUserPassword.class)) {
+                if (dto.getClass().equals(info.dtoClass)) {
+                    break;
+                }
+                CommonUserPassword userPassword = (CommonUserPassword) info.getDtoInstance();
+                userPassword.setId(dto.getId());
+                userPassword.setPassword(password);
+                try {
+                    if (MongoSearch.existsById(userPassword)) {
+                        CommonModelMongo.update(userPassword);
+                    } else {
+                        CommonModelMongo.insert(userPassword);
+                    }
+                } catch (DatabaseException | VantarException e) {
+                    throw new ServerException(VantarKey.FETCH_FAIL);
+                }
+                break;
+            }
+        }
+    }
+
 
     public interface Import {
 
-        void execute(String presentValue);
+        void execute(String presentValue, Map<String, Object> values);
     }
 
 

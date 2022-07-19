@@ -75,9 +75,9 @@ public class DtoDictionary {
         }
 
         if (StringUtil.isNotEmpty(command)) {
-            for (String c : StringUtil.split(command, VantarParam.SEPARATOR_BLOCK)) {
-                String[] commandProperties = StringUtil.split(c, VantarParam.SEPARATOR_KEY_VAL);
-                String[] properties = StringUtil.split(commandProperties[1], VantarParam.SEPARATOR_COMMON);
+            for (String c : StringUtil.splitTrim(command, VantarParam.SEPARATOR_BLOCK)) {
+                String[] commandProperties = StringUtil.splitTrim(c, VantarParam.SEPARATOR_KEY_VAL);
+                String[] properties = StringUtil.splitTrim(commandProperties[1], VantarParam.SEPARATOR_COMMON);
                 switch (commandProperties[0]) {
                     case "present":
                         info.present = new ArrayList<>();

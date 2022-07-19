@@ -1,6 +1,5 @@
 package com.vantar.business;
 
-import com.vantar.common.VantarParam;
 import com.vantar.database.common.*;
 import com.vantar.database.dependency.DataDependency;
 import com.vantar.database.dto.*;
@@ -12,6 +11,7 @@ import com.vantar.exception.*;
 import com.vantar.locale.Locale;
 import com.vantar.locale.*;
 import com.vantar.service.Services;
+import com.vantar.service.auth.CommonUser;
 import com.vantar.service.cache.ServiceDtoCache;
 import com.vantar.service.log.ServiceUserActionLog;
 import com.vantar.util.number.NumberUtil;
@@ -68,7 +68,7 @@ public class CommonModelMongo extends CommonModel {
         return insertX(json, dto, event);
     }
 
-    private static ResponseMessage insertX(Object params, Dto dto, WriteEvent event)
+    private static synchronized ResponseMessage insertX(Object params, Dto dto, WriteEvent event)
         throws InputException, ServerException {
 
         if (event != null) {
@@ -143,7 +143,7 @@ public class CommonModelMongo extends CommonModel {
     public static ResponseMessage insert(Dto dto) throws InputException, ServerException {
         return insert(dto, null);
     }
-    public static ResponseMessage insert(Dto dto, WriteEvent event) throws InputException, ServerException {
+    public static synchronized ResponseMessage insert(Dto dto, WriteEvent event) throws InputException, ServerException {
         if (event != null) {
             try {
                 event.beforeSet(dto);
@@ -236,7 +236,6 @@ public class CommonModelMongo extends CommonModel {
     }
     public static ResponseMessage updateJson(Params params, String key, Dto dto, WriteEvent event)
         throws InputException, ServerException {
-
         return updateX(params.getString(key), dto, event, params.getX("action", Dto.Action.UPDATE_FEW_COLS));
     }
     public static ResponseMessage updateJson(String json, Dto dto) throws InputException, ServerException {
@@ -246,7 +245,7 @@ public class CommonModelMongo extends CommonModel {
         return updateX(json, dto, event, Dto.Action.UPDATE_FEW_COLS);
     }
 
-    private static ResponseMessage updateX(Object params, Dto dto, WriteEvent event, Dto.Action action)
+    private static synchronized ResponseMessage updateX(Object params, Dto dto, WriteEvent event, Dto.Action action)
         throws InputException, ServerException {
 
         if (event != null) {
@@ -345,7 +344,7 @@ public class CommonModelMongo extends CommonModel {
         return updateX(null, q, action, event);
     }
 
-    private static ResponseMessage updateX(Dto dto, QueryBuilder q, Dto.Action action, WriteEvent event)
+    private static synchronized ResponseMessage updateX(Dto dto, QueryBuilder q, Dto.Action action, WriteEvent event)
         throws InputException, ServerException {
 
         if (q != null) {
@@ -565,7 +564,7 @@ public class CommonModelMongo extends CommonModel {
     public static <T extends Dto> ResponseMessage deleteBatch(Params params, Class<T> tClass, WriteEvent event)
         throws InputException, ServerException {
 
-        List<Long> ids = params.getLongList(VantarParam.IDS);
+        List<Long> ids = params.getLongList("ids");
         if (ids == null || ids.isEmpty()) {
             ids = params.getJsonList(Long.class);
         }
@@ -631,7 +630,7 @@ public class CommonModelMongo extends CommonModel {
     public static <T extends Dto> ResponseMessage unDeleteBatch(Params params, Class<T> tClass, WriteEvent event)
         throws InputException, ServerException {
 
-        List<Long> ids = params.getLongList(VantarParam.IDS);
+        List<Long> ids = params.getLongList("ids");
         if (ids == null || ids.isEmpty()) {
             ids = params.getJsonList(Long.class);
         }
@@ -739,7 +738,7 @@ public class CommonModelMongo extends CommonModel {
         AtomicInteger success = new AtomicInteger();
         AtomicInteger duplicate = new AtomicInteger();
 
-        CommonModel.Import imp = (String presentValue) -> {
+        CommonModel.Import imp = (String presentValue, Map<String, Object> values) -> {
             try {
                 if (dto.getId() == null ? CommonRepoMongo.existsByDto(dto) : CommonRepoMongo.existsById(dto)) {
                     duplicate.getAndIncrement();
@@ -747,9 +746,15 @@ public class CommonModelMongo extends CommonModel {
                 }
 
                 CommonRepoMongo.insert(dto);
+                if (dto instanceof CommonUser) {
+                    CommonModel.insertPassword(
+                        dto,
+                        (String) values.get("password")
+                    );
+                }
 
                 success.getAndIncrement();
-            } catch (DatabaseException e) {
+            } catch (DatabaseException | ServerException e) {
                 ui.addErrorMessage(presentValue + " " + Locale.getString(VantarKey.IMPORT_FAIL));
                 failed.getAndIncrement();
             }
@@ -780,24 +785,39 @@ public class CommonModelMongo extends CommonModel {
 
     // GET DATA > > >
 
+    public static void forEach(Dto dto, QueryResultBase.Event event) throws ServerException {
+        try {
+            MongoSearch.getAllData(dto).forEach(event);
+        } catch (DatabaseException e) {
+            throw new ServerException(VantarKey.FETCH_FAIL);
+        }
+    }
 
-    public static Object search(Params params, Dto dto) throws InputException, ServerException, NoContentException {
+    public static void forEach(QueryBuilder q, QueryResultBase.Event event) throws ServerException {
+        try {
+            MongoSearch.getData(q).forEach(event);
+        } catch (DatabaseException e) {
+            throw new ServerException(VantarKey.FETCH_FAIL);
+        }
+    }
+
+    public static PageData search(Params params, Dto dto) throws InputException, ServerException, NoContentException {
         return search(params, dto, dto, null);
     }
 
-    public static Object search(Params params, Dto dto, QueryEvent event)
+    public static PageData search(Params params, Dto dto, QueryEvent event)
         throws InputException, ServerException, NoContentException {
 
         return search(params, dto, dto, event);
     }
 
-    public static Object search(Params params, Dto dto, Dto dtoView)
+    public static PageData search(Params params, Dto dto, Dto dtoView)
         throws InputException, ServerException, NoContentException {
 
         return search(params, dto, dtoView, null);
     }
 
-    public static Object search(Params params, Dto dto, Dto dtoView, QueryEvent event)
+    public static PageData search(Params params, Dto dto, Dto dtoView, QueryEvent event)
         throws InputException, ServerException, NoContentException {
 
         QueryData queryData = params.getQueryData();
@@ -806,7 +826,7 @@ public class CommonModelMongo extends CommonModel {
                 throw new InputException(VantarKey.NO_SEARCH_COMMAND);
             }
             if (event == null) {
-                return getAll(params, dtoView, null, null);
+                return new PageData(getAll(params, dtoView, null, null));
             }
             queryData = new QueryData();
         }
@@ -826,11 +846,11 @@ public class CommonModelMongo extends CommonModel {
         return search(q, event, params.getLang());
     }
 
-    public static Object search(QueryBuilder q, String... locales) throws ServerException, NoContentException {
+    public static PageData search(QueryBuilder q, String... locales) throws ServerException, NoContentException {
         return search(q, null, locales);
     }
 
-    public static Object search(QueryBuilder q, QueryEvent event, String... locales) throws ServerException, NoContentException {
+    public static PageData search(QueryBuilder q, QueryEvent event, String... locales) throws ServerException, NoContentException {
         if (q.isPagination()) {
             try {
                 return MongoSearch.getPage(q, event, locales);
@@ -851,7 +871,7 @@ public class CommonModelMongo extends CommonModel {
                 result.setLocale(locales);
             }
             try {
-                return result.asList();
+                return new PageData(result.asList());
             } catch (DatabaseException e) {
                 throw new ServerException(VantarKey.FETCH_FAIL);
             }
@@ -862,6 +882,18 @@ public class CommonModelMongo extends CommonModel {
         throws ServerException, NoContentException {
 
         return getData(q, null, locales);
+    }
+
+    public static <D extends Dto> List<D> getData(Params params, QueryBuilder q)
+        throws ServerException, NoContentException {
+
+        return getData(params, q, null);
+    }
+
+    public static <D extends Dto> List<D> getData(Params params, QueryBuilder q, QueryEvent event)
+        throws ServerException, NoContentException {
+
+        return getData(q, event, params.getLang());
     }
 
     public static <D extends Dto> List<D> getData(QueryBuilder q, QueryEvent event, String... locales)
@@ -881,16 +913,53 @@ public class CommonModelMongo extends CommonModel {
         }
     }
 
-    public static <D extends Dto> List<D> getData(Params params, QueryBuilder q)
+    public static <D extends Dto> Map<Object, D> getMap(QueryBuilder q, String keyProperty, String... locales)
         throws ServerException, NoContentException {
 
-        return getData(params, q, null);
+        return getMap(q, keyProperty, null, locales);
     }
 
-    public static <D extends Dto> List<D> getData(Params params, QueryBuilder q, QueryEvent event)
+    public static <D extends Dto> Map<Object, D> getMap(Params params, String keyProperty, QueryBuilder q)
         throws ServerException, NoContentException {
 
-        return getData(q, event, params.getLang());
+        return getMap(params, keyProperty, q, null);
+    }
+
+    public static <D extends Dto> Map<Object, D> getMap(Params params, String keyProperty, QueryBuilder q, QueryEvent event)
+        throws ServerException, NoContentException {
+
+        return getMap(q, keyProperty, event, params.getLang());
+    }
+
+    public static <D extends Dto> Map<Object, D> getMap(QueryBuilder q, String keyProperty, QueryEvent event, String... locales)
+        throws ServerException, NoContentException {
+
+        try {
+            QueryResult result = MongoSearch.getData(q);
+            if (event != null) {
+                result.setEvent(event);
+            }
+            if (ObjectUtil.isNotEmpty(locales)) {
+                result.setLocale(locales);
+            }
+            return result.asMap(keyProperty);
+        } catch (DatabaseException e) {
+            throw new ServerException(VantarKey.FETCH_FAIL);
+        }
+    }
+
+    public static <D extends Dto> Map<Object, D> getMap(Dto dto, String keyProperty, String... locales)
+        throws ServerException, NoContentException {
+
+        try {
+            QueryResult result = MongoSearch.getAllData(dto);
+            if (ObjectUtil.isNotEmpty(locales)) {
+                result.setLocale(locales);
+            }
+            return result.asMap(keyProperty);
+        } catch (DatabaseException e) {
+            throw new ServerException(VantarKey.FETCH_FAIL);
+        }
     }
 
     public static <D extends Dto> D getFirst(QueryBuilder q) throws ServerException, NoContentException {
@@ -912,6 +981,9 @@ public class CommonModelMongo extends CommonModel {
     @SuppressWarnings("unchecked")
     public static <D extends Dto> D getById(Params params, D dto) throws InputException, ServerException, NoContentException {
         Long id = params.getLong("id");
+        if (id == null) {
+            id = params.extractFromJson("id", Long.class);
+        }
         if (!NumberUtil.isIdValid(id)) {
             throw new InputException(VantarKey.INVALID_ID, dto.getClass().getSimpleName() + ".id");
         }
@@ -1134,4 +1206,91 @@ public class CommonModelMongo extends CommonModel {
             throw new ServerException(VantarKey.FETCH_FAIL);
         }
     }
+
+
+
+
+
+
+
+
+
+    // > > > DEPRECATED
+    public static Object searchX(Params params, Dto dto) throws InputException, ServerException, NoContentException {
+        return searchX(params, dto, dto, null);
+    }
+
+    public static Object searchX(Params params, Dto dto, QueryEvent event)
+        throws InputException, ServerException, NoContentException {
+
+        return searchX(params, dto, dto, event);
+    }
+
+    public static Object searchX(Params params, Dto dto, Dto dtoView)
+        throws InputException, ServerException, NoContentException {
+
+        return searchX(params, dto, dtoView, null);
+    }
+
+    public static Object searchX(Params params, Dto dto, Dto dtoView, QueryEvent event)
+        throws InputException, ServerException, NoContentException {
+
+        QueryData queryData = params.getQueryData();
+        if (queryData == null) {
+            if (!SEARCH_POLICY_ALLOW_EMPTY_CONDITION) {
+                throw new InputException(VantarKey.NO_SEARCH_COMMAND);
+            }
+            if (event == null) {
+                return getAll(params, dtoView, null, null);
+            }
+            queryData = new QueryData();
+        }
+
+        queryData.setDto(dto, dtoView);
+
+        QueryBuilder q = new QueryBuilder(queryData);
+        List<ValidationError> errors = q.getErrors();
+        if (ObjectUtil.isNotEmpty(errors) && SEARCH_POLICY_THROW_ON_CONDITION_ERROR) {
+            throw new InputException(errors);
+        }
+
+        if (event != null) {
+            event.beforeQuery(q);
+        }
+
+        return searchX(q, event, params.getLang());
+    }
+
+    public static Object searchX(QueryBuilder q, String... locales) throws ServerException, NoContentException {
+        return searchX(q, null, locales);
+    }
+
+    public static Object searchX(QueryBuilder q, QueryEvent event, String... locales) throws ServerException, NoContentException {
+        if (q.isPagination()) {
+            try {
+                return MongoSearch.getPage(q, event, locales);
+            } catch (DatabaseException e) {
+                throw new ServerException(VantarKey.FETCH_FAIL);
+            }
+        } else {
+            QueryResult result;
+            try {
+                result = MongoSearch.getData(q);
+            } catch (DatabaseException e) {
+                throw new ServerException(VantarKey.FETCH_FAIL);
+            }
+            if (event != null) {
+                result.setEvent(event);
+            }
+            if (ObjectUtil.isNotEmpty(locales)) {
+                result.setLocale(locales);
+            }
+            try {
+                return result.asList();
+            } catch (DatabaseException e) {
+                throw new ServerException(VantarKey.FETCH_FAIL);
+            }
+        }
+    }
+
 }

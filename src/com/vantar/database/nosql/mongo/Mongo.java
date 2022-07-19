@@ -63,7 +63,7 @@ public class Mongo {
         public static synchronized void reset(Dto dto) throws DatabaseException {
             try {
                 MongoConnection.getDatabase().getCollection(COLLECTION).findOneAndUpdate(
-                    new Document(COLLECTION_FIELD, dto.getStorage()),
+                    new Document(COLLECTION_FIELD, dto.getSequenceName()),
                     new Document(COUNT_FIELD, dto.getSequenceInitValue())
                 );
             } catch (Exception e) {
@@ -85,25 +85,27 @@ public class Mongo {
         }
 
         public static synchronized long setToMax(Dto dto) throws DatabaseException {
+            return setToMax(dto.getSequenceName());
+        }
+
+        public static synchronized long setToMax(String sequenceName) throws DatabaseException {
             try {
-                MongoCursor<Document> it = MongoConnection.getDatabase().getCollection(dto.getStorage())
+                MongoCursor<Document> it = MongoConnection.getDatabase().getCollection(sequenceName)
                     .find().sort(new Document(ID, -1)).limit(1).iterator();
                 if (!it.hasNext()) {
                     return 0;
                 }
                 long max = ((Number) it.next().get(ID)).longValue();
-
-                getNextValue(dto.getStorage(), max + 1);
-
-                return max;
+                return set(sequenceName, max + 1);
             } catch (Exception e) {
                 log.error("! reset seq", e);
                 throw new DatabaseException(e);
             }
         }
 
-        public static synchronized void set(String sequenceName, long value) throws DatabaseException {
-            getNextValue(sequenceName, value);
+        public static synchronized long set(String sequenceName, long value) throws DatabaseException {
+            remove(sequenceName);
+            return getNextValue(sequenceName, value);
         }
 
         public static synchronized void remove() throws DatabaseException {
@@ -184,11 +186,11 @@ public class Mongo {
 //                log.error("! index error {} {}", dto.getClass(), dto, e);
 //                throw new DatabaseException(e);
 //            }
-
+//https://www.mongodb.com/docs/manual/core/index-case-insensitive/
             for (String item : dto.getIndexes()) {
                 Document indexes = new Document();
-                for (String item2 : StringUtil.split(item, VantarParam.SEPARATOR_COMMON)) {
-                    String[] parts = StringUtil.split(item2, VantarParam.SEPARATOR_KEY_VAL);
+                for (String item2 : StringUtil.splitTrim(item, VantarParam.SEPARATOR_COMMON)) {
+                    String[] parts = StringUtil.splitTrim(item2, VantarParam.SEPARATOR_KEY_VAL);
                     if (parts.length == 1) {
                         indexes.append(StringUtil.toSnakeCase(parts[0]), 1);
                     } else if (parts[1].equals("-1") || parts[1].equals("1")) {

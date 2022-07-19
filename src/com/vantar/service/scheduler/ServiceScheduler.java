@@ -27,12 +27,12 @@ public class ServiceScheduler implements Services.Service {
 
 
     public void start() {
-        String[] parts = StringUtil.split(schedule, VantarParam.SEPARATOR_BLOCK);
+        String[] parts = StringUtil.splitTrim(schedule, VantarParam.SEPARATOR_BLOCK);
         schedules = new ScheduledExecutorService[parts.length];
 
         int i = 0;
         for (String item : parts) {
-            String[] classNameOptions = StringUtil.split(item, VantarParam.SEPARATOR_COMMON);
+            String[] classNameOptions = StringUtil.splitTrim(item, VantarParam.SEPARATOR_COMMON);
             ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
 
             LogEvent.beat(this.getClass(), "set:" + classNameOptions[0]);
@@ -40,7 +40,7 @@ public class ServiceScheduler implements Services.Service {
             if (classNameOptions.length == 2) {
                 // ClassName.Method,hh:mm;              once at hh:mm
                 if (StringUtil.contains(classNameOptions[1], ':')) {
-                    String[] time = StringUtil.split(classNameOptions[1], ':');
+                    String[] time = StringUtil.splitTrim(classNameOptions[1], ':');
 
                     ZonedDateTime now = ZonedDateTime.now(ZoneId.systemDefault());
                     ZonedDateTime nextRun = now.withHour(StringUtil.toInteger(time[0]));

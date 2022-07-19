@@ -90,7 +90,7 @@ public class ConditionItem {
 
     public void separateCols() {
         if (StringUtil.contains(col, ':')) {
-            String[] parts = StringUtil.split(col, ':');
+            String[] parts = StringUtil.splitTrim(col, ':');
             col = parts[0];
             colB = parts[1];
         }

@@ -146,6 +146,6 @@ public class QueueConnection {
     }
 
     public String[] getQueues() {
-        return StringUtil.split(config.getRabbitMqQueues(), VantarParam.SEPARATOR_BLOCK);
+        return StringUtil.splitTrim(config.getRabbitMqQueues(), VantarParam.SEPARATOR_BLOCK);
     }
 }

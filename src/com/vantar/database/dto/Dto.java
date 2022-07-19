@@ -102,6 +102,7 @@ public interface Dto {
 
     enum Action {
         SET,
+        SET_STRICT,
         GET,
 
         IMPORT,

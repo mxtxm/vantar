@@ -6,7 +6,7 @@ import com.vantar.exception.*;
 import com.vantar.service.Services;
 import com.vantar.service.backup.ServiceBackup;
 import com.vantar.web.*;
-import javax.servlet.annotation.WebServlet;
+import javax.servlet.annotation.*;
 import javax.servlet.http.HttpServletResponse;
 
 @WebServlet({
@@ -23,7 +23,14 @@ import javax.servlet.http.HttpServletResponse;
     "/admin/data/backup/files/elastic",
 
     "/admin/data/backup/download",
+    "/admin/data/backup/upload",
 })
+@MultipartConfig(
+    location="/tmp",
+    fileSizeThreshold=100*1024*1024,
+    maxFileSize=100*1024*1024,
+    maxRequestSize=100*1024*1024*5
+)
 public class AdminBackupController extends RouteToMethod {
 
     // > > > SQL
@@ -79,5 +86,9 @@ public class AdminBackupController extends RouteToMethod {
             return;
         }
         Response.download(response, backup.getPath() + filename, filename + ".zip");
+    }
+
+    public void dataBackupUpload(Params params, HttpServletResponse response) throws FinishException {
+        AdminBackup.upload(params, response);
     }
 }

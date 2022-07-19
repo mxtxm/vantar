@@ -79,7 +79,7 @@ public class Services {
         Set<Class<?>> dependencies = new HashSet<>();
         String values = Settings.getValue("service.dependencies");
         if (values != null) {
-            for (String className : StringUtil.split(values, VantarParam.SEPARATOR_COMMON)) {
+            for (String className : StringUtil.splitTrim(values, VantarParam.SEPARATOR_COMMON)) {
                 try {
                     dependencies.add(Class.forName(className));
                 } catch (ClassNotFoundException e) {

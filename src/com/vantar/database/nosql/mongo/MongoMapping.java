@@ -28,7 +28,7 @@ public class MongoMapping {
         }
         Document document = new Document();
         for (String item : sort) {
-            String[] parts = StringUtil.split(item, ':');
+            String[] parts = StringUtil.splitTrim(item, ':');
             if (parts[0].equals(DtoBase.ID)) {
                 parts[0] = Mongo.ID;
             }
@@ -278,7 +278,7 @@ public class MongoMapping {
             condition = qCondition;
         }
 
-        List<Bson> matches = new ArrayList<>();
+        List<Bson> matches = new ArrayList<>(10);
         for (QueryMatchItem item : condition.q) {
             if (item.type == QUERY) {
                 matches.add(getMongoMatches(item.queryValue, dto));
@@ -434,10 +434,11 @@ public class MongoMapping {
                     break;
 
                 case IN_LIST: {
-                    matches.add(new Document(
-                        fieldName,
-                        new Document("$elemMatch", getMongoMatches(item.queryValue, dto))
-                    ));
+                    Document innerMatch = getMongoMatches(item.queryValue, dto);
+                    if (innerMatch == null || innerMatch.isEmpty()) {
+                        continue;
+                    }
+                    matches.add(new Document(fieldName, new Document("$elemMatch", innerMatch)));
                     break;
                 }
 
@@ -469,6 +470,7 @@ public class MongoMapping {
                         ids.add(document.getLong(fieldNameInner));
                     }
                     if (ids.isEmpty()) {
+                        matches.add(new Document(Mongo.ID, -1));
                         continue;
                     }
                     matches.add(new Document(fieldName, new Document("$in", ids)));
@@ -489,6 +491,6 @@ public class MongoMapping {
                 op = "$and";
         }
 
-        return new Document(op, matches);
+        return matches.isEmpty() ? new Document() : new Document(op, matches);
     }
 }

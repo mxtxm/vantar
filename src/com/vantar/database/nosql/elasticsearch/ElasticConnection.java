@@ -26,11 +26,11 @@ public class ElasticConnection {
 
     protected static synchronized RestHighLevelClient getClient() {
         if (client == null) {
-            String[] hostConfigs = StringUtil.split(config.getElasticHosts(), VantarParam.SEPARATOR_BLOCK);
+            String[] hostConfigs = StringUtil.splitTrim(config.getElasticHosts(), VantarParam.SEPARATOR_BLOCK);
             HttpHost[] hosts = new HttpHost[hostConfigs.length];
             int i = 0;
             for (String host : hostConfigs) {
-                String[] hostParts = StringUtil.split(host, VantarParam.SEPARATOR_COMMON);
+                String[] hostParts = StringUtil.splitTrim(host, VantarParam.SEPARATOR_COMMON);
                 hosts[i++] = new HttpHost(hostParts[1], StringUtil.toInteger(hostParts[2]), hostParts[0]);
             }
             client = new RestHighLevelClient(RestClient.builder(hosts));

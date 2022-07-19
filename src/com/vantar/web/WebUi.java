@@ -37,7 +37,7 @@ public class WebUi {
 
     private StringBuilder html = new StringBuilder(100000);
     private final Stack<String> openTags = new Stack<>();
-    private List<String> js;
+    private Set<String> js;
 
     private String authToken;
     private String lang;
@@ -188,10 +188,10 @@ public class WebUi {
 
         StringBuilder sb = new StringBuilder(100);
 
-        String[] urlQuery = StringUtil.split(url, '?');
+        String[] urlQuery = StringUtil.splitTrim(url, '?');
         sb.append(urlQuery[0]).append('?');
         if (urlQuery.length > 1) {
-            for (String q : StringUtil.split(urlQuery[1], '&')) {
+            for (String q : StringUtil.splitTrim(urlQuery[1], '&')) {
                 if (q.startsWith(VantarParam.AUTH_TOKEN + "=") || q.startsWith(VantarParam.LANG + "=")) {
                     continue;
                 }
@@ -321,6 +321,22 @@ public class WebUi {
         return this;
     }
 
+    public WebUi addKeyValueExtendable(Object key, Object value, String hValue) {
+        key = StringUtil.replace(escape(key == null ? "" : key.toString()), "\n", "<br/>");
+        value = StringUtil.replace(escape(value == null ? "NULL" : value.toString()), "\n", "<br/><br/>");
+
+        html.append("<div class='kv-flex-container' style='direction:").append(direction).append("; justify-content:")
+            .append(alignValue).append("; align-items:").append(alignValue).append("'>\n")
+            .append("<label class='kv-key' style='overflow-wrap:break-word;text-align:").append(alignKey).append("'>")
+            .append(key).append("</label>").append("<label class='kv-value' style='text-align:")
+            .append(alignValue).append("' onclick='$(this).find(\"pre\").toggle()'>")
+            .append(value).append("<br/><pre style='display:none'>")
+            .append(hValue).append("</pre></label>").append("</div>");
+
+        setJs("/js/jquery.min.js");
+        return this;
+    }
+
     public WebUi addLogRow(UserLog userLog, CommonUser user) {
         html.append("<div class='log-row clearfix'>");
 
@@ -404,7 +420,7 @@ public class WebUi {
         html.append("<tr>");
         for (String col : cols) {
             if (StringUtil.contains(col, COLSPAN_SEPARATOR)) {
-                String[] parts = StringUtil.split(col, COLSPAN_SEPARATOR);
+                String[] parts = StringUtil.splitTrim(col, COLSPAN_SEPARATOR);
                 html.append("<th colspan='").append(parts[1]).append("'>").append(parts[0]).append("</th>");
                 continue;
             }
@@ -419,12 +435,12 @@ public class WebUi {
         for (Object col : cols) {
             if (col instanceof String) {
                 if (StringUtil.contains((String) col, COLSPAN_SEPARATOR)) {
-                    String[] parts = StringUtil.split((String) col, COLSPAN_SEPARATOR);
+                    String[] parts = StringUtil.splitTrim((String) col, COLSPAN_SEPARATOR);
                     html.append("<td colspan='").append(parts[1]).append("'><div>").append(parts[0]).append("</div></td>");
                     continue;
                 }
                 if (StringUtil.contains((String) col, LINK_SEPARATOR)) {
-                    String[] parts = StringUtil.split((String) col, LINK_SEPARATOR);
+                    String[] parts = StringUtil.splitTrim((String) col, LINK_SEPARATOR);
                     html.append("<td><div>");
                     addLink(parts[0], parts[1], true, false);
                     html.append("<div></td>");
@@ -520,18 +536,11 @@ public class WebUi {
 
     public WebUi addErrorMessage(String msg, String comment) {
         String id = "i" + StringUtil.getRandomString(10);
-        html.append("<script>\n//<![CDATA[\n")
-            .append("function toggleComment(id) {\n" +
-                "var x = document.getElementById(id);\n" +
-                "if (x.style.display === \"none\") {\n" +
-                "x.style.display = \"block\";\n" +
-                "} else {\n" +
-                "x.style.display = \"none\";\n" +
-                "}\n" +
-                "}\n")
-            .append("\n//]]>\n</script>\n").append("<p class='error' onclick='toggleComment(\"").append(id)
-            .append("\")'>\n").append(escapeWithNtoBr(msg)).append("</p>\n").append("<pre id='").append(id)
+        html.append("<p class='error' onclick='$(\"#").append(id).append("\").toggle()'>\n")
+            .append(escapeWithNtoBr(msg)).append("</p>\n").append("<pre id='").append(id)
             .append("' class='error' style='display:none'>\n").append(escapeWithNtoBr(comment)).append("</pre>\n");
+
+        setJs("/js/jquery.min.js");
         return this;
     }
 
@@ -1009,7 +1018,7 @@ public class WebUi {
 
             if (value.toLowerCase().contains("jpg") || value.toLowerCase().contains("png")) {
                 StringBuilder images = new StringBuilder();
-                for (String v : StringUtil.split(value, '|')) {
+                for (String v : StringUtil.splitTrim(value, '|')) {
                     if (StringUtil.isNotEmpty(v)) {
                         images
                             .append("<img src='").append(v).append("' alt='").append(v)
@@ -1048,8 +1057,8 @@ public class WebUi {
         }
         html.append("</div>");
 
-        html.append("<script>")
-            .append("function toggle() {\n" +
+        html.append("<script>\n//<![CDATA[\n")
+            .append("function toggleSw() {\n" +
                 "var x = document.getElementById('container-search-options');\n" +
                 "var y = document.getElementById('container-search-json');\n" +
                 "if (x.style.display === \"none\") {\n" +
@@ -1060,8 +1069,8 @@ public class WebUi {
                 "y.style.display = \"block\";\n" +
                 "}\n" +
                 "}\n")
-            .append("</script>")
-            .append("<div id='toggle' onclick='toggle()'>").append(Locale.getString(VantarKey.ADMIN_JSON_OPTION))
+            .append("\n//]]>\n</script>\n")
+            .append("<div id='toggle' onclick='toggleSw()'>").append(Locale.getString(VantarKey.ADMIN_JSON_OPTION))
             .append("</div>")
             .append("<form id='dto-list-form' method='post'>");
 
@@ -1191,7 +1200,9 @@ public class WebUi {
         html.append("<tr><td></td><td><button type='submit'>&gt;&gt;</button></td></tr>")
             .append("<tr><td></td><td>")
             .append("</td></tr></table></form>")
-            .append("<form method='post' action='/admin/data/delete/many'>");
+            .append("<form method='post' action='/admin/data/delete/many'>")
+            .append("    <input type='hidden' name='" + VantarParam.AUTH_TOKEN + "' value='")
+            .append(authToken).append("'/>\n");
 
         if (data == null) {
             addMessage(Locale.getString(VantarKey.NO_CONTENT));
@@ -1371,7 +1382,8 @@ public class WebUi {
                 "    <meta name=\"description\" content=\"Vantar admin dashboard\">\n" +
                 "    <meta name=\"author\" content=\"Mehdi Torabi\">\n" +
                 "    <link rel='stylesheet' type='text/css' href='/css/index.css'>\n</head>\n<body class="
-                + direction + ">\n\n" + html.toString();
+                + direction + ">\n\n"
+                + html.toString();
 
         written = true;
         Response.writeHtml(response, content);
@@ -1399,7 +1411,7 @@ public class WebUi {
 
     public WebUi setJs(String path) {
         if (js == null) {
-            js = new ArrayList<>();
+            js = new HashSet<>(10);
         }
         js.add(path);
         return this;

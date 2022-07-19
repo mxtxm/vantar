@@ -67,7 +67,7 @@ public class AdminMonitoring {
         links.forEach((cat, i) -> {
             ui.beginBox(cat);
             for (String item : i) {
-                String[] parts = StringUtil.split(item, ':');
+                String[] parts = StringUtil.splitTrim(item, ':');
                 ui.addBlockLink(parts[0], parts[1]);
             }
             ui.containerEnd();

@@ -184,24 +184,20 @@ public class FileUtil {
 
     public static boolean zip(String dir, String zipPath, BeforeZipCallback callback) {
         Path sourceDir = Paths.get(dir);
-        try {
+        try (ZipOutputStream zip = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(zipPath)))) {
             Files.walkFileTree(sourceDir, new SimpleFileVisitor<Path>() {
                 @Override
                 public FileVisitResult visitFile(Path file, BasicFileAttributes attributes) {
-                    try (ZipOutputStream zip = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(zipPath)))) {
-                        if (callback == null || callback.accept(file.toAbsolutePath().toString())) {
-                            try {
-                                Path targetFile = sourceDir.relativize(file);
-                                zip.putNextEntry(new ZipEntry(targetFile.toString()));
-                                byte[] bytes = Files.readAllBytes(file);
-                                zip.write(bytes, 0, bytes.length);
-                                zip.closeEntry();
-                            } catch (IOException e) {
-                                log.error(" !! ziping ({} > {})\n", dir, zipPath, e);
-                            }
+                    if (callback == null || callback.accept(file.toAbsolutePath().toString())) {
+                        try {
+                            Path targetFile = sourceDir.relativize(file);
+                            zip.putNextEntry(new ZipEntry(targetFile.toString()));
+                            byte[] bytes = Files.readAllBytes(file);
+                            zip.write(bytes, 0, bytes.length);
+                            zip.closeEntry();
+                        } catch (IOException e) {
+                            log.error(" !! ziping ({} > {})\n", dir, zipPath, e);
                         }
-                    } catch (IOException e) {
-                        log.error(" !! ziping ({} > {})\n", dir, zipPath, e);
                     }
                     return FileVisitResult.CONTINUE;
                 }

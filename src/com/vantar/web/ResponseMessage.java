@@ -3,6 +3,7 @@ package com.vantar.web;
 import com.vantar.database.dto.Dto;
 import com.vantar.locale.LangKey;
 import com.vantar.locale.Locale;
+import com.vantar.util.object.ObjectUtil;
 
 
 public class ResponseMessage {
@@ -60,5 +61,9 @@ public class ResponseMessage {
         r.value = value;
         r.dto = dto;
         return r;
+    }
+
+    public String toString() {
+        return ObjectUtil.toString(this);
     }
 }

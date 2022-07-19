@@ -9,7 +9,6 @@ import com.vantar.locale.Locale;
 import com.vantar.locale.*;
 import com.vantar.service.Services;
 import com.vantar.service.backup.ServiceBackup;
-import com.vantar.util.collection.CollectionUtil;
 import com.vantar.util.datetime.*;
 import com.vantar.util.file.FileUtil;
 import com.vantar.util.object.ObjectUtil;
@@ -173,5 +172,40 @@ public class AdminBackup {
             .addCheckbox(Locale.getString(VantarKey.ADMIN_DELETE_DO), WebUi.PARAM_CONFIRM)
             .addSubmit(Locale.getString(VantarKey.ADMIN_DELETE))
             .finish();
+    }
+
+    public static void upload(Params params, HttpServletResponse response) throws FinishException {
+        WebUi ui = Admin.getUi(Locale.getString(VantarKey.ADMIN_BACKUP_UPLOAD), params, response, true);
+
+        if (!params.isChecked("f")) {
+            ui  .beginUploadForm()
+                .addFile(Locale.getString(VantarKey.ADMIN_BACKUP_UPLOAD_FILE), "file")
+                .addSubmit(Locale.getString(VantarKey.ADMIN_SUBMIT))
+                .finish();
+            return;
+        }
+
+        ServiceBackup backup;
+        try {
+            backup = Services.get(ServiceBackup.class);
+        } catch (ServiceException e) {
+            ui.addErrorMessage(e);
+            ui.write();
+            return;
+        }
+
+        try (Params.Uploaded uploaded = params.upload("file")) {
+            if (!uploaded.isUploaded() || uploaded.isIoError()) {
+                ui.addErrorMessage(Locale.getString(VantarKey.REQUIRED, "file")).finish();
+                return;
+            }
+
+            if (!uploaded.moveTo(backup.getPath(), uploaded.getOriginalFilename())) {
+                ui.addMessage(Locale.getString(VantarKey.UPLOAD_FAIL)).finish();
+                return;
+            }
+        }
+
+        ui.addMessage(Locale.getString(VantarKey.UPLOAD_SUCCESS)).finish();
     }
 }

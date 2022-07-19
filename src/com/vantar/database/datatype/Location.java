@@ -64,7 +64,7 @@ public class Location {
             countryCode = location.countryCode;
             return;
         }
-        String[] parts = StringUtil.split(string, ',');
+        String[] parts = StringUtil.splitTrim(string, ',');
         if (parts.length < 2) {
             return;
         }
@@ -212,7 +212,7 @@ public class Location {
     }
 
     public static Bound getCountryBoundsByCode(String countryName) {
-        String[] parts = StringUtil.split(StringUtil.getBetween(getCountryBoundsAsString(), countryName.toLowerCase(), "\n"), ',');
+        String[] parts = StringUtil.splitTrim(StringUtil.getBetween(getCountryBoundsAsString(), countryName.toLowerCase(), "\n"), ',');
         if (parts.length < 5) {
             return null;
         }

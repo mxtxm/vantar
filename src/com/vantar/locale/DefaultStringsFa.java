@@ -19,6 +19,7 @@ public class DefaultStringsFa {
         tokens.put(VantarKey.EXPIRED_AUTH_TOKEN, "شناسه هویت کاربر باطل شده است، دوباره به سیستم وارد شوید");
         tokens.put(VantarKey.NO_ACCESS, "کاربر شما به این صفحه دسترسی ندارد");
         tokens.put(VantarKey.USER_REPO_NOT_SET, "user repo event not set, authentication requires repo to access database");
+        tokens.put(VantarKey.USER_ALREADY_SIGNED_IN, "کاربر هم اکنون در سیسم وارد شده.");
 
         // datetime
         tokens.put(VantarKey.INVALID_DATETIME, "تاریخ و زمان نادرست است");
@@ -283,6 +284,8 @@ public class DefaultStringsFa {
         tokens.put(VantarKey.ADMIN_ACTION_LOG_USER, "لاگ کاربران");
         tokens.put(VantarKey.ADMIN_ACTION_LOG_REQUEST, "لاگ درخواست ها");
         tokens.put(VantarKey.ADMIN_MEMORY, "حافظه");
+        tokens.put(VantarKey.ADMIN_BACKUP_UPLOAD, "آپلور فایل بکاپ");
+        tokens.put(VantarKey.ADMIN_BACKUP_UPLOAD_FILE, "فایل بکاپ");
     }
 
     public static String getString(LangKey key) {

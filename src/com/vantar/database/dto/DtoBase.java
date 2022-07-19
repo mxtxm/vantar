@@ -461,7 +461,7 @@ public abstract class DtoBase implements Dto {
         } else {
             includeSet = new HashSet<>(include.length);
             for (String includeProperty : include) {
-                String[] split = StringUtil.split(includeProperty, ':');
+                String[] split = StringUtil.splitTrim(includeProperty, ':');
                 includeSet.add(split[0]);
                 if (split.length == 2) {
                     if (propertyNameMap == null) {
@@ -573,7 +573,7 @@ public abstract class DtoBase implements Dto {
                     continue;
                 }
 
-                String[] storage = StringUtil.split(field.getAnnotation(ManyToManyStore.class).value(), VantarParam.SEPARATOR_NEXT);
+                String[] storage = StringUtil.splitTrim(field.getAnnotation(ManyToManyStore.class).value(), VantarParam.SEPARATOR_NEXT);
                 String fieldName = StringUtil.toSnakeCase(field.getName());
 
                 ManyToManyDefinition manyToManyDefinition = new ManyToManyDefinition();
@@ -657,6 +657,9 @@ public abstract class DtoBase implements Dto {
                 if (areSameType) {
                     Object value = field.get(dto);
                     if (value == null) {
+                        if (action.equals(Action.SET_STRICT)) {
+                            field.set(this, null);
+                        }
                         continue;
                     }
                     if (value instanceof Dto) {
@@ -740,7 +743,7 @@ public abstract class DtoBase implements Dto {
                     action
                 );
             }
-            return set(dto);
+            return set(dto, action);
         }
 
         return set(Json.d.mapFromJson(json, String.class, Object.class), action);
@@ -788,7 +791,7 @@ public abstract class DtoBase implements Dto {
             } else if (o instanceof Collection<?>) {
                 nulls = new HashSet<>((Collection<String>) o);
             } else if (o instanceof String) {
-                nulls = StringUtil.splitToSet((String) o, ',');
+                nulls = StringUtil.splitToSetTrim((String) o, ',');
             }
         }
         Set<String> excludes = null;
@@ -799,7 +802,7 @@ public abstract class DtoBase implements Dto {
             } else if (o instanceof Collection<?>) {
                 excludes = new HashSet<>((Collection<String>) o);
             } else if (o instanceof String) {
-                excludes = StringUtil.splitToSet((String) o, ',');
+                excludes = StringUtil.splitToSetTrim((String) o, ',');
             }
         }
         setDtoSetConfigs(excludes, nulls, (String) map.get(VantarParam.SET_ACTION), action);
@@ -1031,7 +1034,7 @@ public abstract class DtoBase implements Dto {
             if (getClass().isAnnotationPresent(RequiredGroupXor.class)) {
                 for (String requiredProps : getClass().getAnnotation(RequiredGroupXor.class).value()) {
                     int notNullCount = 0;
-                    for (String prop : StringUtil.split(requiredProps, ',')) {
+                    for (String prop : StringUtil.splitTrim(requiredProps, ',')) {
                         Object v = getPropertyValue(prop.trim());
                         if (v == null
                             || (v instanceof String && ((String) v).isEmpty())
@@ -1060,7 +1063,7 @@ public abstract class DtoBase implements Dto {
             if (getClass().isAnnotationPresent(RequiredGroupOr.class)) {
                 for (String requiredProps : getClass().getAnnotation(RequiredGroupOr.class).value()) {
                     boolean ok = false;
-                    for (String prop : StringUtil.split(requiredProps, ',')) {
+                    for (String prop : StringUtil.splitTrim(requiredProps, ',')) {
                         Object v = getPropertyValue(prop.trim());
                         if (v == null
                             || (v instanceof String && ((String) v).isEmpty())
@@ -1137,7 +1140,7 @@ public abstract class DtoBase implements Dto {
         }
 
         if (field.isAnnotationPresent(Limit.class)) {
-            String[] minMax = StringUtil.split(field.getAnnotation(Limit.class).value(),
+            String[] minMax = StringUtil.splitTrim(field.getAnnotation(Limit.class).value(),
                 VantarParam.SEPARATOR_COMMON, VantarParam.SEPARATOR_KEY_VAL);
 
             if (value instanceof Number) {

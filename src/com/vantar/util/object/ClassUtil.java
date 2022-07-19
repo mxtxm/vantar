@@ -314,7 +314,7 @@ public class ClassUtil {
     }
 
     /**
-     * Call static method on a class
+     * Call static method on a class - a param can not be null
      * @param packageClassMethod package.name.ClassName.methodName
      * @param params method params
      * @return method return value
@@ -323,8 +323,13 @@ public class ClassUtil {
     public static Object callStaticMethod(String packageClassMethod, Object... params) throws Throwable {
         String[] parts = StringUtil.split(packageClassMethod, '.');
         Class<?>[] types = new Class[params.length];
-        for (int i = 0, paramsLength = params.length; i < paramsLength; i++) {
+        for (int i = 0, l = params.length; i < l; i++) {
             types[i] = params[i].getClass();
+            if (ClassUtil.implementsInterface(types[i], Map.class)) {
+                types[i] = Map.class;
+            } else if (ClassUtil.implementsInterface(types[i], List.class)) {
+                types[i] = List.class;
+            }
         }
         try {
             Class<?> tClass = Class.forName(ExtraUtils.join(parts, '.', parts.length - 1));
@@ -339,7 +344,38 @@ public class ClassUtil {
     }
 
     /**
-     * Call static method on a class
+     * Call static method on a class - a param can be be null, params must be even
+     * @param packageClassMethod package.name.ClassName.methodName
+     * @param typesAndParams method params: type1, value1, type2, value2,... type must be the Class type of object
+     * @return method return value
+     * @throws Throwable
+     */
+    public static Object callStaticMethodWithTypes(String packageClassMethod, Object... typesAndParams) throws Throwable {
+        String[] parts = StringUtil.split(packageClassMethod, '.');
+        int s = typesAndParams.length / 2;
+        Class<?>[] types = new Class[s];
+        Object[] params = new Object[s];
+        for (int i = 0, j = 0, k = 0, l = typesAndParams.length; i < l; i++) {
+            if (i % 2 == 0) {
+                types[j++] = (Class<?>) typesAndParams[i];
+            } else {
+                params[k++] = typesAndParams[i];
+            }
+        }
+        try {
+            Class<?> tClass = Class.forName(ExtraUtils.join(parts, '.', parts.length - 1));
+            Method method = tClass.getMethod(parts[parts.length - 1], types);
+            return method.invoke(null, params);
+        } catch (ClassNotFoundException | NoSuchMethodException | IllegalAccessException e) {
+            ObjectUtil.log.error(" !! {}\n", packageClassMethod, e);
+            return null;
+        } catch (InvocationTargetException e) {
+            throw e.getCause();
+        }
+    }
+
+    /**
+     * Call static method on a class - a param can not be null
      * @param theClass the class
      * @param params method params
      * @return method return value
@@ -347,8 +383,13 @@ public class ClassUtil {
      */
     public static Object callStaticMethod(Class<?> theClass, String methodName, Object... params) throws Throwable {
         Class<?>[] types = new Class[params.length];
-        for (int i = 0, paramsLength = params.length; i < paramsLength; i++) {
+        for (int i = 0, l = params.length; i < l; i++) {
             types[i] = params[i].getClass();
+            if (ClassUtil.implementsInterface(types[i], Map.class)) {
+                types[i] = Map.class;
+            } else if (ClassUtil.implementsInterface(types[i], List.class)) {
+                types[i] = List.class;
+            }
         }
         try {
             Method method = theClass.getMethod(methodName, types);

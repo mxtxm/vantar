@@ -42,8 +42,8 @@ public class Params {
 
 
 
-    public final HttpServletRequest request;
-    public final Type type;
+    public HttpServletRequest request;
+    public Type type;
 
 
     public enum Type {
@@ -59,6 +59,10 @@ public class Params {
     private String json;
     private Set<String> ignoreParams;
 
+
+    public Params() {
+
+    }
 
     public Params(HttpServletRequest request) {
         this.request = request;
@@ -87,7 +91,7 @@ public class Params {
 
     public void set(String key, Object value) {
         if (map == null) {
-            map = new HashMap<>();
+            map = new HashMap<>(10);
         }
         map.put(key, value);
     }
@@ -132,7 +136,7 @@ public class Params {
     }
 
     public Map<String, String> getHeaders() {
-        Map<String, String> headers = new HashMap<>();
+        Map<String, String> headers = new HashMap<>(15);
         Enumeration<String> names = request.getHeaderNames();
         while (names.hasMoreElements()) {
             String name = names.nextElement();
@@ -190,7 +194,7 @@ public class Params {
     }
 
     public Map<String, Object> getAll() {
-        Map<String, Object> params = map == null ? new HashMap<>() : map;
+        Map<String, Object> params = map == null ? new HashMap<>(50) : map;
         if (request == null) {
             return params;
         }
@@ -217,7 +221,12 @@ public class Params {
     // > > > GET
 
 
-    // todo: something more neat, get from map
+    @SuppressWarnings("unchecked")
+    public <T> T getX(String key) {
+        return map == null ? null : (T) map.get(key);
+    }
+
+    @SuppressWarnings("unchecked")
     public <T> T getX(String key, T defaultValue) {
         T obj = map == null ? defaultValue : (T) map.get(key);
         return obj == null ? defaultValue : obj;
@@ -228,12 +237,15 @@ public class Params {
             return null;
         }
 
-        String v = request == null ? null : request.getParameter(key);
-        if (v != null) {
-            return StringUtil.remove(v, '\r');
+        if (map != null) {
+            Object obj = map.get(key);
+            if (obj != null) {
+                return obj.toString();
+            }
         }
-        Object obj = map == null ? null : map.get(key);
-        return obj == null ? null : obj.toString();
+
+        String v = request == null ? null : request.getParameter(key);
+        return v == null ? null : StringUtil.remove(v, '\r');
     }
 
     public Object getObject(String key, Class<?> typeClass) {
@@ -566,7 +578,7 @@ public class Params {
 
 
     public Map<String, Object> queryParams(QueryParams q) {
-        Map<String, Object> params = map == null ? new HashMap<>() : map;
+        Map<String, Object> params = map == null ? new HashMap<>(20) : map;
         if (request == null) {
             return params;
         }

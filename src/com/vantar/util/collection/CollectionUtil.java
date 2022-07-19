@@ -475,13 +475,13 @@ public class CollectionUtil {
             return map == null ? new ArrayList<>(1) : toList(map.values(), genericType);
         }
 
-        String[] strings = StringUtil.split(string, VantarParam.SEPARATOR_COMMON);
+        String[] strings = StringUtil.splitTrim(string, VantarParam.SEPARATOR_COMMON);
         if (strings == null) {
             return new ArrayList<>(1);
         }
         List<T> items = new ArrayList<>(strings.length + 1);
         for (String s : strings) {
-            T item = ObjectUtil.convert(s, genericType);
+            T item = ObjectUtil.convert(s.trim(), genericType);
             if (item != null) {
                 items.add(item);
             }
@@ -580,7 +580,7 @@ public class CollectionUtil {
             return map == null ? new HashMap<>(1) : map;
         }
 
-        String[] strings = StringUtil.split(string, VantarParam.SEPARATOR_COMMON);
+        String[] strings = StringUtil.splitTrim(string, VantarParam.SEPARATOR_COMMON);
         if (strings == null) {
             return new HashMap<>(1);
         }
@@ -593,7 +593,7 @@ public class CollectionUtil {
 
     private static <K, V> void putKv(Object object, Map<K, V> map, Class<K> genericTypeK, Class<V> genericTypeV) {
         if (object instanceof String) {
-            String[] kv = StringUtil.split((String) object, VantarParam.SEPARATOR_KEY_VAL);
+            String[] kv = StringUtil.splitTrim((String) object, VantarParam.SEPARATOR_KEY_VAL);
             if (kv.length < 2) {
                 return;
             }

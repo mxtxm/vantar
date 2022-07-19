@@ -42,9 +42,9 @@ public class StopWord {
                 log.warn(" ! stop word file not exists ({})", path);
                 return new String[] {};
             }
-            set = StringUtil.splitToSet(FileUtil.getFileContentFromClassPath(path), '\n');
+            set = StringUtil.splitToSetTrim(FileUtil.getFileContentFromClassPath(path), '\n');
         } else {
-            set = StringUtil.splitToSet(FileUtil.getFileContent(Locale.stopWordPath + lang), '\n');
+            set = StringUtil.splitToSetTrim(FileUtil.getFileContent(Locale.stopWordPath + lang), '\n');
         }
 
         set.removeIf(element -> element.startsWith(COMMENT_INDICATOR) && element.endsWith(COMMENT_INDICATOR));

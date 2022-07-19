@@ -63,16 +63,18 @@ public class SqlQueryResult extends QueryResultBase implements QueryResult, Auto
     }
 
     private void setColumns() throws DatabaseException {
-        columns = new HashMap<>();
         try {
             ResultSetMetaData metaData = resultSet.getMetaData();
-            for (int i = 1, l = metaData.getColumnCount(); i <= l; ++i) {
+            int colCount = metaData.getColumnCount();
+            columns = new HashMap<>(colCount);
+            for (int i = 1; i <= colCount; ++i) {
                 columns.put(
                     StringUtil.toCamelCase(metaData.getColumnName(i)),
                     new Column(i, metaData.getColumnType(i))
                 );
             }
         } catch (SQLException e) {
+            columns = new HashMap<>(1);
             throw new DatabaseException(e);
         }
     }
@@ -264,10 +266,10 @@ public class SqlQueryResult extends QueryResultBase implements QueryResult, Auto
                             List value;
 
                             if (field.isAnnotationPresent(ManyToManyGetData.class)) {
-                                String[] parts = StringUtil.split(field.getAnnotation(ManyToManyGetData.class).value(), VantarParam.SEPARATOR_NEXT);
+                                String[] parts = StringUtil.splitTrim(field.getAnnotation(ManyToManyGetData.class).value(), VantarParam.SEPARATOR_NEXT);
                                 if (many == null) {
                                     many = new ColumnMany();
-                                    many.properties = StringUtil.split(parts[2], VantarParam.SEPARATOR_COMMON);
+                                    many.properties = StringUtil.splitTrim(parts[2], VantarParam.SEPARATOR_COMMON);
                                     many.propertyOut = StringUtil.toSnakeCase(field.getName());
                                     // this is db column name
                                     many.className = StringUtil.toSnakeCase(many.propertyOut);

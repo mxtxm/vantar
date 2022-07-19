@@ -20,6 +20,7 @@ public class StringUtil {
 
     /**
      * Check if a string is empty
+     *
      * @param value string to check
      * @return null, "", "      " are empty
      */
@@ -29,6 +30,7 @@ public class StringUtil {
 
     /**
      * Check if all strings are empty
+     *
      * @param values strings to check
      * @return values == null or values == [] or all items are (null or "" or "      ")
      */
@@ -46,6 +48,7 @@ public class StringUtil {
 
     /**
      * Check if a string is not empty
+     *
      * @param value string to check
      * @return null, "", "      " are empty
      */
@@ -55,6 +58,7 @@ public class StringUtil {
 
     /**
      * Check if all strings are not empty
+     *
      * @param values strings to check
      * @return values != null and values != [] and all items are not (null or "" or "      ")
      */
@@ -72,6 +76,7 @@ public class StringUtil {
 
     /**
      * Replace persian chars, remove none number chars (including ".") then convert to number
+     *
      * @param string string to convert
      * @return number or (null if string == null)
      */
@@ -84,6 +89,7 @@ public class StringUtil {
 
     /**
      * Replace persian chars, remove none number chars (including ".") then convert to number
+     *
      * @param string string to convert
      * @return number or (null if string == null)
      */
@@ -96,6 +102,7 @@ public class StringUtil {
 
     /**
      * Replace persian chars, remove none number chars then convert to number
+     *
      * @param string string to convert
      * @return number or (null if string == null)
      */
@@ -108,6 +115,7 @@ public class StringUtil {
 
     /**
      * Replace persian chars, remove none number chars then convert to number
+     *
      * @param string string to convert
      * @return number or (null if string == null)
      */
@@ -120,6 +128,7 @@ public class StringUtil {
 
     /**
      * Replace persian chars then convert to number
+     *
      * @param string string to convert
      * @return number or (null if string == null)
      */
@@ -142,6 +151,7 @@ public class StringUtil {
 
     /**
      * Replace persian chars then convert to number
+     *
      * @param string string to convert
      * @return number or (null if string == null)
      */
@@ -164,6 +174,7 @@ public class StringUtil {
 
     /**
      * Replace persian chars then convert to number
+     *
      * @param string string to convert
      * @return number or (null if string == null)
      */
@@ -184,6 +195,7 @@ public class StringUtil {
 
     /**
      * Replace persian chars then convert to number
+     *
      * @param string string to convert
      * @return number or (null if string == null)
      */
@@ -204,6 +216,7 @@ public class StringUtil {
 
     /**
      * Replace persian chars then convert to byte
+     *
      * @param string string to convert
      * @return byte or (null if string == null)
      */
@@ -224,9 +237,9 @@ public class StringUtil {
 
     /**
      * Convert to boolean
+     *
      * @param string string to convert
-     * @return
-     * (true if string-ci == "1", "true", "yes", "on", "بله", "بلی") or
+     * @return (true if string - ci = = " 1 ", " true ", " yes ", " on ", " بله ", " بلی ") or
      * (false if string-ci == "0", "false", "no", "off", "نه", "خیر") or
      * (null if string == null or "" or "     " or not in above values)
      */
@@ -252,6 +265,7 @@ public class StringUtil {
 
     /**
      * Convert to char
+     *
      * @param string string to convert
      * @return first char or (null if string == null or "" or "     ")
      */
@@ -268,9 +282,9 @@ public class StringUtil {
 
     /**
      * Convert to timestamp
+     *
      * @param string string to convert
-     * @return
-     * (timestamp if string is a valid timestamp or date-time) or
+     * @return (timestamp if string is a valid timestamp or date - time) or
      * (null if string == null or "" or "     " or invalid date-time string)
      */
     public static Long toTimestamp(String string) {
@@ -283,7 +297,8 @@ public class StringUtil {
 
     /**
      * Convert to object
-     * @param string string to convert
+     *
+     * @param string    string to convert
      * @param typeClass class to convert to (number classes, Byte, Boolean, Character, Location, DateTime, Enum, Dto)
      * @return instance of typeClass or (null if string == null or "" or "     " or unsupported typeClass)
      */
@@ -321,8 +336,9 @@ public class StringUtil {
 
     /**
      * Change to camelCase
+     *
      * @param string string to convert
-     * @return (null if string == null)
+     * @return (null if string = = null)
      */
     public static String toCamelCase(String string) {
         return toCamelCase(string, false);
@@ -330,8 +346,9 @@ public class StringUtil {
 
     /**
      * Change to CamelCase
+     *
      * @param string string to convert
-     * @return (null if string == null)
+     * @return (null if string = = null)
      */
     public static String toStudlyCase(String string) {
         return toCamelCase(string, true);
@@ -364,8 +381,9 @@ public class StringUtil {
 
     /**
      * Change to snake_case
+     *
      * @param string string to convert
-     * @return (null if string == null)
+     * @return (null if string = = null)
      */
     public static String toSnakeCase(String string) {
         return string == null ? null : PATTERN_SNAKE_CASE.matcher(string).replaceAll("$1_$2").toLowerCase();
@@ -373,8 +391,9 @@ public class StringUtil {
 
     /**
      * Change to snake-case
+     *
      * @param string string to convert
-     * @return (null if string == null)
+     * @return (null if string = = null)
      */
     public static String toKababCase(String string) {
         return string == null ? null : PATTERN_SNAKE_CASE.matcher(string).replaceAll("$1-$2").toLowerCase();
@@ -382,6 +401,7 @@ public class StringUtil {
 
     /**
      * Get a random string
+     *
      * @param length number of chars
      * @return piece of UUID
      */
@@ -391,6 +411,7 @@ public class StringUtil {
 
     /**
      * Get random strings
+     *
      * @param count number of random strings to get
      * @return a set of random strings
      */
@@ -404,7 +425,8 @@ public class StringUtil {
 
     /**
      * Get random strings
-     * @param count number of random strings to get
+     *
+     * @param count  number of random strings to get
      * @param length number of chars
      * @return a set of random strings
      */
@@ -418,10 +440,11 @@ public class StringUtil {
 
     /**
      * Get a random string with only nummeric chars
+     *
      * @param length number of chars
      * @return "321543213"
      */
-    public static String getRandomStringOnlyNumbers (int length) {
+    public static String getRandomStringOnlyNumbers(int length) {
         char[] chars = "0123456789".toCharArray();
         Random rnd = new Random();
         StringBuilder sb = new StringBuilder();
@@ -433,7 +456,8 @@ public class StringUtil {
 
     /**
      * Remove chars from a string
-     * @param string base
+     *
+     * @param string      base
      * @param removeChars to remove
      * @return updated string (null if string == null)
      */
@@ -461,7 +485,8 @@ public class StringUtil {
 
     /**
      * Remove string from a string
-     * @param string base
+     *
+     * @param string       base
      * @param removeString to remove
      * @return updated string (null if string == null)
      */
@@ -492,7 +517,8 @@ public class StringUtil {
 
     /**
      * Remove strings from a string
-     * @param string base
+     *
+     * @param string        base
      * @param removeStrings to remove
      * @return updated string (null if string == null)
      */
@@ -508,8 +534,9 @@ public class StringUtil {
 
     /**
      * Remove all chars from a strings except the given chars
+     *
      * @param string base
-     * @param keep chars to keep
+     * @param keep   chars to keep
      * @return updated string (null if string == null)
      */
     public static String removeExcept(String string, char... keep) {
@@ -536,7 +563,8 @@ public class StringUtil {
 
     /**
      * Trim(remove) chars and whitespace from left and right side of a string
-     * @param string to trim
+     *
+     * @param string    to trim
      * @param trimChars chars to trim
      * @return updated string (null if string == null)
      */
@@ -546,7 +574,8 @@ public class StringUtil {
 
     /**
      * Trim(remove) chars and whitespace from left
-     * @param string to trim
+     *
+     * @param string    to trim
      * @param trimChars chars to trim
      * @return updated string (null if string == null)
      */
@@ -575,7 +604,8 @@ public class StringUtil {
 
     /**
      * Trim(remove) chars and whitespace from right side of a string
-     * @param string to trim
+     *
+     * @param string    to trim
      * @param trimChars chars to trim
      * @return updated string (null if string == null)
      */
@@ -604,29 +634,67 @@ public class StringUtil {
     }
 
     /**
-     * Split string
-     * @param string to split
+     * Split string (items are not trimmed)
+     *
+     * @param string    to split
      * @param separator separator
      * @return splatted parts (null if string == null, [string] if separator == null or "" or string == "")
      */
     public static String[] split(String string, String separator) {
-        return split(string, separator, 0);
+        return split(string, separator, 0, false);
+    }
+
+    /**
+     * Split string (items are trimmed)
+     *
+     * @param string    to split
+     * @param separator separator
+     * @return splatted parts (null if string == null, [string] if separator == null or "" or string == "")
+     */
+    public static String[] splitTrim(String string, String separator) {
+        return split(string, separator, 0, true);
+    }
+
+    /**
+     * Split string (items are not trimmed)
+     *
+     * @param string    to split
+     * @param separator separator
+     * @param max       max number of splatted parts (splits from left to right) 0 = no limit
+     * @return splatted parts (null if string == null, [string] if separator == null or "" or string == "")
+     */
+    public static String[] split(String string, String separator, int max) {
+        return split(string, separator, max, false);
+    }
+
+    /**
+     * Split string (items are trimmed)
+     *
+     * @param string    to split
+     * @param separator separator
+     * @param max       max number of splatted parts (splits from left to right) 0 = no limit
+     * @return splatted parts (null if string == null, [string] if separator == null or "" or string == "")
+     */
+    public static String[] splitTrim(String string, String separator, int max) {
+        return split(string, separator, max, true);
     }
 
     /**
      * Split string
-     * @param string to split
+     *
+     * @param string    to split
      * @param separator separator
-     * @param max max number of splatted parts (splits from left to right) 0 = no limit
+     * @param max       max number of splatted parts (splits from left to right) 0 = no limit
+     * @param trim      trim items
      * @return splatted parts (null if string == null, [string] if separator == null or "" or string == "")
      */
-    public static String[] split(String string, String separator, int max) {
+    public static String[] split(String string, String separator, int max, boolean trim) {
         if (isEmpty(string)) {
             return null;
         }
         int len = string.length();
         if (len == 0 || separator == null || separator.length() == 0) {
-            return new String[] {string};
+            return new String[]{string};
         }
 
         int separatorLen = separator.length();
@@ -643,7 +711,7 @@ public class StringUtil {
                 }
             }
             if (match) {
-                substrings.add(pos >= i ? "" : string.substring(pos, i));
+                substrings.add(pos >= i ? "" : (trim ? string.substring(pos, i).trim() : string.substring(pos, i)));
                 i += separatorLen;
                 pos = i;
                 i--;
@@ -654,29 +722,75 @@ public class StringUtil {
                 }
             }
         }
-        substrings.add(string.substring(pos, len));
+        substrings.add(trim ? string.substring(pos, len).trim() : string.substring(pos, len));
 
         return substrings.toArray(new String[0]);
     }
 
     /**
-     * Split string
-     * @param string to split
+     * Split string (items are not trimmed)
+     *
+     * @param string    to split
      * @param separator separator
      * @return splatted parts (null if string == null, [string] if string == "")
      */
     public static String[] split(String string, char separator) {
-        return split(string, separator, 0);
+        return split(string, separator, 0, false);
     }
 
     /**
-     * Split string
-     * @param string to split
+     * Split string (items are trimmed)
+     *
+     * @param string    to split
+     * @param separator separator
+     * @return splatted parts (null if string == null, [string] if string == "")
+     */
+    public static String[] splitTrim(String string, char separator) {
+        return split(string, separator, 0, true);
+    }
+
+    /**
+     * Split string (items are not trimmed)
+     *
+     * @param string    to split
      * @param separator separator
      * @return splatted parts (null if string == null, [string] if string == "")
      */
     public static Set<String> splitToSet(String string, char separator) {
         return new HashSet<>(Arrays.asList(split(string, separator)));
+    }
+
+    /**
+     * Split string (items are trimmed)
+     *
+     * @param string    to split
+     * @param separator separator
+     * @return splatted parts (null if string == null, [string] if string == "")
+     */
+    public static Set<String> splitToSetTrim(String string, char separator) {
+        return new HashSet<>(Arrays.asList(splitTrim(string, separator)));
+    }
+
+    /**
+     * Split string (items are not trimmed)
+     * @param string to split
+     * @param separator separator
+     * @param max max number of splatted parts (splits from left to right) 0 = no limit
+     * @return splatted parts (null if string == null, [string] if string == "")
+     */
+    public static String[] split(String string, char separator, int max) {
+        return split(string, separator, max, false);
+    }
+
+    /**
+     * Split string (items are trimmed)
+     * @param string to split
+     * @param separator separator
+     * @param max max number of splatted parts (splits from left to right) 0 = no limit
+     * @return splatted parts (null if string == null, [string] if string == "")
+     */
+    public static String[] splitTrim(String string, char separator, int max) {
+        return split(string, separator, max, true);
     }
 
     /**
@@ -686,7 +800,7 @@ public class StringUtil {
      * @param max max number of splatted parts (splits from left to right) 0 = no limit
      * @return splatted parts (null if string == null, [string] if string == "")
      */
-    public static String[] split(String string, char separator, int max) {
+    public static String[] split(String string, char separator, int max, boolean trim) {
         if (string == null) {
             return null;
         }
@@ -700,7 +814,7 @@ public class StringUtil {
         int pos = 0;
         for (int i = 0; i < len; ++i) {
             if (string.charAt(i) == separator) {
-                substrings.add(pos >= i ? "" : string.substring(pos, i));
+                substrings.add(pos >= i ? "" : (trim ? string.substring(pos, i).trim() : string.substring(pos, i)));
                 pos = i + 1;
                 ++count;
 
@@ -709,19 +823,29 @@ public class StringUtil {
                 }
             }
         }
-        substrings.add(string.substring(pos, len));
+        substrings.add(trim ? string.substring(pos, len).trim() : string.substring(pos, len));
 
         return substrings.toArray(new String[0]);
     }
 
     /**
-     * Split string
+     * Split string (items are not trimmed)
      * @param string to split
      * @param separator separator
      * @return splatted parts (null if string == null, [string] if separator == null or "" or string == "")
      */
     public static Set<String> splitToSet(String string, String separator) {
         return new HashSet<>(Arrays.asList(split(string, separator)));
+    }
+
+    /**
+     * Split string (items are trimmed)
+     * @param string to split
+     * @param separator separator
+     * @return splatted parts (null if string == null, [string] if separator == null or "" or string == "")
+     */
+    public static Set<String> splitToSetTrim(String string, String separator) {
+        return new HashSet<>(Arrays.asList(splitTrim(string, separator)));
     }
 
     /**
@@ -831,13 +955,45 @@ public class StringUtil {
     }
 
     /**
-     * Split strings
+     * Split strings (items are not trimmed)
      * @param string to split
      * @param separator separators
      * @return splatted parts (null if string == null, [string] if string == "")
      */
     public static String[] splits(String string, char... separator) {
-        return splits(string, separator, 0);
+        return splits(string, separator, 0, false);
+    }
+
+    /**
+     * Split strings (items are trimmed)
+     * @param string to split
+     * @param separator separators
+     * @return splatted parts (null if string == null, [string] if string == "")
+     */
+    public static String[] splitsTrim(String string, char... separator) {
+        return splits(string, separator, 0, true);
+    }
+
+    /**
+     * Split strings (items are not trimmed)
+     * @param string to split
+     * @param separator separators
+     * @param max max number of splatted parts (splits from left to right) 0 = no limit
+     * @return splatted parts (null if string == null, [string] if string == "")
+     */
+    public static String[] splits(String string, char[] separator, int max) {
+        return splits(string, separator, max, false);
+    }
+
+    /**
+     * Split strings (items are trimmed)
+     * @param string to split
+     * @param separator separators
+     * @param max max number of splatted parts (splits from left to right) 0 = no limit
+     * @return splatted parts (null if string == null, [string] if string == "")
+     */
+    public static String[] splitsTrim(String string, char[] separator, int max) {
+        return splits(string, separator, max, true);
     }
 
     /**
@@ -845,9 +1001,10 @@ public class StringUtil {
      * @param string to split
      * @param separator separators
      * @param max max number of splatted parts (splits from left to right) 0 = no limit
+     * @param trim trim items
      * @return splatted parts (null if string == null, [string] if string == "")
      */
-    public static String[] splits(String string, char[] separator, int max) {
+    public static String[] splits(String string, char[] separator, int max, boolean trim) {
         if (string == null) {
             return null;
         }
@@ -863,7 +1020,7 @@ public class StringUtil {
             char current = string.charAt(i);
             for (char c : separator) {
                 if (current == c) {
-                    substrings.add(pos >= i ? "" : string.substring(pos, i));
+                    substrings.add(pos >= i ? "" : (trim ? string.substring(pos, i).trim() : string.substring(pos, i)));
                     pos = i + 1;
                     ++count;
 
@@ -873,7 +1030,7 @@ public class StringUtil {
                 }
             }
         }
-        substrings.add(string.substring(pos, len));
+        substrings.add(trim ? string.substring(pos, len).trim() : string.substring(pos, len));
 
         return substrings.toArray(new String[0]);
     }

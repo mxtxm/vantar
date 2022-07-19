@@ -1,9 +1,13 @@
 package com.vantar.database.query;
 
+import com.mongodb.MongoException;
+import com.vantar.database.common.DbUtil;
 import com.vantar.database.dto.Dto;
+import com.vantar.database.nosql.mongo.Mongo;
 import com.vantar.exception.*;
 import com.vantar.locale.Locale;
 import com.vantar.util.object.ObjectUtil;
+import org.bson.Document;
 import org.slf4j.*;
 import java.lang.reflect.*;
 import java.util.*;
@@ -65,12 +69,43 @@ abstract public class QueryResultBase {
             if (data.isEmpty()) {
                 throw new NoContentException();
             }
-
             return data;
-
         } catch (NoSuchMethodException | IllegalAccessException | InstantiationException | InvocationTargetException e) {
             log.error("! data > dto({})", dto, e);
-            return new ArrayList<>();
+            return new ArrayList<>(1);
+        } finally {
+            close();
+        }
+    }
+
+    public <T extends Dto> Map<Object, T> asMap(String keyField) throws NoContentException, DatabaseException {
+        Map<Object, T> data = new HashMap<>(1000);
+        try {
+            while (next()) {
+                data.put(dto.getPropertyValue(keyField), (T) dto);
+                dto = dto.getClass().getConstructor().newInstance();
+            }
+
+            if (data.isEmpty()) {
+                throw new NoContentException();
+            }
+            return data;
+        } catch (NoSuchMethodException | IllegalAccessException | InstantiationException | InvocationTargetException e) {
+            log.error("! data > dto({})", dto, e);
+            return new HashMap<>(1);
+        } finally {
+            close();
+        }
+    }
+
+    public void forEach(Event event) throws DatabaseException {
+        try {
+            while (next()) {
+                event.afterSetData(dto);
+                dto = dto.getClass().getConstructor().newInstance();
+            }
+        } catch (NoSuchMethodException | IllegalAccessException | InstantiationException | InvocationTargetException e) {
+            log.error("! data > dto({})", dto, e);
         } finally {
             close();
         }

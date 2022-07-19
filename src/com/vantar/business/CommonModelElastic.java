@@ -256,7 +256,7 @@ public class CommonModelElastic extends CommonModel {
     }
 
     public static <T extends Dto> ResponseMessage deleteBatch(Params params, Class<T> tClass, WriteEvent event) throws VantarException {
-        List<Long> ids = params.getLongList(VantarParam.IDS);
+        List<Long> ids = params.getLongList("ids");
         if (ids == null || ids.isEmpty()) {
             ids = params.getJsonList(Long.class);
         }
@@ -447,7 +447,7 @@ public class CommonModelElastic extends CommonModel {
         AtomicInteger success = new AtomicInteger();
         AtomicInteger duplicate = new AtomicInteger();
 
-        CommonModel.Import imp = (String presentValue) -> {
+        CommonModel.Import imp = (String presentValue, Map<String, Object> values) -> {
             try {
                 if (dto.getId() == null && ElasticSearch.existsById(dto)) {
                     duplicate.getAndIncrement();

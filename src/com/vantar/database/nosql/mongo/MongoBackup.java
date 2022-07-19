@@ -134,6 +134,10 @@ public class MongoBackup {
             while (entries.hasMoreElements()) {
                 long startItemTime = System.currentTimeMillis();
                 ZipEntry entry = entries.nextElement();
+                if (entry.getName().contains("_sequence")) {
+                    continue;
+                }
+
                 String[] parts = StringUtil.split(entry.getName(), '/');
                 String collection = StringUtil.replace(parts[parts.length - 1], ".dump", "");
 
@@ -155,10 +159,12 @@ public class MongoBackup {
                         documents.add(Document.parse(reader.readLine()));
                     }
                     Mongo.insert(collection, documents);
+                    long seq = Mongo.Sequence.setToMax(collection);
 
                     if (ui != null) {
                         long elapsed = (System.currentTimeMillis() - startItemTime) / 1000;
-                        ui.addKeyValue(collection, (i - 1) + " records,    " + (elapsed * 10 / 10d) + "s").write();
+                        ui.addKeyValue(collection, (i - 1) + " records - seq=" + seq + ",    "
+                            + (elapsed * 10 / 10d) + "s").write();
                         r += i - 1;
                     }
                 } catch (IOException | DatabaseException e) {

@@ -44,7 +44,6 @@ public class VantarParam {
     public static final String SEARCH_FIELD = "search";
     public static final String SEARCH_VALUE = "searchval";
     public static final String DTO = "dto";
-    public static final String IDS = "ids";
     public static final String EXCLUDE_PROPERTIES = "__excludeProperties";
     public static final String NULL_PROPERTIES = "__nullProperties";
     public static final String SET_ACTION = "__action";

@@ -6,7 +6,6 @@ import com.vantar.database.dependency.DataDependency;
 import com.vantar.database.dto.*;
 import com.vantar.database.nosql.elasticsearch.*;
 import com.vantar.database.nosql.mongo.*;
-import com.vantar.database.nosql.mongo.Mongo;
 import com.vantar.database.query.*;
 import com.vantar.database.query.data.QueryData;
 import com.vantar.database.sql.*;
@@ -21,7 +20,6 @@ import com.vantar.util.json.Json;
 import com.vantar.util.object.*;
 import com.vantar.util.string.*;
 import com.vantar.web.*;
-import org.slf4j.LoggerFactory;
 import javax.servlet.http.HttpServletResponse;
 import java.lang.reflect.Field;
 import java.util.*;
@@ -558,30 +556,10 @@ public class AdminData {
                         @Override
                         public void afterWrite(Dto dto) throws ServerException {
                             if (dto instanceof CommonUser) {
-                                for (DtoDictionary.Info info: DtoDictionary.getAll()) {
-                                    if (ClassUtil.isInstantiable(info.dtoClass, CommonUserPassword.class)) {
-                                        if (dto.getClass().equals(info.dtoClass)) {
-                                            break;
-                                        }
-                                        String password = Json.d.extract(params.getString("asjson"), "password", String.class);
-                                        if (StringUtil.isEmpty(password)) {
-                                            break;
-                                        }
-                                        CommonUserPassword userPassword = (CommonUserPassword) info.getDtoInstance();
-                                        userPassword.setId(dto.getId());
-                                        userPassword.setPassword(password);
-                                        try {
-                                            if (MongoSearch.existsById(userPassword)) {
-                                                CommonModelMongo.update(userPassword);
-                                            } else {
-                                                CommonModelMongo.insert(userPassword);
-                                            }
-                                        } catch (DatabaseException | VantarException e) {
-                                            throw new ServerException(VantarKey.FETCH_FAIL);
-                                        }
-                                        break;
-                                    }
-                                }
+                                CommonModel.insertPassword(
+                                    dto,
+                                    Json.d.extract(params.getString("asjson"), "password", String.class)
+                                );
                             }
                         }
                     });
@@ -657,26 +635,12 @@ public class AdminData {
                         }
 
                         @Override
-                        public void afterWrite(Dto dto) throws InputException, ServerException {
+                        public void afterWrite(Dto dto) throws ServerException {
                             if (dto instanceof CommonUser) {
-                                for (DtoDictionary.Info info: DtoDictionary.getAll()) {
-                                    if (ClassUtil.isInstantiable(info.dtoClass, CommonUserPassword.class)) {
-                                        if (dto.getClass().equals(info.dtoClass)) {
-                                            break;
-                                        }
-                                            String password =
-                                                Json.d.extract(params.getString("asjson"), "password", String.class);
-                                        if (StringUtil.isEmpty(password)) {
-                                            break;
-                                        }
-                                        CommonUserPassword userPassword = (CommonUserPassword) info.getDtoInstance();
-                                        CommonModelMongo.insert(userPassword);
-                                        userPassword.setId(dto.getId());
-                                        userPassword.setPassword(password);
-                                        CommonModelMongo.insert(userPassword);
-                                        break;
-                                    }
-                                }
+                                CommonModel.insertPassword(
+                                    dto,
+                                    Json.d.extract(params.getString("asjson"), "password", String.class)
+                                );
                             }
                         }
                     });

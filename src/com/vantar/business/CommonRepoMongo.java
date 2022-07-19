@@ -121,7 +121,6 @@ public class CommonRepoMongo extends Mongo {
                 errors.add(new ValidationError(fieldName, VantarKey.UNIQUE));
             }
         }
-
         if (dto.getClass().isAnnotationPresent(UniqueGroup.class)) {
             for (String group : dto.getClass().getAnnotation(UniqueGroup.class).value()) {
                 if (!MongoSearch.isUnique(dto, StringUtil.split(group, VantarParam.SEPARATOR_COMMON))) {

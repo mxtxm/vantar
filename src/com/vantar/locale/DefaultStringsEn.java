@@ -19,6 +19,7 @@ public class DefaultStringsEn {
         tokens.put(VantarKey.EXPIRED_AUTH_TOKEN, "Expired authentication token");
         tokens.put(VantarKey.NO_ACCESS, "No access");
         tokens.put(VantarKey.USER_REPO_NOT_SET, "User repo event not set, authentication requires repo to access database");
+        tokens.put(VantarKey.USER_ALREADY_SIGNED_IN, "User is already signed in");
 
         tokens.put(VantarKey.ADMIN_REQUIRES_ROOT, "Unauthorized! This request requires 'root' access.");
 
@@ -282,6 +283,8 @@ public class DefaultStringsEn {
         tokens.put(VantarKey.ADMIN_ACTION_LOG_USER, "User actions");
         tokens.put(VantarKey.ADMIN_ACTION_LOG_REQUEST, "Request/Response logs");
         tokens.put(VantarKey.ADMIN_MEMORY, "Memory");
+        tokens.put(VantarKey.ADMIN_BACKUP_UPLOAD, "Upload backup file");
+        tokens.put(VantarKey.ADMIN_BACKUP_UPLOAD_FILE, "Backup file");
 
     }
 

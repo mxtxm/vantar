@@ -199,9 +199,6 @@ public class DtoDocumentData {
                 if (propType == Location.class) {
                     sb.append(" {\"latitude\": double, \"longitude\": double}");
                 }
-                if (obj.hasAnnotation(prop, Unique.class)) {
-                    sb.append(" [must be unique]");
-                }
                 if (obj.hasAnnotation(prop, Regex.class)) {
                     sb.append(" [regex=").append(obj.getAnnotation(prop, Regex.class).value()).append("]");
                 }

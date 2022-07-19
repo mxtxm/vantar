@@ -12,6 +12,7 @@ public enum VantarKey implements LangKey {
     EXPIRED_AUTH_TOKEN,
     NO_ACCESS,
     USER_REPO_NOT_SET,
+    USER_ALREADY_SIGNED_IN,
 
     // datetime
     INVALID_TIME,
@@ -268,5 +269,6 @@ public enum VantarKey implements LangKey {
     ADMIN_ACTION_LOG_REQUEST,
     ADMIN_MEMORY,
 
-
+    ADMIN_BACKUP_UPLOAD,
+    ADMIN_BACKUP_UPLOAD_FILE,
 }
