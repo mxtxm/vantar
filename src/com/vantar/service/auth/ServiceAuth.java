@@ -60,9 +60,9 @@ public class ServiceAuth extends Permit implements Services.Service {
             FileUtil.write(
                 backupPath + AUTH_BACKUP_FILENAME,
                 json.toJson(onlineUsers) + VantarParam.SEPARATOR_BLOCK_COMPLEX +
-                json.toJson(signupVerifyTokens) + VantarParam.SEPARATOR_BLOCK_COMPLEX +
-                json.toJson(oneTimeTokens) + VantarParam.SEPARATOR_BLOCK_COMPLEX +
-                json.toJson(verifyTokens)
+                    json.toJson(signupVerifyTokens) + VantarParam.SEPARATOR_BLOCK_COMPLEX +
+                    json.toJson(oneTimeTokens) + VantarParam.SEPARATOR_BLOCK_COMPLEX +
+                    json.toJson(verifyTokens)
             );
             log.info(" >> auth-data backed-up");
         }
@@ -258,6 +258,10 @@ public class ServiceAuth extends Permit implements Services.Service {
         return user;
     }
 
+    public TokenData getSigninToken(CommonUser user) {
+        return onlineUsers.get(user.getToken());
+    }
+
     // > > > signout
 
     public synchronized void signout(Params params) {
@@ -304,6 +308,7 @@ public class ServiceAuth extends Permit implements Services.Service {
         return this;
     }
 
+    @SuppressWarnings("ConstantConditions")
     private synchronized String makeUserOnline(TokenData tNew) throws AuthException {
         String token;
         do {
@@ -321,7 +326,7 @@ public class ServiceAuth extends Permit implements Services.Service {
                 log.error(" !! token={} online={}\n", tNew, onlineUsers, e);
             }
         } else if (SIGNIN_MODE_SINGLE_KICK_OUT_OLD.equals(signinMode)) {
-           try {
+            try {
                 List<String> tokensToDelete = new ArrayList<>(5);
                 for (Map.Entry<String, TokenData> entry : onlineUsers.entrySet()) {
                     if (entry.getValue().user.getId().equals(tNew.user.getId())) {
@@ -340,12 +345,9 @@ public class ServiceAuth extends Permit implements Services.Service {
             List<String> tokensToDelete = new ArrayList<>(5);
             for (Map.Entry<String, TokenData> online : onlineUsers.entrySet()) {
                 try {
-                    ClassUtil.callStaticMethod(
-                        signinMode,
-                        tNew,
-                        online.getValue(),
-                        tokensToDelete
-                    );
+                    if ((boolean) ClassUtil.callStaticMethod(signinMode, tNew, online.getValue())) {
+                        tokensToDelete.add(online.getKey());
+                    }
                 } catch (Throwable t) {
                     if (t instanceof AuthException) {
                         throw (AuthException) t;
@@ -436,6 +438,13 @@ public class ServiceAuth extends Permit implements Services.Service {
         signupVerifyTokens.remove(token);
         oneTimeTokens.remove(token);
         verifyTokens.remove(token);
+    }
+
+    public void setValue(CommonUser user, String key, Object value) {
+        TokenData t = onlineUsers.get(user.getToken());
+        if (t != null) {
+            t.setExtraValue(key, value);
+        }
     }
 
 

@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.util.*;
+import java.util.stream.Collectors;
 
 
 public class WebUi {
@@ -37,7 +38,7 @@ public class WebUi {
 
     private StringBuilder html = new StringBuilder(100000);
     private final Stack<String> openTags = new Stack<>();
-    private Set<String> js;
+    private List<String> js;
 
     private String authToken;
     private String lang;
@@ -1411,7 +1412,7 @@ public class WebUi {
 
     public WebUi setJs(String path) {
         if (js == null) {
-            js = new HashSet<>(10);
+            js = new ArrayList<>(10);
         }
         js.add(path);
         return this;
@@ -1422,7 +1423,7 @@ public class WebUi {
             html.append(openTags.pop());
         }
         if (js != null) {
-            for (String j : js) {
+            for (String j : js.stream().distinct().collect(Collectors.toList())) {
                 html.append("    <script src=\"").append(j).append("\"></script>\n");
             }
         }

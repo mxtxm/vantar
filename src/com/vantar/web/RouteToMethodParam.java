@@ -19,7 +19,7 @@ import java.io.IOException;
  */
 public class RouteToMethodParam extends HttpServlet {
 
-    private static final Logger log = LoggerFactory.getLogger(RouteToMethodParam.class);
+    protected static final Logger log = LoggerFactory.getLogger(RouteToMethodParam.class);
     private static boolean logRequest;
 
     static {

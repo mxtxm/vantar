@@ -19,7 +19,7 @@ import java.io.IOException;
  */
 public class RestfullToMethod extends HttpServlet {
 
-    private static final Logger log = LoggerFactory.getLogger(RestfullToMethod.class);
+    protected static final Logger log = LoggerFactory.getLogger(RestfullToMethod.class);
     private static boolean logRequest;
 
     static {

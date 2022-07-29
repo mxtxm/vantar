@@ -82,7 +82,7 @@ public class HttpConnect {
         return get (dto == null ? HttpHelper.getUri(url) : HttpHelper.getUri(url, dto, includeFields));
     }
 
-    private HttpResponse get(String url, Map<String, Object> data) throws HttpException {
+    public HttpResponse get(String url, Map<String, Object> data) throws HttpException {
         return get(data == null ? HttpHelper.getUri(url) : HttpHelper.getUri(url, data));
     }
 
@@ -243,10 +243,10 @@ public class HttpConnect {
 
     private HttpResponse requestJson(String url, String method, Object object) throws HttpException {
         String json;
-        if (object instanceof Dto) {
-            json = Json.d.toJson(((Dto) object).getPropertyValues());
-        } else if (object instanceof String) {
+        if (object instanceof String) {
             json = (String) object;
+        } else if (object instanceof Dto) {
+            json = Json.d.toJson(((Dto) object).getPropertyValues());
         } else {
             json = Json.d.toJson(object);
         }

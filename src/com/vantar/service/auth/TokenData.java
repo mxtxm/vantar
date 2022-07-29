@@ -2,7 +2,7 @@ package com.vantar.service.auth;
 
 import com.vantar.util.datetime.DateTime;
 import com.vantar.util.object.ObjectUtil;
-import java.util.Map;
+import java.util.*;
 
 
 public class TokenData {
@@ -34,6 +34,13 @@ public class TokenData {
 
     public Object getExtraValue(String key) {
         return extraData == null ? null : extraData.get(key);
+    }
+
+    public void setExtraValue(String key, Object value) {
+        if (extraData == null) {
+            extraData = new HashMap<>(5);
+        }
+        extraData.put(key, value);
     }
 
 

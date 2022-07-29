@@ -116,7 +116,7 @@ public class CommonRepoMongo extends Mongo {
         for (String fieldName : dto.annotatedProperties(Unique.class)) {
             if (!MongoSearch.isUnique(dto, fieldName)) {
                 if (errors == null) {
-                    errors = new ArrayList<>();
+                    errors = new ArrayList<>(5);
                 }
                 errors.add(new ValidationError(fieldName, VantarKey.UNIQUE));
             }
@@ -125,7 +125,7 @@ public class CommonRepoMongo extends Mongo {
             for (String group : dto.getClass().getAnnotation(UniqueGroup.class).value()) {
                 if (!MongoSearch.isUnique(dto, StringUtil.split(group, VantarParam.SEPARATOR_COMMON))) {
                     if (errors == null) {
-                        errors = new ArrayList<>();
+                        errors = new ArrayList<>(5);
                     }
                     errors.add(new ValidationError("(" + group + ")", VantarKey.UNIQUE));
                 }
