@@ -305,7 +305,7 @@ public class Services {
     }
 
     public static synchronized Set<String> getEnabledServices() {
-        Set<String> services = new HashSet<>(10);
+        Set<String> services = new HashSet<>(10, 1);
 
         for (String key : Settings.getKeys()) {
             if (key.startsWith("service.enabled")) {

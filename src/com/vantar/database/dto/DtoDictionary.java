@@ -58,15 +58,19 @@ public class DtoDictionary {
             info.dbms = Dbms.NOSTORE;
         }
 
-        info.insertExclude = new ArrayList<>();
+        info.insertExclude = new ArrayList<>(6);
         info.insertExclude.add("id");
         info.insertExclude.add("create_t");
+        info.insertExclude.add("createT");
         info.insertExclude.add("update_t");
-        info.updateExclude = new ArrayList<>();
+        info.insertExclude.add("updateT");
+        info.updateExclude = new ArrayList<>(6);
         info.insertExclude.add("id");
         info.insertExclude.add("create_t");
+        info.insertExclude.add("createT");
         info.insertExclude.add("update_t");
-        info.present = new ArrayList<>();
+        info.insertExclude.add("updateT");
+        info.present = new ArrayList<>(4);
         try {
             dtoClass.getField("name");
             info.present.add("name");
@@ -82,31 +86,36 @@ public class DtoDictionary {
                     case "present":
                         info.present = new ArrayList<>();
                         for (String property : properties) {
-                            info.present.add(StringUtil.toSnakeCase(property));
+                            //info.present.add(StringUtil.toSnakeCase(property));
+                            info.present.add(property);
                         }
                         break;
 
                     case "insert-exclude":
                         for (String property : properties) {
-                            info.insertExclude.add(StringUtil.toSnakeCase(property));
+                            //info.insertExclude.add(StringUtil.toSnakeCase(property));
+                            info.insertExclude.add(property);
                         }
                         break;
 
                     case "insert-include":
                         for (String property : properties) {
-                            info.insertExclude.remove(StringUtil.toSnakeCase(property));
+                            //info.insertExclude.remove(StringUtil.toSnakeCase(property));
+                            info.insertExclude.remove(property);
                         }
                         break;
 
                     case "update-exclude":
                         for (String property : properties) {
-                            info.updateExclude.add(StringUtil.toSnakeCase(property));
+                            //info.updateExclude.add(StringUtil.toSnakeCase(property));
+                            info.updateExclude.add(property);
                         }
                         break;
 
                     case "update-include":
                         for (String property : properties) {
-                            info.updateExclude.remove(StringUtil.toSnakeCase(property));
+                            //info.updateExclude.remove(StringUtil.toSnakeCase(property));
+                            info.updateExclude.remove(property);
                         }
                         break;
                 }

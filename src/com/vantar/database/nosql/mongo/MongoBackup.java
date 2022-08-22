@@ -1,12 +1,13 @@
 package com.vantar.database.nosql.mongo;
 
 import com.mongodb.client.*;
+import com.vantar.admin.model.AdminDatabase;
 import com.vantar.database.dto.*;
 import com.vantar.exception.DatabaseException;
 import com.vantar.util.datetime.DateTimeRange;
 import com.vantar.util.file.FileUtil;
 import com.vantar.util.string.StringUtil;
-import com.vantar.web.*;
+import com.vantar.web.WebUi;
 import org.bson.Document;
 import java.io.*;
 import java.util.*;
@@ -103,20 +104,20 @@ public class MongoBackup {
         }
 
         if (ui != null) {
-            ui.containerEnd().write();
+            ui.finish();
         }
     }
 
     public static void restore(String zipPath, boolean deleteData) {
-        restore(zipPath, deleteData, null);
+        restore(zipPath, deleteData, false, null);
     }
 
-    public static void restore(String zipPath, boolean deleteData, WebUi ui) {
+    public static void restore(String zipPath, boolean deleteData, boolean toCamelCase, WebUi ui) {
         MongoDatabase database;
         try {
             database = MongoConnection.getDatabase();
         } catch (DatabaseException e) {
-            if (ui != null){
+            if (ui != null) {
                 ui.addErrorMessage(e).write();
             }
             return;
@@ -129,6 +130,18 @@ public class MongoBackup {
         long startTime = System.currentTimeMillis();
         long r = 0;
 
+        if (deleteData) {
+            try {
+                for (String s : MongoConnection.getCollections()) {
+                    Mongo.deleteAll(s);
+                }
+            } catch (DatabaseException e) {
+                if (ui != null) {
+                    ui.addErrorMessage(e);
+                }
+            }
+        }
+
         try (ZipFile zipFile = new ZipFile(zipPath)) {
             Enumeration<? extends ZipEntry> entries = zipFile.entries();
             while (entries.hasMoreElements()) {
@@ -140,14 +153,11 @@ public class MongoBackup {
 
                 String[] parts = StringUtil.split(entry.getName(), '/');
                 String collection = StringUtil.replace(parts[parts.length - 1], ".dump", "");
+                collection = StringUtil.toStudlyCase(collection);
 
                 try (
                     InputStream stream = zipFile.getInputStream(entry);
                     BufferedReader reader = new BufferedReader(new InputStreamReader(stream))) {
-
-                    if (deleteData) {
-                        Mongo.deleteAll(collection);
-                    }
 
                     int i = 1;
                     List<Document> documents = new ArrayList<>(BULK_ACTION_RECORD_COUNT);
@@ -156,7 +166,11 @@ public class MongoBackup {
                             Mongo.insert(collection, documents);
                             documents = new ArrayList<>(BULK_ACTION_RECORD_COUNT);
                         }
-                        documents.add(Document.parse(reader.readLine()));
+                        String line = reader.readLine();
+                        if (toCamelCase) {
+                            line = jsonToCamelCaseProperties(line);
+                        }
+                        documents.add(Document.parse(line));
                     }
                     Mongo.insert(collection, documents);
                     long seq = Mongo.Sequence.setToMax(collection);
@@ -187,6 +201,52 @@ public class MongoBackup {
                 )
                 .containerEnd()
                 .write();
+
+            AdminDatabase.createMongoIndex(ui, true);
+
+            ui.finish();
         }
+    }
+
+    private static String jsonToCamelCaseProperties(String json) {
+        StringBuilder buffer = new StringBuilder();
+        boolean isIn = false;
+        StringBuilder tokenBuffer = new StringBuilder();
+        char[] charArray = json.toCharArray();
+        for (int i = 0, l = charArray.length; i < l; i++) {
+            char c = charArray[i];
+            if (!isIn && c == '"') {
+                isIn = true;
+                tokenBuffer = new StringBuilder();
+                continue;
+            }
+
+            if (isIn) {
+                if (c == '"') {
+                    isIn = false;
+                    char peek = charArray[i+1];
+                    if (peek != ':') {
+                        buffer.append('"');
+                        buffer.append(tokenBuffer);
+                        buffer.append('"');
+                        continue;
+                    }
+
+                    String token = tokenBuffer.toString();
+                    if (!token.startsWith("_") && !token.startsWith("$")) {
+                        token = StringUtil.toCamelCase(token);
+                    }
+                    buffer.append('"');
+                    buffer.append(token);
+                    buffer.append("\"");
+                    continue;
+                }
+                tokenBuffer.append(c);
+                continue;
+            }
+
+            buffer.append(c);
+        }
+        return buffer.toString();
     }
 }

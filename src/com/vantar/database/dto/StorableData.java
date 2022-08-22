@@ -53,7 +53,7 @@ public class StorableData {
     }
 
     public static Map<String, Object> toMap(List<StorableData> infos) {
-        Map<String, Object> x = new HashMap<>();
+        Map<String, Object> x = new HashMap<>(infos.size(), 1);
         for (StorableData info : infos) {
             x.put(info.name, info.value);
         }

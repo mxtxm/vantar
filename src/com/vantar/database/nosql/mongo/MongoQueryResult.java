@@ -59,7 +59,8 @@ public class MongoQueryResult extends QueryResultBase implements QueryResult, Au
             if (data == null) {
                 throw new NoContentException();
             }
-            return data.get(StringUtil.toSnakeCase(field));
+            //return data.get(StringUtil.toSnakeCase(field));
+            return data.get(field);
         } catch (MongoException e) {
             throw new DatabaseException(e);
         }
@@ -97,7 +98,7 @@ public class MongoQueryResult extends QueryResultBase implements QueryResult, Au
         if (valueField.equals("id")) {
             valueField = Mongo.ID;
         }
-        Map<String, String> result = new HashMap<>(1000);
+        Map<String, String> result = new HashMap<>(1000, 1);
         String locale = getLocale();
         try {
             while (iterator.hasNext()) {
@@ -165,7 +166,8 @@ public class MongoQueryResult extends QueryResultBase implements QueryResult, Au
             if (name.equals(VantarParam.ID) && document.containsKey(Mongo.ID)) {
                 name = Mongo.ID;
             }
-            String key = StringUtil.toSnakeCase(name);
+            //String key = StringUtil.toSnakeCase(name);
+            String key = name;
             Class<?> type = field.getType();
 
             try {
@@ -257,7 +259,7 @@ public class MongoQueryResult extends QueryResultBase implements QueryResult, Au
                             continue;
                         }
 
-                        Collection<Dto> list = type == List.class ? new ArrayList<>(docs.size()) : new HashSet<>(docs.size());
+                        Collection<Dto> list = type == List.class ? new ArrayList<>(docs.size()) : new HashSet<>(docs.size(), 1);
                         for (Document d : docs) {
                             Dto obj = (Dto) ClassUtil.getInstance(listType);
                             if (obj == null) {
@@ -350,7 +352,7 @@ public class MongoQueryResult extends QueryResultBase implements QueryResult, Au
             return null;
         }
 
-        Map<K, V> map = new HashMap<>();
+        Map<K, V> map = new HashMap<>(document.size(), 1);
         for (Map.Entry<String, Object> entry : document.entrySet()) {
             if (ClassUtil.isInstantiable(vClass, Dto.class)) {
                 V vDto = ClassUtil.getInstance(vClass);
@@ -424,7 +426,8 @@ public class MongoQueryResult extends QueryResultBase implements QueryResult, Au
         }
 
         if (isListSet) {
-            List<Long> ids = document.getList(StringUtil.toSnakeCase(fk), Long.class);
+            //List<Long> ids = document.getList(StringUtil.toSnakeCase(fk), Long.class);
+            List<Long> ids = document.getList(fk, Long.class);
             if (ids == null) {
                 ids = document.getList(fk, Long.class);
             }
@@ -432,7 +435,7 @@ public class MongoQueryResult extends QueryResultBase implements QueryResult, Au
                 return true;
             }
 
-            Collection<Object> dtos = type == List.class ? new ArrayList<>(ids.size()) : new HashSet<>(ids.size());
+            Collection<Object> dtos = type == List.class ? new ArrayList<>(ids.size()) : new HashSet<>(ids.size(), 1);
             for (Long id : ids) {
                 if (straightFromCache) {
                     dtos.add(cache.getDto(cachedClass, id));
@@ -470,7 +473,8 @@ public class MongoQueryResult extends QueryResultBase implements QueryResult, Au
             return true;
         }
 
-        Long id = document.getLong(StringUtil.toSnakeCase(fk));
+        //Long id = document.getLong(StringUtil.toSnakeCase(fk));
+        Long id = document.getLong(fk);
         if (id == null) {
             id = document.getLong(fk);
         }
@@ -526,7 +530,8 @@ public class MongoQueryResult extends QueryResultBase implements QueryResult, Au
             type = types[0];
 
             List<Long> ids = document.getList(
-                StringUtil.toSnakeCase(fieldX.getAnnotation(Fetch.class).value()),
+                //StringUtil.toSnakeCase(fieldX.getAnnotation(Fetch.class).value()),
+                fieldX.getAnnotation(Fetch.class).value(),
                 Long.class
             );
             if (ids == null) {
@@ -536,7 +541,7 @@ public class MongoQueryResult extends QueryResultBase implements QueryResult, Au
                 return;
             }
 
-            Collection<Object> dtos = type == List.class ? new ArrayList<>(ids.size()) : new HashSet<>(ids.size());
+            Collection<Object> dtos = type == List.class ? new ArrayList<>(ids.size()) : new HashSet<>(ids.size(), 1);
             for (Long id : ids) {
                 try {
                     dtos.add(MongoSearch.getDto((Class<? extends Dto>) type, id, getLocales()));
@@ -548,7 +553,8 @@ public class MongoQueryResult extends QueryResultBase implements QueryResult, Au
             return;
         }
 
-        Long id = document.getLong(StringUtil.toSnakeCase(fieldX.getAnnotation(Fetch.class).value()));
+        //Long id = document.getLong(StringUtil.toSnakeCase(fieldX.getAnnotation(Fetch.class).value()));
+        Long id = document.getLong(fieldX.getAnnotation(Fetch.class).value());
         if (id == null) {
             id = document.getLong(fieldX.getAnnotation(Fetch.class).value());
         }
@@ -567,7 +573,8 @@ public class MongoQueryResult extends QueryResultBase implements QueryResult, Au
         FetchByFk fkData = field.getAnnotation(FetchByFk.class);
         if (newIteration) {
             newIteration = false;
-            Long id = document.getLong(StringUtil.toSnakeCase(fkData.fk()));
+            //Long id = document.getLong(StringUtil.toSnakeCase(fkData.fk()));
+            Long id = document.getLong(fkData.fk());
             if (id == null) {
                 id = document.getLong(fkData.fk());
             }

@@ -38,7 +38,7 @@ public class TokenData {
 
     public void setExtraValue(String key, Object value) {
         if (extraData == null) {
-            extraData = new HashMap<>(5);
+            extraData = new HashMap<>(5, 1);
         }
         extraData.put(key, value);
     }

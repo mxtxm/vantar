@@ -31,16 +31,25 @@ public class DateTimeRange {
      * Set data, lower bound=not upper bound=tomorrow
      */
     public DateTimeRange() {
+
+    }
+
+    /**
+     * Set data, lower-bound=now upper-bound=tomorrow
+     */
+    public DateTimeRange setDefaultRange() {
         this.dateMin = new DateTime();
         this.dateMax = new DateTime().addDays(1);
+        return this;
     }
+
 
     /**
      * Truncate time and normalize the range
      */
-    public void adjustDateRange() {
+    public DateTimeRange adjustDateRange() {
         if (dateMin == null || dateMax == null) {
-            return;
+            return this;
         }
         dateMax.addDays(1);
         dateMin.truncateTime();
@@ -53,16 +62,16 @@ public class DateTimeRange {
                 dateMax.truncateTime();
             }
         }
-        dateMin.addSeconds(1);
         dateMax.decreaseSeconds(1);
+        return this;
     }
 
     /**
      * Normalize the range
      */
-    public void adjustDateTimeRange() {
+    public DateTimeRange adjustDateTimeRange() {
         if (dateMin == null || dateMax == null) {
-            return;
+            return this;
         }
         if (dateMax.equals(dateMin)) {
             dateMax.addDays(1);
@@ -72,6 +81,7 @@ public class DateTimeRange {
         }
         dateMin.addSeconds(1);
         dateMax.decreaseSeconds(1);
+        return this;
     }
 
     /**

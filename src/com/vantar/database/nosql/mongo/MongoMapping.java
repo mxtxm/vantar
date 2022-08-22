@@ -33,7 +33,8 @@ public class MongoMapping {
                 parts[0] = Mongo.ID;
             }
             document.append(
-                StringUtil.toSnakeCase(parts[0]),
+                //StringUtil.toSnakeCase(parts[0]),
+                parts[0],
                 parts.length == 1 ? 1 : (parts[1].equalsIgnoreCase("asc") || parts[1].equalsIgnoreCase("1") ? 1 : -1)
             );
         }
@@ -285,7 +286,8 @@ public class MongoMapping {
                 continue;
             }
 
-            String fieldName = StringUtil.toSnakeCase(item.fieldName);
+            //String fieldName = StringUtil.toSnakeCase(item.fieldName);
+            String fieldName = item.fieldName;
             if (fieldName != null) {
                 if (fieldName.equals("id")) {
                     fieldName = Mongo.ID;
@@ -377,7 +379,7 @@ public class MongoMapping {
                     neConditions.add(new Document(fieldName, new Document("$eq", null)));
                     neConditions.add(new Document(fieldName, new Document("$eq", "")));
                     neConditions.add(new Document(fieldName, new Document("$eq", new ArrayList<>(1))));
-                    neConditions.add(new Document(fieldName, new Document("$eq", new HashMap<>(1))));
+                    neConditions.add(new Document(fieldName, new Document("$eq", new HashMap<>(1, 1))));
                     neConditions.add(new Document(fieldName, new Document("$exists", false)));
                     matches.add(new Document("$or", neConditions));
                     break;
@@ -387,7 +389,7 @@ public class MongoMapping {
                     neConditions.add(new Document(fieldName, new Document("$ne", null)));
                     neConditions.add(new Document(fieldName, new Document("$ne", "")));
                     neConditions.add(new Document(fieldName, new Document("$ne", new ArrayList<>(1))));
-                    neConditions.add(new Document(fieldName, new Document("$ne", new HashMap<>(1))));
+                    neConditions.add(new Document(fieldName, new Document("$ne", new HashMap<>(1, 1))));
                     neConditions.add(new Document(fieldName, new Document("$exists", true)));
                     matches.add(new Document("$and", neConditions));
                     break;
@@ -465,7 +467,7 @@ public class MongoMapping {
                         Mongo.log.error("!! IN_DTO error {}", item, e);
                         continue;
                     }
-                    Set<Long> ids = new HashSet<>(100);
+                    Set<Long> ids = new HashSet<>(100, 1);
                     for (Document document : cursor) {
                         ids.add(document.getLong(fieldNameInner));
                     }
@@ -491,6 +493,10 @@ public class MongoMapping {
                 op = "$and";
         }
 
-        return matches.isEmpty() ? new Document() : new Document(op, matches);
+        Document document = matches.isEmpty() ? new Document() : new Document(op, matches);
+        if (qCondition != null && qCondition.dump) {
+            Mongo.log.info(" > mongo condition dump: {}", document);
+        }
+        return document;
     }
 }

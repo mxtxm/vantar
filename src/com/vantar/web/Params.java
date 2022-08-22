@@ -1,5 +1,6 @@
 package com.vantar.web;
 
+import com.vantar.admin.model.Admin;
 import com.vantar.common.VantarParam;
 import com.vantar.database.datatype.Location;
 import com.vantar.database.query.data.QueryData;
@@ -91,7 +92,7 @@ public class Params {
 
     public void set(String key, Object value) {
         if (map == null) {
-            map = new HashMap<>(10);
+            map = new HashMap<>(10, 1);
         }
         map.put(key, value);
     }
@@ -136,7 +137,7 @@ public class Params {
     }
 
     public Map<String, String> getHeaders() {
-        Map<String, String> headers = new HashMap<>(15);
+        Map<String, String> headers = new HashMap<>(15, 1);
         Enumeration<String> names = request.getHeaderNames();
         while (names.hasMoreElements()) {
             String name = names.nextElement();
@@ -194,7 +195,7 @@ public class Params {
     }
 
     public Map<String, Object> getAll() {
-        Map<String, Object> params = map == null ? new HashMap<>(50) : map;
+        Map<String, Object> params = map == null ? new HashMap<>(50, 1) : map;
         if (request == null) {
             return params;
         }
@@ -413,7 +414,7 @@ public class Params {
         typeMisMatch = false;
         String value = getParameter(key);
         if (value == null || value.isEmpty() ) {
-            return new HashSet<>();
+            return new HashSet<>(1, 1);
         }
         return new HashSet<>(getListFromJson(value, typeClass));
     }
@@ -578,7 +579,7 @@ public class Params {
 
 
     public Map<String, Object> queryParams(QueryParams q) {
-        Map<String, Object> params = map == null ? new HashMap<>(20) : map;
+        Map<String, Object> params = map == null ? new HashMap<>(20, 1) : map;
         if (request == null) {
             return params;
         }
@@ -632,7 +633,7 @@ public class Params {
     public DateTimeRange getDateTimeRangeDefaultNow(String dateMin, String dateMax) {
         DateTimeRange range = getDateTimeRange(dateMin, dateMax);
         if (!range.isValid()) {
-            range = new DateTimeRange();
+            range = new DateTimeRange().setDefaultRange();
             range.adjustDateTimeRange();
         }
         return range;
@@ -656,7 +657,7 @@ public class Params {
     public DateTimeRange getDateRangeDefaultNow(String dateMin, String dateMax) {
         DateTimeRange range = getDateRange(dateMin, dateMax);
         if (!range.isValid()) {
-            range = new DateTimeRange();
+            range = new DateTimeRange().setDefaultRange();
             range.adjustDateRange();
         }
         return range;

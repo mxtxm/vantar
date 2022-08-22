@@ -17,7 +17,6 @@ class MongoQuery {
     public Integer limit;
     public List<String> union;
     public String[] columns;
-
     private List<Document> groups;
     private final Dto dto;
     private final Dto dtoResult;
@@ -71,6 +70,8 @@ class MongoQuery {
             } else {
                 find = MongoConnection.getDatabase().getCollection(dto.getStorage()).find(matches);
             }
+
+            //columns = dto.getProperties();
 
             if (columns != null && columns.length > 0) {
                 find.projection(Projections.fields(Projections.include(columns)));
@@ -144,7 +145,7 @@ class MongoQuery {
     }
 
     public AggregateIterable<Document> getAggregate() throws DatabaseException {
-        List<Document> query = new ArrayList<>();
+        List<Document> query = new ArrayList<>(7);
         if (matches != null && !matches.isEmpty()) {
             query.add(new Document("$match", matches));
         }

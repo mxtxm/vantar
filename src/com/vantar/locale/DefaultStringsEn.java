@@ -8,7 +8,7 @@ public class DefaultStringsEn {
     private static final Map<LangKey, String> tokens;
 
     static {
-        tokens = new HashMap<>(290);
+        tokens = new HashMap<>(300, 1);
         // auth
         tokens.put(VantarKey.USER_PASSWORD_EMPTY, "Username or password is empty");
         tokens.put(VantarKey.USER_NOT_EXISTS, "User does not exists");
@@ -242,7 +242,6 @@ public class DefaultStringsEn {
         tokens.put(VantarKey.ADMIN_BATCH_EDIT, "Batch update");
         tokens.put(VantarKey.ADMIN_BATCH_DELETE, "Batch delete");
         tokens.put(VantarKey.ADMIN_JSON_OPTION, "JSON/option");
-        tokens.put(VantarKey.ADMIN_PAGE, "Page");
         tokens.put(VantarKey.ADMIN_SORT, "Sort");
         tokens.put(VantarKey.ADMIN_SEARCH, "Search");
         tokens.put(VantarKey.ADMIN_FROM, "From");
@@ -269,12 +268,15 @@ public class DefaultStringsEn {
         tokens.put(VantarKey.BUSINESS_DUPLICATE_COUNT, "Duplicate record ({0})");
         tokens.put(VantarKey.BUSINESS_SERIAL_MAX,      "Last primary key ({0})");
 
+        tokens.put(VantarKey.SHOW_NOT_DELETED, "Show not deleted");
         tokens.put(VantarKey.SHOW_DELETED, "Show deleted");
+        tokens.put(VantarKey.SHOW_ALL, "Show all");
+
         tokens.put(VantarKey.LOGICAL_DELETED, "Soft delete (mark record as deleted)");
         tokens.put(VantarKey.LOGICAL_DELETED_UNDO, "Undelete");
         tokens.put(VantarKey.ADMIN_ACTION_LOG, "Log");
 
-        tokens.put(VantarKey.ADMIN_N_PER_PAGE, "n per page");
+        tokens.put(VantarKey.ADMIN_PAGING, "paging");
 
         tokens.put(VantarKey.DELETE_FAIL_HAS_DEPENDENCIES, "Not deleted because of dependencies");
 
@@ -285,6 +287,7 @@ public class DefaultStringsEn {
         tokens.put(VantarKey.ADMIN_MEMORY, "Memory");
         tokens.put(VantarKey.ADMIN_BACKUP_UPLOAD, "Upload backup file");
         tokens.put(VantarKey.ADMIN_BACKUP_UPLOAD_FILE, "Backup file");
+        tokens.put(VantarKey.SELECT_ALL, "Select all");
 
     }
 

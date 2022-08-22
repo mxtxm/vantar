@@ -46,7 +46,7 @@ public class WebServiceDocumentCreator {
     }
 
     public static Set<String> getTags(String content) {
-        Set<String> tags = new HashSet<>();
+        Set<String> tags = new HashSet<>(5, 1);
 
         boolean inBlock = false;
         for (String line : StringUtil.split(content, '\n')) {
@@ -206,7 +206,7 @@ public class WebServiceDocumentCreator {
         try {
             Class<?> c = ClassUtil.getClass(className);
             if (c == null) {
-                return new HashSet<>();
+                return new HashSet<>(1, 1);
             }
             Method m = c.getDeclaredMethod(methodName, parameterTypes);
 
@@ -217,7 +217,7 @@ public class WebServiceDocumentCreator {
             return exceptions;
         } catch (Exception e) {
             Admin.log.warn("! could not get exceptions ({}, {})", className, methodName, e);
-            return new HashSet<>();
+            return new HashSet<>(1, 1);
         }
     }
 

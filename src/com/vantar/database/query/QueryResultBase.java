@@ -92,7 +92,7 @@ abstract public class QueryResultBase {
             return data;
         } catch (NoSuchMethodException | IllegalAccessException | InstantiationException | InvocationTargetException e) {
             log.error("! data > dto({})", dto, e);
-            return new HashMap<>(1);
+            return new HashMap<>(1, 1);
         } finally {
             close();
         }

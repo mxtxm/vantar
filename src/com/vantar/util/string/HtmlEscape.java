@@ -12,7 +12,7 @@ public class HtmlEscape {
 
 
     public HtmlEscape() {
-        htmlSpecialChars = new HashMap<>();
+        htmlSpecialChars = new HashMap<>(260, 1);
         htmlSpecialChars.put('\u0026', "&amp;");
         htmlSpecialChars.put('\u003C', "&lt;");
         htmlSpecialChars.put('\u003E', "&gt;");

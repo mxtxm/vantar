@@ -12,6 +12,7 @@ public class QueryCondition {
     public List<QueryMatchItem> q = new ArrayList<>();
     public QueryOperator operator;
     public String storage;
+    public boolean dump = false;
 
 
     public QueryCondition() {

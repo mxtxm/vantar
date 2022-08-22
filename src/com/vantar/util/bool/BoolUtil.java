@@ -58,4 +58,14 @@ public class BoolUtil {
         }
         return StringUtil.toBoolean(obj.toString());
     }
+
+    /**
+     * Get value or default value if null
+     * @param value
+     * @param defaultValue
+     * @return value or default value if null
+     */
+    public static boolean value(Boolean value, boolean defaultValue) {
+        return value == null ? defaultValue : value;
+    }
 }

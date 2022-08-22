@@ -220,9 +220,10 @@ public class ObjectUtil {
      * @return {propertyName: value,}
      */
     public static Map<String, Object> getPropertyValues(Object object) {
-        Map<String, Object> params = new HashMap<>();
+        Field[] fields = object.getClass().getFields();
+        Map<String, Object> params = new HashMap<>(fields.length, 1);
         try {
-            for (Field field : object.getClass().getFields()) {
+            for (Field field : fields) {
                 if (Modifier.isFinal(field.getModifiers()) || Modifier.isStatic(field.getModifiers())) {
                     continue;
                 }

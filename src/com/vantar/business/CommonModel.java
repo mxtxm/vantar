@@ -12,7 +12,8 @@ import com.vantar.service.Services;
 import com.vantar.service.auth.*;
 import com.vantar.service.cache.ServiceDtoCache;
 import com.vantar.util.json.*;
-import com.vantar.util.object.ClassUtil;
+import com.vantar.util.number.NumberUtil;
+import com.vantar.util.object.*;
 import com.vantar.util.string.StringUtil;
 import com.vantar.web.*;
 import org.slf4j.*;
@@ -69,7 +70,7 @@ public abstract class CommonModel {
                 continue;
             }
 
-            Map<String, Object> values = new HashMap<>(100);
+            Map<String, Object> values = new HashMap<>(100, 1);
             dto.reset();
             String key;
             String value;
@@ -142,7 +143,7 @@ public abstract class CommonModel {
             dto.reset();
             dto.setToDefaults();
 
-            Map<String, Object> values = new HashMap<>(100);
+            Map<String, Object> values = new HashMap<>(100, 1);
             for (int j = 0; j < fieldCount; j++) {
                 dto.setPropertyValue(fields[j], cols[j].equals("-") ? null : cols[j]);
                 values.put(fields[j], cols[j].equals("-") ? null : cols[j]);
@@ -167,7 +168,7 @@ public abstract class CommonModel {
             List<ValidationError> errors = dto.validate(Dto.Action.INSERT);
             String presentValue = dto.getPresentationValue();
             if (errors.isEmpty()) {
-                importCallback.execute(presentValue, new HashMap<>(1));
+                importCallback.execute(presentValue, new HashMap<>(1, 1));
                 continue;
             }
 
@@ -175,17 +176,17 @@ public abstract class CommonModel {
         }
     }
 
-    public static void insertPassword(Dto dto, String password) throws ServerException {
+    public static void insertPassword(Dto user, String password) throws ServerException {
         if (StringUtil.isEmpty(password)) {
             return;
         }
         for (DtoDictionary.Info info: DtoDictionary.getAll()) {
             if (ClassUtil.isInstantiable(info.dtoClass, CommonUserPassword.class)) {
-                if (dto.getClass().equals(info.dtoClass)) {
+                if (user.getClass().equals(info.dtoClass)) {
                     break;
                 }
                 CommonUserPassword userPassword = (CommonUserPassword) info.getDtoInstance();
-                userPassword.setId(dto.getId());
+                userPassword.setId(user.getId());
                 userPassword.setPassword(password);
                 try {
                     if (MongoSearch.existsById(userPassword)) {
@@ -198,6 +199,28 @@ public abstract class CommonModel {
                 }
                 break;
             }
+        }
+    }
+
+    public static void validateRequired(Object... objs) throws InputException {
+        StringBuilder fields = new StringBuilder();
+        String fieldName = null;
+        for (int i = 0, l = objs.length; i < l; ++i) {
+            Object obj = objs[i];
+            if (i % 2 == 0) {
+                fieldName = (String) obj;
+                continue;
+            }
+            if (obj == null
+                || (obj instanceof Long && NumberUtil.isIdInvalid((Long) obj))
+                || ObjectUtil.isEmpty(obj)) {
+
+                fields.append(fieldName).append(", ");
+            }
+        }
+        if (fields.length() > 0) {
+            fields.setLength(fields.length() - 2);
+            throw new InputException(VantarKey.REQUIRED, fields.toString());
         }
     }
 

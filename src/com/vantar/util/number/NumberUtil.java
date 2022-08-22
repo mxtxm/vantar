@@ -155,4 +155,44 @@ public class NumberUtil {
     public static Byte toByte(Object obj) {
         return toNumber(obj, Byte.class);
     }
+
+    /**
+     * Get value or default value if null
+     * @param value
+     * @param defaultValue
+     * @return value or default value if null
+     */
+    public static int value(Number value, int defaultValue) {
+        return value == null ? defaultValue : (int) value;
+    }
+
+    /**
+     * Get value or default value if null
+     * @param value
+     * @param defaultValue
+     * @return value or default value if null
+     */
+    public static long value(Number value, long defaultValue) {
+        return value == null ? defaultValue : (long) value;
+    }
+
+    /**
+     * Get value or default value if null
+     * @param value
+     * @param defaultValue
+     * @return value or default value if null
+     */
+    public static double value(Number value, double defaultValue) {
+        return value == null ? defaultValue : (double) value;
+    }
+
+    /**
+     * Get value or default value if null
+     * @param value
+     * @param defaultValue
+     * @return value or default value if null
+     */
+    public static float value(Number value, float defaultValue) {
+        return value == null ? defaultValue : (float) value;
+    }
 }

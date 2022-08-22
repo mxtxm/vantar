@@ -69,7 +69,7 @@ public class DateTimeFormatter {
 
     protected void addError(VantarKey error) {
         if (errors == null) {
-            errors = new HashSet<>();
+            errors = new HashSet<>(1, 1);
         }
         errors.add(error);
     }

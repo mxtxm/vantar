@@ -21,7 +21,8 @@ public class MongoSearch {
         Document condition = new Document(Mongo.LOGICAL_DELETE_FIELD, new Document("$ne", Mongo.LOGICAL_DELETE_VALUE));
         for (String property : properties) {
             property = property.trim();
-            condition.append(StringUtil.toSnakeCase(property), dto.getPropertyValue(property));
+            //condition.append(StringUtil.toSnakeCase(property), dto.getPropertyValue(property));
+            condition.append(property, dto.getPropertyValue(property));
         }
 
         try {
@@ -51,7 +52,8 @@ public class MongoSearch {
         try {
             return MongoConnection.getDatabase().getCollection(dto.getStorage())
                 .find(
-                    new Document(StringUtil.toSnakeCase(property), dto.getPropertyValue(property))
+                    //new Document(StringUtil.toSnakeCase(property), dto.getPropertyValue(property))
+                    new Document(property, dto.getPropertyValue(property))
                         .append(Mongo.LOGICAL_DELETE_FIELD, new Document("$ne", Mongo.LOGICAL_DELETE_VALUE))
                 )
                 .iterator()
@@ -142,10 +144,11 @@ public class MongoSearch {
                     default:
                         condition = null;
                 }
+                Document sortDoc = MongoMapping.sort(sort);
                 return new MongoQueryResult(
                     condition == null ?
-                        MongoConnection.getDatabase().getCollection(dto.getStorage()).find().sort(MongoMapping.sort(sort)) :
-                        MongoConnection.getDatabase().getCollection(dto.getStorage()).find(condition).sort(MongoMapping.sort(sort)),
+                        MongoConnection.getDatabase().getCollection(dto.getStorage()).find().sort(sortDoc) :
+                        MongoConnection.getDatabase().getCollection(dto.getStorage()).find(condition).sort(sortDoc),
                     dto
                 );
             }
@@ -160,7 +163,9 @@ public class MongoSearch {
         }
     }
 
-    public static PageData getPage(QueryBuilder q, QueryResultBase.Event event, String... locales) throws NoContentException, DatabaseException {
+    public static PageData getPage(QueryBuilder q, QueryResultBase.Event event, String... locales)
+        throws NoContentException, DatabaseException {
+
         MongoQuery mongoQuery = new MongoQuery(q);
         long total = q.getTotal();
         if (total == 0) {
@@ -175,10 +180,12 @@ public class MongoSearch {
             result.setEvent(event);
         }
 
+        Integer limit = q.getLimit();
+        List<Dto> dtos = result.asList();
         return new PageData(
-            result.asList(),
+            dtos,
             q.getPageNo(),
-            q.getLimit(),
+            limit == null ? dtos.size() : limit,
             total
         );
     }

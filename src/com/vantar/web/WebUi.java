@@ -585,7 +585,7 @@ public class WebUi {
         html.append("method='").append(method).append("'>\n    <input type='hidden' name='f' value='1'/>\n");
         String q = params.request.getQueryString();
         if (StringUtil.isNotEmpty(q)) {
-            if (StringUtil.contains(q, VantarParam.AUTH_TOKEN + "=") && authToken != null){
+            if (StringUtil.contains(q, VantarParam.AUTH_TOKEN + "=") && authToken != null) {
                 html.append("    <input type='hidden' name='" + VantarParam.AUTH_TOKEN + "' value='")
                     .append(authToken).append("'/>\n");
             }
@@ -810,7 +810,7 @@ public class WebUi {
         boolean isLogical = dtos.size() > 0 && dtos.get(0).isDeleteLogicalEnabled();
         if (isLogical) {
             html.append("<div>");
-            addCheckbox(Locale.getString(VantarKey.LOGICAL_DELETED), VantarParam.LOGICAL_DELETED);
+            addCheckbox(Locale.getString(VantarKey.LOGICAL_DELETED), "delete-logic");
             html.append("<div>");
             addCheckbox(Locale.getString(VantarKey.LOGICAL_DELETED_UNDO), VantarParam.LOGICAL_DELETED_UNDO);
             html.append("</div><br/><br/>");
@@ -1058,113 +1058,73 @@ public class WebUi {
         }
         html.append("</div>");
 
-        html.append("<script>\n//<![CDATA[\n")
-            .append("function toggleSw() {\n" +
-                "var x = document.getElementById('container-search-options');\n" +
-                "var y = document.getElementById('container-search-json');\n" +
-                "if (x.style.display === \"none\") {\n" +
-                "x.style.display = \"block\";\n" +
-                "y.style.display = \"none\";\n" +
-                "} else {\n" +
-                "x.style.display = \"none\";\n" +
-                "y.style.display = \"block\";\n" +
-                "}\n" +
-                "}\n")
-            .append("\n//]]>\n</script>\n")
-            .append("<div id='toggle' onclick='toggleSw()'>").append(Locale.getString(VantarKey.ADMIN_JSON_OPTION))
-            .append("</div>")
-            .append("<form id='dto-list-form' method='post'>");
-
-        String jsonSearch = params.getString(VantarParam.JSON_SEARCH, "");
-
-        html.append("<div id='container-search-json' style='display:")
-            .append(jsonSearch.isEmpty() ? "none" : "block").append("'>");
-
-        addTextArea("JSON", VantarParam.JSON_SEARCH, jsonSearch);
-        html.append(" &nbsp;");
-        addLinkNewPage(
-            Locale.getString(VantarKey.ADMIN_HELP),
-            "/admin/document/show?document=document--webservice--common--search.md"
-        );
-        addSubmit("&gt;&gt;");
-
-        html.append("</div>");
-
-        Params.QueryParams qp = new Params.QueryParams();
-        // add all used params here
-        qp.exclude = new String[] {
-            VantarParam.PAGE,
-            VantarParam.SORT_FIELD,
-            VantarParam.SORT_POS,
-            VantarParam.SEARCH_FIELD,
-            VantarParam.SEARCH_VALUE,
-            VantarParam.LOGICAL_DELETED,
-        };
-        Map<String, Object> q = params.queryParams(qp);
-        q.forEach((key, value) ->
-            html.append("<input type='hidden' name='").append(key).append("' value='").append(value).append("'/>"));
-
         // PAGE
         // SORT
         // PAGE
-        // PAGE
-        html.append("<table id='container-search-options' style='display:")
-            .append(jsonSearch.isEmpty() ? "block" : "none").append("'>")
+        int pageNo = params.getInteger("page-no", 1);
+        int pageLength = params.getInteger("page-length", AdminData.N_PER_PAGE);
+        String sort = params.getString("sort", "id");
+        String sortPos = params.getString("sortpos", "desc");
+
+        html.append("<form id='dto-list-form' method='post'>");
+        if (authToken != null) {
+            html.append("<input type='hidden' name='" + VantarParam.AUTH_TOKEN + "' value='")
+                .append(authToken).append("'/>\n");
+        }
+        // N PER PAGE
+        html.append("<table id='container-search-options'>")
 
             // N PER PAGE
             .append("<tr>")
-            .append("<td class='dto-list-form-title'>").append(Locale.getString(VantarKey.ADMIN_N_PER_PAGE))
-            .append("</td>")
-            .append("<td class='dto-list-form-option'><input id='dto-list-form-page' type='text' name='"
-                + VantarParam.COUNT + "' value='")
-            .append(params.getString(VantarParam.COUNT, Integer.toString(AdminData.N_PER_PAGE))).append("'/>")
-            .append("</td>")
-            .append("</tr>")
+            .append("<td class='dto-list-form-title'>").append(Locale.getString(VantarKey.ADMIN_PAGING)).append("</td>")
+            .append("<td class='dto-list-form-option'>")
+            .append("<input id='page-length' name='page-length' title='page length' value='").append(pageLength).append("'/>")
+            .append("<input id='page-no' name='page-no' title='page number' value='").append(pageNo).append("'/>");
 
-            // PAGE
-            .append("<tr>")
-            .append("<td class='dto-list-form-title'>").append(Locale.getString(VantarKey.ADMIN_PAGE)).append("</td>")
-            .append("<td class='dto-list-form-option'><input id='dto-list-form-page' type='text' name='"
-                + VantarParam.PAGE + "' value='")
-            .append(params.getString(VantarParam.PAGE, "1")).append("'/>").append("<input id='total-pages' value='")
-            .append(Locale.getString(VantarKey.ADMIN_FROM)).append(" ")
-            .append(data == null ? "" : (long) Math.ceil((double) data.total / (double) data.length))
-            .append("'/>")
-            .append("</td>")
-            .append("</tr>")
+            if (data != null) {
+                html.append("<input id='total-pages' value='")
+                    .append((long) Math.ceil((double) data.total / (double) data.length)).append(" pages'/>");
+            }
+
+            html.append("</td>")
+                .append("</tr>")
 
             // SORT
             .append("<tr>").append("<td class='dto-list-form-title'>")
             .append(Locale.getString(VantarKey.ADMIN_SORT)).append("</td>")
             .append("<td class='dto-list-form-option'>");
 
-        String sortField = params.getString(VantarParam.SORT_FIELD, "id");
-        String sortPos = params.getString(VantarParam.SORT_POS, "desc");
-
-
-        html.append("<select name='" + VantarParam.SORT_FIELD + "'>");
+        html.append("<select id='sort' name='sort'>");
         for (String name : dto.getProperties()) {
-            html.append("<option ")
-                .append(sortField.equals(name) ? "selected='selected' " : "")
-                .append("value='").append(name).append("'>").append(name).append("</option>");
+            html.append("<option ");
+            if (name.equals(sort)) {
+                html.append("selected='selected' ");
+            }
+            html.append("value='").append(name).append("'>").append(name).append("</option>");
         }
-        html
+        html.append("</select>")
+            .append("<select id='sortpos' name='sortpos'>")
+            .append("<option ");
+        if ("asc".equals(sortPos)) {
+            html.append("selected='selected' ");
+        }
+        html.append("value='asc'>asc</option>")
+            .append("<option ");
+        if ("desc".equals(sortPos)) {
+            html.append("selected='selected' ");
+        }
+        html.append("value='desc'>desc</option>")
             .append("</select>")
-            .append("<select name='" + VantarParam.SORT_POS + "'><option ")
-            .append(sortPos.equals("asc") ? "selected='selected' " : "")
-            .append("value='asc'>asc</option><option ")
-            .append(sortPos.equals("desc") ? "selected='selected' " : "")
-            .append("value='desc'>desc</option></select>")
             .append("</td></tr>");
 
         // search
+        String jsonSearch = params.getString("jsonsearch", "");
 
-        String searchCol = params.getString(VantarParam.SEARCH_FIELD);
-        String searchValue = params.getString(VantarParam.SEARCH_VALUE);
         html.append("<tr>")
             .append("<td class='dto-list-form-title'>").append(Locale.getString(VantarKey.ADMIN_SEARCH)).append("</td>")
-            .append("<td class='dto-list-form-option'>")
-            .append("<select name='" + VantarParam.SEARCH_FIELD + "'><option value='all'>all</option>");
+            .append("<td class='dto-list-form-option'><div>")
+            .append("<select id='search-col'>");
+
         for (String name : dto.getProperties()) {
             if (ClassUtil.isInstantiable(dto.getPropertyType(name), Dto.class)) {
                 DtoDictionary.Info obj = DtoDictionary.get(name);
@@ -1173,63 +1133,132 @@ public class WebUi {
                 }
                 for (String nameInner : obj.getDtoInstance().getProperties()) {
                     nameInner = name + '.' + nameInner;
-                    html.append("<option ")
-                        .append(nameInner.equals(searchCol) ? "selected='selected' " : "")
-                        .append("value='").append(nameInner).append("'>").append(nameInner).append("</option>");
+                    html.append("<option value='").append(nameInner).append("'>").append(nameInner).append("</option>");
                 }
             } else {
-                html.append("<option ")
-                    .append(name.equals(searchCol) ? "selected='selected' " : "")
-                    .append("value='").append(name).append("'>").append(name).append("</option>");
+                html.append("<option value='").append(name).append("'>").append(name).append("</option>");
             }
         }
+
         html.append("</select>")
-            .append("<input id='dto-list-form-search' type='text' name='" + VantarParam.SEARCH_VALUE + "' value='")
-            .append(searchValue == null ? "" : searchValue).append("'/>")
+            .append("<select id='search-type'>")
+            .append("    <optgroup label='equal' selected='selected'>")
+            .append("        <option value='EQUAL'>EQUAL</option>")
+            .append("        <option value='NOT_EQUAL'>NOT_EQUAL</option>")
+            .append("    </optgroup>")
+            .append("    <optgroup label='string'>")
+            .append("        <option value='LIKE'>LIKE</option>")
+            .append("        <option value='NOT_LIKE'>NOT_LIKE</option>")
+            .append("        <option value='FULL_SEARCH'>FULL_SEARCH</option>")
+            .append("    </optgroup>")
+            .append("    <optgroup label='collection'>")
+            .append("        <option value='IN' title='if col value exists in list'>IN [list,]</option>")
+            .append("        <option value='NOT_IN' title='if col value not-exists in list'>NOT_IN [list,]</option>")
+            .append("        <option value='CONTAINS_ALL' title='if col(list) contains all items of list'>CONTAINS_ALL [list,]</option>")
+            .append("        <option value='CONTAINS_ALL-object' title='if col(dictionary).k has value v'>CONTAINS_ALL {k:v,}</option>")
+            .append("    </optgroup>")
+            .append("    <optgroup label='number/date compare'>")
+            .append("        <option value='LESS_THAN'>LESS_THAN</option>")
+            .append("        <option value='LESS_THAN_EQUAL'>LESS_THAN_EQUAL</option>")
+            .append("        <option value='GREATER_THAN'>GREATER_THAN</option>")
+            .append("        <option value='GREATER_THAN_EQUAL'>GREATER_THAN_EQUAL</option>")
+            .append("        <option value='BETWEEN'>BETWEEN (x, y)</option>")
+            .append("        <option value='BETWEEN-2'>BETWEEN (col2, x, y)</option>")
+            .append("        <option value='NOT_BETWEEN'>NOT_BETWEEN (x, y)</option>")
+            .append("    </optgroup>")
+            .append("    <optgroup label='empty check'>")
+            .append("        <option value='IS_NULL'>IS_NULL</option>")
+            .append("        <option value='IS_NOT_NULL'>IS_NOT_NULL</option>")
+            .append("        <option value='IS_EMPTY'>IS_EMPTY</option>")
+            .append("        <option value='IS_NOT_EMPTY'>IS_NOT_EMPTY</option>")
+            .append("    </optgroup>")
+            .append("    <optgroup label='point'>")
+            .append("        <option value='NEAR'>NEAR (lat, lng, maxDistance(m), minDistance(m))</option>")
+            .append("        <option value='FAR'>FAR (lat, lng, maxDistance(m))</option>")
+            .append("    </optgroup>")
+            .append("    <optgroup label='polygon'>")
+            .append("        <option value='WITHIN'>WITHIN [lat1, lng1, lat2, lng2,]</option>")
+            .append("    </optgroup>")
+            .append("</select>")
+
+            .append("<input type='text' id='search-value'/>")
+            .append("<button id='add-search-item' type='button'>+</button>")
+            .append("</div></td>")
+            .append("</tr>")
+
+            .append("<tr><td></td>")
+            .append("<td>")
+            .append("<ul id='search-items'></ul>")
+            .append("<p><textarea id='jsonsearch' name='jsonsearch'>")
+            .append(jsonSearch).append("</textarea></p>")
             .append("</td>")
             .append("</tr>");
 
-        boolean showDeleted = params.isChecked(VantarParam.LOGICAL_DELETED);
         if (dto.isDeleteLogicalEnabled()) {
-            html.append("<tr><td></td><td><input value='1' type='checkbox' id='" + VantarParam.LOGICAL_DELETED + "' name='"
-                + VantarParam.LOGICAL_DELETED + "' ").append(showDeleted ? "checked='checked'" : "").append("/> <label for='")
-                .append(VantarParam.LOGICAL_DELETED).append("'>").append(Locale.getString(VantarKey.SHOW_DELETED))
-                .append("</label></td></tr>");
+            String deletePolicy = params.getString("delete-policy", "n");
+            html.append("<tr><td></td><td class='dto-list-form-option'><select name='delete-policy'>")
+                .append("<option value='n'")
+                    .append(deletePolicy.equals("n") ? " selected='selected'" : "").append(">")
+                    .append(Locale.getString(VantarKey.SHOW_NOT_DELETED)).append("</option>")
+                .append("<option value='d'")
+                    .append(deletePolicy.equals("d") ? " selected='selected'" : "").append(">")
+                    .append(Locale.getString(VantarKey.SHOW_DELETED)).append("</option>")
+                .append("<option value='a'")
+                    .append(deletePolicy.equals("a") ? " selected='selected'" : "").append(">")
+                    .append(Locale.getString(VantarKey.SHOW_ALL)).append("</option>")
+                .append("</select></td></tr>");
         }
 
         // button
-        html.append("<tr><td></td><td><button type='submit'>&gt;&gt;</button></td></tr>")
+        html.append("<tr><td>");
+
+        html.append("<select id='search-op'>")
+            .append("    <option value='AND' selected='selected'>AND</option>")
+            .append("    <option value='OR'>OR</option>")
+            .append("    <option value='XOR'>XOR</option>")
+            .append("</select>");
+
+        html.append("</td><td class='dto-list-form-option'>");
+
+        html.append("<button type='submit'>&gt;&gt;</button><button id='get-search-json' type='button'>JSON</button></td></tr>")
             .append("<tr><td></td><td>")
             .append("</td></tr></table></form>")
-            .append("<form method='post' action='/admin/data/delete/many'>")
-            .append("    <input type='hidden' name='" + VantarParam.AUTH_TOKEN + "' value='")
-            .append(authToken).append("'/>\n");
-
+            .append("<form method='post' action='/admin/data/delete/many'>");
+        if (authToken != null) {
+            html.append("<input type='hidden' name='" + VantarParam.AUTH_TOKEN + "' value='")
+                .append(authToken).append("'/>\n");
+        }
         if (data == null) {
             addMessage(Locale.getString(VantarKey.NO_CONTENT));
         } else {
             addDtoList(data, true, fields);
-        }
 
-        html.append("<div id='delete-container'>")
-            .append("<input name='" + VantarParam.DTO + "' value='").append(dto.getClass().getSimpleName())
-            .append("' type='hidden'/>");
+            html.append("<div id='delete-container'>")
+                .append("<input name='" + VantarParam.DTO + "' value='").append(dto.getClass().getSimpleName())
+                .append("' type='hidden'/>");
 
-        if (dto.isDeleteLogicalEnabled()) {
             html.append("<div class='delete-type-container'>")
-                .append("<input type='checkbox' name='do-logical-delete' id='do-logical-delete' checked='checked'/> ")
-                .append("<label for='do-logical-delete'>").append(Locale.getString(VantarKey.LOGICAL_DELETED)).append("</label></div>");
+                .append("<input type='checkbox' id='delete-select-all'/> ")
+                .append("<label for='delete-select-all'>").append(Locale.getString(VantarKey.SELECT_ALL))
+                .append("</label></div>");
+
+            if (dto.isDeleteLogicalEnabled()) {
+                html.append("<div class='delete-type-container'>")
+                    .append("<input type='checkbox' name='do-logical-delete' id='do-logical-delete' checked='checked'/> ")
+                    .append("<label for='do-logical-delete'>").append(Locale.getString(VantarKey.LOGICAL_DELETED))
+                    .append("</label></div>");
+            }
+
+            html.append("<div><input type='checkbox' name='confirm-delete'/> <label for='confirm-delete'>")
+                .append(Locale.getString(VantarKey.ADMIN_CONFIRM)).append("</label></div>")
+                .append("<div class='delete-button-container'><button id='delete-button' type='submit'>")
+                .append(Locale.getString(VantarKey.ADMIN_DELETE)).append("</button></div>")
+                .append("</div>");
         }
 
-        html.append("<div> <input type='checkbox' name='confirm-delete'/> <label for='confirm-delete'>")
-            .append(Locale.getString(VantarKey.ADMIN_CONFIRM)).append("</label></div>")
-            .append("<div class='delete-button-container'><button type='submit'>")
-            .append(Locale.getString(VantarKey.ADMIN_DELETE)).append("</button></div>")
-            .append("</div>");
-
+        html.append("</form>");
         setJs("/js/jquery.min.js");
         setJs("/js/vantar.js");
-
         return this;
     }
 
@@ -1273,7 +1302,6 @@ public class WebUi {
 
                 String className = dto.getClass().getSimpleName();
                 html
-//                    .append("<td class='option'><div class='option'><a href='" + "/admin/data/delete?" + VantarParam.DTO + "=")
                     .append("<td class='option delete-option'><input class='delete-check' name='delete-check' value='")
                     .append(dto.getId()).append("' type='checkbox'/></td>")
                     .append("<td class='option'><div class='option'><a href='" + "/admin/data/update?" + VantarParam.DTO + "=")
@@ -1334,7 +1362,7 @@ public class WebUi {
             html.append("<option ").append(pageNumber == i ? "selected='selected' " : "").append("value='?");
 
             Map<String, Object> q = params.getAll();
-            q.put(VantarParam.PAGE, Long.toString(i));
+            q.put("page", Long.toString(i));
             if (authToken != null) {
                 q.put(VantarParam.AUTH_TOKEN, authToken);
             }

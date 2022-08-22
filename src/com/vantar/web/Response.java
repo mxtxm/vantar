@@ -282,7 +282,7 @@ public class Response {
     }
 
     public static Map<String, String> getHeaders(HttpServletResponse response) {
-        Map<String, String> headers = new HashMap<>();
+        Map<String, String> headers = new HashMap<>(16, 1);
         for (String name : response.getHeaderNames()) {
             headers.put(name, response.getHeader(name));
         }

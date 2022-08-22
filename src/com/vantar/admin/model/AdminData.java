@@ -144,33 +144,12 @@ public class AdminData {
         WebUi ui = Admin.getUiDto(Locale.getString(VantarKey.ADMIN_DATA_LIST), params, response, dtoInfo);
 
         Dto dto = dtoInfo.getDtoInstance();
-        QueryData queryData = params.getQueryData(VantarParam.JSON_SEARCH);
+        QueryData queryData = params.getQueryData("jsonsearch");
         QueryBuilder q;
-
         if (queryData == null) {
             q = new QueryBuilder(dto)
-                .page(params.getInteger(VantarParam.PAGE, 1), params.getInteger(VantarParam.COUNT, N_PER_PAGE))
-                .sort(params.getString(VantarParam.SORT_FIELD, "id") + ":" + params.getString(VantarParam.SORT_POS, "desc"));
-
-            String field = params.getString(VantarParam.SEARCH_FIELD);
-            String string = Persian.Number.toLatin(params.getString(VantarParam.SEARCH_VALUE));
-            if (field != null) {
-                if (field.equals("all")) {
-                    q.condition().phrase(string);
-                } else {
-                    Class<?> type = dto.getPropertyType(field);
-                    if (string.contains("*")) {
-                        q.condition().like(field, StringUtil.remove(string, '*'));
-                    } else if (type == null) {
-                        q.condition().equal(field, params.getString(VantarParam.SEARCH_VALUE));
-                    } else if (type == String.class) {
-                        q.condition().like(field, string);
-                    } else {
-                        q.condition().equal(field, params.getObject(VantarParam.SEARCH_VALUE, type));
-                    }
-                }
-            }
-
+                .page(params.getInteger("page", 1), params.getInteger("count", AdminData.N_PER_PAGE))
+                .sort(params.getString("sort", "id") + ":" + params.getString("sortpos", "desc"));
         } else {
             try {
                 queryData.setDto(dto);
@@ -181,9 +160,13 @@ public class AdminData {
             }
         }
 
-        dto.setDeletedQueryPolicy(
-            params.isChecked(VantarParam.LOGICAL_DELETED) ? Dto.QueryDeleted.SHOW_DELETED : Dto.QueryDeleted.SHOW_NOT_DELETED
-        );
+        if (dto.isDeleteLogicalEnabled()) {
+            String deletePolicy = params.getString("delete-policy", "n");
+            dto.setDeletedQueryPolicy(
+                deletePolicy.equals("d") ? Dto.QueryDeleted.SHOW_DELETED :
+                    (deletePolicy.equals("a") ? Dto.QueryDeleted.SHOW_ALL :  Dto.QueryDeleted.SHOW_NOT_DELETED)
+            );
+        }
 
         PageData data = null;
         try {
@@ -299,7 +282,7 @@ public class AdminData {
                     if (params.isChecked(VantarParam.LOGICAL_DELETED_UNDO)) {
                         ui.addMessage(CommonModelMongo.unDeleteBatch(params, dto.getClass()).message);
                     } else {
-                        dto.setDeleteLogical(params.isChecked(VantarParam.LOGICAL_DELETED));
+                        dto.setDeleteLogical(params.isChecked("delete-logic"));
 
                         ResponseMessage resp = CommonModelMongo.deleteBatch(params, dto.getClass());
                         ui.addMessage(resp.message);
@@ -370,7 +353,7 @@ public class AdminData {
                         if (params.isChecked(VantarParam.LOGICAL_DELETED_UNDO)) {
                             ui.addMessage(CommonModelMongo.unDeleteBatch(params, dto.getClass()).message);
                         } else {
-                            dto.setDeleteLogical(params.isChecked(VantarParam.LOGICAL_DELETED));
+                            dto.setDeleteLogical(params.isChecked("delete-logic"));
                             ResponseMessage resp = CommonModelMongo.deleteById(dto);
                             ui.addMessage(resp.message);
                             if (resp.value instanceof List) {

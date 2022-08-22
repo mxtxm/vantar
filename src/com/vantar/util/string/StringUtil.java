@@ -239,7 +239,7 @@ public class StringUtil {
      * Convert to boolean
      *
      * @param string string to convert
-     * @return (true if string - ci = = " 1 ", " true ", " yes ", " on ", " بله ", " بلی ") or
+     * @return (true if string - ci == " 1 ", " true ", " yes ", " on ", " بله ", " بلی ") or
      * (false if string-ci == "0", "false", "no", "off", "نه", "خیر") or
      * (null if string == null or "" or "     " or not in above values)
      */
@@ -338,7 +338,7 @@ public class StringUtil {
      * Change to camelCase
      *
      * @param string string to convert
-     * @return (null if string = = null)
+     * @return (null if string == null)
      */
     public static String toCamelCase(String string) {
         return toCamelCase(string, false);
@@ -348,13 +348,13 @@ public class StringUtil {
      * Change to CamelCase
      *
      * @param string string to convert
-     * @return (null if string = = null)
+     * @return (null if string == null)
      */
     public static String toStudlyCase(String string) {
         return toCamelCase(string, true);
     }
 
-    private static String toCamelCase(String string, boolean capitalize) {
+    private static String toCamelCase(String string, boolean capitalizeFirst) {
         if (string == null) {
             return null;
         }
@@ -362,17 +362,20 @@ public class StringUtil {
 
         StringBuilder stringBuilder = new StringBuilder();
         char value;
-        String input = string.toLowerCase();
 
-        for (int i = 0; i < input.length(); ++i) {
-            value = input.charAt(i);
+        if (string.contains("_")) {
+            string = string.toLowerCase();
+        }
+
+        for (int i = 0; i < string.length(); ++i) {
+            value = string.charAt(i);
             if (value == '_' || value == '.' || value == '-' || value == '/') {
-                capitalize = true;
-            } else if (capitalize) {
+                capitalizeFirst = true;
+            } else if (capitalizeFirst) {
                 stringBuilder.append(Character.toUpperCase(value));
-                capitalize = false;
+                capitalizeFirst = false;
             } else {
-                stringBuilder.append(value);
+                stringBuilder.append(i == 0 ? Character.toLowerCase(value) : value);
             }
         }
 
@@ -383,7 +386,7 @@ public class StringUtil {
      * Change to snake_case
      *
      * @param string string to convert
-     * @return (null if string = = null)
+     * @return (null if string == null)
      */
     public static String toSnakeCase(String string) {
         return string == null ? null : PATTERN_SNAKE_CASE.matcher(string).replaceAll("$1_$2").toLowerCase();
@@ -393,7 +396,7 @@ public class StringUtil {
      * Change to snake-case
      *
      * @param string string to convert
-     * @return (null if string = = null)
+     * @return (null if string == null)
      */
     public static String toKababCase(String string) {
         return string == null ? null : PATTERN_SNAKE_CASE.matcher(string).replaceAll("$1-$2").toLowerCase();
@@ -416,7 +419,7 @@ public class StringUtil {
      * @return a set of random strings
      */
     public static Set<String> getRandomStrings(int count) {
-        Set<String> codes = new HashSet<>(count);
+        Set<String> codes = new HashSet<>(count, 1);
         while (codes.size() < count) {
             codes.add(split(UUID.randomUUID().toString(), '-')[0]);
         }
@@ -431,7 +434,7 @@ public class StringUtil {
      * @return a set of random strings
      */
     public static Set<String> getRandomStrings(int count, int length) {
-        Set<String> codes = new HashSet<>(count);
+        Set<String> codes = new HashSet<>(count, 1);
         while (codes.size() < count) {
             codes.add(getRandomString(length));
         }
@@ -1642,5 +1645,15 @@ public class StringUtil {
             return (Boolean) obj ? '1' : '0';
         }
         return toCharacter(obj.toString());
+    }
+
+    /**
+     * Get value or default value if null
+     * @param value
+     * @param defaultValue
+     * @return value or default value if null
+     */
+    public static String value(String value, String defaultValue) {
+        return value == null ? defaultValue : value;
     }
 }

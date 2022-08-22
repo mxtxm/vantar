@@ -213,7 +213,8 @@ public class QueryBuilder {
 
                 String[] parts = StringUtil.split(dto.getField(column).getAnnotation(ManyToManyGetData.class).value(), VantarParam.SEPARATOR_NEXT);
                 String junctionTable = parts[0];
-                String tableRight = StringUtil.toSnakeCase(parts[1]);
+                //String tableRight = StringUtil.toSnakeCase(parts[1]);
+                String tableRight = parts[1];
 
                 String leftTable = dto.getStorage();
                 joins.add(new QueryJoin(QueryJoin.INNER_JOIN, junctionTable, leftTable + ".id", junctionTable + "." + leftTable + "_id" ));
@@ -229,7 +230,8 @@ public class QueryBuilder {
                     this.columns = new ArrayList<>();
                 }
                 //this.columns.add(column.toLowerCase());
-                this.columns.add(StringUtil.toSnakeCase(column));
+                //this.columns.add(StringUtil.toSnakeCase(column));
+                this.columns.add(column);
             }
         }
         return this;
@@ -311,7 +313,8 @@ public class QueryBuilder {
 
     public QueryBuilder sort(String... sort) {
         for (int i = 0; i < sort.length; i++) {
-            sort[i] = StringUtil.toSnakeCase(sort[i]);
+            //sort[i] = StringUtil.toSnakeCase(sort[i]);
+            sort[i] = sort[i];
         }
         this.sort = sort;
         return this;
@@ -330,6 +333,18 @@ public class QueryBuilder {
 
     public QueryCondition condition() {
         return condition(QueryOperator.AND);
+    }
+
+    public QueryCondition conditionDump(QueryOperator operator) {
+        if (condition == null) {
+            condition = new QueryCondition(operator);
+        }
+        condition.dump = true;
+        return condition;
+    }
+
+    public QueryCondition conditionDump() {
+        return conditionDump(QueryOperator.AND);
     }
 
     public QueryCondition condition(QueryOperator operator) {

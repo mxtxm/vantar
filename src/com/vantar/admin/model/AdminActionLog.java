@@ -90,7 +90,7 @@ public class AdminActionLog {
         }
         q.page(page, 200);
         q.sort("id:desc");
-        Map<String, UserLog> responses = new HashMap<>(200);
+        Map<String, UserLog> responses = new HashMap<>(200, 1);
         try {
             for (Dto dto : CommonRepoMongo.getData(q)) {
                 UserLog uLog = (UserLog) dto;

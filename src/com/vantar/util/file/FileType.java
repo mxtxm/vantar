@@ -90,7 +90,7 @@ public class FileType {
             return null;
         }
 
-        Map<String,String> meta = new HashMap<>(metadata.names().length);
+        Map<String,String> meta = new HashMap<>(metadata.names().length, 1);
         for (String key : metadata.names()) {
             meta.put(key, metadata.get(key));
         }

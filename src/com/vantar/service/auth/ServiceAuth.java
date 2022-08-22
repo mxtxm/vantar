@@ -262,6 +262,15 @@ public class ServiceAuth extends Permit implements Services.Service {
         return onlineUsers.get(user.getToken());
     }
 
+    public TokenData getSigninToken(long userId) {
+        for (TokenData t : onlineUsers.values()) {
+            if (t.user.getId().equals(userId)) {
+                return t;
+            }
+        }
+        return null;
+    }
+
     // > > > signout
 
     public synchronized void signout(Params params) {

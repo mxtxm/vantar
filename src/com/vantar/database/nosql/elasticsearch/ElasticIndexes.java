@@ -270,7 +270,8 @@ public class ElasticIndexes {
                 params.put("null_value", "");
             }
 
-            properties.put(StringUtil.toSnakeCase(name), params);
+            //properties.put(StringUtil.toSnakeCase(name), params);
+            properties.put(name, params);
         });
 
         //todo: StoreIndexNotValue

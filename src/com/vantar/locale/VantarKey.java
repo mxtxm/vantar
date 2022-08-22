@@ -216,7 +216,6 @@ public enum VantarKey implements LangKey {
     ADMIN_BATCH_DELETE,
     ADMIN_BATCH_EDIT,
     ADMIN_JSON_OPTION,
-    ADMIN_PAGE,
     ADMIN_SORT,
     ADMIN_SEARCH,
     ADMIN_FROM,
@@ -254,12 +253,15 @@ public enum VantarKey implements LangKey {
     ADMIN_SCHEDULE_RUN_SUCCESS,
     ADMIN_SCHEDULE_RUN_FAIL,
 
+    SHOW_NOT_DELETED,
     SHOW_DELETED,
+    SHOW_ALL,
+
     LOGICAL_DELETED,
     LOGICAL_DELETED_UNDO,
     ADMIN_ACTION_LOG,
 
-    ADMIN_N_PER_PAGE,
+    ADMIN_PAGING,
 
     DELETE_FAIL_HAS_DEPENDENCIES,
 
@@ -271,4 +273,7 @@ public enum VantarKey implements LangKey {
 
     ADMIN_BACKUP_UPLOAD,
     ADMIN_BACKUP_UPLOAD_FILE,
+
+    SELECT_ALL,
+
 }

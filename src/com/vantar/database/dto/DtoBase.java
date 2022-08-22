@@ -66,9 +66,10 @@ public abstract class DtoBase implements Dto {
     }
 
     public static String getStorage(Class<?> dtoClass) {
-        return StringUtil.toSnakeCase(
-            dtoClass.isAnnotationPresent(Storage.class) ? dtoClass.getAnnotation(Storage.class).value() : dtoClass.getSimpleName()
-        );
+        return //StringUtil.toSnakeCase(
+            dtoClass.isAnnotationPresent(Storage.class) ?
+                dtoClass.getAnnotation(Storage.class).value() : dtoClass.getSimpleName();
+        //);
     }
 
     public void setId(Long id) {
@@ -103,19 +104,19 @@ public abstract class DtoBase implements Dto {
         if (exclude == null) {
             excludeProperties = null;
         } else {
-            excludeProperties = new HashSet<>(exclude.length * 2);
+            excludeProperties = new HashSet<>(exclude.length * 2, 1);
             excludeProperties.addAll(Arrays.asList(exclude));
         }
     }
 
     public void setInclude(String... include) {
-        excludeProperties = new HashSet<>(include.length * 2);
+        excludeProperties = new HashSet<>(include.length * 2, 1);
         excludeProperties.addAll(Arrays.asList(getProperties(include)));
     }
 
     public void addExclude(String... exclude) {
         if (excludeProperties == null) {
-            excludeProperties = new HashSet<>(exclude.length * 2);
+            excludeProperties = new HashSet<>(exclude.length * 2, 1);
         }
         excludeProperties.addAll(Arrays.asList(exclude));
     }
@@ -130,7 +131,7 @@ public abstract class DtoBase implements Dto {
 
     public void addNullProperties(String... nullProperties) {
         if (this.nullProperties == null) {
-            this.nullProperties = new HashSet<>(nullProperties.length * 2);
+            this.nullProperties = new HashSet<>(nullProperties.length * 2, 1);
         }
         this.nullProperties.addAll(Arrays.asList(nullProperties));
     }
@@ -139,7 +140,7 @@ public abstract class DtoBase implements Dto {
         if (nullProperties == null) {
             this.nullProperties = null;
         } else {
-            this.nullProperties = new HashSet<>(nullProperties.length * 2);
+            this.nullProperties = new HashSet<>(nullProperties.length * 2, 1);
             this.nullProperties.addAll(Arrays.asList(nullProperties));
         }
     }
@@ -304,7 +305,8 @@ public abstract class DtoBase implements Dto {
             return getClass().getField(name.trim());
         } catch (NoSuchFieldException x) {
             try {
-                return getClass().getField(StringUtil.toCamelCase(name.trim()));
+                //return getClass().getField(StringUtil.toCamelCase(name.trim()));
+                return getClass().getField(name.trim());
             } catch (NoSuchFieldException e) {
                 return null;
             }
@@ -459,7 +461,7 @@ public abstract class DtoBase implements Dto {
         if (include.length == 0) {
             includeSet = null;
         } else {
-            includeSet = new HashSet<>(include.length);
+            includeSet = new HashSet<>(include.length, 1);
             for (String includeProperty : include) {
                 String[] split = StringUtil.splitTrim(includeProperty, ':');
                 includeSet.add(split[0]);
@@ -485,7 +487,8 @@ public abstract class DtoBase implements Dto {
             if (propertyNameMap != null && propertyNameMap.containsKey(fieldName)) {
                 fieldName = propertyNameMap.get(fieldName);
             } else if (snakeCase) {
-                fieldName = StringUtil.toSnakeCase(field.getName());
+                //fieldName = StringUtil.toSnakeCase(field.getName());
+                fieldName = field.getName();
             }
 
             Object value;
@@ -554,7 +557,8 @@ public abstract class DtoBase implements Dto {
                     }
                 }
 
-                data.add(new StorableData(StringUtil.toSnakeCase(name), type, value, isNull, field.getAnnotations()));
+                //data.add(new StorableData(StringUtil.toSnakeCase(name), type, value, isNull, field.getAnnotations()));
+                data.add(new StorableData(name, type, value, isNull, field.getAnnotations()));
             }
         } catch (IllegalAccessException e) {
             log.error(" !! ({}, {})\n", getClass().getName(), this, e);
@@ -836,7 +840,8 @@ public abstract class DtoBase implements Dto {
                     );
                 }
             } else if (value == null) {
-                value = map.get(StringUtil.toSnakeCase(key));
+                //value = map.get(StringUtil.toSnakeCase(key));
+                value = map.get(key);
             }
 
             setPropertyValue(field, value, action, errors);
@@ -850,14 +855,14 @@ public abstract class DtoBase implements Dto {
     private void setDtoSetConfigs(Set<String> excludes, Set<String> nulls, String actionString, Action defaultAction) {
         if (excludes != null) {
             if (excludeProperties == null) {
-                excludeProperties = new HashSet<>(excludes.size() * 2);
+                excludeProperties = new HashSet<>(excludes.size() * 2, 1);
             }
             excludeProperties.addAll(excludes);
         }
 
         if (nulls != null) {
             if (nullProperties == null) {
-                nullProperties = new HashSet<>(nulls.size() * 2);
+                nullProperties = new HashSet<>(nulls.size() * 2, 1);
             }
             nullProperties.addAll(nulls);
         }
@@ -953,7 +958,7 @@ public abstract class DtoBase implements Dto {
                         } else {
                             Map<String, String> v = (Map<String, String>) field.get(this);
                             if (v == null) {
-                                v = new HashMap<>(1);
+                                v = new HashMap<>(1, 1);
                             }
                             v.put(Locale.getSelectedLocale(), (String) value);
                             value = v;

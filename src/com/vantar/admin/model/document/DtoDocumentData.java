@@ -100,7 +100,7 @@ public class DtoDocumentData {
         }
 
         if (includeFields == null) {
-            includeFields = new HashSet<>();
+            includeFields = new HashSet<>(10, 1);
         }
 
         StringBuilder sb = new StringBuilder();
@@ -369,7 +369,7 @@ public class DtoDocumentData {
         }
 
         if (includeFields == null) {
-            includeFields = new HashSet<>();
+            includeFields = new HashSet<>(10, 1);
         }
 
         StringBuilder json = new StringBuilder();

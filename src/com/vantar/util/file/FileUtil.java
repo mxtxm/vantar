@@ -326,7 +326,7 @@ public class FileUtil {
             }
         }
 
-        Set<PosixFilePermission> fullPermission = new HashSet<>();
+        Set<PosixFilePermission> fullPermission = new HashSet<>(10, 1);
         fullPermission.add(PosixFilePermission.OWNER_EXECUTE);
         fullPermission.add(PosixFilePermission.OWNER_READ);
         fullPermission.add(PosixFilePermission.OWNER_WRITE);
@@ -381,7 +381,7 @@ public class FileUtil {
             return;
         }
 
-        Set<PosixFilePermission> fullPermission = new HashSet<>();
+        Set<PosixFilePermission> fullPermission = new HashSet<>(10, 1);
         fullPermission.add(PosixFilePermission.OWNER_EXECUTE);
         fullPermission.add(PosixFilePermission.OWNER_READ);
         fullPermission.add(PosixFilePermission.OWNER_WRITE);

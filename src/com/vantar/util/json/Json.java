@@ -17,7 +17,7 @@ public class Json {
 
     public static Jackson put(String tag, Config config) {
         if (tagged == null) {
-            tagged = new HashMap<>(5);
+            tagged = new HashMap<>(5, 1);
         }
         Jackson jackson = new Jackson(config);
         tagged.put(tag, jackson);

@@ -17,7 +17,7 @@ public class QueueConnection {
 
     private static final Logger log = LoggerFactory.getLogger(QueueConnection.class);
     private Connection connection;
-    private Map<String, Deque<Channel>> channels = new HashMap<>(20);
+    private Map<String, Deque<Channel>> channels = new HashMap<>(20, 1);
     private final QueueConfig config;
     private final QueueExceptionHandler exceptionHandler;
 
@@ -105,7 +105,7 @@ public class QueueConnection {
         for (String queueName : channels.keySet()) {
             removeChannels(queueName);
         }
-        channels = new HashMap<>(20);
+        channels = new HashMap<>(20, 1);
     }
 
     public synchronized void removeChannels(String queueName) {

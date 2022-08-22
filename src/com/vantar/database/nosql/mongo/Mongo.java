@@ -37,7 +37,7 @@ public class Mongo {
 
 
         public static Map<String, Long> getAll() throws DatabaseException {
-            Map<String, Long> all = new HashMap<>(100);
+            Map<String, Long> all = new HashMap<>(100, 1);
             try {
                 for (Document document : MongoConnection.getDatabase().getCollection(COLLECTION).find()) {
                     all.put(document.getString(COLLECTION_FIELD), document.getLong(COUNT_FIELD));
@@ -192,11 +192,14 @@ public class Mongo {
                 for (String item2 : StringUtil.splitTrim(item, VantarParam.SEPARATOR_COMMON)) {
                     String[] parts = StringUtil.splitTrim(item2, VantarParam.SEPARATOR_KEY_VAL);
                     if (parts.length == 1) {
-                        indexes.append(StringUtil.toSnakeCase(parts[0]), 1);
+                        //indexes.append(StringUtil.toSnakeCase(parts[0]), 1);
+                        indexes.append(parts[0], 1);
                     } else if (parts[1].equals("-1") || parts[1].equals("1")) {
-                        indexes.append(StringUtil.toSnakeCase(parts[0]), StringUtil.toInteger(parts[1]));
+                        //indexes.append(StringUtil.toSnakeCase(parts[0]), StringUtil.toInteger(parts[1]));
+                        indexes.append(parts[0], StringUtil.toInteger(parts[1]));
                     } else {
-                        indexes.append(StringUtil.toSnakeCase(parts[0]), parts[1]);
+                        //indexes.append(StringUtil.toSnakeCase(parts[0]), parts[1]);
+                        indexes.append(parts[0], parts[1]);
                     }
                 }
                 try {

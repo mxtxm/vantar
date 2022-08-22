@@ -8,7 +8,7 @@ public class DefaultStringsFa {
     private static final Map<LangKey, String> tokens;
 
     static {
-        tokens = new HashMap<>(290);
+        tokens = new HashMap<>(300, 1);
         // auth
         tokens.put(VantarKey.USER_PASSWORD_EMPTY, "نام کاربری و یا رمز عبور خالی است");
         tokens.put(VantarKey.USER_NOT_EXISTS, "کاربر در سیستم وجود ندارد");
@@ -243,7 +243,6 @@ public class DefaultStringsFa {
         tokens.put(VantarKey.ADMIN_BATCH_EDIT, "ویرایش دسته ای");
         tokens.put(VantarKey.ADMIN_BATCH_DELETE, "حذف دسته ای");
         tokens.put(VantarKey.ADMIN_JSON_OPTION, "JSON/گزینه");
-        tokens.put(VantarKey.ADMIN_PAGE, "صفحه");
         tokens.put(VantarKey.ADMIN_SORT, "سورت");
         tokens.put(VantarKey.ADMIN_SEARCH, "جستجو");
         tokens.put(VantarKey.ADMIN_FROM, "از");
@@ -270,12 +269,15 @@ public class DefaultStringsFa {
         tokens.put(VantarKey.BUSINESS_DUPLICATE_COUNT, "تعداد تکراری" + "        ({0})");
         tokens.put(VantarKey.BUSINESS_SERIAL_MAX, "آخرین شناسه" + "         ({0})");
 
-        tokens.put(VantarKey.SHOW_DELETED, "حذف شده ها");
+        tokens.put(VantarKey.SHOW_NOT_DELETED, "نمایش پاک نشده ها");
+        tokens.put(VantarKey.SHOW_DELETED, "نمایش پاک شده ها");
+        tokens.put(VantarKey.SHOW_ALL, "نمایش همه");
+
         tokens.put(VantarKey.LOGICAL_DELETED, "حذف نرم (رکورد تنها نشانه زده شود)");
         tokens.put(VantarKey.LOGICAL_DELETED_UNDO, "برگرداندن");
         tokens.put(VantarKey.ADMIN_ACTION_LOG, "لاگ");
 
-        tokens.put(VantarKey.ADMIN_N_PER_PAGE, "رکورد در صفحه");
+        tokens.put(VantarKey.ADMIN_PAGING, "صفحه بندی");
 
         tokens.put(VantarKey.DELETE_FAIL_HAS_DEPENDENCIES, "بعلت وجود وابستگی امکان حذف وجود ندارد");
 
@@ -286,6 +288,8 @@ public class DefaultStringsFa {
         tokens.put(VantarKey.ADMIN_MEMORY, "حافظه");
         tokens.put(VantarKey.ADMIN_BACKUP_UPLOAD, "آپلور فایل بکاپ");
         tokens.put(VantarKey.ADMIN_BACKUP_UPLOAD_FILE, "فایل بکاپ");
+
+        tokens.put(VantarKey.SELECT_ALL, "انتخاب همه");
     }
 
     public static String getString(LangKey key) {

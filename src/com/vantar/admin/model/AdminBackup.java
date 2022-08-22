@@ -104,6 +104,7 @@ public class AdminBackup {
                 .beginFormPost()
                 .addSelect(Locale.getString(VantarKey.ADMIN_BACKUP_FILE_PATH), "dumpfile", files.toArray(new String[0]))
                 .addCheckbox(Locale.getString(VantarKey.ADMIN_RESTORE_DELETE_CURRENT_DATA), "deleteall", true)
+                .addCheckbox("camelCaseProperties", "camelcase", false)
                 .addSubmit(Locale.getString(VantarKey.ADMIN_BACKUP_RESTORE))
                 .finish();
             return;
@@ -112,7 +113,7 @@ public class AdminBackup {
         if (dbms.equals(DtoDictionary.Dbms.SQL)) {
             SqlBackup.restore(dbDumpFilename, params.isChecked("deleteall"), ui);
         } else if (dbms.equals(DtoDictionary.Dbms.MONGO)) {
-            MongoBackup.restore(dbDumpFilename, params.isChecked("deleteall"), ui);
+            MongoBackup.restore(dbDumpFilename, params.isChecked("deleteall"), params.isChecked("camelcase"), ui);
         } else if (dbms.equals(DtoDictionary.Dbms.ELASTIC)) {
             ElasticBackup.restore(dbDumpFilename, params.isChecked("deleteall"), ui);
         }

@@ -28,8 +28,6 @@ public class VantarParam {
 
     public static final long INVALID_ID = 0;
     public static final String AUTH_TOKEN = "x";
-    public static final String NO = "0";
-    public static final String YES = "1";
     public static final int SUCCESS = 1;
     public static final int FAIL = 0;
 
@@ -37,17 +35,10 @@ public class VantarParam {
     public static final String ID = "id";
     public static final String TOTAL_COUNT = "totalcount";
     public static final String URL = "url";
-    public static final String PAGE = "page";
-    public static final String COUNT = "count";
-    public static final String SORT_FIELD = "sort";
-    public static final String SORT_POS = "sortpos";
-    public static final String SEARCH_FIELD = "search";
-    public static final String SEARCH_VALUE = "searchval";
     public static final String DTO = "dto";
     public static final String EXCLUDE_PROPERTIES = "__excludeProperties";
     public static final String NULL_PROPERTIES = "__nullProperties";
     public static final String SET_ACTION = "__action";
-    public static final String JSON_SEARCH = "jsonsearch";
     public static final String USER_NAME = "username";
     public static final String PASSWORD = "password";
 
@@ -58,7 +49,6 @@ public class VantarParam {
     public static final String HEADER_AUTH_TOKEN = "X-Auth-Token";
     public static final String HEADER_LANG = "X-Lang";
 
-    public static final String LOGICAL_DELETED = "logicaldeleted";
     public static final String LOGICAL_DELETED_UNDO = "logicaldeletedundo";
     public static final String COORDINATE = "coordinates";
 }

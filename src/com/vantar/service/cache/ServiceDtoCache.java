@@ -45,9 +45,9 @@ public class ServiceDtoCache implements Services.Service {
     public <A extends Dto> Map<Long, A> getMap(Class<? extends Dto> tClass, Class<A> asClass) {
         Map<Long, Dto> originalData = cache.get(tClass);
         if (originalData == null) {
-            return new HashMap<>(1);
+            return new HashMap<>(1, 1);
         }
-        Map<Long, A> data = new HashMap<>(originalData.size());
+        Map<Long, A> data = new HashMap<>(originalData.size(), 1);
         for (Map.Entry<Long, Dto> e : originalData.entrySet()) {
             A a = ClassUtil.getInstance(asClass);
             if (a != null) {

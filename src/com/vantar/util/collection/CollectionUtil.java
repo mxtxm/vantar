@@ -5,6 +5,7 @@ import com.vantar.database.dto.Dto;
 import com.vantar.util.json.Json;
 import com.vantar.util.object.*;
 import com.vantar.util.string.*;
+import com.vantar.web.dto.Permission;
 import java.lang.reflect.Array;
 import java.util.*;
 
@@ -486,6 +487,7 @@ public class CollectionUtil {
                 items.add(item);
             }
         }
+
         return items;
     }
 
@@ -512,10 +514,10 @@ public class CollectionUtil {
 
         if (object instanceof Map) {
             if (ObjectUtil.isEmpty(object)) {
-                return new HashMap<>(1);
+                return new HashMap<>(1, 1);
             }
 
-            Map<K, V> items = new HashMap<>(((Map<?, ?>) object).size());
+            Map<K, V> items = new HashMap<>(((Map<?, ?>) object).size(), 1);
             for (Map.Entry<?, ?> entry : ((Map<?, ?>) object).entrySet()) {
                 K k = ObjectUtil.convert(entry.getKey(), genericTypeK);
                 V v = ObjectUtil.convert(entry.getValue(), genericTypeV);
@@ -528,10 +530,10 @@ public class CollectionUtil {
 
         if (object instanceof Iterable) {
             if (ObjectUtil.isEmpty(object)) {
-                return new HashMap<>(1);
+                return new HashMap<>(1, 1);
             }
             Map<K, V> items = new HashMap<>(object instanceof Collection<?> ?
-                ((Collection<?>) object).size() : DEFAULT_INIT_SIZE);
+                ((Collection<?>) object).size() : DEFAULT_INIT_SIZE, 1);
             for (Object o : (Iterable<?>) object) {
                 putKv(o, items, genericTypeK, genericTypeV);
             }
@@ -542,7 +544,7 @@ public class CollectionUtil {
 
         if (type.isArray()) {
             int length = Array.getLength(object);
-            Map<K, V> items = new HashMap<>(length + 1);
+            Map<K, V> items = new HashMap<>(length + 1, 1);
             for (int i = 0; i < length; ++i) {
                 putKv(Array.get(object, i), items, genericTypeK, genericTypeV);
             }
@@ -561,7 +563,7 @@ public class CollectionUtil {
         }
         string = string.trim();
         if (string.isEmpty()) {
-            return new HashMap<>(1);
+            return new HashMap<>(1, 1);
         }
 
         if (string.startsWith("[") && string.endsWith("]")) {
@@ -577,14 +579,14 @@ public class CollectionUtil {
         }
         if (string.startsWith("{") && string.endsWith("}")) {
             Map<K, V> map = Json.d.mapFromJson(string, genericTypeK, genericTypeV);
-            return map == null ? new HashMap<>(1) : map;
+            return map == null ? new HashMap<>(1, 1) : map;
         }
 
         String[] strings = StringUtil.splitTrim(string, VantarParam.SEPARATOR_COMMON);
         if (strings == null) {
-            return new HashMap<>(1);
+            return new HashMap<>(1, 1);
         }
-        Map<K, V> items = new HashMap<>(strings.length + 1);
+        Map<K, V> items = new HashMap<>(strings.length + 1, 1);
         for (String s : strings) {
             putKv(s, items, genericTypeK, genericTypeV);
         }
