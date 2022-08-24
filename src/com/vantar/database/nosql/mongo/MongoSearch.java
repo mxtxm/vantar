@@ -1,12 +1,10 @@
 package com.vantar.database.nosql.mongo;
 
 import com.mongodb.client.*;
-import com.vantar.admin.model.Admin;
 import com.vantar.database.dto.Dto;
 import com.vantar.database.query.*;
 import com.vantar.exception.*;
-import com.vantar.util.object.*;
-import com.vantar.util.string.StringUtil;
+import com.vantar.util.object.ClassUtil;
 import org.bson.Document;
 import java.util.List;
 
@@ -21,8 +19,12 @@ public class MongoSearch {
         Document condition = new Document(Mongo.LOGICAL_DELETE_FIELD, new Document("$ne", Mongo.LOGICAL_DELETE_VALUE));
         for (String property : properties) {
             property = property.trim();
+            if (property.equals(Mongo.ID)) {
+                property = "id";
+            }
+            String p = property.equals("id") ? Mongo.ID : property;
             //condition.append(StringUtil.toSnakeCase(property), dto.getPropertyValue(property));
-            condition.append(property, dto.getPropertyValue(property));
+            condition.append(p, dto.getPropertyValue(property));
         }
 
         try {
@@ -49,11 +51,15 @@ public class MongoSearch {
     }
 
     public static boolean exists(Dto dto, String property) throws DatabaseException {
+        if (property.equals(Mongo.ID)) {
+            property = "id";
+        }
+        String p = property.equals("id") ? Mongo.ID : property;
         try {
             return MongoConnection.getDatabase().getCollection(dto.getStorage())
                 .find(
                     //new Document(StringUtil.toSnakeCase(property), dto.getPropertyValue(property))
-                    new Document(property, dto.getPropertyValue(property))
+                    new Document(p, dto.getPropertyValue(property))
                         .append(Mongo.LOGICAL_DELETE_FIELD, new Document("$ne", Mongo.LOGICAL_DELETE_VALUE))
                 )
                 .iterator()
@@ -65,7 +71,7 @@ public class MongoSearch {
     }
 
     public static boolean existsById(Dto dto) throws DatabaseException {
-        return exists(dto, Mongo.ID);
+        return exists(dto, "id");
     }
 
     public static boolean existsByDto(Dto dto) throws DatabaseException {
