@@ -86,35 +86,30 @@ public class DtoDictionary {
                     case "present":
                         info.present = new ArrayList<>();
                         for (String property : properties) {
-                            //info.present.add(StringUtil.toSnakeCase(property));
                             info.present.add(property);
                         }
                         break;
 
                     case "insert-exclude":
                         for (String property : properties) {
-                            //info.insertExclude.add(StringUtil.toSnakeCase(property));
                             info.insertExclude.add(property);
                         }
                         break;
 
                     case "insert-include":
                         for (String property : properties) {
-                            //info.insertExclude.remove(StringUtil.toSnakeCase(property));
                             info.insertExclude.remove(property);
                         }
                         break;
 
                     case "update-exclude":
                         for (String property : properties) {
-                            //info.updateExclude.add(StringUtil.toSnakeCase(property));
                             info.updateExclude.add(property);
                         }
                         break;
 
                     case "update-include":
                         for (String property : properties) {
-                            //info.updateExclude.remove(StringUtil.toSnakeCase(property));
                             info.updateExclude.remove(property);
                         }
                         break;
@@ -254,7 +249,9 @@ public class DtoDictionary {
         public String getImportData() {
             String data;
             if (Settings.isLocal()) {
-                data = FileUtil.getFileContentFromClassPath("/data/import/" + StringUtil.toKababCase(getDtoClassName()) + "-local");
+                data = FileUtil.getFileContentFromClassPath(
+                    "/data/import/" + StringUtil.toKababCase(getDtoClassName()) + "-local"
+                );
                 if (StringUtil.isNotEmpty(data)) {
                     return data;
                 }

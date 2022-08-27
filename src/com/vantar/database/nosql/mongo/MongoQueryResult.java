@@ -59,7 +59,6 @@ public class MongoQueryResult extends QueryResultBase implements QueryResult, Au
             if (data == null) {
                 throw new NoContentException();
             }
-            //return data.get(StringUtil.toSnakeCase(field));
             return data.get(field);
         } catch (MongoException e) {
             throw new DatabaseException(e);
@@ -166,8 +165,6 @@ public class MongoQueryResult extends QueryResultBase implements QueryResult, Au
             if (name.equals(VantarParam.ID) && document.containsKey(Mongo.ID)) {
                 name = Mongo.ID;
             }
-            //String key = StringUtil.toSnakeCase(name);
-            String key = name;
             Class<?> type = field.getType();
 
             try {
@@ -188,23 +185,23 @@ public class MongoQueryResult extends QueryResultBase implements QueryResult, Au
                 }
 
                 if (field.isAnnotationPresent(DeLocalized.class)) {
-                    deLocalize(document, dto, field, key);
+                    deLocalize(document, dto, field, name);
                     continue;
                 }
 
                 if (field.isAnnotationPresent(StoreString.class)) {
-                    String v = document.getString(key);
+                    String v = document.getString(name);
                     field.set(dto, v == null ? null : Json.d.fromJson(v, type));
                     continue;
                 }
 
                 if (type.isEnum()) {
-                    EnumUtil.setEnumValue(document.getString(key), type, dto, field);
+                    EnumUtil.setEnumValue(document.getString(name), type, dto, field);
                     continue;
                 }
 
                 if (type == Location.class) {
-                    Document point = (Document) document.get(key);
+                    Document point = (Document) document.get(name);
                     if (point == null) {
                         setFieldNullValue(dto, field);
                         continue;
@@ -233,24 +230,24 @@ public class MongoQueryResult extends QueryResultBase implements QueryResult, Au
                         || listType.getSuperclass() == Double.class) {
 
                         try {
-                            v = document.getList(key, listType);
+                            v = document.getList(name, listType);
                             field.set(dto, v != null && type == Set.class ? new HashSet<>(v) : v);
                         } catch (Exception e) {
                             log.error(
                                 " !! can not get List<{}> from database ({}:{}) > ({}, {})\n",
-                                listType.getSimpleName(), key, document.get(key), dto.getClass().getName(), dto, e
+                                listType.getSimpleName(), name, document.get(name), dto.getClass().getName(), dto, e
                             );
                         }
 
                     } else if (listType == Dto.class || listType.getSuperclass() == DtoBase.class) {
                         List<Document> docs;
                         try {
-                            docs = document.getList(key, Document.class);
+                            docs = document.getList(name, Document.class);
                         } catch (Exception e) {
                             docs = null;
                             log.error(
                                 " ! can not get List<{}> from database ({}:{}) > ({}, {})\n",
-                                listType.getSimpleName(), key, document.get(key), dto.getClass().getName(), dto, e
+                                listType.getSimpleName(), name, document.get(name), dto.getClass().getName(), dto, e
                             );
                         }
 
@@ -270,14 +267,14 @@ public class MongoQueryResult extends QueryResultBase implements QueryResult, Au
                         }
                         field.set(dto, list);
                     } else {
-                        v = Json.d.listFromJson(Json.d.toJson(document.get(key)), listType);
+                        v = Json.d.listFromJson(Json.d.toJson(document.get(name)), listType);
                         field.set(dto, v != null && type == Set.class ? new HashSet<>(v) : v);
                     }
                     continue;
                 }
 
                 if (type == Map.class) {
-                    Document v = (Document) document.get(key);
+                    Document v = (Document) document.get(name);
                     if (v == null) {
                         setFieldNullValue(dto, field);
                     } else {
@@ -291,7 +288,7 @@ public class MongoQueryResult extends QueryResultBase implements QueryResult, Au
                     continue;
                 }
 
-                Object value = document.get(key);
+                Object value = document.get(name);
                 if (value == null) {
                     setFieldNullValue(dto, field);
                     continue;
@@ -325,7 +322,7 @@ public class MongoQueryResult extends QueryResultBase implements QueryResult, Au
                 field.set(dto, value);
 
             } catch (Exception e) {
-                log.error(" !! ({}:{}) > ({}, {})\n", key, document.get(key), dto.getClass(), dto, e);
+                log.error(" !! ({}:{}) > ({}, {})\n", name, document.get(name), dto.getClass(), dto, e);
                 try {
                     setFieldNullValue(dto, field);
                 } catch (Exception ignore) {
@@ -426,11 +423,7 @@ public class MongoQueryResult extends QueryResultBase implements QueryResult, Au
         }
 
         if (isListSet) {
-            //List<Long> ids = document.getList(StringUtil.toSnakeCase(fk), Long.class);
             List<Long> ids = document.getList(fk, Long.class);
-            if (ids == null) {
-                ids = document.getList(fk, Long.class);
-            }
             if (ids == null) {
                 return true;
             }
@@ -473,15 +466,10 @@ public class MongoQueryResult extends QueryResultBase implements QueryResult, Au
             return true;
         }
 
-        //Long id = document.getLong(StringUtil.toSnakeCase(fk));
         Long id = document.getLong(fk);
-        if (id == null) {
-            id = document.getLong(fk);
-        }
         if (id == null) {
             return true;
         }
-
         if (straightFromCache) {
             fieldX.set(dtoX, cache.getDto(cachedClass, id));
             return true;
@@ -516,7 +504,6 @@ public class MongoQueryResult extends QueryResultBase implements QueryResult, Au
         }
 
         fieldX.set(dtoX, baseDto);
-
         return true;
     }
 
@@ -529,14 +516,7 @@ public class MongoQueryResult extends QueryResultBase implements QueryResult, Au
             }
             type = types[0];
 
-            List<Long> ids = document.getList(
-                //StringUtil.toSnakeCase(fieldX.getAnnotation(Fetch.class).value()),
-                fieldX.getAnnotation(Fetch.class).value(),
-                Long.class
-            );
-            if (ids == null) {
-                ids = document.getList(fieldX.getAnnotation(Fetch.class).value(), Long.class);
-            }
+            List<Long> ids = document.getList(fieldX.getAnnotation(Fetch.class).value(), Long.class);
             if (ids == null) {
                 return;
             }
@@ -553,11 +533,7 @@ public class MongoQueryResult extends QueryResultBase implements QueryResult, Au
             return;
         }
 
-        //Long id = document.getLong(StringUtil.toSnakeCase(fieldX.getAnnotation(Fetch.class).value()));
         Long id = document.getLong(fieldX.getAnnotation(Fetch.class).value());
-        if (id == null) {
-            id = document.getLong(fieldX.getAnnotation(Fetch.class).value());
-        }
         if (id == null) {
             return;
         }
@@ -573,15 +549,10 @@ public class MongoQueryResult extends QueryResultBase implements QueryResult, Au
         FetchByFk fkData = field.getAnnotation(FetchByFk.class);
         if (newIteration) {
             newIteration = false;
-            //Long id = document.getLong(StringUtil.toSnakeCase(fkData.fk()));
             Long id = document.getLong(fkData.fk());
-            if (id == null) {
-                id = document.getLong(fkData.fk());
-            }
             if (fetchByFkCache == null) {
                 fetchByFkCache = new HashMap<>(4);
             }
-
             if (id != null) {
                 try {
                     fetchByFkCache.put(fkData.fk(), MongoSearch.getDto(fkData.dto(), id, getLocales()));

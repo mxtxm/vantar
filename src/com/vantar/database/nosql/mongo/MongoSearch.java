@@ -23,7 +23,6 @@ public class MongoSearch {
                 property = "id";
             }
             String p = property.equals("id") ? Mongo.ID : property;
-            //condition.append(StringUtil.toSnakeCase(property), dto.getPropertyValue(property));
             condition.append(p, dto.getPropertyValue(property));
         }
 
@@ -58,7 +57,6 @@ public class MongoSearch {
         try {
             return MongoConnection.getDatabase().getCollection(dto.getStorage())
                 .find(
-                    //new Document(StringUtil.toSnakeCase(property), dto.getPropertyValue(property))
                     new Document(p, dto.getPropertyValue(property))
                         .append(Mongo.LOGICAL_DELETE_FIELD, new Document("$ne", Mongo.LOGICAL_DELETE_VALUE))
                 )
