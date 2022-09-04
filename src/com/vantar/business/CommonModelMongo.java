@@ -141,9 +141,18 @@ public class CommonModelMongo extends CommonModel {
     }
 
     public static ResponseMessage insert(Dto dto) throws InputException, ServerException {
-        return insert(dto, null);
+        return insertY(dto, true, null);
     }
     public static synchronized ResponseMessage insert(Dto dto, WriteEvent event) throws InputException, ServerException {
+        return insertY(dto, true, event);
+    }
+    public static ResponseMessage insertNoLog(Dto dto) throws InputException, ServerException {
+        return insertY(dto, false, null);
+    }
+    public static synchronized ResponseMessage insertNoLog(Dto dto, WriteEvent event) throws InputException, ServerException {
+        return insertY(dto, false, event);
+    }
+    public static synchronized ResponseMessage insertY(Dto dto, boolean logEvent, WriteEvent event) throws InputException, ServerException {
         if (event != null) {
             try {
                 event.beforeSet(dto);
@@ -195,16 +204,18 @@ public class CommonModelMongo extends CommonModel {
             }
         }
 
-        try {
-            dto = CommonRepoMongo.getById(dto);
-        } catch (DatabaseException e) {
-            log.error(" !! {} : {}\n", dto.getClass().getSimpleName(), dto, e);
-        } catch (NoContentException e) {
-            throw new ServerException(VantarKey.INSERT_FAIL);
-        }
+        if (logEvent) {
+            try {
+                dto = CommonRepoMongo.getById(dto);
+            } catch (DatabaseException e) {
+                log.error(" !! {} : {}\n", dto.getClass().getSimpleName(), dto, e);
+            } catch (NoContentException e) {
+                throw new ServerException(VantarKey.INSERT_FAIL);
+            }
 
-        if (Services.isUp(ServiceUserActionLog.class)) {
-            ServiceUserActionLog.add(Dto.Action.INSERT, dto);
+            if (Services.isUp(ServiceUserActionLog.class)) {
+                ServiceUserActionLog.add(Dto.Action.INSERT, dto);
+            }
         }
 
         return ResponseMessage.success(VantarKey.INSERT_SUCCESS, dto.getId(), dto);
@@ -317,35 +328,63 @@ public class CommonModelMongo extends CommonModel {
     }
 
     public static ResponseMessage update(Dto dto) throws InputException, ServerException {
-        return updateX(dto, null, Dto.Action.UPDATE_FEW_COLS, null);
+        return updateY(dto, null, Dto.Action.UPDATE_FEW_COLS, true, null);
     }
     public static ResponseMessage update(Dto dto, Dto.Action action) throws InputException, ServerException {
-        return updateX(dto, null, action, null);
+        return updateY(dto, null, action, true, null);
     }
     public static ResponseMessage update(Dto dto, WriteEvent event) throws InputException, ServerException {
-        return updateX(dto, null, Dto.Action.UPDATE_FEW_COLS, event);
+        return updateY(dto, null, Dto.Action.UPDATE_FEW_COLS, true, event);
     }
     public static ResponseMessage update(Dto dto, Dto.Action action, WriteEvent event) throws InputException, ServerException {
-        return updateX(dto, null, action, event);
+        return updateY(dto, null, action, true, event);
     }
 
     public static ResponseMessage update(QueryBuilder q) throws InputException, ServerException {
-        return updateX(null, q, Dto.Action.UPDATE_FEW_COLS, null);
+        return updateY(null, q, Dto.Action.UPDATE_FEW_COLS, true, null);
     }
     public static ResponseMessage update(QueryBuilder q, Dto.Action action) throws InputException, ServerException {
-        return updateX(null, q, action, null);
+        return updateY(null, q, action, true, null);
     }
     public static ResponseMessage update(QueryBuilder q, WriteEvent event) throws InputException, ServerException {
-        return updateX(null, q, Dto.Action.UPDATE_FEW_COLS, event);
+        return updateY(null, q, Dto.Action.UPDATE_FEW_COLS, true, event);
     }
     public static ResponseMessage update(QueryBuilder q, Dto.Action action, WriteEvent event)
         throws InputException, ServerException {
 
-        return updateX(null, q, action, event);
+        return updateY(null, q, action, true, event);
     }
 
-    private static synchronized ResponseMessage updateX(Dto dto, QueryBuilder q, Dto.Action action, WriteEvent event)
+    public static ResponseMessage updateNoLog(Dto dto) throws InputException, ServerException {
+        return updateY(dto, null, Dto.Action.UPDATE_FEW_COLS, false, null);
+    }
+    public static ResponseMessage updateNoLog(Dto dto, Dto.Action action) throws InputException, ServerException {
+        return updateY(dto, null, action, false, null);
+    }
+    public static ResponseMessage updateNoLog(Dto dto, WriteEvent event) throws InputException, ServerException {
+        return updateY(dto, null, Dto.Action.UPDATE_FEW_COLS, false, event);
+    }
+    public static ResponseMessage updateNoLog(Dto dto, Dto.Action action, WriteEvent event) throws InputException, ServerException {
+        return updateY(dto, null, action, false, event);
+    }
+
+    public static ResponseMessage updateNoLog(QueryBuilder q) throws InputException, ServerException {
+        return updateY(null, q, Dto.Action.UPDATE_FEW_COLS, false, null);
+    }
+    public static ResponseMessage updateNoLog(QueryBuilder q, Dto.Action action) throws InputException, ServerException {
+        return updateY(null, q, action, false, null);
+    }
+    public static ResponseMessage updateNoLog(QueryBuilder q, WriteEvent event) throws InputException, ServerException {
+        return updateY(null, q, Dto.Action.UPDATE_FEW_COLS, false, event);
+    }
+    public static ResponseMessage updateNoLog(QueryBuilder q, Dto.Action action, WriteEvent event)
         throws InputException, ServerException {
+
+        return updateY(null, q, action, false, event);
+    }
+
+    private static synchronized ResponseMessage updateY(Dto dto, QueryBuilder q, Dto.Action action
+        , boolean logEvent, WriteEvent event) throws InputException, ServerException {
 
         if (q != null) {
             dto = q.getDto();
@@ -404,16 +443,18 @@ public class CommonModelMongo extends CommonModel {
             }
         }
 
-        try {
-            dto = CommonRepoMongo.getById(dto);
-        } catch (DatabaseException e) {
-            log.error(" !! {} : {}\n", dto.getClass().getSimpleName(), dto, e);
-        } catch (NoContentException e) {
-            throw new ServerException(VantarKey.UPDATE_FAIL);
-        }
+        if (logEvent) {
+            try {
+                dto = CommonRepoMongo.getById(dto);
+            } catch (DatabaseException e) {
+                log.error(" !! {} : {}\n", dto.getClass().getSimpleName(), dto, e);
+            } catch (NoContentException e) {
+                throw new ServerException(VantarKey.UPDATE_FAIL);
+            }
 
-        if (Services.isUp(ServiceUserActionLog.class)) {
-            ServiceUserActionLog.add(action, dto);
+            if (Services.isUp(ServiceUserActionLog.class)) {
+                ServiceUserActionLog.add(action, dto);
+            }
         }
 
         return ResponseMessage.success(VantarKey.UPDATE_SUCCESS, dto);
@@ -482,20 +523,34 @@ public class CommonModelMongo extends CommonModel {
     }
 
     public static ResponseMessage deleteById(Dto dto) throws InputException, ServerException {
-        return deleteX(dto, null, null);
+        return deleteX(dto, null, true, null);
     }
     public static ResponseMessage deleteById(Dto dto, WriteEvent event) throws InputException, ServerException {
-        return deleteX(dto, null, event);
+        return deleteX(dto, null, true, event);
     }
 
     public static ResponseMessage delete(QueryBuilder q) throws InputException, ServerException {
-        return deleteX(null, q, null);
+        return deleteX(null, q, true, null);
     }
     public static ResponseMessage delete(QueryBuilder q, WriteEvent event) throws InputException, ServerException {
-        return deleteX(null, q, event);
+        return deleteX(null, q, true, event);
     }
 
-    public static ResponseMessage deleteX(Dto dto, QueryBuilder q, WriteEvent event)
+    public static ResponseMessage deleteByIdNoLog(Dto dto) throws InputException, ServerException {
+        return deleteX(dto, null, false, null);
+    }
+    public static ResponseMessage deleteByIdNoLog(Dto dto, WriteEvent event) throws InputException, ServerException {
+        return deleteX(dto, null, false, event);
+    }
+
+    public static ResponseMessage deleteNoLog(QueryBuilder q) throws InputException, ServerException {
+        return deleteX(null, q, false, null);
+    }
+    public static ResponseMessage deleteNoLog(QueryBuilder q, WriteEvent event) throws InputException, ServerException {
+        return deleteX(null, q, false, event);
+    }
+
+    public static ResponseMessage deleteX(Dto dto, QueryBuilder q, boolean logEvent, WriteEvent event)
         throws InputException, ServerException {
 
         if (q != null) {
@@ -545,7 +600,7 @@ public class CommonModelMongo extends CommonModel {
                 }
             }
 
-            if (Services.isUp(ServiceUserActionLog.class)) {
+            if (logEvent && Services.isUp(ServiceUserActionLog.class)) {
                 ServiceUserActionLog.add(Dto.Action.DELETE, dto);
             }
 

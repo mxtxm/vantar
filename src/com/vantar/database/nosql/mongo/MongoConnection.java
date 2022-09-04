@@ -11,7 +11,7 @@ import java.util.*;
 
 public class MongoConnection {
 
-    private static MongoConfig config;
+    public static MongoConfig config;
     private static MongoClient mongoClient;
     private static MongoDatabase database;
     private static boolean isUp;

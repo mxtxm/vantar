@@ -3,11 +3,13 @@ package com.vantar.database.query;
 import com.vantar.database.dto.Dto;
 import com.vantar.util.datetime.DateTime;
 import com.vantar.util.object.ObjectUtil;
-import java.util.List;
+import java.util.*;
 
 
 public class QueryMatchItem {
 
+    public int id;
+    
     public String fieldName;
     public QueryOperator type;
 
@@ -207,5 +209,66 @@ public class QueryMatchItem {
 
     public String toString() {
         return ObjectUtil.toString(this);
+    }
+
+    public boolean equals(QueryMatchItem obj) {
+        if ((fieldName == null && obj.fieldName != null) || (fieldName != null && !fieldName.equals(obj.fieldName))) {
+            return false;
+        }
+        if ((type == null && obj.type != null) || (type != null && !type.equals(obj.type))) {
+            return false;
+        }
+        if ((queryValue == null && obj.queryValue != null)
+            || (queryValue != null && !queryValue.equals(obj.queryValue))) {
+            return false;
+        }
+        if ((booleanValue == null && obj.booleanValue != null)
+            || (booleanValue != null && !booleanValue.equals(obj.booleanValue))) {
+            return false;
+        }
+        if ((characterValue == null && obj.characterValue != null)
+            || (characterValue != null && !characterValue.equals(obj.characterValue))) {
+            return false;
+        }
+        if ((characterValues == null && obj.characterValues != null)
+            || (characterValues != null && !Arrays.equals(characterValues, obj.characterValues))) {
+            return false;
+        }
+        if ((stringValue == null && obj.stringValue != null)
+            || (stringValue != null && !stringValue.equals(obj.stringValue))) {
+            return false;
+        }
+        if ((stringValues == null && obj.stringValues != null)
+            || (stringValues != null && !Arrays.equals(stringValues, obj.stringValues))) {
+            return false;
+        }
+        if ((numberValue == null && obj.numberValue != null)
+            || (numberValue != null && !numberValue.equals(obj.numberValue))) {
+            return false;
+        }
+        if ((numberValues == null && obj.numberValues != null)
+            || (numberValues != null && !Arrays.equals(numberValues, obj.numberValues))) {
+            return false;
+        }
+        if ((objectValues == null && obj.objectValues != null)
+            || (objectValues != null && !Arrays.equals(objectValues, obj.objectValues))) {
+            return false;
+        }
+        if ((dateTimeValue == null && obj.dateTimeValue != null)
+            || (dateTimeValue != null && !dateTimeValue.equals(obj.dateTimeValue))) {
+            return false;
+        }
+        if ((dateTimeValues == null && obj.dateTimeValues != null)
+            || (dateTimeValues != null && !Arrays.equals(dateTimeValues, obj.dateTimeValues))) {
+            return false;
+        }
+        if ((itemList == null && obj.itemList != null)
+            || (itemList != null && !itemList.equals(obj.itemList))) {
+            return false;
+        }
+        if ((dto == null && obj.dto != null) || (dto != null && !dto.getStorage().equals(obj.dto.getStorage()))) {
+            return false;
+        }
+        return true;
     }
 }

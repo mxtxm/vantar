@@ -3,7 +3,6 @@ package com.vantar.business;
 import com.vantar.common.VantarParam;
 import com.vantar.database.common.ValidationError;
 import com.vantar.database.dto.*;
-import com.vantar.database.nosql.mongo.Mongo;
 import com.vantar.database.nosql.mongo.MongoSearch;
 import com.vantar.database.query.*;
 import com.vantar.exception.*;
@@ -202,6 +201,11 @@ public abstract class CommonModel {
         }
     }
 
+    /**
+     * Validate values
+     * @param objs "obj1", obj1, "obj2", obj2, ...
+     * @throws InputException when object is empty
+     */
     public static void validateRequired(Object... objs) throws InputException {
         StringBuilder fields = new StringBuilder();
         String fieldName = null;

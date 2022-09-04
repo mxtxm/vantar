@@ -1,6 +1,6 @@
 package com.vantar.database.nosql.mongo;
 
-import com.mongodb.MongoCommandException;
+import com.mongodb.*;
 import com.mongodb.client.*;
 import com.mongodb.client.model.*;
 import com.vantar.common.VantarParam;
@@ -22,6 +22,17 @@ public class Mongo {
     public static final String ID = "_id";
     public final static String LOGICAL_DELETE_FIELD = "is_deleted";
     public final static Object LOGICAL_DELETE_VALUE = "Y";
+
+
+    public static synchronized void renameCollection(String from, String to) throws DatabaseException {
+        try {
+            MongoConnection.getDatabase().getCollection(from)
+                .renameCollection(new MongoNamespace(MongoConnection.config.getMongoDatabase(), to));
+        } catch (Exception e) {
+            log.error("! rename collection", e);
+            throw new DatabaseException(e);
+        }
+    }
 
     /**
      *  SEQUENCE > > >

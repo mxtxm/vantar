@@ -103,7 +103,7 @@ abstract public class QueryResultBase {
             while (next()) {
                 event.afterSetData(dto);
                 dto = dto.getClass().getConstructor().newInstance();
-            }
+           }
         } catch (NoSuchMethodException | IllegalAccessException | InstantiationException | InvocationTargetException e) {
             log.error("! data > dto({})", dto, e);
         } finally {

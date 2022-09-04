@@ -9,7 +9,7 @@ import java.util.*;
 
 public class QueryCondition {
 
-    public List<QueryMatchItem> q = new ArrayList<>();
+    public List<QueryMatchItem> q = new ArrayList<>(25);
     public QueryOperator operator;
     public String storage;
     public boolean dump = false;
@@ -631,4 +631,44 @@ public class QueryCondition {
         return ObjectUtil.toStringViewable(this);
     }
 
+    public boolean conditionIsEmpty() {
+        return q.isEmpty();
+    }
+
+    public boolean conditionExists(String fieldName, QueryOperator type) {
+        for (QueryMatchItem item : q) {
+            if (fieldName.equals(item.fieldName) && type.equals(item.type)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public List<QueryMatchItem> conditionGet(String fieldName) {
+        List<QueryMatchItem> found = new ArrayList<>(5);
+        for (int i = 0, l = q.size(); i < l; i++) {
+            QueryMatchItem item = q.get(i);
+            if (fieldName.equals(item.fieldName)) {
+                item.id = i;
+                found.add(item);
+            }
+        }
+        return found;
+    }
+
+    public List<QueryMatchItem> conditionGet(String fieldName, QueryOperator type) {
+        List<QueryMatchItem> found = new ArrayList<>(5);
+        for (int i = 0, l = q.size(); i < l; i++) {
+            QueryMatchItem item = q.get(i);
+            if (fieldName.equals(item.fieldName) && type.equals(item.type)) {
+                item.id = i;
+                found.add(item);
+            }
+        }
+        return found;
+    }
+
+    public void conditionRemove(int id) {
+        q.remove(id);
+    }
 }

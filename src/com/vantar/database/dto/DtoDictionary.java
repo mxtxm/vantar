@@ -84,33 +84,39 @@ public class DtoDictionary {
                 String[] properties = StringUtil.splitTrim(commandProperties[1], VantarParam.SEPARATOR_COMMON);
                 switch (commandProperties[0]) {
                     case "present":
-                        info.present = new ArrayList<>();
-                        for (String property : properties) {
-                            info.present.add(property);
+                        if (info.present == null) {
+                            info.present = new ArrayList<>(properties.length);
                         }
+                        info.present.addAll(Arrays.asList(properties));
                         break;
 
                     case "insert-exclude":
-                        for (String property : properties) {
-                            info.insertExclude.add(property);
+                        if (info.insertExclude == null) {
+                            info.insertExclude = new ArrayList<>(properties.length);
                         }
+                        info.insertExclude.addAll(Arrays.asList(properties));
                         break;
 
                     case "insert-include":
-                        for (String property : properties) {
-                            info.insertExclude.remove(property);
+                        if (info.insertExclude != null) {
+                            for (String property : properties) {
+                                info.insertExclude.remove(property);
+                            }
                         }
                         break;
 
                     case "update-exclude":
-                        for (String property : properties) {
-                            info.updateExclude.add(property);
+                        if (info.updateExclude == null) {
+                            info.updateExclude = new ArrayList<>(properties.length);
                         }
+                        info.updateExclude.addAll(Arrays.asList(properties));
                         break;
 
                     case "update-include":
-                        for (String property : properties) {
-                            info.updateExclude.remove(property);
+                        if (info.updateExclude != null) {
+                            for (String property : properties) {
+                                info.updateExclude.remove(property);
+                            }
                         }
                         break;
                 }
@@ -249,9 +255,7 @@ public class DtoDictionary {
         public String getImportData() {
             String data;
             if (Settings.isLocal()) {
-                data = FileUtil.getFileContentFromClassPath(
-                    "/data/import/" + StringUtil.toKababCase(getDtoClassName()) + "-local"
-                );
+                data = FileUtil.getFileContentFromClassPath("/data/import/" + StringUtil.toKababCase(getDtoClassName()) + "-local");
                 if (StringUtil.isNotEmpty(data)) {
                     return data;
                 }

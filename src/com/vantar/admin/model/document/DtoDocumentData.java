@@ -321,7 +321,7 @@ public class DtoDocumentData {
         if (g.length == 2) {
             Class<?> genericTypeK = g[0];
             if (ClassUtil.isInstantiable(genericTypeK, Number.class)) {
-                json.append("0:");
+                json.append("\"0\":");
             } else if (genericTypeK == String.class) {
                 json.append("\"STRING\":");
             }
