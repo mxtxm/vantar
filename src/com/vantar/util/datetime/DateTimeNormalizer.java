@@ -522,4 +522,47 @@ public class DateTimeNormalizer {
         }
         return 2;
     }
+
+    public static int getMonthDayCount(int month) {
+        if (month == 2) {
+            return 28;
+        }
+        return (month == 1 || month == 3 || month == 5 || month == 7 || month == 8 || month == 10 || month == 12) ?
+            31 : 30;
+    }
+
+    public static int getMonthDayCount(int year, int month) {
+        if (month == 2) {
+            return
+                (  year == 1940 || year == 1944 || year == 1948 || year == 1952 || year == 1956 || year == 1960
+                || year == 1964 || year == 1968 || year == 1972 || year == 1976 || year == 1980 || year == 1984
+                || year == 1988 || year == 1992 || year == 1996 || year == 2000 || year == 2004 || year == 2008
+                || year == 2016 || year == 2020 || year == 2024 || year == 2028 || year == 2032 || year == 2036
+                || year == 2040 || year == 2044 || year == 2048 || year == 2052 || year == 2056 || year == 2060) ? 29 :28;
+        }
+        return (month == 1 || month == 3 || month == 5 || month == 7 || month == 8 || month == 10 || month == 12) ?
+            31 : 30;
+    }
+
+    public static int getMonthDayCountPersian(int month) {
+        if (month == 12) {
+            return 29;
+        }
+        return month < 7 ? 31 : 30;
+    }
+
+    public static int getMonthDayCountPersian(int year, int month) {
+        if (month == 12) {
+            return
+                (  year == 1309 || year == 1313 || year == 1317 || year == 1321 || year == 1325 || year == 1329
+                || year == 1333 || year == 1337 || year == 1342 || year == 1346 || year == 1350 || year == 1354
+                || year == 1358 || year == 1362 || year == 1366 || year == 1370 || year == 1375 || year == 1379
+                || year == 1383 || year == 1387 || year == 1391 || year == 1395 || year == 1399 || year == 1403
+                || year == 1408 || year == 1412 || year == 1416 || year == 1420 || year == 1424 || year == 1428
+                || year == 1432 || year == 1436 || year == 1441 || year == 1445 || year == 1449 || year == 1453
+                || year == 1457 || year == 1461 || year == 1465 || year == 1469 || year == 1474 || year == 1478
+                || year == 1482 || year == 1486 || year == 1490 || year == 1494 || year == 1498) ? 30 : 29;
+        }
+        return month < 7 ? 31 : 30;
+    }
 }

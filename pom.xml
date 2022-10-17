@@ -18,6 +18,15 @@
 
     <dependencies>
 
+
+        <!-- experiment ssh -->
+        <dependency>
+            <groupId>com.jcraft</groupId>
+            <artifactId>jsch</artifactId>
+            <version>0.1.55</version>
+        </dependency>
+
+
         <!-- file type detection -->
         <dependency>
             <groupId>org.apache.tika</groupId>

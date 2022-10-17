@@ -12,14 +12,13 @@ import com.vantar.exception.*;
 import com.vantar.service.Services;
 import com.vantar.service.cache.ServiceDtoCache;
 import com.vantar.util.collection.*;
-import com.vantar.util.datetime.DateTime;
+import com.vantar.util.datetime.*;
 import com.vantar.util.json.Json;
 import com.vantar.util.object.*;
 import com.vantar.util.string.StringUtil;
 import org.bson.Document;
 import java.lang.reflect.Field;
 import java.util.*;
-
 
 @SuppressWarnings({"unchecked"})
 public class MongoQueryResult extends QueryResultBase implements QueryResult, AutoCloseable {
@@ -173,33 +172,27 @@ public class MongoQueryResult extends QueryResultBase implements QueryResult, Au
                         continue;
                     }
                 }
-
                 if (field.isAnnotationPresent(Fetch.class)) {
                     fetchFromDatabase(document, dto, field, type);
                     continue;
                 }
-
                 if (field.isAnnotationPresent(FetchByFk.class)) {
                     fetchByFk(document, field);
                     continue;
                 }
-
                 if (field.isAnnotationPresent(DeLocalized.class)) {
                     deLocalize(document, dto, field, name);
                     continue;
                 }
-
                 if (field.isAnnotationPresent(StoreString.class)) {
                     String v = document.getString(name);
                     field.set(dto, v == null ? null : Json.d.fromJson(v, type));
                     continue;
                 }
-
                 if (type.isEnum()) {
                     EnumUtil.setEnumValue(document.getString(name), type, dto, field);
                     continue;
                 }
-
                 if (type == Location.class) {
                     Document point = (Document) document.get(name);
                     if (point == null) {
@@ -309,7 +302,19 @@ public class MongoQueryResult extends QueryResultBase implements QueryResult, Au
                     field.set(dto, t);
                     continue;
                 }
-
+                if (type == DateTimeRange.class) {
+                    if (value instanceof Document) {
+                        Object dateMin = ((Document) value).get("dateMin");
+                        Object dateMax = ((Document) value).get("dateMax");
+                        if (dateMax == null || dateMin == null) {
+                            continue;
+                        }
+                        field.set(dto, new DateTimeRange(dateMin.toString(), dateMax.toString()));
+                    } else {
+                        field.set(dto, new DateTimeRange(value.toString()));
+                    }
+                    continue;
+                }
                 if (ClassUtil.isInstantiable(type, Dto.class)) {
                     Dto obj = (Dto) ClassUtil.getInstance(type);
                     if (obj != null) {

@@ -39,8 +39,7 @@ public class Admin {
         menu.put(Locale.getString(VantarKey.ADMIN_MENU_DOCUMENTS), "/admin/document/index");
 
         // custom menu
-        String appPackage = Settings.getAppPackage();
-        String adminApp = StringUtil.isEmpty(appPackage) ? null : appPackage + ".business.admin.model.AdminApp";
+        String adminApp = Settings.getAdminApp();
         if (StringUtil.isNotEmpty(adminApp)) {
             try {
                 Class<?> tClass = Class.forName(adminApp);
@@ -120,8 +119,7 @@ public class Admin {
         }
 
         // custom shortcuts
-        String appPackage = Settings.getAppPackage();
-        String adminApp = StringUtil.isEmpty(appPackage) ? null : appPackage + ".business.admin.model.AdminApp";
+        String adminApp = Settings.getAdminApp();
         if (StringUtil.isNotEmpty(adminApp)) {
             try {
                 Class<?> tClass = Class.forName(adminApp);

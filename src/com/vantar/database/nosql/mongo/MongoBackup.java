@@ -1,7 +1,7 @@
 package com.vantar.database.nosql.mongo;
 
 import com.mongodb.client.*;
-import com.vantar.admin.model.AdminDatabase;
+import com.vantar.admin.model.*;
 import com.vantar.database.dto.*;
 import com.vantar.exception.DatabaseException;
 import com.vantar.util.datetime.DateTimeRange;
@@ -154,7 +154,7 @@ public class MongoBackup {
                 String[] parts = StringUtil.split(entry.getName(), '/');
                 String collection = StringUtil.replace(parts[parts.length - 1], ".dump", "");
                 collection = StringUtil.toStudlyCase(collection);
-
+                String line = null;
                 try (
                     InputStream stream = zipFile.getInputStream(entry);
                     BufferedReader reader = new BufferedReader(new InputStreamReader(stream))) {
@@ -166,7 +166,7 @@ public class MongoBackup {
                             Mongo.insert(collection, documents);
                             documents = new ArrayList<>(BULK_ACTION_RECORD_COUNT);
                         }
-                        String line = reader.readLine();
+                        line = reader.readLine();
                         if (toCamelCase) {
                             line = jsonToCamelCaseProperties(line);
                         }
@@ -181,7 +181,8 @@ public class MongoBackup {
                             + (elapsed * 10 / 10d) + "s").write();
                         r += i - 1;
                     }
-                } catch (IOException | DatabaseException e) {
+                } catch (Exception e) {
+                    Admin.log.info("! {}\n{}\n", entry.getName(), line, e);
                     if (ui != null) {
                         ui.addErrorMessage(e);
                     }
@@ -209,6 +210,7 @@ public class MongoBackup {
     }
 
     private static String jsonToCamelCaseProperties(String json) {
+        json = StringUtil.replace(json, "\\\"", "==-+-=-=-+-==");
         StringBuilder buffer = new StringBuilder();
         boolean isIn = false;
         StringBuilder tokenBuffer = new StringBuilder();
@@ -247,6 +249,6 @@ public class MongoBackup {
 
             buffer.append(c);
         }
-        return buffer.toString();
+        return StringUtil.replace(buffer.toString(), "==-+-=-=-+-==", "\\\"");
     }
 }

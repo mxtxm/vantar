@@ -74,10 +74,10 @@ public class AdminService {
             return;
         }
 
-        String appPackage = Settings.getAppPackage();
-        if (StringUtil.isNotEmpty(appPackage)) {
+        String adminApp = Settings.getAdminApp();
+        if (StringUtil.isNotEmpty(adminApp)) {
             try {
-                Class<?> tClass = Class.forName(appPackage + ".business.admin.model.AdminApp");
+                Class<?> tClass = Class.forName(adminApp);
                 Method method = tClass.getMethod("factoryResetBefore");
                 method.invoke(null);
             } catch (ClassNotFoundException | NoSuchMethodException | IllegalAccessException | InvocationTargetException ignore) {
@@ -119,10 +119,9 @@ public class AdminService {
                 .containerEnd();
         }
 
-        appPackage = Settings.getAppPackage();
-        if (StringUtil.isNotEmpty(appPackage)) {
+        if (StringUtil.isNotEmpty(adminApp)) {
             try {
-                Class<?> tClass = Class.forName(appPackage + ".business.admin.model.AdminApp");
+                Class<?> tClass = Class.forName(adminApp);
                 Method method = tClass.getMethod("factoryResetAfter");
                 method.invoke(null);
             } catch (ClassNotFoundException | NoSuchMethodException | IllegalAccessException | InvocationTargetException ignore) {

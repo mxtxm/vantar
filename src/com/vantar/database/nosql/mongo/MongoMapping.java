@@ -33,7 +33,6 @@ public class MongoMapping {
                 parts[0] = Mongo.ID;
             }
             document.append(
-                //StringUtil.toSnakeCase(parts[0]),
                 parts[0],
                 parts.length == 1 ? 1 : (parts[1].equalsIgnoreCase("asc") || parts[1].equalsIgnoreCase("1") ? 1 : -1)
             );
@@ -241,7 +240,17 @@ public class MongoMapping {
                         mongoQuery.average(group.columns[0]);
                         break;
                     default:
-                        document.put(group.columns[1], group.columns[0] == null ? null : "$" + group.columns[0]);
+                        int l = group.columns.length;
+                        if (l == 2) {
+                            document.put(group.columns[1], group.columns[0] == null ? null : "$" + group.columns[0]);
+                            break;
+                        }
+                        Document columnsDoc = new Document();
+                        --l;
+                        for (int i = 0; i < l ; ++i) {
+                            columnsDoc.append(group.columns[i], "$" + group.columns[i]);
+                        }
+                        document.put(group.columns[l], columnsDoc);
                 }
             }
             if (!document.isEmpty()) {
@@ -286,7 +295,6 @@ public class MongoMapping {
                 continue;
             }
 
-            //String fieldName = StringUtil.toSnakeCase(item.fieldName);
             String fieldName = item.fieldName;
             if (fieldName != null) {
                 if (fieldName.equals("id")) {

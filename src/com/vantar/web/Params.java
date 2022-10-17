@@ -1,6 +1,5 @@
 package com.vantar.web;
 
-import com.vantar.admin.model.Admin;
 import com.vantar.common.VantarParam;
 import com.vantar.database.datatype.Location;
 import com.vantar.database.query.data.QueryData;
@@ -136,12 +135,14 @@ public class Params {
         return StringUtil.isEmpty(header) ? defaultValue : header;
     }
 
-    public Map<String, String> getHeaders() {
+    public Map<String, String> getHeaders(String... exclude) {
         Map<String, String> headers = new HashMap<>(15, 1);
         Enumeration<String> names = request.getHeaderNames();
         while (names.hasMoreElements()) {
             String name = names.nextElement();
-            headers.put(name, request.getHeader(name));
+            if (!CollectionUtil.contains(exclude, name)) {
+                headers.put(name, request.getHeader(name));
+            }
         }
         return headers;
     }
@@ -504,6 +505,10 @@ public class Params {
         if (request == null) {
             return "";
         }
+        json = (String) request.getAttribute("__json__");
+        if (json != null) {
+            return json;
+        }
 
         StringBuilder buffer = new StringBuilder();
         String line;
@@ -517,6 +522,7 @@ public class Params {
         }
 
         json = buffer.toString();
+        request.setAttribute("__json__", json);
         return json;
     }
 
@@ -654,6 +660,16 @@ public class Params {
         return range;
     }
 
+    public DateTimeRange getDateTimeRange(String key) {
+        try {
+            DateTimeRange range = new DateTimeRange(getString(key));
+            range.adjustDateTimeRange();
+            return range;
+        } catch (DateTimeException e) {
+            return null;
+        }
+    }
+
     public DateTimeRange getDateRangeDefaultNow(String dateMin, String dateMax) {
         DateTimeRange range = getDateRange(dateMin, dateMax);
         if (!range.isValid()) {
@@ -677,6 +693,17 @@ public class Params {
         range.adjustDateRange();
         return range;
     }
+
+    public DateTimeRange getDateRange(String key) {
+        try {
+            DateTimeRange range = new DateTimeRange(getString(key));
+            range.adjustDateRange();
+            return range;
+        } catch (DateTimeException e) {
+            return null;
+        }
+    }
+
 
 
     // > > > UPLOAD

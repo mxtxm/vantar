@@ -304,18 +304,17 @@ public class DateTimeFormatter {
         return sb.toString();
     }
 
-    public String getDateCompactYm() {
+    public int getDateCompactYm() {
         StringBuilder sb = new StringBuilder(6);
         sb.append(year);
         if (month < 10) {
             sb.append('0');
         }
         sb.append(month);
-        pattern = "yyyyMM";
-        return sb.toString();
+        return StringUtil.toInteger(sb.toString());
     }
 
-    public String getDateCompactYmd() {
+    public int getDateCompactYmd() {
         StringBuilder sb = new StringBuilder(8);
         sb.append(year);
         if (month < 10) {
@@ -326,11 +325,10 @@ public class DateTimeFormatter {
             sb.append('0');
         }
         sb.append(day);
-        pattern = "yyyyMMdd";
-        return sb.toString();
+        return StringUtil.toInteger(sb.toString());
     }
 
-    public String getDateTimeCompact() {
+    public int getDateTimeCompact() {
         StringBuilder sb = new StringBuilder(20);
         sb.append(year);
         if (month < 10) {
@@ -355,7 +353,7 @@ public class DateTimeFormatter {
         }
         sb.append(second);
         pattern = "yyyyMMddHHmmss";
-        return sb.toString();
+        return StringUtil.toInteger(sb.toString());
     }
 
     public long getAsTimestamp() {
@@ -406,6 +404,31 @@ public class DateTimeFormatter {
         return time.toString();
     }
 
+    public static int getWeek(int ymd) {
+        return getWeek(ymd / 100, (ymd / 100) % 100, ymd % 100);
+    }
+
+    public static int getWeek(int year, int month, int day) {
+        int days = 0;
+        for (int m = 1; m < month; ++m) {
+            days += DateTimeNormalizer.getMonthDayCount(year, m);
+        }
+        days += day;
+        return (days / 7) + 1;
+    }
+
+    public static int getWeekPersian(int ymd) {
+        return getWeekPersian(ymd / 100, (ymd / 100) % 100, ymd % 100);
+    }
+
+    public static int getWeekPersian(int year, int month, int day) {
+        int days = 0;
+        for (int m = 1; m < month; ++m) {
+            days += DateTimeNormalizer.getMonthDayCountPersian(year, m);
+        }
+        days += day;
+        return (days / 7) + 1;
+    }
 
     @Override
     public boolean equals(Object obj) {

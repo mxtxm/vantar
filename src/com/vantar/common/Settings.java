@@ -152,6 +152,10 @@ public class Settings {
         return ((CommonConfig) config).getAppPackage();
     }
 
+    public static String getAdminApp() {
+        return ((CommonConfig) config).getAdminApp();
+    }
+
 
     public interface Common extends org.aeonbits.owner.Reloadable, org.aeonbits.owner.Accessible, org.aeonbits.owner.Mutable {
 
@@ -167,5 +171,9 @@ public class Settings {
         @org.aeonbits.owner.Config.DefaultValue("")
         @org.aeonbits.owner.Config.Key("package")
         String getAppPackage();
+
+        @org.aeonbits.owner.Config.DefaultValue("")
+        @org.aeonbits.owner.Config.Key("admin.app")
+        String getAdminApp();
     }
 }

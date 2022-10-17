@@ -8,7 +8,7 @@ import com.vantar.locale.Locale;
 import com.vantar.locale.VantarKey;
 import com.vantar.util.bool.BoolUtil;
 import com.vantar.util.collection.CollectionUtil;
-import com.vantar.util.datetime.DateTime;
+import com.vantar.util.datetime.*;
 import com.vantar.util.json.*;
 import com.vantar.util.number.NumberUtil;
 import com.vantar.util.object.*;
@@ -66,10 +66,8 @@ public abstract class DtoBase implements Dto {
     }
 
     public static String getStorage(Class<?> dtoClass) {
-        return //StringUtil.toSnakeCase(
-            dtoClass.isAnnotationPresent(Storage.class) ?
-                dtoClass.getAnnotation(Storage.class).value() : dtoClass.getSimpleName();
-        //);
+        return dtoClass.isAnnotationPresent(Storage.class) ?
+            dtoClass.getAnnotation(Storage.class).value() : dtoClass.getSimpleName();
     }
 
     public void setId(Long id) {
@@ -487,7 +485,6 @@ public abstract class DtoBase implements Dto {
             if (propertyNameMap != null && propertyNameMap.containsKey(fieldName)) {
                 fieldName = propertyNameMap.get(fieldName);
             } else if (snakeCase) {
-                //fieldName = StringUtil.toSnakeCase(field.getName());
                 fieldName = field.getName();
             }
 
@@ -557,7 +554,6 @@ public abstract class DtoBase implements Dto {
                     }
                 }
 
-                //data.add(new StorableData(StringUtil.toSnakeCase(name), type, value, isNull, field.getAnnotations()));
                 data.add(new StorableData(name, type, value, isNull, field.getAnnotations()));
             }
         } catch (IllegalAccessException e) {
@@ -840,7 +836,6 @@ public abstract class DtoBase implements Dto {
                     );
                 }
             } else if (value == null) {
-                //value = map.get(StringUtil.toSnakeCase(key));
                 value = map.get(key);
             }
 
@@ -916,6 +911,15 @@ public abstract class DtoBase implements Dto {
                     if (!(value instanceof DateTime)) {
                         try {
                             value = DateTime.toDateTime(value);
+                        } catch (DateTimeException e) {
+                            errors.add(new ValidationError(name, VantarKey.DATA_TYPE));
+                            return;
+                        }
+                    }
+                } else if (type.equals(DateTimeRange.class)) {
+                    if (!(value instanceof DateTimeRange)) {
+                        try {
+                            value = DateTimeRange.toDateTimeRange(value);
                         } catch (DateTimeException e) {
                             errors.add(new ValidationError(name, VantarKey.DATA_TYPE));
                             return;

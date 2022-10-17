@@ -1,6 +1,9 @@
 package com.vantar.util.datetime;
 
+import com.vantar.exception.DateTimeException;
+import com.vantar.util.json.Json;
 import com.vantar.util.object.ObjectUtil;
+import com.vantar.util.string.StringUtil;
 import java.util.*;
 
 /**
@@ -28,10 +31,66 @@ public class DateTimeRange {
     }
 
     /**
+     * Set data from String (timestamp or date value)
+     * @param dateMin lower bound
+     * @param dateMax upper bound
+     */
+    public DateTimeRange(String dateMin, String dateMax) throws DateTimeException {
+        this.dateMin = new DateTime(dateMin);
+        this.dateMax = new DateTime(dateMax);
+    }
+
+    /**
+     * Set data from String (timestamp or date value)
+     * @param range lower-bound,upper-bound e.g: "2021-01-01,2021-02-02"
+     */
+    public DateTimeRange(String range) throws DateTimeException {
+        if (range == null) {
+            return;
+        }
+        if (range.startsWith("{") && range.endsWith("}")) {
+            DateTimeRange temp = Json.d.fromJson(range, DateTimeRange.class);
+            dateMin = temp.dateMin;
+            dateMax = temp.dateMax;
+            return;
+        }
+        String[] parts = StringUtil.splits(range, ',', '|', '،');
+        if (parts.length != 2) {
+            return;
+        }
+        dateMin = new DateTime(parts[0]);
+        dateMax = new DateTime(parts[1]);
+    }
+
+    /**
      * Set data, lower bound=not upper bound=tomorrow
      */
     public DateTimeRange() {
 
+    }
+
+    @SuppressWarnings("unchecked")
+    public static DateTimeRange toDateTimeRange(Object value) throws DateTimeException {
+        if (value == null || value instanceof DateTimeRange) {
+            return (DateTimeRange) value;
+        }
+
+        if (value instanceof Map) {
+            Map<String, ?> map = (Map<String, ?>) value;
+            Object dateMin = map.get("dateMin");
+            Object dateMax = map.get("dateMax");
+            if (dateMin == null || dateMax == null) {
+                return null;
+            }
+            return new DateTimeRange(dateMin.toString(), dateMax.toString());
+        }
+
+
+        String stringValue = value.toString();
+        if (StringUtil.isEmpty(stringValue)) {
+            return null;
+        }
+        return new DateTimeRange(stringValue);
     }
 
     /**
@@ -93,6 +152,22 @@ public class DateTimeRange {
     }
 
     /**
+     * Check if at least one of the range bounds is null
+     * @return true if empty
+     */
+    public boolean isEmpty() {
+        return dateMin == null || dateMax == null;
+    }
+
+    /**
+     * Check both range bounds are not null
+     * @return true if not empty
+     */
+    public boolean isNotEmpty() {
+        return dateMin != null && dateMax != null;
+    }
+
+    /**
      * Get a list of years between the bounds
      * @return list of years
      */
@@ -109,7 +184,7 @@ public class DateTimeRange {
      * @return list of months
      */
     public List<Integer> getMonthsBetween() {
-        List<Integer> values = new ArrayList<>(30);
+        List<Integer> values = new ArrayList<>(100);
         if (dateMin.formatter().year == dateMax.formatter().year) {
             for (int i = dateMin.formatter().month, l = dateMax.formatter().month ; i <= l ; ++i) {
                 values.add(i);
@@ -131,13 +206,12 @@ public class DateTimeRange {
         return values;
     }
 
-
     /**
      * Get a list of year-months between the bounds. e.i: 202201, 202202, ...
      * @return list of months
      */
     public List<Integer> getYearMonthsBetween() {
-        List<Integer> values = new ArrayList<>(30);
+        List<Integer> values = new ArrayList<>(100);
         int minY = dateMin.formatter().year;
         if (minY == dateMax.formatter().year) {
             for (int i = dateMin.formatter().month, l = dateMax.formatter().month ; i <= l ; ++i) {
@@ -158,6 +232,129 @@ public class DateTimeRange {
         for (int i = 1, mMax = dateMax.formatter().month ; i <= mMax ; ++i) {
             values.add(yMax * 100 + i);
         }
+        return values;
+    }
+
+    /**
+     * Get a list of year-month-days between the bounds. e.i: 20220101, 20220230, ...
+     * @return list of days
+     */
+    public List<Integer> getYearMonthDaysBetween() {
+        return getYearMonthDaysBetweenX(false);
+    }
+
+    public List<Integer> getYearMonthDaysBetweenPersian() {
+        return getYearMonthDaysBetweenX(true);
+    }
+
+    private List<Integer> getYearMonthDaysBetweenX(boolean persian) {
+        int minY = dateMin.formatter().year;
+        int maxY = dateMax.formatter().year;
+        int minM = dateMin.formatter().month;
+        int maxM = dateMax.formatter().month;
+        int minD = dateMin.formatter().day;
+        int maxD = dateMax.formatter().day;
+
+        List<Integer> values = new ArrayList<>((maxY - minY) * 365);
+
+        for (int y = minY; y <= maxY; ++y) {
+            int firstMonth = -1;
+            int lastMonth = -1;
+            if (y == minY) {
+                firstMonth = minM;
+            }
+            if (y == maxY) {
+                lastMonth = maxM;
+            }
+            if (firstMonth == -1) {
+                firstMonth = 1;
+            }
+            if (lastMonth == -1) {
+                lastMonth = 12;
+            }
+
+            for (int m = firstMonth; m <= lastMonth; ++m) {
+                int firstDay = -1;
+                int lastDay = -1;
+                if (y == minY && m == minM) {
+                    firstDay = minD;
+                }
+                if (y == maxY && m == maxM) {
+                    lastDay = maxD;
+                }
+                if (firstDay == -1) {
+                    firstDay = 1;
+                }
+                if (lastDay == -1) {
+                    lastDay = persian ?
+                        DateTimeNormalizer.getMonthDayCountPersian(y, m) :
+                        DateTimeNormalizer.getMonthDayCount(y, m);
+                }
+
+                for (int d = firstDay; d <= lastDay; ++d) {
+                    values.add(y * 10000 + m * 100 + d);
+                }
+            }
+        }
+
+        return values;
+    }
+
+    /**
+     * Get a list of year-months-day between the bounds. e.i: 20220101, 20220230, ...
+     * @return list of days
+     */
+    public List<Integer> getYearWeeksBetween() {
+        return getYearWeeksBetween(false);
+    }
+
+    public List<Integer> getYearWeeksBetweenPersian() {
+        return getYearWeeksBetween(true);
+    }
+
+    public List<Integer> getYearWeeksBetween(boolean persian) {
+        int minY = dateMin.formatter().year;
+        int maxY = dateMax.formatter().year;
+        int minM = dateMin.formatter().month;
+        int maxM = dateMax.formatter().month;
+        int minD = dateMin.formatter().day;
+        int maxD = dateMax.formatter().day;
+
+        List<Integer> values = new ArrayList<>((maxY - minY) * 365);
+
+        for (int y = minY; y <= maxY; ++y) {
+            int w = 1;
+            int yd = 1;
+
+            for (int m = 1; m <= 12; ++m) {
+                int lastDay = persian ?
+                    DateTimeNormalizer.getMonthDayCountPersian(y, m) :
+                    DateTimeNormalizer.getMonthDayCount(y, m);
+                for (int d = 1; d <= lastDay; ++d) {
+                    if (yd % 7 == 0) {
+                        ++w;
+                    }
+                    ++yd;
+                    if (y == minY && m < minM) {
+                        continue;
+                    }
+                    if (y == minY && m == minM && d < minD) {
+                        continue;
+                    }
+                    if (y == maxY && m > maxM) {
+                        return values;
+                    }
+                    if (y == maxY && m == maxM && d > maxD) {
+                        return values;
+                    }
+                    int ww = y * 100 + w;
+                    if (!values.contains(ww)) {
+                        values.add(ww);
+                    }
+                }
+            }
+        }
+
         return values;
     }
 

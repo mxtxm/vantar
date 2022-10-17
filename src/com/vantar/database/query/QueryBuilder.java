@@ -166,7 +166,6 @@ public class QueryBuilder {
     private Dto getDto(String dtoName) {
         DtoDictionary.Info info = DtoDictionary.get(dtoName);
         if (info == null) {
-            //errors.add(new ValidationError("dto", VantarKey.REQUIRED));
             return null;
         }
         return info.getDtoInstance();
@@ -213,7 +212,6 @@ public class QueryBuilder {
 
                 String[] parts = StringUtil.split(dto.getField(column).getAnnotation(ManyToManyGetData.class).value(), VantarParam.SEPARATOR_NEXT);
                 String junctionTable = parts[0];
-                //String tableRight = StringUtil.toSnakeCase(parts[1]);
                 String tableRight = parts[1];
 
                 String leftTable = dto.getStorage();
@@ -229,8 +227,6 @@ public class QueryBuilder {
                 if (this.columns == null) {
                     this.columns = new ArrayList<>();
                 }
-                //this.columns.add(column.toLowerCase());
-                //this.columns.add(StringUtil.toSnakeCase(column));
                 this.columns.add(column);
             }
         }
@@ -312,10 +308,6 @@ public class QueryBuilder {
     // > > > SORT
 
     public QueryBuilder sort(String... sort) {
-        for (int i = 0; i < sort.length; i++) {
-            //sort[i] = StringUtil.toSnakeCase(sort[i]);
-            sort[i] = sort[i];
-        }
         this.sort = sort;
         return this;
     }
@@ -388,17 +380,20 @@ public class QueryBuilder {
         return this;
     }
 
-    public QueryBuilder addGroup(String column, String columnAs) {
+    /**
+     * @param columns ---> columns(0:last-1) As columns(last)
+     */
+    public QueryBuilder addGroup(String... columns) {
         if (this.group == null) {
-            this.group = new ArrayList<>();
+            this.group = new ArrayList<>(5);
         }
-        this.group.add(new QueryGroup(column, columnAs));
+        this.group.add(new QueryGroup(columns));
         return this;
     }
 
     public QueryBuilder addGroup(QueryGroupType groupType, String column) {
         if (this.group == null) {
-            this.group = new ArrayList<>();
+            this.group = new ArrayList<>(5);
         }
         this.group.add(new QueryGroup(groupType, column));
         return this;
@@ -406,7 +401,7 @@ public class QueryBuilder {
 
     public QueryBuilder addGroup(QueryGroupType groupType, String... columns) {
         if (this.group == null) {
-            this.group = new ArrayList<>();
+            this.group = new ArrayList<>(5);
         }
         this.group.add(new QueryGroup(groupType, columns));
         return this;

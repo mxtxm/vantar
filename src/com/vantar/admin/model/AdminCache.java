@@ -42,7 +42,7 @@ public class AdminCache {
 
         long sum = 0L;
         for (Class<?> c : classes) {
-            Map<Long, Dto> values = serviceDtoCache.getMap((Class<? extends Dto>) c);
+            Map<Long, ? extends Dto> values = serviceDtoCache.getMap((Class<? extends Dto>) c);
             sum += ObjectUtil.sizeOf(values);
             ui.addBlockLink(c.getName() + " (" + ObjectUtil.sizeOfReadable(values) + ")", "/admin/cache/view?c=" + c.getName());
         }
@@ -75,7 +75,7 @@ public class AdminCache {
             return;
         }
 
-        Map<Long, Dto> values = serviceDtoCache.getMap((Class<? extends Dto>) object.getClass());
+        Map<Long, ? extends Dto> values = serviceDtoCache.getMap((Class<? extends Dto>) object.getClass());
         if (values == null) {
             ui.addErrorMessage(Locale.getString(VantarKey.NO_CONTENT)).finish();
             return;
@@ -83,7 +83,7 @@ public class AdminCache {
 
         ui.addEmptyLine().addPre(ObjectUtil.sizeOfReadable(values)).addEmptyLine();
 
-        for (Map.Entry<Long, Dto> entry : values.entrySet()) {
+        for (Map.Entry<Long, ? extends Dto> entry : values.entrySet()) {
             Dto dto = entry.getValue();
             ui.addPre(dto.toString()).write();
         }

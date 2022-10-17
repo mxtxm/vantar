@@ -842,8 +842,7 @@ public class AdminData {
     }
 
     private static Event getEvent() {
-        String appPackage = Settings.getAppPackage();
-        String adminApp = StringUtil.isEmpty(appPackage) ? null : (appPackage + ".business.admin.model.AdminApp");
+        String adminApp = Settings.getAdminApp();
         if (StringUtil.isNotEmpty(adminApp)) {
             try {
                 return (Event) ClassUtil.callStaticMethod(adminApp + ".getAdminDataEvent");

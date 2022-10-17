@@ -2,6 +2,7 @@ package com.vantar.database.nosql.mongo;
 
 import com.mongodb.client.*;
 import com.mongodb.client.model.Projections;
+import com.vantar.admin.model.Admin;
 import com.vantar.database.dto.Dto;
 import com.vantar.database.query.*;
 import com.vantar.exception.DatabaseException;
@@ -71,8 +72,6 @@ class MongoQuery {
                 find = MongoConnection.getDatabase().getCollection(dto.getStorage()).find(matches);
             }
 
-            //columns = dto.getProperties();
-
             if (columns != null && columns.length > 0) {
                 find.projection(Projections.fields(Projections.include(columns)));
             }
@@ -137,7 +136,10 @@ class MongoQuery {
         }
 
         try {
-            return new MongoQueryResult(MongoConnection.getDatabase().getCollection(dto.getStorage()).aggregate(query), dtoResult);
+            return new MongoQueryResult(
+                MongoConnection.getDatabase().getCollection(dto.getStorage()).aggregate(query),
+                dtoResult
+            );
         } catch (Exception e) {
             Mongo.log.error(" !! aggr {}", dto, e);
             throw new DatabaseException(e);
@@ -163,7 +165,6 @@ class MongoQuery {
         if (skip != null) {
             query.add(new Document("$skip", skip));
         }
-
         try {
             return MongoConnection.getDatabase().getCollection(dto.getStorage()).aggregate(query).allowDiskUse(true);
         } catch (Exception e) {

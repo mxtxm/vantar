@@ -53,10 +53,10 @@ public class AdminMonitoring {
         items.add(Locale.getString(VantarKey.ADMIN_CACHE) + ":/admin/cache/index");
         links.put(Locale.getString(VantarKey.ADMIN_CACHE), items);
 
-        String appPackage = Settings.getAppPackage();
-        if (StringUtil.isNotEmpty(appPackage)) {
+        String adminApp = Settings.getAdminApp();
+        if (StringUtil.isNotEmpty(adminApp)) {
             try {
-                Class<?> tClass = Class.forName(appPackage + ".business.admin.model.AdminApp");
+                Class<?> tClass = Class.forName(adminApp);
                 Method method = tClass.getMethod("extendMonitoringLinks", Map.class);
                 method.invoke(null, links);
             } catch (ClassNotFoundException | NoSuchMethodException | IllegalAccessException | InvocationTargetException ignore) {

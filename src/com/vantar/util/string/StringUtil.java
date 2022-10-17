@@ -776,6 +776,28 @@ public class StringUtil {
 
     /**
      * Split string (items are not trimmed)
+     *
+     * @param string    to split
+     * @param separator separator
+     * @return splatted parts (null if string == null, [string] if string == "")
+     */
+    public static List<String> splitToList(String string, char separator) {
+        return Arrays.asList(split(string, separator));
+    }
+
+    /**
+     * Split string (items are trimmed)
+     *
+     * @param string    to split
+     * @param separator separator
+     * @return splatted parts (null if string == null, [string] if string == "")
+     */
+    public static List<String> splitToListTrim(String string, char separator) {
+        return Arrays.asList(splitTrim(string, separator));
+    }
+
+    /**
+     * Split string (items are not trimmed)
      * @param string to split
      * @param separator separator
      * @param max max number of splatted parts (splits from left to right) 0 = no limit

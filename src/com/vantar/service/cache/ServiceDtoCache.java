@@ -13,7 +13,7 @@ import java.util.*;
 public class ServiceDtoCache implements Services.Service {
 
     private static final Logger log = LoggerFactory.getLogger(ServiceDtoCache.class);
-    private Map<Class<?>, Map<Long, Dto>> cache;
+    private Map<Class<?>, Map<Long, ? extends Dto>> cache;
 
     public Boolean onEndSetNull;
 
@@ -38,17 +38,17 @@ public class ServiceDtoCache implements Services.Service {
         return cache.keySet();
     }
 
-    public Map<Long, Dto> getMap(Class<? extends Dto> tClass) {
-        return cache.get(tClass);
+    public <D extends Dto> Map<Long, D> getMap(Class<D> tClass) {
+        return (Map<Long, D>) cache.get(tClass);
     }
 
-    public <A extends Dto> Map<Long, A> getMap(Class<? extends Dto> tClass, Class<A> asClass) {
-        Map<Long, Dto> originalData = cache.get(tClass);
+    public <D extends Dto, A extends Dto> Map<Long, A> getMap(Class<D> tClass, Class<A> asClass) {
+        Map<Long, D> originalData = (Map<Long, D>) cache.get(tClass);
         if (originalData == null) {
             return new HashMap<>(1, 1);
         }
         Map<Long, A> data = new HashMap<>(originalData.size(), 1);
-        for (Map.Entry<Long, Dto> e : originalData.entrySet()) {
+        for (Map.Entry<Long, D> e : originalData.entrySet()) {
             A a = ClassUtil.getInstance(asClass);
             if (a != null) {
                 a.set(e.getValue());
@@ -59,23 +59,19 @@ public class ServiceDtoCache implements Services.Service {
     }
 
     public <T extends Dto> List<T> getList(Class<T> tClass) {
-        List<T> data = new ArrayList<>();
-        Map<Long, Dto> values = cache.get(tClass);
+        Map<Long, T> values = (Map<Long, T>) cache.get(tClass);
         if (values == null) {
-            return data;
+            return new ArrayList<>(1);
         }
-        for (Dto item : values.values()) {
-            data.add((T) item);
-        }
-        return data;
+        return new ArrayList<>(values.values());
     }
 
-    public <A extends Dto> List<A> getList(Class<? extends Dto> tClass, Class<A> asClass) {
-        List<A> data = new ArrayList<>();
-        Map<Long, Dto> values = cache.get(tClass);
+    public <D extends Dto, A extends Dto> List<A> getList(Class<D> tClass, Class<A> asClass) {
+        Map<Long, D> values = (Map<Long, D>) cache.get(tClass);
         if (values == null) {
-            return data;
+            return new ArrayList<>(1);
         }
+        List<A> data = new ArrayList<>(values.size());
         for (Dto item : values.values()) {
             A a = ClassUtil.getInstance(asClass);
             if (a != null) {
@@ -90,18 +86,18 @@ public class ServiceDtoCache implements Services.Service {
         if (id == null) {
             return null;
         }
-        Map<Long, Dto> data = cache.get(tClass);
+        Map<Long, T> data = (Map<Long, T>) cache.get(tClass);
         if (data == null) {
             return null;
         }
-        return (T) data.get(id);
+        return data.get(id);
     }
 
-    public <A extends Dto> A getDto(Class<? extends Dto> tClass, Class<A> asClass, Long id) {
+    public <D extends Dto, A extends Dto> A getDto(Class<D> tClass, Class<A> asClass, Long id) {
         if (id == null) {
             return null;
         }
-        Map<Long, Dto> data = cache.get(tClass);
+        Map<Long, D> data = (Map<Long, D>) cache.get(tClass);
         if (data == null) {
             return null;
         }
@@ -179,7 +175,7 @@ public class ServiceDtoCache implements Services.Service {
         return Services.get(ServiceDtoCache.class).getList(tClass, asClass);
     }
 
-    public static Map<Long, Dto> asMap(Class<? extends Dto> tClass) throws ServiceException {
+    public static <D extends Dto> Map<Long, D> asMap(Class<D> tClass) throws ServiceException {
         return Services.get(ServiceDtoCache.class).getMap(tClass);
     }
 

@@ -668,7 +668,30 @@ public class QueryCondition {
         return found;
     }
 
-    public void conditionRemove(int id) {
+    public QueryCondition conditionRemove(int id) {
         q.remove(id);
+        return this;
+    }
+
+    public QueryCondition conditionRemove(String fieldName) {
+        List<QueryMatchItem> items = conditionGet(fieldName);
+        if (items == null) {
+            return this;
+        }
+        for (QueryMatchItem item : items) {
+            q.remove(item.id);
+        }
+        return this;
+    }
+
+    public QueryCondition conditionRemove(String fieldName, QueryOperator type) {
+        List<QueryMatchItem> items = conditionGet(fieldName, type);
+        if (items == null) {
+            return this;
+        }
+        for (QueryMatchItem item : items) {
+            q.remove(item.id);
+        }
+        return this;
     }
 }

@@ -127,10 +127,8 @@ public class CommonModelMongo extends CommonModel {
 
         try {
             dto = CommonRepoMongo.getById(dto);
-        } catch (DatabaseException e) {
+        } catch (DatabaseException | NoContentException e) {
             log.error(" !! {} : {}\n", dto.getClass().getSimpleName(), dto, e);
-        } catch (NoContentException e) {
-            throw new ServerException(VantarKey.INSERT_FAIL);
         }
 
         if (Services.isUp(ServiceUserActionLog.class)) {
@@ -207,10 +205,8 @@ public class CommonModelMongo extends CommonModel {
         if (logEvent) {
             try {
                 dto = CommonRepoMongo.getById(dto);
-            } catch (DatabaseException e) {
+            } catch (DatabaseException | NoContentException e) {
                 log.error(" !! {} : {}\n", dto.getClass().getSimpleName(), dto, e);
-            } catch (NoContentException e) {
-                throw new ServerException(VantarKey.INSERT_FAIL);
             }
 
             if (Services.isUp(ServiceUserActionLog.class)) {
@@ -314,10 +310,8 @@ public class CommonModelMongo extends CommonModel {
 
         try {
             dto = CommonRepoMongo.getById(dto);
-        } catch (DatabaseException e) {
+        } catch (DatabaseException | NoContentException e) {
             log.error(" !! {} : {}\n", dto.getClass().getSimpleName(), dto, e);
-        } catch (NoContentException e) {
-            throw new ServerException(VantarKey.UPDATE_FAIL);
         }
 
         if (Services.isUp(ServiceUserActionLog.class)) {
@@ -446,10 +440,8 @@ public class CommonModelMongo extends CommonModel {
         if (logEvent) {
             try {
                 dto = CommonRepoMongo.getById(dto);
-            } catch (DatabaseException e) {
+            } catch (DatabaseException | NoContentException e) {
                 log.error(" !! {} : {}\n", dto.getClass().getSimpleName(), dto, e);
-            } catch (NoContentException e) {
-                throw new ServerException(VantarKey.UPDATE_FAIL);
             }
 
             if (Services.isUp(ServiceUserActionLog.class)) {
