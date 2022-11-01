@@ -155,7 +155,7 @@ public class WebServiceDocumentCreator {
             if (e.getSimpleName().equals("NoContentException")) {
                 to.append("* **204** (no content) There is no data available for the request\n");
             }
-            if (e.getSimpleName().equals("VantaException")) {
+            if (e.getSimpleName().equals("VantarException")) {
                 to.append("* **204** (no content) There is no data available for the request\n");
                 to.append("* **400** (client side error) Invalid input params\n");
                 to.append("* **401** (client side error / unauthorized) user is not signed in or invalid/expired access token\n");

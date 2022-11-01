@@ -114,7 +114,7 @@ class MongoQuery {
     }
 
     public QueryResult getDataX() throws DatabaseException {
-        List<Document> query = new ArrayList<>();
+        List<Document> query = new ArrayList<>(10);
 
         if (union != null) {
             for (String collection : union) {

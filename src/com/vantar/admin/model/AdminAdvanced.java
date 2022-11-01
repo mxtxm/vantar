@@ -96,6 +96,17 @@ public class AdminAdvanced {
 
         ui.containerEnd();
 
+        // > > >
+        ui.beginBox("Deploy");
+        ui  .beginFloatBox("system-box", "Deploy")
+            .addBlockLink("Upload", "/admin/deploy/upload")
+            .addBlockLink("Run", "/admin/deploy/run")
+            .addBlockLink("Shell", "/admin/deploy/shell")
+            .containerEnd();
+
+
+        ui.containerEnd();
+
         ui.containerEnd().finish();
     }
 }

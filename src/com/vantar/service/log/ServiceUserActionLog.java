@@ -107,7 +107,7 @@ public class ServiceUserActionLog implements Services.Service {
 
         if (userLogService.delayedStoreEnabled && Queue.isUp()) {
             Queue.add(VantarParam.QUEUE_NAME_USER_ACTION_LOG, new Packet(userLog));
-            log.debug(" ! userLog > queue({})", VantarParam.QUEUE_NAME_USER_ACTION_LOG);
+            log.debug(" userLog > queue({})", VantarParam.QUEUE_NAME_USER_ACTION_LOG);
         } else {
             if (userLogService.dbms.equalsIgnoreCase(DtoDictionary.Dbms.ELASTIC.name())) {
                 saveOnElastic(userLog);
@@ -150,7 +150,7 @@ public class ServiceUserActionLog implements Services.Service {
 
         if (userLogService.delayedStoreEnabled && Queue.isUp()) {
             Queue.add(VantarParam.QUEUE_NAME_USER_ACTION_LOG, new Packet(userLog));
-            log.debug(" ! userLog > queue({})", VantarParam.QUEUE_NAME_USER_ACTION_LOG);
+            log.debug(" userLog > queue({})", VantarParam.QUEUE_NAME_USER_ACTION_LOG);
         } else {
             if (userLogService.dbms.equalsIgnoreCase(DtoDictionary.Dbms.ELASTIC.name())) {
                 saveOnElastic(userLog);

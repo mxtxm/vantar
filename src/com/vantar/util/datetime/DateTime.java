@@ -350,6 +350,39 @@ public class DateTime {
         return Math.abs(timestamp - dateTime.timestamp) / 1000;
     }
 
+    public int diffMinutes(DateTime dateTime) {
+        return (int) (diffSeconds(dateTime) / 60);
+    }
+
+    public int diffHours(DateTime dateTime) {
+        return diffMinutes(dateTime) / 60;
+    }
+
+    public int diffDays(DateTime dateTime) {
+        return diffHours(dateTime) / 24;
+    }
+
+    public long decreaseSeconds(DateTime dateTime) {
+        if (dateTime.timestamp == null) {
+            return 0;
+        }
+        return (timestamp - dateTime.timestamp) / 1000;
+    }
+
+    public int decreaseMinutes(DateTime dateTime) {
+        return (int) (decreaseSeconds(dateTime) / 60);
+    }
+
+    public int decreaseHours(DateTime dateTime) {
+        return decreaseMinutes(dateTime) / 60;
+    }
+
+    public int decreaseDays(DateTime dateTime) {
+        return decreaseHours(dateTime) / 24;
+    }
+
+
+
     public int than(DateTime dateTime) {
         if (dateTime.timestamp == null || timestamp > dateTime.timestamp) {
             return BIGGER;

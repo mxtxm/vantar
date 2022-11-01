@@ -12,7 +12,7 @@ import com.vantar.exception.DatabaseException;
 import com.vantar.util.datetime.DateTime;
 import com.vantar.util.object.ObjectUtil;
 import com.vantar.util.string.StringUtil;
-import org.bson.Document;
+import org.bson.*;
 import org.bson.conversions.Bson;
 import java.util.*;
 import java.util.regex.Pattern;
@@ -376,30 +376,40 @@ public class MongoMapping {
                     matches.add(new Document(fieldName, new Document("$gte", item.getValue())));
                     break;
 
-                case IS_NULL:
-                    matches.add(new Document(fieldName, new Document("$eq", null)));
+                case IS_NULL: {
+                    if (fieldName.contains(".")) {
+                        matches.add(new Document(fieldName, new Document("$exists", false)));
+                    } else {
+                        matches.add(new Document(fieldName, null));
+                    }
                     break;
-                case IS_NOT_NULL:
-                    matches.add(new Document(fieldName, new Document("$ne", null)));
+                }
+                case IS_NOT_NULL: {
+                    if (fieldName.contains(".")) {
+                        matches.add(new Document(fieldName, new Document("$exists", true)));
+                    } else {
+                        matches.add(new Document(fieldName, new Document("$ne", null)));
+                    }
                     break;
+                }
                 case IS_EMPTY: {
-                    List<Document> neConditions = new ArrayList<>(5);
-                    neConditions.add(new Document(fieldName, new Document("$eq", null)));
-                    neConditions.add(new Document(fieldName, new Document("$eq", "")));
-                    neConditions.add(new Document(fieldName, new Document("$eq", new ArrayList<>(1))));
-                    neConditions.add(new Document(fieldName, new Document("$eq", new HashMap<>(1, 1))));
-                    neConditions.add(new Document(fieldName, new Document("$exists", false)));
-                    matches.add(new Document("$or", neConditions));
+                    List<Document> c = new ArrayList<>(5);
+                    c.add(new Document(fieldName, new Document("$eq", null)));
+                    c.add(new Document(fieldName, new Document("$eq", "")));
+                    c.add(new Document(fieldName, new Document("$eq", new ArrayList<>(1))));
+                    c.add(new Document(fieldName, new Document("$eq", new HashMap<>(1, 1))));
+                    c.add(new Document(fieldName, new Document("$exists", false)));
+                    matches.add(new Document("$or", c));
                     break;
                 }
                 case IS_NOT_EMPTY: {
-                    List<Document> neConditions = new ArrayList<>(5);
-                    neConditions.add(new Document(fieldName, new Document("$ne", null)));
-                    neConditions.add(new Document(fieldName, new Document("$ne", "")));
-                    neConditions.add(new Document(fieldName, new Document("$ne", new ArrayList<>(1))));
-                    neConditions.add(new Document(fieldName, new Document("$ne", new HashMap<>(1, 1))));
-                    neConditions.add(new Document(fieldName, new Document("$exists", true)));
-                    matches.add(new Document("$and", neConditions));
+                    List<Document> c = new ArrayList<>(5);
+                    c.add(new Document(fieldName, new Document("$ne", null)));
+                    c.add(new Document(fieldName, new Document("$ne", "")));
+                    c.add(new Document(fieldName, new Document("$ne", new ArrayList<>(1))));
+                    c.add(new Document(fieldName, new Document("$ne", new HashMap<>(1, 1))));
+                    c.add(new Document(fieldName, new Document("$exists", true)));
+                    matches.add(new Document("$and", c));
                     break;
                 }
                 case CONTAINS_ALL:
@@ -505,6 +515,7 @@ public class MongoMapping {
         if (qCondition != null && qCondition.dump) {
             Mongo.log.info(" > mongo condition dump: {}", document);
         }
+
         return document;
     }
 }
