@@ -356,8 +356,7 @@ public class ObjectUtil {
             return EnumUtil.getEnumValue(object.toString(), classType);
         }
         if (classType == Location.class) {
-            Location location = new Location(object.toString());
-            return location.isValid() ? (T) location : null;
+            return (T) Location.toLocation(object);
         }
         if (classType == Boolean.class) {
             return (T) BoolUtil.toBoolean(object);

@@ -3,9 +3,10 @@ package com.vantar.web;
 import com.vantar.common.VantarParam;
 import com.vantar.database.datatype.Location;
 import com.vantar.database.query.data.QueryData;
-import com.vantar.exception.DateTimeException;
+import com.vantar.exception.*;
 import com.vantar.locale.Locale;
 import com.vantar.locale.*;
+import com.vantar.service.auth.*;
 import com.vantar.util.collection.CollectionUtil;
 import com.vantar.util.datetime.*;
 import com.vantar.util.file.*;
@@ -499,6 +500,9 @@ public class Params {
 
 
     public String getJson() {
+        if (fileUploaded) {
+            return "";
+        }
         if (json != null) {
             return json;
         }
@@ -510,12 +514,15 @@ public class Params {
             return json;
         }
 
+
         StringBuilder buffer = new StringBuilder();
         String line;
         try (BufferedReader reader = request.getReader()) {
             while ((line = reader.readLine()) != null) {
                 buffer.append(line);
             }
+        } catch (IllegalStateException ignore) {
+            return "";
         } catch (Exception e) {
             log.error(" !! JSON input\n", e);
             return "";
@@ -710,6 +717,7 @@ public class Params {
 
 
     private List<String> uploadFiles;
+    private boolean fileUploaded = false;
 
     public List<String> getUploadFiles() {
         return uploadFiles;
@@ -719,7 +727,7 @@ public class Params {
         if (request == null) {
             return new Uploaded(VantarKey.REQUIRED);
         }
-
+        fileUploaded = true;
         try {
             Part filePart = request.getPart(name);
             if (filePart == null || filePart.getSize() == 0) {
@@ -733,7 +741,7 @@ public class Params {
             uploadFiles.add(upload.getOriginalFilename());
             return upload;
         } catch (IOException | ServletException e) {
-            log.warn(" ! ({}) multi-part?\n", name, e);
+            log.warn(" ! ({}) is multi-part?\n", name, e);
             return new Uploaded(VantarKey.IO_ERROR);
         }
     }
@@ -804,6 +812,11 @@ public class Params {
             return filePart.getSubmittedFileName();
         }
 
+        public String getOriginalExtension() {
+            String[] parts = StringUtil.split(filePart.getSubmittedFileName(), '.');
+            return parts.length < 2 ? "" : parts[parts.length - 1];
+        }
+
         public boolean moveTo(String path) {
             if (path.charAt(path.length() - 1) == '/') {
                 return moveTo(path, null);
@@ -847,5 +860,9 @@ public class Params {
 
             }
         }
+    }
+
+    public CommonUser getCurrentUser() throws AuthException, ServiceException {
+        return ServiceAuth.getCurrentSignedInUser(this);
     }
 }

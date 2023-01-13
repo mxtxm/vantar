@@ -134,6 +134,20 @@ public class Response {
         }
     }
 
+    public static void writeJsonPretty(HttpServletResponse response, Object data) {
+        setJsonHeaders(response);
+        String json = Json.d.toJsonPretty(data);
+        try {
+            response.getWriter().append(json);
+        } catch (IOException e) {
+            log.error(" ! write json failed ({})\n", data, e);
+            return;
+        }
+        if (logResponse) {
+            ServiceUserActionLog.addResponse(data, response);
+        }
+    }
+
     public static void writeSuccess(HttpServletResponse response) {
         writeString(response, VantarParam.SUCCESS);
     }

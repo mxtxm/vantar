@@ -349,7 +349,7 @@ public class MongoMapping {
 
                 case BETWEEN: {
                     Object[] values = item.getValues();
-                    List<Document>  bConditions = new ArrayList<>(2);
+                    List<Document> bConditions = new ArrayList<>(2);
                     bConditions.add(new Document(fieldName, new Document("$gte", values[0])));
                     bConditions.add(new Document(fieldName, new Document("$lte", values[1])));
                     matches.add(new Document("$and",  bConditions));

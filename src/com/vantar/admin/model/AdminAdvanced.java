@@ -1,7 +1,9 @@
 package com.vantar.admin.model;
 
-import com.vantar.exception.FinishException;
+import com.vantar.exception.*;
 import com.vantar.locale.*;
+import com.vantar.service.Services;
+import com.vantar.service.backup.ServiceBackup;
 import com.vantar.web.*;
 import javax.servlet.http.HttpServletResponse;
 
@@ -33,6 +35,19 @@ public class AdminAdvanced {
             .addBlockLink(Locale.getString(VantarKey.ADMIN_BACKUP_FILES), "/admin/data/backup/files/elastic")
             .addBlockLink(Locale.getString(VantarKey.ADMIN_BACKUP_UPLOAD), "/admin/data/backup/upload")
             .containerEnd();
+
+        try {
+            ServiceBackup serviceBackup = Services.get(ServiceBackup.class);
+            ui  .beginFloatBox("system-box", "Service")
+                .addMessage("Last run: " + serviceBackup.getLastRun())
+                .addMessage("Next run: " + serviceBackup.getNextRun())
+                .addMessage("Interval: " + serviceBackup.intervalHour + "hours")
+                .addMessage("Path: " + serviceBackup.path)
+                .addBlockLink("Logs", "/admin/data/backup/logs")
+                .containerEnd();
+        } catch (ServiceException ignore) {
+
+        }
 
         ui.containerEnd();
 

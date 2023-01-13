@@ -31,6 +31,7 @@ public class Location {
     public Location(Double latitude, Double longitude) {
         this.latitude = latitude;
         this.longitude = longitude;
+
     }
 
     public Location(Double latitude, Double longitude, String countryCode) {
@@ -185,6 +186,22 @@ public class Location {
         hash = 31 * hash + (height == null ? 0 : height.hashCode());
         hash = 31 * hash + (countryCode == null ? 0 : countryCode.hashCode());
         return hash;
+    }
+
+    public static Location toLocation(Object value) {
+        if (value instanceof Location) {
+            return (Location) value;
+        }
+        if (value instanceof String) {
+            Location location = new Location((String) value);
+            return location.isValid() ? location : null;
+        }
+        if (value instanceof Map) {
+            Location location = new Location((Map) value);
+            return location.isValid() ? location : null;
+        }
+
+        return null;
     }
 
     public Double getDistanceM(Location location) {

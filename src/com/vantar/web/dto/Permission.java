@@ -17,8 +17,11 @@ public class Permission extends DtoBase {
     public Long id;
     @Required
     public String method;
+    // for info only
+    public String path;
     public Set<String> allowedRoles;
     public String allowedFeature;
+    public String extraData;
 
 
     @Override

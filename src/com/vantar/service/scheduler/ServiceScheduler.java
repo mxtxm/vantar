@@ -4,10 +4,10 @@ import com.vantar.service.log.LogEvent;
 import com.vantar.common.VantarParam;
 import com.vantar.service.Services;
 import com.vantar.util.collection.*;
+import com.vantar.util.datetime.*;
 import com.vantar.util.string.StringUtil;
 import org.slf4j.*;
 import java.lang.reflect.*;
-import java.time.*;
 import java.util.concurrent.*;
 
 
@@ -40,27 +40,14 @@ public class ServiceScheduler implements Services.Service {
             if (classNameOptions.length == 2) {
                 // ClassName.Method,hh:mm;              once at hh:mm
                 if (StringUtil.contains(classNameOptions[1], ':')) {
-                    String[] time = StringUtil.splitTrim(classNameOptions[1], ':');
-
-                    ZonedDateTime now = ZonedDateTime.now(ZoneId.systemDefault());
-                    ZonedDateTime nextRun = now.withHour(StringUtil.toInteger(time[0]));
-                    if (time.length > 1) {
-                        nextRun.withMinute(StringUtil.toInteger(time[1]));
-                    }
-                    if (time.length > 2) {
-                        nextRun.withSecond(StringUtil.toInteger(time[2]));
-                    }
-                    if (now.compareTo(nextRun) > 0) {
-                        nextRun = nextRun.plusDays(1);
-                    }
-
                     executor.schedule(
                         getRunnable(classNameOptions[0]),
-                        Duration.between(now, nextRun).getSeconds(),
+                        getStartSeconds(classNameOptions[1], classNameOptions[0]),
                         TimeUnit.SECONDS
                     );
 
                 } else {
+
                     // ClassName.Method,x(s/m/h);           x seconds/minutes/hours
                     int startAt = StringUtil.scrapeInt(classNameOptions[1]);
                     if (StringUtil.contains(classNameOptions[1], 'm')) {
@@ -68,62 +55,34 @@ public class ServiceScheduler implements Services.Service {
                     } else if (StringUtil.contains(classNameOptions[1], 'h')) {
                         startAt *= 360;
                     }
-
                     executor.schedule(
                         getRunnable(classNameOptions[0]),
                         startAt,
                         TimeUnit.SECONDS
                     );
+                    log.info("    >> scheduled ({}, startat={}) ", classNameOptions[0], startAt);
                 }
+
             // ClassName.Method,hh:mm,repeat;       every hh:mm
             } else if ("repeat".equalsIgnoreCase(classNameOptions[2])) {
-                String[] time = StringUtil.split(classNameOptions[1], ':');
-
-                ZonedDateTime now = ZonedDateTime.now(ZoneId.systemDefault());
-                ZonedDateTime nextRun = now.withHour(StringUtil.toInteger(time[0]));
-                if (time.length > 1) {
-                    nextRun.withMinute(StringUtil.toInteger(time[1]));
-                }
-                if (time.length > 2) {
-                    nextRun.withSecond(StringUtil.toInteger(time[2]));
-                }
-                if (now.compareTo(nextRun) > 0) {
-                    nextRun = nextRun.plusDays(1);
-                }
-
                 executor.scheduleAtFixedRate(
                     getRunnable(classNameOptions[0]),
-                    Duration.between(now, nextRun).getSeconds(),
+                    getStartSeconds(classNameOptions[1], classNameOptions[0]),
                     TimeUnit.DAYS.toSeconds(1),
                     TimeUnit.SECONDS
                 );
 
             // ClassName.Method,hh:mm,x(s/m/h);     starting from hh:mm, every x seconds/minutes/hours
             } else if (StringUtil.contains(classNameOptions[1], ':')) {
-                String[] time = StringUtil.split(classNameOptions[1], ':');
-
-                ZonedDateTime now = ZonedDateTime.now(ZoneId.systemDefault());
-                ZonedDateTime nextRun = now.withHour(StringUtil.toInteger(time[0]));
-                if (time.length > 1) {
-                    nextRun.withMinute(StringUtil.toInteger(time[1]));
-                }
-                if (time.length > 2) {
-                    nextRun.withSecond(StringUtil.toInteger(time[2]));
-                }
-                if (now.compareTo(nextRun) > 0) {
-                    nextRun = nextRun.plusDays(1);
-                }
-
                 int repeatAt = StringUtil.scrapeInt(classNameOptions[2]);
                 if (StringUtil.contains(classNameOptions[1], 'm')) {
                     repeatAt *= 60;
                 } else if (StringUtil.contains(classNameOptions[1], 'h')) {
                     repeatAt *= 360;
                 }
-
                 executor.scheduleAtFixedRate(
                     getRunnable(classNameOptions[0]),
-                    Duration.between(now, nextRun).getSeconds(),
+                    getStartSeconds(classNameOptions[1], classNameOptions[0]),
                     repeatAt,
                     TimeUnit.SECONDS
                 );
@@ -136,24 +95,50 @@ public class ServiceScheduler implements Services.Service {
                 } else if (StringUtil.contains(classNameOptions[1], 'h')) {
                     startAt *= 360;
                 }
-
                 int repeatAt = StringUtil.scrapeInt(classNameOptions[2]);
                 if (StringUtil.contains(classNameOptions[1], 'm')) {
                     repeatAt *= 60;
                 } else if (StringUtil.contains(classNameOptions[1], 'h')) {
                     repeatAt *= 360;
                 }
-
                 executor.scheduleAtFixedRate(
                     getRunnable(classNameOptions[0]),
                     startAt,
                     repeatAt,
                     TimeUnit.SECONDS
                 );
+                log.info("    >> scheduled ({}, startat={} repeatat={}) ", classNameOptions[0], startAt, repeatAt);
             }
 
             schedules[i++] = executor;
         }
+    }
+
+    private long getStartSeconds(String timeHms, String className) {
+        String[] time = StringUtil.split(timeHms, ':');
+        DateTime now = new DateTime();
+        DateTime next = new DateTime();
+        int hn = now.formatter().hour;
+        int mn = now.formatter().minute;
+        int sn = now.formatter().second;
+        int h = StringUtil.toInteger(time[0]);
+        int m = time.length > 1 ? StringUtil.toInteger(time[1]) : 0;
+        int s = time.length > 2 ? StringUtil.toInteger(time[2]) : 0;
+        if (h > hn) {
+            next.addHours(h - hn);
+            next.addMinutes(m - mn);
+        } else if (h == hn && m > mn) {
+            next.addMinutes(m - mn);
+        } else if (h == hn && m == mn && s >= sn) {
+            next.addSeconds(s - sn + 1);
+        } else {
+            next.addDays(1);
+            next.addHours(h - hn);
+            next.addMinutes(m - mn);
+            next.addSeconds(s - sn);
+        }
+        log.info("    >> scheduled ({}, now={}, start={}, repeat every day)", className, now, next);
+        return now.diffSeconds(next);
     }
 
     public void stop() {

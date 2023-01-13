@@ -13,6 +13,7 @@ public class DefaultStringsEn {
         tokens.put(VantarKey.USER_PASSWORD_EMPTY, "Username or password is empty");
         tokens.put(VantarKey.USER_NOT_EXISTS, "User does not exists");
         tokens.put(VantarKey.USER_DISABLED, "User is disabled");
+        tokens.put(VantarKey.USER_DISABLED_MAX_FAILED, "User is disabled because of to many failed signings");
         tokens.put(VantarKey.WRONG_PASSWORD, "Wrong password");
         tokens.put(VantarKey.MISSING_AUTH_TOKEN, "Missing authentication token");
         tokens.put(VantarKey.INVALID_AUTH_TOKEN, "Invalid authentication token");
@@ -287,7 +288,9 @@ public class DefaultStringsEn {
         tokens.put(VantarKey.ADMIN_MEMORY, "Memory");
         tokens.put(VantarKey.ADMIN_BACKUP_UPLOAD, "Upload backup file");
         tokens.put(VantarKey.ADMIN_BACKUP_UPLOAD_FILE, "Backup file");
+
         tokens.put(VantarKey.SELECT_ALL, "Select all");
+        tokens.put(VantarKey.ADMIN_RESET_SIGNIN_FAILS, "Reset failed signins");
 
     }
 

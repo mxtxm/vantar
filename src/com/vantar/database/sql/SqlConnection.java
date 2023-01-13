@@ -18,6 +18,10 @@ public class SqlConnection implements AutoCloseable {
     private static boolean isUp;
 
 
+    public static boolean isEnabled() {
+        return config != null;
+    }
+
     public static boolean isUp() {
         return isUp;
     }

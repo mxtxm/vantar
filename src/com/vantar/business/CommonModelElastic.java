@@ -1,5 +1,6 @@
 package com.vantar.business;
 
+import com.vantar.business.importexport.CommonImport;
 import com.vantar.common.VantarParam;
 import com.vantar.database.common.ValidationError;
 import com.vantar.database.dto.Dto;
@@ -447,7 +448,7 @@ public class CommonModelElastic extends CommonModel {
         AtomicInteger success = new AtomicInteger();
         AtomicInteger duplicate = new AtomicInteger();
 
-        CommonModel.Import imp = (String presentValue, Map<String, Object> values) -> {
+        CommonImport.Import imp = (String presentValue, Map<String, Object> values) -> {
             try {
                 if (dto.getId() == null && ElasticSearch.existsById(dto)) {
                     duplicate.getAndIncrement();
@@ -462,7 +463,7 @@ public class CommonModelElastic extends CommonModel {
             }
         };
 
-        importDataX(imp, data, dto, presentField, ui);
+        //importDataX(imp, data, dto, presentField, ui);
 
         try {
             write.commit();

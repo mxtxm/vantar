@@ -34,7 +34,16 @@ public abstract class DtoBase implements Dto {
     private transient boolean deleteLogical = DEFAULT_DELETE_LOGICAL;
     private transient QueryDeleted deletedQueryPolicy = QueryDeleted.SHOW_NOT_DELETED;
     private transient Action bAction;
+    private transient boolean clearIdOnInsert = true;
 
+
+    public void setClearIdOnInsert(boolean clearIdOnInsert) {
+        this.clearIdOnInsert = clearIdOnInsert;
+    }
+
+    public boolean getClearIdOnInsert() {
+        return clearIdOnInsert;
+    }
 
     public Action getAction(Action defaultAction) {
         return bAction == null ? defaultAction : bAction;
@@ -834,6 +843,8 @@ public abstract class DtoBase implements Dto {
                         NumberUtil.toNumber(map.get(key + "_latitude"), Double.class),
                         NumberUtil.toNumber(map.get(key + "_longitude"), Double.class)
                     );
+                } else {
+                    value = Location.toLocation(v);
                 }
             } else if (value == null) {
                 value = map.get(key);
@@ -933,23 +944,7 @@ public abstract class DtoBase implements Dto {
                         return;
                     }
                 } else if (type.equals(Location.class)) {
-                    if (!(value instanceof Location)) {
-                        if (value instanceof String) {
-                            value = new Location((String) value);
-                            if (!((Location) value).isValid()) {
-                                value = null;
-                            }
-                        } else if (value instanceof Map) {
-                            value = new Location((Map) value);
-                            if (!((Location) value).isValid()) {
-                                value = null;
-                            }
-                        } else {
-                            value = null;
-                            log.warn(" ! trying to set invalid location value {}>{} ({}, {})"
-                                , value, name, this.getClass().getName(), this);
-                        }
-                    }
+                    value = Location.toLocation(value);
                 } else if (ClassUtil.isInstantiable(type, List.class)) {
                     value = CollectionUtil.toList(value, getPropertyGenericTypes(name)[0]);
                 } else if (ClassUtil.isInstantiable(type, Set.class)) {
@@ -995,7 +990,8 @@ public abstract class DtoBase implements Dto {
             }
 
             if (value == null) {
-                if ((action.equals(Action.INSERT) || action.equals(Action.IMPORT) || action.equals(Action.UPDATE_ALL_COLS))) {
+                if (action.equals(Action.INSERT) || action.equals(Action.IMPORT)
+                    || action.equals(Action.UPDATE_ALL_COLS) || action.equals(Action.UPDATE_ALL_COLS_NO_ID)) {
 
                     Object defaultValue = getDefaultValue(field);
                     if (defaultValue != null) {
@@ -1006,7 +1002,7 @@ public abstract class DtoBase implements Dto {
                     }
                 } else if (action.equals(Action.SET)) {
                     field.set(this, null);
-                } else if (action.equals(Action.UPDATE_FEW_COLS)) {
+                } else if (action.equals(Action.UPDATE_FEW_COLS) || action.equals(Action.UPDATE_FEW_COLS_NO_ID)) {
                     Object defaultValue = getDefaultValue(field);
                     if (defaultValue != null) {
                         field.set(this, defaultValue);
@@ -1055,7 +1051,7 @@ public abstract class DtoBase implements Dto {
 
                         ++notNullCount;
                     }
-                    if (action.equals(Action.UPDATE_FEW_COLS)) {
+                    if (action.equals(Action.UPDATE_FEW_COLS) || action.equals(Action.UPDATE_FEW_COLS_NO_ID)) {
                         if (notNullCount == 2) {
                             errors.add(new ValidationError(requiredProps, VantarKey.REQUIRED_XOR));
                         }
@@ -1065,7 +1061,7 @@ public abstract class DtoBase implements Dto {
                 }
             }
 
-            if (action.equals(Action.UPDATE_FEW_COLS)) {
+            if (action.equals(Action.UPDATE_FEW_COLS) || action.equals(Action.UPDATE_FEW_COLS_NO_ID)) {
                 return;
             }
 
@@ -1120,23 +1116,23 @@ public abstract class DtoBase implements Dto {
         }
 
         Class<?> type = field.getType();
-        if (type.equals(String.class) && StringUtil.isEmpty((String) value)) {
+        if (ObjectUtil.isEmpty(value)) {
             value = null;
         }
 
-        if (ObjectUtil.isEmpty(value)) {
-            if (ObjectUtil.isNotEmpty(paramValue) && !isNull(name)) {
+        if (value == null) {
+            if (ObjectUtil.isNotEmpty(paramValue) && isNull(name)) {
                 errors.add(new ValidationError(name, VantarKey.DATA_TYPE));
             } else if (
-                (action.equals(Action.INSERT) || action.equals(Action.UPDATE_ALL_COLS))
+                (action.equals(Action.INSERT) || action.equals(Action.UPDATE_ALL_COLS)
+                    || action.equals(Action.UPDATE_ALL_COLS_NO_ID)
+                    || ((action.equals(Action.UPDATE_FEW_COLS) || action.equals(Action.UPDATE_FEW_COLS_NO_ID)) && isNull(name)))
                 && field.isAnnotationPresent(Required.class)
                 && !field.isAnnotationPresent(Default.class)) {
 
                 errors.add(new ValidationError(name, VantarKey.REQUIRED));
             }
-        }
 
-        if (value == null) {
             return;
         }
 
@@ -1248,6 +1244,14 @@ public abstract class DtoBase implements Dto {
 
     public boolean beforeUpdate() {
         return true;
+    }
+
+    public void afterInsert() {
+
+    }
+
+    public void afterUpdate() {
+
     }
 
     public void beforeJson() {

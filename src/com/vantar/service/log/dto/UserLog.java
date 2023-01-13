@@ -28,7 +28,6 @@ public class UserLog extends DtoBase {
     @StoreString
     public Map<String, String> headers;
 
-
     public Long objectId;
     public String object;
 }

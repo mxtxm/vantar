@@ -15,6 +15,7 @@ import javax.servlet.http.HttpServletResponse;
     "/admin/data/backup/files/sql",
 
     "/admin/data/backup/mongo",
+    "/admin/data/backup/mongo/q",
     "/admin/data/restore/mongo",
     "/admin/data/backup/files/mongo",
 
@@ -24,6 +25,7 @@ import javax.servlet.http.HttpServletResponse;
 
     "/admin/data/backup/download",
     "/admin/data/backup/upload",
+    "/admin/data/backup/logs",
 })
 @MultipartConfig(
     location="/tmp",
@@ -51,6 +53,10 @@ public class AdminBackupController extends RouteToMethod {
 
     public void dataBackupMongo(Params params, HttpServletResponse response) throws FinishException {
         AdminBackup.backup(params, response, DtoDictionary.Dbms.MONGO);
+    }
+
+    public void dataBackupMongoQ(Params params, HttpServletResponse response) throws FinishException {
+        AdminBackup.backupQuery(params, response, DtoDictionary.Dbms.MONGO);
     }
 
     public void dataRestoreMongo(Params params, HttpServletResponse response) throws FinishException {
@@ -90,5 +96,9 @@ public class AdminBackupController extends RouteToMethod {
 
     public void dataBackupUpload(Params params, HttpServletResponse response) throws FinishException {
         AdminBackup.upload(params, response);
+    }
+
+    public void dataBackupLogs(Params params, HttpServletResponse response) throws FinishException {
+        AdminBackup.logs(params, response);
     }
 }

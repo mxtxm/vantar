@@ -44,7 +44,6 @@ public class Services {
     public static Service get(String serviceClass) throws ServiceException {
         ServiceInfo service = upServices.get(serviceClass);
         if (service == null) {
-            log.error(" !! service '{}' not registered", serviceClass);
             throw new ServiceException(serviceClass);
         }
         return service.instance;
@@ -54,7 +53,6 @@ public class Services {
     public static <T extends Service> T get(Class<T> serviceClass) throws ServiceException {
         ServiceInfo service = upServices.get(serviceClass.getSimpleName());
         if (service == null) {
-            log.error(" !! service '{}' not registered", serviceClass.getSimpleName());
             throw new ServiceException(serviceClass);
         }
         return (T) service.instance;

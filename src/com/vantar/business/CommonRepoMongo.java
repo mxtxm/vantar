@@ -1,7 +1,6 @@
 package com.vantar.business;
 
 import com.vantar.common.VantarParam;
-import com.vantar.database.common.ValidationError;
 import com.vantar.database.dto.*;
 import com.vantar.database.nosql.mongo.Mongo;
 import com.vantar.database.nosql.mongo.*;
@@ -9,8 +8,7 @@ import com.vantar.database.query.*;
 import com.vantar.database.query.data.QueryData;
 import com.vantar.exception.*;
 import com.vantar.locale.VantarKey;
-import com.vantar.util.object.*;
-import com.vantar.util.string.StringUtil;
+import com.vantar.util.object.ObjectUtil;
 import com.vantar.web.ResponseMessage;
 import java.util.*;
 
@@ -111,91 +109,7 @@ public class CommonRepoMongo extends Mongo {
         return insert(dto);
     }
 
-    public static List<ValidationError> getUniqueViolation(Dto dto) throws DatabaseException {
-        List<ValidationError> errors = null;
-        for (String fieldName : dto.annotatedProperties(Unique.class)) {
-            if (!MongoSearch.isUnique(dto, fieldName)) {
-                if (errors == null) {
-                    errors = new ArrayList<>(5);
-                }
-                errors.add(new ValidationError(fieldName, VantarKey.UNIQUE));
-            }
-        }
-        if (dto.getClass().isAnnotationPresent(UniqueGroup.class)) {
-            for (String group : dto.getClass().getAnnotation(UniqueGroup.class).value()) {
-                if (!MongoSearch.isUnique(dto, StringUtil.split(group, VantarParam.SEPARATOR_COMMON))) {
-                    if (errors == null) {
-                        errors = new ArrayList<>(5);
-                    }
-                    errors.add(new ValidationError("(" + group + ")", VantarKey.UNIQUE));
-                }
-            }
-        }
 
-        return errors;
-    }
-
-    public static List<ValidationError> getParentChildViolation(Dto dto) {
-        Long id = dto.getId();
-        if (id == null) {
-            return null;
-        }
-        List<ValidationError> errors = null;
-        for (String name : dto.annotatedProperties(Depends.class)) {
-            if (dto.getAnnotation(name, Depends.class).value().equals(dto.getClass())) {
-                Object value = dto.getPropertyValue(name);
-                if (value != null && value.equals(id)) {
-                    if (errors == null) {
-                        errors = new ArrayList<>();
-                    }
-                    errors.add(new ValidationError(name, VantarKey.UNIQUE));
-                }
-            }
-        }
-        return errors;
-    }
-
-    public static List<ValidationError> getRelationViolation(Dto dto) {
-        List<ValidationError> errors = new ArrayList<>();
-        for (String name : dto.annotatedProperties(Depends.class)) {
-            Object value = dto.getPropertyValue(name);
-            if (value != null) {
-                if (value instanceof Long) {
-                    checkRelation(dto, name, (Long) value, errors);
-                } else if (ClassUtil.isInstantiable(value.getClass(), Collection.class)) {
-                    if (ClassUtil.getGenericTypes(dto.getField(name))[0].equals(Long.class)) {
-                        for (Long v : (Collection<Long>) value) {
-                            checkRelation(dto, name, v, errors);
-                        }
-                    }
-                }
-            }
-        }
-        return errors.isEmpty() ? null : errors;
-    }
-
-    private static void checkRelation(Dto dto, String name, Long value, List<ValidationError> errors) {
-        DtoDictionary.Info info = DtoDictionary.get(dto.getAnnotation(name, Depends.class).value());
-        if (info == null) {
-            return;
-        }
-
-        Dto dtoD = info.getDtoInstance();
-        if (dtoD == null) {
-            return;
-        }
-
-        QueryBuilder q = new QueryBuilder(dtoD);
-        q.condition().equal(Dto.ID, value);
-
-        try {
-            if (!MongoSearch.exists(q)) {
-                errors.add(new ValidationError(name, VantarKey.REFERENCE, value));
-            }
-        } catch (DatabaseException e) {
-            log.error(" !! could not check reference dto={} field={} value={}", dto, name, value, e);
-        }
-    }
 
     public static void purge(String collection) throws DatabaseException {
         Mongo.deleteAll(collection);

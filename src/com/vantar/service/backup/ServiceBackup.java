@@ -4,13 +4,15 @@ import com.vantar.database.dto.DtoDictionary;
 import com.vantar.database.nosql.elasticsearch.ElasticBackup;
 import com.vantar.database.nosql.mongo.MongoBackup;
 import com.vantar.database.sql.SqlBackup;
+import com.vantar.exception.DateTimeException;
 import com.vantar.service.Services;
-import com.vantar.util.datetime.DateTime;
+import com.vantar.service.log.LogEvent;
+import com.vantar.util.collection.FixedArrayList;
+import com.vantar.util.datetime.*;
 import com.vantar.util.file.*;
 import com.vantar.util.string.StringUtil;
 import org.slf4j.*;
-import java.time.*;
-import java.time.temporal.ChronoUnit;
+import java.util.*;
 import java.util.concurrent.*;
 
 
@@ -18,9 +20,13 @@ public class ServiceBackup implements Services.Service {
 
     private static final Logger log = LoggerFactory.getLogger(ServiceBackup.class);
     private ScheduledExecutorService schedule;
+    private final List<String> logs = new FixedArrayList<>(100);
+    private DateTime lastRun;
+    private DateTime startDateTime;
 
     public Boolean onEndSetNull;
     public String dbms;
+    public Integer startHour;
     public Integer intervalHour;
     public Integer deleteOldFilesAfterDays;
     public String path;
@@ -28,8 +34,25 @@ public class ServiceBackup implements Services.Service {
 
     public void start() {
         schedule = Executors.newSingleThreadScheduledExecutor();
-        long midnight = LocalDateTime.now().until(LocalDate.now().plusDays(1).atStartOfDay(), ChronoUnit.MINUTES);
-        schedule.scheduleAtFixedRate(this::create, midnight, intervalHour * 60, TimeUnit.MINUTES);
+
+        DateTime now = new DateTime();
+        DateTimeFormatter f = now.formatter();
+        try {
+            startDateTime = new DateTime(f.year + "-" + f.month + "-" + f.day + " " + startHour + ":0:0");
+        } catch (DateTimeException ignore) {
+
+        }
+        while (startDateTime.isBefore(now)) {
+            startDateTime.addHours(intervalHour);
+        }
+
+        schedule.scheduleAtFixedRate(this::create, startDateTime.diffMinutes(now), intervalHour * 60, TimeUnit.MINUTES);
+        log.info(
+            "    >> backup: runs at {} ({}minutes) > repeats every {}hours",
+            startDateTime.formatter().getDateTime(),
+            startDateTime.diffMinutes(now),
+            intervalHour
+        );
     }
 
     public void stop() {
@@ -46,45 +69,78 @@ public class ServiceBackup implements Services.Service {
     }
 
     private void create() {
-        String tail = "-" + (new DateTime().formatter().getDateTimeSimple()) + ".dump";
-
+        log.info(" >> start creating database backup");
+        startDateTime = null;
+        lastRun = new DateTime();
         dbms = dbms.toUpperCase();
-        if (StringUtil.contains(dbms, DtoDictionary.Dbms.MONGO.toString())) {
-            MongoBackup.dump(path + "mongo" + tail, null, null);
-        }
-        if (StringUtil.contains(dbms, DtoDictionary.Dbms.SQL.toString())) {
-            SqlBackup.dump(path + "sql" + tail, null, null);
-        }
-        if (StringUtil.contains(dbms, DtoDictionary.Dbms.ELASTIC.toString())) {
-            ElasticBackup.dump(path + "elastic" + tail, null, null);
-        }
+        String tail = "-" + (lastRun.formatter().getDateTimeSimple()) + ".dump";
+        logs.add("begin: " + lastRun.formatter().getDateTime());
 
-        if (deleteOldFilesAfterDays != null) {
-            DateTime thresholdDate = new DateTime().decreaseDays(deleteOldFilesAfterDays);
-            DirUtil.browseByExtension(path, "dump", file -> {
-                String[] parts = StringUtil.split(
-                    StringUtil.remove(
-                        file.getName(),
-                        ".dump", ".zip", "elastic-", "sql-", "mongo-"
-                    ),
-                    '-'
-                );
-                String s = parts[0] + '-' + parts[1] + '-' + parts[2];
-                try {
-                    DateTime fileDate = new DateTime(s);
-                    if (fileDate.isBefore(thresholdDate)) {
-                        FileUtil.removeFile(file.getAbsolutePath());
-                        log.info(" > removed old backup {}", file.getAbsolutePath());
+        try {
+            if (StringUtil.contains(dbms, DtoDictionary.Dbms.MONGO.toString())) {
+                LogEvent.beat(this.getClass(), "Mongo backed-up start...");
+                MongoBackup.dump(path + "mongo" + tail, null, null);
+                LogEvent.beat(this.getClass(), "Mongo backed-up");
+                logs.add("success: " + lastRun.formatter().getDateTime() + " mongo");
+            }
+            if (StringUtil.contains(dbms, DtoDictionary.Dbms.SQL.toString())) {
+                LogEvent.beat(this.getClass(), "SQL backed-up start...");
+                SqlBackup.dump(path + "sql" + tail, null, null);
+                LogEvent.beat(this.getClass(), "SQL backed-up");
+                logs.add("success: " + lastRun.formatter().getDateTime() + " sql");
+            }
+            if (StringUtil.contains(dbms, DtoDictionary.Dbms.ELASTIC.toString())) {
+                LogEvent.beat(this.getClass(), "Elastic backed-up start...");
+                ElasticBackup.dump(path + "elastic" + tail, null, null);
+                LogEvent.beat(this.getClass(), "Elastic backed-up");
+                logs.add("success: " + lastRun.formatter().getDateTime() + " elastic");
+            }
+
+            if (deleteOldFilesAfterDays != null) {
+                DateTime thresholdDate = lastRun.decreaseDays(deleteOldFilesAfterDays);
+                DirUtil.browseByExtension(path, "dump", file -> {
+                    String[] parts = StringUtil.split(
+                        StringUtil.remove(
+                            file.getName(),
+                            ".dump", ".zip", "elastic-", "sql-", "mongo-"
+                        ),
+                        '-'
+                    );
+                    try {
+                        DateTime fileDate = new DateTime(parts[0] + '-' + parts[1] + '-' + parts[2]);
+                        if (fileDate.isBefore(thresholdDate)) {
+                            FileUtil.removeFile(file.getAbsolutePath());
+                            logs.add("removed: " + file.getAbsolutePath());
+                            log.info(" > removed old backup {}", file.getAbsolutePath());
+                        }
+                    } catch (Exception ignore) {
+
                     }
-                } catch (Exception ignore) {
+                });
 
-                }
-            });
-
+                log.info(" << end creating database backup");
+            }
+        } catch (Exception e) {
+            logs.add("FAILED: " + lastRun.formatter().getDateTime());
+            log.error(" ! creating backup failed", e);
         }
     }
 
     public String getPath() {
         return path;
+    }
+
+    public List<String> getLogs() {
+        return logs;
+    }
+
+    public String getLastRun() {
+        return lastRun == null ? "Run pending..." : lastRun.formatter().getDateTime();
+    }
+
+    public String getNextRun() {
+        return startDateTime == null ?
+            lastRun.addHours(intervalHour).formatter().getDateTime() :
+            startDateTime.formatter().getDateTime();
     }
 }

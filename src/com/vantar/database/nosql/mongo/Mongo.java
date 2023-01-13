@@ -28,6 +28,8 @@ public class Mongo {
         try {
             MongoConnection.getDatabase().getCollection(from)
                 .renameCollection(new MongoNamespace(MongoConnection.config.getMongoDatabase(), to));
+
+            Sequence.setToMax(to);
         } catch (Exception e) {
             log.error("! rename collection", e);
             throw new DatabaseException(e);
@@ -248,7 +250,7 @@ public class Mongo {
         dto.setCreateTime(true);
         dto.setUpdateTime(true);
 
-        if (dto.getId() == null) {
+        if (dto.getClearIdOnInsert() || dto.getId() == null) {
             dto.setId(Sequence.getNext(dto));
         }
         if (!dto.beforeInsert()) {
@@ -265,6 +267,9 @@ public class Mongo {
             log.error("! insert {}", MongoMapping.getFieldValuesAsDocument(dto, Dto.Action.INSERT).getClass(), e);
             throw new DatabaseException(e);
         }
+
+        dto.afterInsert();
+
         return dto.getId();
     }
 
@@ -298,7 +303,7 @@ public class Mongo {
             dto.setCreateTime(true);
             dto.setUpdateTime(true);
 
-            if (dto.getId() == null) {
+            if (dto.getClearIdOnInsert() || dto.getId() == null) {
                 dto.setId(Sequence.getNext(dto));
             }
 
@@ -316,6 +321,10 @@ public class Mongo {
         } catch (Exception e) {
             log.error("! insert {}", dtos, e);
             throw new DatabaseException(e);
+        }
+
+        for (Dto dto : dtos) {
+            dto.afterInsert();
         }
     }
 
@@ -415,6 +424,7 @@ public class Mongo {
             log.error("! update({}, {})", condition, dto, e);
             throw new DatabaseException(e);
         }
+        dto.afterUpdate();
     }
 
     /* UPDATE < < < */

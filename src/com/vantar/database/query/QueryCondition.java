@@ -33,6 +33,10 @@ public class QueryCondition {
         this.operator = operator;
     }
 
+    public QueryCondition dump() {
+        dump = true;
+        return this;
+    }
 
     // EXISTS > > >
 

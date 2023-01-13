@@ -87,7 +87,7 @@ public class Admin {
     private static String getOnlineUserTitle(Params params) {
         try {
             return Services.get(ServiceAuth.class).getCurrentUser(params).getFullName();
-        } catch (AuthException | ServiceException ignore) {
+        } catch (ServiceException ignore) {
             return "";
         }
     }
@@ -95,7 +95,7 @@ public class Admin {
     public static void index(Params params, HttpServletResponse response) throws FinishException {
         try {
             ServiceAuth.getCurrentSignedInUser(params);
-        } catch (ServiceException | AuthException e) {
+        } catch (ServiceException e) {
             Response.redirect(response, "/admin/signin");
             return;
         }
@@ -156,6 +156,11 @@ public class Admin {
                 )
                 .addEmptyLine();
 
+            ui  .addKeyValue("Mongo ", MongoConnection.isUp() ? "on" : "off")
+                .addKeyValue("ElasticSearch ", ElasticConnection.isUp() ? "on" : "off")
+                .addKeyValue("Sql ", SqlConnection.isUp() ? "on" : "off")
+                .addKeyValue("RabbitMQ ", Queue.isUp() ? "on" : "off");
+
             synchronized (Services.upServices) {
                 ui  .addEmptyLine()
                     .addHeading(3, Locale.getString(VantarKey.ADMIN_RUNNING_SERVICES))
@@ -167,12 +172,6 @@ public class Admin {
                 Services.upServices.forEach((service, info) ->
                     ui.addKeyValue(service + " (" + info.instanceCount + ")", info.isEnabledOnThisServer));
             }
-
-            ui  .addKeyValue("Mongo ", MongoConnection.isUp() ? "on" : "off")
-                .addKeyValue("ElasticSearch ", ElasticConnection.isUp() ? "on" : "off")
-                .addKeyValue("Sql ", SqlConnection.isUp() ? "on" : "off")
-                .addKeyValue("RabbitMQ ", Queue.isUp() ? "on" : "off");
-
         }
 
         ui.addEmptyLine(8).addHeading(3, "Vantar system administration: " + VantarParam.VERSION).finish();

@@ -2,7 +2,6 @@ package com.vantar.database.nosql.mongo;
 
 import com.mongodb.client.*;
 import com.mongodb.client.model.Projections;
-import com.vantar.admin.model.Admin;
 import com.vantar.database.dto.Dto;
 import com.vantar.database.query.*;
 import com.vantar.exception.DatabaseException;

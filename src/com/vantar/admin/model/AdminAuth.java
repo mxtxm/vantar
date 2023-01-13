@@ -36,7 +36,10 @@ public class AdminAuth {
             auth.removeToken(tk);
         }
 
-        ui  .beginBox(Locale.getString(VantarKey.ADMIN_DELETE_TOKEN))
+        ui  .beginBox(Locale.getString(VantarKey.ADMIN_RESET_SIGNIN_FAILS))
+            .addLink(Locale.getString(VantarKey.ADMIN_RESET_SIGNIN_FAILS), "/admin/users/signin/fails/reset")
+            .containerEnd()
+            .beginBox(Locale.getString(VantarKey.ADMIN_DELETE_TOKEN))
             .addText(Locale.getString(VantarKey.ADMIN_DELETE_TOKEN_DESCRIPTION))
             .beginFormPost()
             .addInput(Locale.getString(VantarKey.ADMIN_AUTH_TOKEN), "tk")

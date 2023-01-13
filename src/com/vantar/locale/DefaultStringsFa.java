@@ -13,6 +13,7 @@ public class DefaultStringsFa {
         tokens.put(VantarKey.USER_PASSWORD_EMPTY, "نام کاربری و یا رمز عبور خالی است");
         tokens.put(VantarKey.USER_NOT_EXISTS, "کاربر در سیستم وجود ندارد");
         tokens.put(VantarKey.USER_DISABLED, "کاربر غیر فعال است");
+        tokens.put(VantarKey.USER_DISABLED_MAX_FAILED, "بعلت تلاش های ناموفق بیش از حد کاربر غیر فعال شد");
         tokens.put(VantarKey.WRONG_PASSWORD, "رمز عبور نادرست است");
         tokens.put(VantarKey.MISSING_AUTH_TOKEN, "شناسه هویت کاربر پیدا نشد، دوباره به سیستم وارد شوید");
         tokens.put(VantarKey.INVALID_AUTH_TOKEN, "شناسه هویت کاربر نادرست است، دوباره به سیستم وارد شوید");
@@ -290,6 +291,7 @@ public class DefaultStringsFa {
         tokens.put(VantarKey.ADMIN_BACKUP_UPLOAD_FILE, "فایل بکاپ");
 
         tokens.put(VantarKey.SELECT_ALL, "انتخاب همه");
+        tokens.put(VantarKey.ADMIN_RESET_SIGNIN_FAILS, "ریست کاربران غیرفعال");
     }
 
     public static String getString(LangKey key) {

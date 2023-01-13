@@ -68,6 +68,9 @@ public interface Dto {
     String getPresentationValue();
     String getPresentationValue(String separator);
 
+    void setClearIdOnInsert(boolean clearIdOnInsert);
+    boolean getClearIdOnInsert();
+
     void simpleSet(Dto dto, String... include);
     List<ValidationError> setPropertyValue(String name, Object value);
     List<ValidationError> setPropertyValue(String name, Object value, Action action);
@@ -95,6 +98,8 @@ public interface Dto {
     void beforeJson();
     boolean beforeInsert();
     boolean beforeUpdate();
+    void afterInsert();
+    void afterUpdate();
     void afterSetData();
     void afterFetchData(long i);
     void afterFetchData();
@@ -109,7 +114,9 @@ public interface Dto {
         INSERT,
 
         UPDATE_ALL_COLS,
+        UPDATE_ALL_COLS_NO_ID,
         UPDATE_FEW_COLS,
+        UPDATE_FEW_COLS_NO_ID,
 
         DELETE,
         UN_DELETE,

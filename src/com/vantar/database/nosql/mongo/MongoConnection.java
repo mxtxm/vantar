@@ -17,6 +17,10 @@ public class MongoConnection {
     private static boolean isUp;
 
 
+    public static boolean isEnabled() {
+        return config != null;
+    }
+
     public static boolean isUp() {
         return isUp;
     }

@@ -1,13 +1,17 @@
 package com.vantar.admin.model;
 
+import com.vantar.business.*;
+import com.vantar.database.dto.Dto;
+import com.vantar.database.nosql.mongo.MongoSearch;
+import com.vantar.database.query.QueryBuilder;
 import com.vantar.exception.*;
+import com.vantar.locale.Locale;
 import com.vantar.service.log.dto.Log;
-import com.vantar.business.CommonRepoMongo;
 import com.vantar.locale.*;
 import com.vantar.service.log.LogEvent;
 import com.vantar.web.*;
 import javax.servlet.http.HttpServletResponse;
-import java.util.List;
+import java.util.*;
 
 
 public class AdminSystemError {
@@ -56,4 +60,17 @@ public class AdminSystemError {
             .addBlockLink(Locale.getString(Locale.getString(VantarKey.ADMIN_SYSTEM_ERRORS)), "/admin/system/errors")
             .finish();
     }
+
+    public static List<Dto> query(Params params) throws VantarException {
+        QueryBuilder q = new QueryBuilder(new Log())
+            .sort("id:desc")
+            .page(params.getInteger("page", 1), params.getInteger("count", 200));
+
+        String tag = params.getString("tag");
+        if (tag != null) {
+            q.condition().equal("tag", tag);
+        }
+        return CommonModelMongo.getData(q);
+    }
+
 }

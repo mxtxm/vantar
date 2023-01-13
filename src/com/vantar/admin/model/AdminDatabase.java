@@ -1,6 +1,7 @@
 package com.vantar.admin.model;
 
 import com.vantar.business.*;
+import com.vantar.business.importexport.ImportMongo;
 import com.vantar.common.*;
 import com.vantar.database.dto.*;
 import com.vantar.database.nosql.elasticsearch.*;
@@ -449,7 +450,7 @@ public class AdminDatabase {
                 continue;
             }
 
-            CommonModelMongo.importDataAdmin(
+            ImportMongo.importDataAdmin(
                 data,
                 dto,
                 info.present,

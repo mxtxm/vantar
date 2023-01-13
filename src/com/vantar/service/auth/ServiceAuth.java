@@ -21,6 +21,7 @@ public class ServiceAuth extends Permit implements Services.Service {
     protected static final int DEFAULT_VERIFY_TOKEN_LENGTH = 5;
     protected static final boolean DEFAULT_VERIFY_TOKEN_NUMBER_ONLY = true;
     protected static final int MAX_SIGNED_USERS = 500;
+    protected static final int MAX_SIGNIN_FAIL = 3;
 
     public static final String SIGNIN_MODE_SINGLE_KICK_OUT_OLD = "K";
     public static final String SIGNIN_MODE_SINGLE = "S";
@@ -37,6 +38,7 @@ public class ServiceAuth extends Permit implements Services.Service {
     private final Map<String, TokenData> signupVerifyTokens = new ConcurrentHashMap<>(MAX_VERIFY_TOKENS);
     private final Map<String, TokenData> oneTimeTokens = new ConcurrentHashMap<>(MAX_VERIFY_TOKENS);
     private final Map<String, TokenData> verifyTokens = new ConcurrentHashMap<>(MAX_VERIFY_TOKENS);
+    private Map<Long, Integer> signinFail = new ConcurrentHashMap<>(MAX_VERIFY_TOKENS);
 
     public Boolean onEndSetNull;
     /* parent class: public Integer tokenExpireMin; */
@@ -47,6 +49,7 @@ public class ServiceAuth extends Permit implements Services.Service {
     public Boolean signUpVerifyTokenNumberOnly = DEFAULT_VERIFY_TOKEN_NUMBER_ONLY;
     public Boolean signInVerifyTokenNumberOnly = DEFAULT_VERIFY_TOKEN_NUMBER_ONLY;
     public String signinMode = SIGNIN_MODE_SINGLE_KICK_OUT_OLD;
+    public Integer maxSigninFail = MAX_SIGNIN_FAIL;
 
 
     public void start() {
@@ -229,11 +232,18 @@ public class ServiceAuth extends Permit implements Services.Service {
             throw new AuthException(VantarKey.USER_NOT_EXISTS);
         }
 
+        Integer c = signinFail.get(signinBundle.commonUser.getId());
+        if (c != null && c > maxSigninFail) {
+            throw new AuthException(VantarKey.USER_DISABLED_MAX_FAILED);
+        }
+
         if (signinBundle.commonUserPassword == null) {
             log.error(" ! commonUserPassword is null > \n{}", signinBundle);
+            addFail(signinBundle.commonUser.getId());
             throw new AuthException(VantarKey.WRONG_PASSWORD);
         }
         if (!signinBundle.commonUserPassword.passwordEquals(password)) {
+            addFail(signinBundle.commonUser.getId());
             throw new AuthException(VantarKey.WRONG_PASSWORD);
         }
 
@@ -243,8 +253,13 @@ public class ServiceAuth extends Permit implements Services.Service {
         }
 
         makeUserOnline(tokenData);
-
+        signinFail.remove(signinBundle.commonUser.getId());
         return signinBundle.commonUser;
+    }
+
+    private void addFail(long userId) {
+        Integer c = signinFail.get(userId);
+        signinFail.put(userId, c == null ? 1 : ++c);
     }
 
     public synchronized CommonUser forceSignin(CommonUser user) throws AuthException {
@@ -404,15 +419,11 @@ public class ServiceAuth extends Permit implements Services.Service {
         });
     }
 
-    public static CommonUser getCurrentSignedInUser(Params params) throws ServiceException, AuthException {
+    public static CommonUser getCurrentSignedInUser(Params params) throws ServiceException {
         return Services.get(ServiceAuth.class).getCurrentUser(params);
     }
 
-    public CommonUser getCurrentUser(Params params) throws AuthException {
-        return validateToken(params, onlineUsers).user;
-    }
-
-    public static void assumeSignedIn(Params params) throws ServiceException, AuthException {
+    public static void assumeSignedIn(Params params) throws ServiceException {
         Services.get(ServiceAuth.class).getCurrentUser(params);
     }
 
@@ -454,6 +465,10 @@ public class ServiceAuth extends Permit implements Services.Service {
         if (t != null) {
             t.setExtraValue(key, value);
         }
+    }
+
+    public void resetSigninFails() {
+        signinFail = new ConcurrentHashMap<>(MAX_VERIFY_TOKENS);
     }
 
 

@@ -3,6 +3,7 @@ package com.vantar.database.nosql.mongo;
 import com.mongodb.client.*;
 import com.vantar.admin.model.*;
 import com.vantar.database.dto.*;
+import com.vantar.database.query.QueryBuilder;
 import com.vantar.exception.DatabaseException;
 import com.vantar.util.datetime.DateTimeRange;
 import com.vantar.util.file.FileUtil;
@@ -95,6 +96,50 @@ public class MongoBackup {
                 ui.addPre(
                     "finished in: " + ((System.currentTimeMillis() - startTime) / 1000) + "s" +
                     "\n" + r + " records" + "\n" + FileUtil.getSizeMb(dumpPath) + "Mb"
+                );
+            }
+        } catch (IOException | DatabaseException e) {
+            if (ui != null) {
+                ui.addErrorMessage(e);
+            }
+        }
+
+        if (ui != null) {
+            ui.finish();
+        }
+    }
+
+    public static void dumpQuery(String dumpPath, QueryBuilder q, WebUi ui) {
+        MongoDatabase database;
+        try {
+            database = MongoConnection.getDatabase();
+        } catch (DatabaseException e) {
+            if (ui != null) {
+                ui.addErrorMessage(e).write();
+            }
+            return;
+        }
+
+        if (ui != null) {
+            ui.addHeading("Mongo " + database.getName() + " > " + dumpPath).write();
+        }
+
+        int r = 0;
+        long startTime = System.currentTimeMillis();
+        try (ZipOutputStream zip = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(dumpPath)))) {
+
+            zip.putNextEntry(new ZipEntry(q.getDto().getStorage() + ".dump"));
+            MongoQuery mongoQuery = new MongoQuery(q);
+            for (Document document : mongoQuery.getResult()) {
+                zip.write((document.toJson() + "\n").getBytes());
+                ++r;
+            }
+            zip.closeEntry();
+
+            if (ui != null) {
+                ui.addPre(
+                    "finished in: " + ((System.currentTimeMillis() - startTime) / 1000) + "s" +
+                        "\n" + r + " records" + "\n" + FileUtil.getSizeMb(dumpPath) + "Mb"
                 );
             }
         } catch (IOException | DatabaseException e) {

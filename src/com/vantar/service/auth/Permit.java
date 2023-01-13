@@ -287,6 +287,13 @@ public class Permit {
             token = params.getString(VantarParam.AUTH_TOKEN);
         }
         if (StringUtil.isEmpty(token)) {
+            try {
+                token = params.extractFromJson(VantarParam.AUTH_TOKEN, String.class);
+            } catch (Exception ignore) {
+
+            }
+        }
+        if (StringUtil.isEmpty(token)) {
             token = ServiceAuth.startupAuthToken;
         }
         if (StringUtil.isEmpty(token)) {
@@ -304,6 +311,33 @@ public class Permit {
         }
 
         return tokenData;
+    }
+
+    public CommonUser getCurrentUser(Params params) {
+        String token = params.getHeader(VantarParam.HEADER_AUTH_TOKEN);
+        if (StringUtil.isEmpty(token)) {
+            token = params.getString(VantarParam.AUTH_TOKEN);
+        }
+        if (StringUtil.isEmpty(token)) {
+            try {
+                token = params.extractFromJson(VantarParam.AUTH_TOKEN, String.class);
+            } catch (Exception ignore) {
+                return null;
+            }
+        }
+        if (StringUtil.isEmpty(token)) {
+            token = ServiceAuth.startupAuthToken;
+        }
+        if (StringUtil.isEmpty(token)) {
+            return null;
+        }
+
+        TokenData tokenData = onlineUsers.get(token);
+        if (tokenData == null) {
+            return null;
+        }
+
+        return tokenData.user;
     }
 
     public boolean isRoot(Params params) throws ServiceException, AuthException {

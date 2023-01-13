@@ -6,6 +6,7 @@ public enum VantarKey implements LangKey {
     USER_PASSWORD_EMPTY,
     USER_NOT_EXISTS,
     USER_DISABLED,
+    USER_DISABLED_MAX_FAILED,
     WRONG_PASSWORD,
     MISSING_AUTH_TOKEN,
     INVALID_AUTH_TOKEN,
@@ -275,5 +276,6 @@ public enum VantarKey implements LangKey {
     ADMIN_BACKUP_UPLOAD_FILE,
 
     SELECT_ALL,
+    ADMIN_RESET_SIGNIN_FAILS,
 
 }

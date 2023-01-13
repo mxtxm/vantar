@@ -339,11 +339,14 @@ public class Jackson {
 
         @Override
         public Location deserialize(JsonParser parser, DeserializationContext context) throws IOException {
-            Location location = new Location();
             ObjectCodec codec = parser.getCodec();
             JsonNode node = codec.readTree(parser);
             JsonNode v = node.get("latitude");
-            location.latitude = v == null ? null : v.asDouble();
+            if (v == null) {
+                return new Location(node.asText());
+            }
+            Location location = new Location();
+            location.latitude = v.asDouble();
             v = node.get("longitude");
             location.longitude = v == null ? null : v.asDouble();
             v = node.get("height");

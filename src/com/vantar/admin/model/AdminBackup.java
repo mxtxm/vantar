@@ -3,6 +3,7 @@ package com.vantar.admin.model;
 import com.vantar.database.dto.DtoDictionary;
 import com.vantar.database.nosql.elasticsearch.ElasticBackup;
 import com.vantar.database.nosql.mongo.MongoBackup;
+import com.vantar.database.query.QueryBuilder;
 import com.vantar.database.sql.SqlBackup;
 import com.vantar.exception.*;
 import com.vantar.locale.Locale;
@@ -54,6 +55,7 @@ public class AdminBackup {
                 .addInput(Locale.getString(VantarKey.ADMIN_DATE_TO), "datemax",
                     dateRange.dateMax == null ? "" : dateRange.dateMax.formatter().getDateTimePersian())
                 .addSubmit(Locale.getString(VantarKey.ADMIN_BACKUP_CREATE_START))
+                .addBlockLink("Query", "/admin/data/backup/mongo/q")
                 .finish();
             return;
         }
@@ -67,6 +69,44 @@ public class AdminBackup {
             MongoBackup.dump(dbDumpFilename, dateRange, ui);
         } else if (dbms.equals(DtoDictionary.Dbms.ELASTIC)) {
             ElasticBackup.dump(dbDumpFilename, dateRange, ui);
+        }
+
+        ui.finish();
+    }
+
+    public static void backupQuery(Params params, HttpServletResponse response, DtoDictionary.Dbms dbms) throws FinishException {
+        WebUi ui = Admin.getUi(Locale.getString(VantarKey.ADMIN_BACKUP_CREATE), params, response, true);
+        ui.beginBox(dbms.toString());
+
+        ServiceBackup backup;
+        try {
+            backup = Services.get(ServiceBackup.class);
+        } catch (ServiceException e) {
+            ui.addErrorMessage(e);
+            ui.write();
+            return;
+        }
+
+        String dbDumpFilename = params.getString(
+            "dumpfile",
+            backup.getPath() + dbms.toString().toLowerCase() + "-query-"
+                + (new DateTime().formatter().getDateTimeSimple()) + DUMP_FILE_EXT
+        );
+
+        if (!params.isChecked("f")) {
+            ui  .beginFormPost()
+                .addInput(Locale.getString(VantarKey.ADMIN_BACKUP_FILE_PATH), "dumpfile", dbDumpFilename)
+                .addTextArea("Query", "query")
+                .addSubmit(Locale.getString(VantarKey.ADMIN_BACKUP_CREATE_START))
+                .finish();
+            return;
+        }
+
+        try {
+            QueryBuilder q = new QueryBuilder(params.getQueryData("query"));
+            MongoBackup.dumpQuery(dbDumpFilename, q, ui);
+        } catch (InputException e) {
+            ui.addErrorMessage(e);
         }
 
         ui.finish();
@@ -208,5 +248,20 @@ public class AdminBackup {
         }
 
         ui.addMessage(Locale.getString(VantarKey.UPLOAD_SUCCESS)).finish();
+    }
+
+    public static void logs(Params params, HttpServletResponse response) throws FinishException {
+        WebUi ui = Admin.getUi(Locale.getString(VantarKey.ADMIN_BACKUP), params, response, true);
+
+        try {
+            ServiceBackup serviceBackup = Services.get(ServiceBackup.class);
+            for (String log : serviceBackup.getLogs()) {
+                ui.addPre(log);
+            }
+        } catch (ServiceException ignore) {
+
+        }
+
+        ui.finish();
     }
 }

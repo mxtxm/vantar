@@ -1,11 +1,13 @@
 package com.vantar.admin.model;
 
 import com.vantar.business.*;
+import com.vantar.business.importexport.ImportMongo;
 import com.vantar.common.*;
 import com.vantar.database.dependency.DataDependency;
 import com.vantar.database.dto.*;
 import com.vantar.database.nosql.elasticsearch.*;
 import com.vantar.database.nosql.mongo.*;
+import com.vantar.database.nosql.mongo.Mongo;
 import com.vantar.database.query.*;
 import com.vantar.database.query.data.QueryData;
 import com.vantar.database.sql.*;
@@ -14,6 +16,7 @@ import com.vantar.locale.Locale;
 import com.vantar.locale.*;
 import com.vantar.service.Services;
 import com.vantar.service.auth.*;
+import com.vantar.service.log.ServiceUserActionLog;
 import com.vantar.util.datetime.DateTime;
 import com.vantar.util.file.FileUtil;
 import com.vantar.util.json.Json;
@@ -23,6 +26,7 @@ import com.vantar.web.*;
 import javax.servlet.http.HttpServletResponse;
 import java.lang.reflect.Field;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 
 public class AdminData {
@@ -715,7 +719,7 @@ public class AdminData {
             }
         } else if (dtoIndex.dbms.equals(DtoDictionary.Dbms.MONGO)) {
             if (MongoConnection.isUp()) {
-                CommonModelMongo.importDataAdmin(
+                ImportMongo.importDataAdmin(
                     params.getString("import"),
                     dto,
                     dtoIndex.present,
@@ -826,6 +830,12 @@ public class AdminData {
         }
 
         ui.containerEnd().containerEnd().write();
+    }
+
+    public static void purge(String collection) throws DatabaseException {
+        Mongo.deleteAll(collection);
+        Mongo.Index.remove(collection);
+        Mongo.Sequence.remove(collection);
     }
 
 

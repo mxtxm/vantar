@@ -83,7 +83,7 @@ public class ServiceUserActionLog implements Services.Service {
             userLog.uploadedFiles = params.getUploadFiles();
             try {
                 userLog.userId = Services.get(ServiceAuth.class).getCurrentUser(params).getId();
-            } catch (ServiceException | AuthException e) {
+            } catch (Exception e) {
                 userLog.userId = null;
             }
         }

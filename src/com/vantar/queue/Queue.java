@@ -18,6 +18,10 @@ public class Queue {
     public static QueueConnection connection;
 
 
+    public static boolean isEnabled() {
+        return connection != null;
+    }
+
     public static boolean isUp() {
         return connection != null && connection.isUp();
     }
