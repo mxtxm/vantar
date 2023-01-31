@@ -251,7 +251,7 @@ public class AdminService {
         }
 
         DtoDictionary.getStructure().forEach((dbms, info) -> {
-            List<String> items = new ArrayList<>();
+            List<String> items = new ArrayList<>(14);
             info.forEach((objectName, i) -> items.add(objectName));
             ui.addKeyValue(dbms, CollectionUtil.join(items, "\n"));
             ui.addKeyValue(" ", " ");

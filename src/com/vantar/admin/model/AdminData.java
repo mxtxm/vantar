@@ -37,7 +37,7 @@ public class AdminData {
     public static void index(Params params, HttpServletResponse response) throws FinishException {
         WebUi ui = Admin.getUi(Locale.getString(VantarKey.ADMIN_MENU_DATA), params, response, true);
 
-        List<DtoDictionary.Info> noStores = new ArrayList<>();
+        List<DtoDictionary.Info> noStores = new ArrayList<>(10);
 
         DtoDictionary.getStructure().forEach((groupName, groupDtos) -> {
             ui.beginBox(groupName);

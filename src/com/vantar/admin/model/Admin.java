@@ -27,7 +27,7 @@ public class Admin {
 
 
     private static Map<String, String> getMenus(WebUi ui) throws FinishException {
-        Map<String, String> menu = new LinkedHashMap<>();
+        Map<String, String> menu = new LinkedHashMap<>(14);
         menu.put(Locale.getString(VantarKey.ADMIN_MENU_HOME), "/admin");
         if (AdminAuth.isRoot(ui)) {
             menu.put(Locale.getString(VantarKey.ADMIN_MENU_MONITORING), "/admin/monitoring");
@@ -102,7 +102,7 @@ public class Admin {
 
         WebUi ui = getUi(Locale.getString(VantarKey.ADMIN_SYSTEM_ADMIN), params, response, false);
 
-        Map<String, List<String>> shortcuts = new LinkedHashMap<>();
+        Map<String, List<String>> shortcuts = new LinkedHashMap<>(14);
         List<String> defaultLinks = new ArrayList<>(20);
         if (AdminAuth.isRoot(ui)) {
             defaultLinks.add("");

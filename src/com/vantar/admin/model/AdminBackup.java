@@ -129,7 +129,7 @@ public class AdminBackup {
         String dbDumpFilename = params.getString("dumpfile");
 
         if (!params.isChecked("f")) {
-            List<String> files = new ArrayList<>();
+            List<String> files = new ArrayList<>(10);
             String dbmsName = dbms.toString().toLowerCase();
             for (String path : FileUtil.getDirectoryFiles(backup.getPath())) {
                 if (!StringUtil.contains(path, dbmsName)) {

@@ -1,9 +1,11 @@
 package com.vantar.web;
 
 import com.vantar.admin.model.*;
+import com.vantar.business.CommonModelMongo;
 import com.vantar.common.VantarParam;
 import com.vantar.database.dto.*;
 import com.vantar.database.query.PageData;
+import com.vantar.exception.*;
 import com.vantar.locale.Locale;
 import com.vantar.locale.*;
 import com.vantar.service.Services;
@@ -888,6 +890,30 @@ public class WebUi {
             }
 
             if (ClassUtil.isInstantiable(type, Number.class)) {
+
+                Depends depends = field.getAnnotation(Depends.class);
+                if (depends != null) {
+                    Class<? extends Dto> depClass = depends.value();
+                    if (dto.getClass().isAnnotationPresent(Mongo.class)) {
+                        try {
+                            List<Dto> dtos = CommonModelMongo.getAll(DtoDictionary.getInstance(depClass));
+                            if (dtos.size() <= 1000) {
+                                Map<String, String> map = new HashMap<>();
+                                for (Dto depDto : dtos) {
+                                    map.put(depDto.getId().toString(), depDto.getPresentationValue());
+                                }
+                                addSelect(name, name, map, value == null ? null : value.toString());
+                                continue;
+                            }
+                        } catch (NoContentException e) {
+                            addText("No data: " + depClass.getSimpleName());
+                            continue;
+                        } catch (VantarException ignore) {
+
+                        }
+                    }
+                }
+
                 addInput(name, name, value == null ? null : value.toString());
 
             } else if (type == Boolean.class) {

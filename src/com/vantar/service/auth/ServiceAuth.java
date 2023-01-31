@@ -454,7 +454,7 @@ public class ServiceAuth extends Permit implements Services.Service {
     }
 
     public synchronized void removeToken(String token) {
-        TokenData x = onlineUsers.remove(token);
+        onlineUsers.remove(token);
         signupVerifyTokens.remove(token);
         oneTimeTokens.remove(token);
         verifyTokens.remove(token);
@@ -469,6 +469,10 @@ public class ServiceAuth extends Permit implements Services.Service {
 
     public void resetSigninFails() {
         signinFail = new ConcurrentHashMap<>(MAX_VERIFY_TOKENS);
+    }
+
+    public boolean isOk() {
+        return true;
     }
 
 

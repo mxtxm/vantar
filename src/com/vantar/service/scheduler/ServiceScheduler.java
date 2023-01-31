@@ -211,6 +211,10 @@ public class ServiceScheduler implements Services.Service {
         return cms;
     }
 
+    public boolean isOk() {
+        return true;
+    }
+
 
     public static class ScheduleInfo {
 

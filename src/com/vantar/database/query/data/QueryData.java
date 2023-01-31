@@ -109,6 +109,9 @@ public class QueryData {
         }
 
         QueryCondition queryCondition = new QueryCondition(condition.getOperator());
+        if (ObjectUtil.isEmpty(condition.items)) {
+            return queryCondition;
+        }
 
         for (ConditionItem item : condition.items) {
             if (item.type == null) {

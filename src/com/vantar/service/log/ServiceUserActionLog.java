@@ -252,4 +252,8 @@ public class ServiceUserActionLog implements Services.Service {
             LogEvent.fatal(ServiceUserActionLog.class, e);
         }
     }
+
+    public boolean isOk() {
+        return true;
+    }
 }

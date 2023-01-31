@@ -381,6 +381,7 @@ public class Services {
 
         void start();
         void stop();
+        boolean isOk();
         boolean onEndSetNull();
     }
 

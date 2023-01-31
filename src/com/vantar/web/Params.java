@@ -26,7 +26,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class Params {
 
     private static final Logger log = LoggerFactory.getLogger(Params.class);
-    public static final Map<Long, Params> threadParams = new ConcurrentHashMap<>();
+    public static final Map<Long, Params> threadParams = new ConcurrentHashMap<>(100, 1);
 
 
     public static void setThreadParams(Params params) {
@@ -426,7 +426,7 @@ public class Params {
             return Json.d.listFromJson(value, typeClass);
         } catch (Exception e) {
             typeMisMatch = true;
-            return new ArrayList<>();
+            return new ArrayList<>(1);
         }
     }
 
@@ -736,7 +736,7 @@ public class Params {
 
             Uploaded upload = new Uploaded(filePart);
             if (uploadFiles == null) {
-                uploadFiles = new ArrayList<>();
+                uploadFiles = new ArrayList<>(10);
             }
             uploadFiles.add(upload.getOriginalFilename());
             return upload;

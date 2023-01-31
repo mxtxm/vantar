@@ -83,7 +83,7 @@ public class AdminSettings {
             .addEmptyLine();
 
         if (params.isChecked("f")) {
-            Map<String, String> settings = new HashMap<>();
+            Map<String, String> settings = new HashMap<>(20, 1);
             for (String item : properties.propertyNames()) {
                 ((org.aeonbits.owner.Mutable) properties).setProperty(item, params.getString(item));
                 settings.put(item, properties.getProperty(item));
@@ -136,7 +136,7 @@ public class AdminSettings {
         List<String> settings = new ArrayList<>(properties.propertyNames());
         Collections.sort(settings);
 
-        Map<String, String> newSettings = new LinkedHashMap<>();
+        Map<String, String> newSettings = new LinkedHashMap<>(20, 1);
         for (String item : settings) {
             ((org.aeonbits.owner.Mutable) properties).setProperty(item, updatedSettings.get(item));
             newSettings.put(item, properties.getProperty(item));

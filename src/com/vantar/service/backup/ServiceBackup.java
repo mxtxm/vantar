@@ -143,4 +143,8 @@ public class ServiceBackup implements Services.Service {
             lastRun.addHours(intervalHour).formatter().getDateTime() :
             startDateTime.formatter().getDateTime();
     }
+
+    public boolean isOk() {
+        return true;
+    }
 }

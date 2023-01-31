@@ -17,9 +17,11 @@ import com.vantar.util.string.StringUtil;
 import com.vantar.web.*;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.util.*;
 
 @WebServlet({
+    "/admin/system/health",
     "/admin/system/health/report",
     "/admin/system/database/report",
 })
@@ -27,6 +29,14 @@ public class AdminSystemHealthController extends RouteToMethod {
 
     public Map<String, Object> health = new HashMap<>(10, 1);
 
+
+    public void systemHealth(Params params, HttpServletResponse response) {
+        try {
+            response.getWriter().write("OK");
+        } catch (IOException ignore) {
+
+        }
+    }
 
     public void systemHealthReport(Params params, HttpServletResponse response) {
         // resources

@@ -19,7 +19,7 @@ public class AdminMonitoring {
     public static void index(Params params, HttpServletResponse response) throws FinishException {
         WebUi ui = Admin.getUi(Locale.getString(VantarKey.ADMIN_MENU_MONITORING), params, response, true);
 
-        Map<String, List<String>> links = new LinkedHashMap<>();
+        Map<String, List<String>> links = new LinkedHashMap<>(10, 1);
 
         List<String> items = new ArrayList<>(1);
         items.add(Locale.getString(VantarKey.ADMIN_SYSTEM_ERRORS) + ":/admin/system/errors");

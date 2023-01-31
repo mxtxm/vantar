@@ -140,7 +140,7 @@ public class AdminDocument {
     }
 
     public static Set<String> getTags() {
-        Set<String> tags = new HashSet<>();
+        Set<String> tags = new HashSet<>(10);
         DirUtil.browseByExtensionRecursive(
             FileUtil.getClassPathAbsolutePath("/document"),
             "md",

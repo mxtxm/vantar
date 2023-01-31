@@ -1,5 +1,6 @@
 package com.vantar.util.file;
 
+import com.vantar.util.string.StringUtil;
 import org.apache.tika.config.TikaConfig;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.io.TikaInputStream;
@@ -105,9 +106,15 @@ public class FileType {
         if (mediaType == null) {
             return false;
         }
+        String t1 = StringUtil.replace(mediaType.getSubtype().toLowerCase(), "jpeg", "jpg");
+        String t2 = StringUtil.replace(mediaType.getType().toLowerCase(), "jpeg", "jpg");
         for (String t : type) {
-            if (mediaType.getSubtype().equalsIgnoreCase(t) || mediaType.getType().equalsIgnoreCase(t)
-                || getMimeType().equalsIgnoreCase(t)) {
+            t = StringUtil.replace(t.toLowerCase(), "jpeg", "jpg");
+            if (t1.equals(t) || t2.equals(t) || getMimeType().equalsIgnoreCase(t)) {
+                return true;
+            }
+
+            if (t2.equals("application") && StringUtil.replace(filepath, "jpeg", "jpg").endsWith("." + t.toLowerCase())) {
                 return true;
             }
         }

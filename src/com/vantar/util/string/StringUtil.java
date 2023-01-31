@@ -1038,7 +1038,7 @@ public class StringUtil {
             return new String[] {string};
         }
 
-        List<String> substrings = new ArrayList<>();
+        List<String> substrings = new ArrayList<>(20);
         int count = 1;
         int pos = 0;
         for (int i = 0; i < len; ++i) {

@@ -190,4 +190,8 @@ public class ServiceDtoCache implements Services.Service {
     public static <A extends Dto> A asDto(Class<? extends Dto> tClass, Class<A> asClass, Long id) throws ServiceException {
         return Services.get(ServiceDtoCache.class).getDto(tClass, asClass, id);
     }
+
+    public boolean isOk() {
+        return true;
+    }
 }
