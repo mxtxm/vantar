@@ -782,6 +782,23 @@ public class CommonModelMongo extends CommonModel {
         return search(q, event, params.getLang());
     }
 
+    public static PageData searchForEach(Params params, Dto dto, Dto dtoView, QueryEvent event) throws VantarException {
+        QueryData queryData = params.getQueryData();
+        queryData.setDto(dto, dtoView);
+
+        QueryBuilder q = new QueryBuilder(queryData);
+        List<ValidationError> errors = q.getErrors();
+        if (ObjectUtil.isNotEmpty(errors) && SEARCH_POLICY_THROW_ON_CONDITION_ERROR) {
+            throw new InputException(errors);
+        }
+
+        if (event != null) {
+            event.beforeQuery(q);
+        }
+
+        return searchForEach(q, event, params.getLang());
+    }
+
     public static PageData search(QueryBuilder q, String... locales) throws VantarException {
         return search(q, null, locales);
     }
@@ -811,6 +828,14 @@ public class CommonModelMongo extends CommonModel {
             } catch (DatabaseException e) {
                 throw new ServerException(VantarKey.FETCH_FAIL);
             }
+        }
+    }
+
+    public static PageData searchForEach(QueryBuilder q, QueryResultBase.Event event, String... locales) throws VantarException {
+        try {
+            return MongoSearch.getPageForeach(q, event, locales);
+        } catch (DatabaseException e) {
+            throw new ServerException(VantarKey.FETCH_FAIL);
         }
     }
 

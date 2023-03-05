@@ -47,6 +47,7 @@ public abstract class CommonModel {
                     break;
                 }
                 CommonUserPassword userPassword = (CommonUserPassword) info.getDtoInstance();
+                userPassword.setClearIdOnInsert(false);
                 userPassword.setId(user.getId());
                 userPassword.setPassword(password);
                 try {

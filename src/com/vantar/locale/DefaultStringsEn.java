@@ -25,10 +25,10 @@ public class DefaultStringsEn {
         tokens.put(VantarKey.ADMIN_REQUIRES_ROOT, "Unauthorized! This request requires 'root' access.");
 
         // datetime
-        tokens.put(VantarKey.INVALID_DATETIME, "Invalid datetime");
-        tokens.put(VantarKey.INVALID_DATE, "Invalid date");
-        tokens.put(VantarKey.INVALID_TIME, "Invalid time");
-        tokens.put(VantarKey.INVALID_TIMEZONE, "Invalid timezone");
+        tokens.put(VantarKey.INVALID_DATETIME, "Invalid datetime: {0}");
+        tokens.put(VantarKey.INVALID_DATE, "Invalid date: {0}");
+        tokens.put(VantarKey.INVALID_TIME, "Invalid time: {0}");
+        tokens.put(VantarKey.INVALID_TIMEZONE, "Invalid timezone: {0}");
 
         // validation
         tokens.put(VantarKey.REQUIRED, "{0}: is required");
@@ -291,6 +291,8 @@ public class DefaultStringsEn {
 
         tokens.put(VantarKey.SELECT_ALL, "Select all");
         tokens.put(VantarKey.ADMIN_RESET_SIGNIN_FAILS, "Reset failed signins");
+
+        tokens.put(VantarKey.METHOD_CALL_TIME_LIMIT, "Must wait {0}minutes before another call");
 
     }
 

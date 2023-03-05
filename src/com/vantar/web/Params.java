@@ -29,15 +29,15 @@ public class Params {
     public static final Map<Long, Params> threadParams = new ConcurrentHashMap<>(100, 1);
 
 
-    public static void setThreadParams(Params params) {
+    public synchronized static void setThreadParams(Params params) {
         threadParams.put(Thread.currentThread().getId(), params);
     }
 
-    public static void removeThreadParams() {
+    public synchronized static void removeThreadParams() {
         threadParams.remove(Thread.currentThread().getId());
     }
 
-    public static Params getThreadParams() {
+    public synchronized static Params getThreadParams() {
         return threadParams.get(Thread.currentThread().getId());
     }
 
@@ -86,13 +86,25 @@ public class Params {
         type = Type.MAP;
     }
 
+    public Params(Params params) {
+        request = null;
+        type = Type.MAP;
+        map = new HashMap<>(20, 1);
+
+        Enumeration<String> parameterNames = params.request.getParameterNames();
+        while (parameterNames.hasMoreElements()) {
+            String k = parameterNames.nextElement();
+            map.put(k, params.request.getParameter(k));
+        }
+    }
+
     public void removeParams(String... params) {
         ignoreParams = new HashSet<>(Arrays.asList(params));
     }
 
-    public void set(String key, Object value) {
+    public synchronized void set(String key, Object value) {
         if (map == null) {
-            map = new HashMap<>(10, 1);
+            map = new ConcurrentHashMap<>(10, 1);
         }
         map.put(key, value);
     }
@@ -862,7 +874,16 @@ public class Params {
         }
     }
 
-    public CommonUser getCurrentUser() throws AuthException, ServiceException {
-        return ServiceAuth.getCurrentSignedInUser(this);
+    public CommonUser getCurrentUser() throws AuthException {
+        CommonUser user;
+        try {
+            user = ServiceAuth.getCurrentSignedInUser(this);
+        } catch (ServiceException e) {
+            throw new AuthException(VantarKey.ADMIN_SERVICE_IS_OFF, "Authentication");
+        }
+        if (user == null) {
+            throw new AuthException(VantarKey.EXPIRED_AUTH_TOKEN);
+        }
+        return user;
     }
 }

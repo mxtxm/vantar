@@ -194,6 +194,30 @@ public class MongoSearch {
         );
     }
 
+    public static PageData getPageForeach(QueryBuilder q, QueryResultBase.Event event, String... locales)
+        throws DatabaseException {
+
+        MongoQuery mongoQuery = new MongoQuery(q);
+        long total = q.getTotal();
+        if (total == 0) {
+            total = count(q);
+        }
+
+        QueryResult result = mongoQuery.getData();
+        if (locales.length > 0) {
+            result.setLocale(locales);
+        }
+
+        Integer limit = q.getLimit();
+        result.forEach(event);
+
+        PageData pageData = new PageData();
+        pageData.page = q.getPageNo();
+        pageData.length = limit == null ? 0 : limit;
+        pageData.total = total;
+        return pageData;
+    }
+
     public static AggregateIterable<Document> getAggregate(QueryBuilder q) throws DatabaseException {
         return new MongoQuery(q).getAggregate();
     }

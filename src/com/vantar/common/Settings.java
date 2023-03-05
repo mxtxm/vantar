@@ -135,11 +135,11 @@ public class Settings {
     }
 
     public static WebConfig web() {
-        if (config instanceof WebConfig) {
-            return (WebConfig) config;
-        }
         if (tune instanceof MongoConfig) {
             return (WebConfig) tune;
+        }
+        if (config instanceof WebConfig) {
+            return (WebConfig) config;
         }
         return null;
     }

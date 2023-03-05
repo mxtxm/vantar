@@ -23,10 +23,10 @@ public class DefaultStringsFa {
         tokens.put(VantarKey.USER_ALREADY_SIGNED_IN, "کاربر هم اکنون در سیسم وارد شده.");
 
         // datetime
-        tokens.put(VantarKey.INVALID_DATETIME, "تاریخ و زمان نادرست است");
-        tokens.put(VantarKey.INVALID_DATE, "تاریخ نادرست است");
-        tokens.put(VantarKey.INVALID_TIME, "زمان نادرست است");
-        tokens.put(VantarKey.INVALID_TIMEZONE, "محدوده زمانی نادرست است");
+        tokens.put(VantarKey.INVALID_DATETIME, "{0}: تاریخ و زمان نادرست است");
+        tokens.put(VantarKey.INVALID_DATE, "{0}: تاریخ نادرست است");
+        tokens.put(VantarKey.INVALID_TIME, "{0}: زمان نادرست است");
+        tokens.put(VantarKey.INVALID_TIMEZONE, "{0}: محدوده زمانی نادرست است");
 
         // validation
         tokens.put(VantarKey.REQUIRED, "{0}: وارد کردن اجباری است");
@@ -292,6 +292,9 @@ public class DefaultStringsFa {
 
         tokens.put(VantarKey.SELECT_ALL, "انتخاب همه");
         tokens.put(VantarKey.ADMIN_RESET_SIGNIN_FAILS, "ریست کاربران غیرفعال");
+
+        tokens.put(VantarKey.METHOD_CALL_TIME_LIMIT, "برای اجرای دوباره نیاز به سپری شدن {0}دقیقه است");
+
     }
 
     public static String getString(LangKey key) {

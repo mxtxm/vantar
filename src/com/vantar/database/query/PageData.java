@@ -8,10 +8,10 @@ import java.util.*;
 public class PageData {
 
     public List<String> columns;
-    public final List<? extends Dto> data;
-    public final int page;
-    public final int length;
-    public final long total;
+    public List<? extends Dto> data;
+    public int page;
+    public int length;
+    public long total;
 
 
     public <T extends Dto> PageData(List<T> data, int page, int length, long total) {

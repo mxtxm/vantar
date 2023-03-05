@@ -6,7 +6,7 @@ import java.util.*;
 
 @Elastic
 @Mongo
-@Index({"userId:1", "transactionId:1", "className:1", "objectId:1", "action:1", "time:1",})
+@Index({"userId:1", "transactionId:1", "className:1", "objectId:1", "action:1", "time:1", "url:1",})
 public class UserLog extends DtoBase {
 
     public Long id;
@@ -30,4 +30,6 @@ public class UserLog extends DtoBase {
 
     public Long objectId;
     public String object;
+
+    public Map<String, Object> extraData;
 }

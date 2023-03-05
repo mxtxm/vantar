@@ -550,15 +550,11 @@ public class StringUtil {
         boolean found;
         for (int i = 0, l = string.length(); i < l; ++i) {
             char c = string.charAt(i);
-            found = false;
             for (char value : keep) {
                 if (c == value) {
-                    found = true;
+                    sb.append(c);
                     break;
                 }
-            }
-            if (!found) {
-                sb.append(c);
             }
         }
         return sb.toString();

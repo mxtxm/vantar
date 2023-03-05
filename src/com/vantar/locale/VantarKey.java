@@ -278,4 +278,6 @@ public enum VantarKey implements LangKey {
     SELECT_ALL,
     ADMIN_RESET_SIGNIN_FAILS,
 
+    METHOD_CALL_TIME_LIMIT,
+
 }

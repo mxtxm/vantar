@@ -1,10 +1,8 @@
 package com.vantar.web;
 
-import com.vantar.common.Settings;
 import com.vantar.exception.*;
 import com.vantar.locale.*;
 import com.vantar.service.log.ServiceUserActionLog;
-import org.slf4j.*;
 import javax.servlet.http.*;
 import java.io.IOException;
 
@@ -13,18 +11,7 @@ import java.io.IOException;
  *
  * dispatcher(Params(request), response, url)
  */
-public abstract class RouteAllToOneMethod extends HttpServlet {
-
-    protected static final Logger log = LoggerFactory.getLogger(RouteAllToOneMethod.class);
-    private static boolean logRequest;
-
-
-    static {
-        if (Settings.web() != null) {
-            logRequest = Settings.web().logRequest();
-        }
-    }
-
+public abstract class RouteAllToOneMethod extends RouteBase {
 
     public abstract void dispatcher(Params params, HttpServletResponse response, String url) throws VantarException;
 

@@ -4,7 +4,9 @@ import com.mongodb.client.*;
 import com.vantar.admin.model.*;
 import com.vantar.database.dto.*;
 import com.vantar.database.query.QueryBuilder;
-import com.vantar.exception.DatabaseException;
+import com.vantar.exception.*;
+import com.vantar.service.Services;
+import com.vantar.service.log.ServiceUserActionLog;
 import com.vantar.util.datetime.DateTimeRange;
 import com.vantar.util.file.FileUtil;
 import com.vantar.util.string.StringUtil;
@@ -168,6 +170,14 @@ public class MongoBackup {
             return;
         }
 
+        ServiceUserActionLog logService;
+        try {
+            logService = Services.get(ServiceUserActionLog.class);
+            logService.pause();
+        } catch (ServiceException e) {
+            logService = null;
+        }
+
         if (ui != null) {
             ui.addHeading("Mongo " + zipPath + " > " + database.getName()).write();
         }
@@ -237,6 +247,10 @@ public class MongoBackup {
             if (ui != null) {
                 ui.addErrorMessage(e).write();
             }
+        }
+
+        if (logService != null) {
+            logService.resume();
         }
 
         if (ui != null) {

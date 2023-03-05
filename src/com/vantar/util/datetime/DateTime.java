@@ -343,6 +343,25 @@ public class DateTime {
 
     // compare
 
+    public long diffSecondsRaw(DateTime dateTime) {
+        if (dateTime.timestamp == null) {
+            return 0;
+        }
+        return (timestamp - dateTime.timestamp) / 1000;
+    }
+
+    public int diffMinutesRaw(DateTime dateTime) {
+        return (int) (diffSecondsRaw(dateTime) / 60);
+    }
+
+    public int diffHoursRaw(DateTime dateTime) {
+        return diffMinutesRaw(dateTime) / 60;
+    }
+
+    public int diffDaysRaw(DateTime dateTime) {
+        return diffHoursRaw(dateTime) / 24;
+    }
+
     public long diffSeconds(DateTime dateTime) {
         if (dateTime.timestamp == null) {
             return 0;

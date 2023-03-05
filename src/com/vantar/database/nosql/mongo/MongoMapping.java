@@ -242,13 +242,19 @@ public class MongoMapping {
                     default:
                         int l = group.columns.length;
                         if (l == 2) {
-                            document.put(group.columns[1], group.columns[0] == null ? null : "$" + group.columns[0]);
+                            document.put(
+                                StringUtil.replace(group.columns[1], '.', '_'),
+                                group.columns[0] == null ? null : "$" + group.columns[0]
+                            );
                             break;
                         }
                         Document columnsDoc = new Document();
                         --l;
                         for (int i = 0; i < l ; ++i) {
-                            columnsDoc.append(group.columns[i], "$" + group.columns[i]);
+                            columnsDoc.append(
+                                StringUtil.replace(group.columns[i], '.', '_'),
+                                "$" + group.columns[i]
+                            );
                         }
                         document.put(group.columns[l], columnsDoc);
                 }
@@ -331,6 +337,9 @@ public class MongoMapping {
                 case NOT_IN:
                     matches.add(new Document(fieldName, new Document("$nin", Arrays.asList(item.getValues()))));
                     break;
+                case CONTAINS_ALL:
+                    matches.add(new Document(fieldName, new Document("$all", normalizeList(item.itemList))));
+                    break;
 
                 case FULL_SEARCH:
                     if (StringUtil.isNotEmpty(fieldName)) {
@@ -412,9 +421,6 @@ public class MongoMapping {
                     matches.add(new Document("$and", c));
                     break;
                 }
-                case CONTAINS_ALL:
-                    matches.add(new Document(fieldName, new Document("$all", normalizeList(item.itemList))));
-                    break;
 
                 case NEAR:
                     Object[] numbers = item.getValues();

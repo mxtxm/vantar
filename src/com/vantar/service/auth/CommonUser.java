@@ -1,7 +1,7 @@
 package com.vantar.service.auth;
 
 import com.vantar.database.dto.Dto;
-import java.util.List;
+import java.util.*;
 
 
 public interface CommonUser extends Dto {
@@ -24,4 +24,6 @@ public interface CommonUser extends Dto {
     List<? extends CommonUserRole> getRoles();
 
     Long getId();
+
+    Map<String, Object> getExtraData();
 }

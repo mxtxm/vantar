@@ -25,14 +25,13 @@ public class ServiceUserActionLog implements Services.Service {
     private ScheduledExecutorService schedule;
     private volatile boolean serviceOn = false;
     private final AtomicBoolean isBusy = new AtomicBoolean();
+    private boolean pause = false;
 
     // > > > service params injected from config
     public Boolean onEndSetNull;
     public String dbms;
     public Boolean delayedStoreEnabled;
     public Integer insertIntervalMin;
-
-
     // < < <
 
     public void start() {
@@ -52,6 +51,14 @@ public class ServiceUserActionLog implements Services.Service {
             return;
         }
         schedule.shutdown();
+    }
+
+    public synchronized void pause() {
+        pause = true;
+    }
+
+    public synchronized void resume() {
+        pause = false;
     }
 
     public boolean onEndSetNull() {
@@ -82,7 +89,11 @@ public class ServiceUserActionLog implements Services.Service {
             userLog.ip = params.getIp();
             userLog.uploadedFiles = params.getUploadFiles();
             try {
-                userLog.userId = Services.get(ServiceAuth.class).getCurrentUser(params).getId();
+                CommonUser user = Services.get(ServiceAuth.class).getCurrentUser(params);
+                if (user != null) {
+                    userLog.userId = user.getId();
+                    userLog.extraData = user.getExtraData();
+                }
             } catch (Exception e) {
                 userLog.userId = null;
             }
@@ -98,6 +109,7 @@ public class ServiceUserActionLog implements Services.Service {
                 userLog.object = Json.d.toJson(object);
             } else {
                 userLog.className = object.getClass().getName();
+                log.error(">>>>>>>{} {}",object, userLog.className);
                 userLog.object = Json.d.toJson(object);
             }
             if (object instanceof Dto) {
@@ -161,6 +173,9 @@ public class ServiceUserActionLog implements Services.Service {
     }
 
     private void scheduledTask() {
+        if (pause) {
+            return;
+        }
         try {
             if (!serviceOn || isBusy.get()) {
                 LogEvent.beat(this.getClass(), "timer-busy");
