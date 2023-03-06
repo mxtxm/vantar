@@ -326,17 +326,17 @@ public class ObjectUtil {
             return null;
         }
         if (ClassUtil.isInstantiable(classType, List.class)) {
-            Class<?> g = generics == null || generics.length != 1 ? String.class : generics[0];
+            Class<?> g = generics == null || generics.length == 0 ? String.class : generics[0];
             return (T) CollectionUtil.toList(object, g);
         }
         if (ClassUtil.isInstantiable(classType, Set.class)) {
-            Class<?> g = generics == null || generics.length != 1 ? String.class : generics[0];
+            Class<?> g = generics == null || generics.length == 0 ? String.class : generics[0];
             return (T) CollectionUtil.toSet(object, g);
         }
         if (ClassUtil.isInstantiable(classType, Map.class)) {
             Class<?> g1;
             Class<?> g2;
-            if (generics == null || generics.length != 2) {
+            if (generics == null || generics.length < 2) {
                 g1 = String.class;
                 g2 = String.class;
             } else {

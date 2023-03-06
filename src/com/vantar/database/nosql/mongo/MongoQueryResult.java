@@ -11,7 +11,7 @@ import com.vantar.database.query.*;
 import com.vantar.exception.*;
 import com.vantar.service.Services;
 import com.vantar.service.cache.ServiceDtoCache;
-import com.vantar.util.collection.*;
+import com.vantar.util.collection.ExtraUtils;
 import com.vantar.util.datetime.*;
 import com.vantar.util.json.Json;
 import com.vantar.util.object.*;
@@ -271,12 +271,15 @@ public class MongoQueryResult extends QueryResultBase implements QueryResult, Au
                     if (v == null) {
                         setFieldNullValue(dto, field);
                     } else {
-                        Class<?>[] g = ClassUtil.getGenericTypes(field);
-                        if (g == null || g.length != 2) {
+                        Generics generics = field.getAnnotation(Generics.class);
+                        Class<?>[] g = generics == null ? ClassUtil.getGenericTypes(field) : generics.value();
+                        if (g == null || g.length < 2) {
                             log.warn(" ! type/value miss-match ({}.{})", dto.getClass().getName(), field.getName());
                             continue;
                         }
-                        field.set(dto, documentToMap(v, g[0], g[1]));
+
+                        field.set(dto, documentToMap(v, g[0], g[1], Arrays.stream(g, 2, g.length).toArray(Class<?>[]::new)));
+                        //field.set(dto, documentToMap(v, g[0], g[1], null));
                     }
                     continue;
                 }
@@ -349,7 +352,7 @@ public class MongoQueryResult extends QueryResultBase implements QueryResult, Au
         field.set(dto, StringUtil.toObject(annotation.value(), field.getType()));
     }
 
-    private <K, V> Map<K, V> documentToMap(Document document, Class<K> kClass, Class<V> vClass) {
+    private <K, V> Map<K, V> documentToMap(Document document, Class<K> kClass, Class<V> vClass, Class<?>[] innerGenerics) {
         if (document == null) {
             return null;
         }
@@ -371,7 +374,7 @@ public class MongoQueryResult extends QueryResultBase implements QueryResult, Au
 
             map.put(
                 ObjectUtil.convert(Mongo.Escape.keyForView(entry.getKey()), kClass),
-                ObjectUtil.convert(entry.getValue(), vClass)
+                ObjectUtil.convert(entry.getValue(), vClass, innerGenerics)
             );
         }
         return map;

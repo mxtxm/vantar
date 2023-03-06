@@ -106,10 +106,9 @@ public class ServiceUserActionLog implements Services.Service {
             userLog.object = params.toJsonString();
         } else if (object != null) {
             if (object instanceof String) {
-                userLog.object = Json.d.toJson(object);
+                userLog.object = (String) object;
             } else {
                 userLog.className = object.getClass().getName();
-                log.error(">>>>>>>{} {}",object, userLog.className);
                 userLog.object = Json.d.toJson(object);
             }
             if (object instanceof Dto) {

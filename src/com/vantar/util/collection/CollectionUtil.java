@@ -394,7 +394,15 @@ public class CollectionUtil {
      * (Set<genericType> one item : convert object to genericType)
      */
     public static <T> Set<T> toSet(Object object, Class<T> genericType) {
-        return new HashSet<>(toList(object, genericType));
+        return new HashSet<>(toList(object, genericType, null));
+    }
+
+    public static <T> Set<T> toSet(Object object, Class<T> genericType, Class<?> innerGenericTypes) {
+        return new HashSet<>(toList(object, genericType, innerGenericTypes));
+    }
+
+    public static <T> List<T> toList(Object object, Class<T> genericType) {
+        return toList(object, genericType, null);
     }
 
     /**
@@ -410,7 +418,7 @@ public class CollectionUtil {
      * (List<genericType> one item : convert object to genericType)
      */
     @SuppressWarnings({"unchecked"})
-    public static <T> List<T> toList(Object object, Class<T> genericType) {
+    public static <T> List<T> toList(Object object, Class<T> genericType, Class<?> innerGenericTypes) {
         if (object == null) {
             return null;
         }
