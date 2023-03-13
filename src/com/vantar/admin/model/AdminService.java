@@ -7,6 +7,7 @@ import com.vantar.locale.*;
 import com.vantar.locale.Locale;
 import com.vantar.queue.Queue;
 import com.vantar.service.Services;
+import com.vantar.service.healthmonitor.ServiceHealthMonitor;
 import com.vantar.util.collection.CollectionUtil;
 import com.vantar.util.number.NumberUtil;
 import com.vantar.util.string.StringUtil;
@@ -264,29 +265,44 @@ public class AdminService {
         WebUi ui = Admin.getUi("GC", params, response, true);
 
         if ("run".equals(params.getString("gc"))) {
+            ServiceHealthMonitor.MemoryStatus mStatus = ServiceHealthMonitor.getMemoryStatus();
             ui  .addEmptyLine()
                 .addHeading(3, "Before GC")
-                .addKeyValue("Designated memory", NumberUtil.round(Runtime.getRuntime().maxMemory() / (1024D * 1024D), 1) + "MB")
-                .addKeyValue("Allocated memory", NumberUtil.round(Runtime.getRuntime().totalMemory() / (1024D * 1024D), 1) + "MB")
-                .addKeyValue("Free memory", NumberUtil.round(Runtime.getRuntime().freeMemory() / (1024D * 1024D), 1) + "MB")
+                .addKeyValue("Designated memory", NumberUtil.getReadableByteSize(mStatus.max))
+                .addKeyValue("Allocated memory", NumberUtil.getReadableByteSize(mStatus.total))
+                .addKeyValue("Free memory", NumberUtil.getReadableByteSize(mStatus.free))
+                .addKeyValue("Used memory", NumberUtil.getReadableByteSize(mStatus.used))
                 .addKeyValue(
-                    "Used memory",
-                    NumberUtil.round((Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / (1024D * 1024D), 1) + "MB"
+                    "Physical memory",
+                    NumberUtil.getReadableByteSize(mStatus.physicalFree)
+                        + " / " + NumberUtil.getReadableByteSize(mStatus.physicalTotal)
                 )
-                .addEmptyLine(3)
-                .addHeading(3, "After GC");
-
+                .addKeyValue(
+                    "Swap memory",
+                    NumberUtil.getReadableByteSize(mStatus.swapFree)
+                        + " / " + NumberUtil.getReadableByteSize(mStatus.swapTotal)
+                );
             System.gc();
         } else {
             ui  .addHeading(3, Locale.getString(VantarKey.ADMIN_MEMORY));
         }
 
-        ui  .addKeyValue("Designated memory", NumberUtil.round(Runtime.getRuntime().maxMemory() / (1024D * 1024D), 1) + "MB")
-            .addKeyValue("Allocated memory", NumberUtil.round(Runtime.getRuntime().totalMemory() / (1024D * 1024D), 1) + "MB")
-            .addKeyValue("Free memory", NumberUtil.round(Runtime.getRuntime().freeMemory() / (1024D * 1024D), 1) + "MB")
+        ServiceHealthMonitor.MemoryStatus mStatus = ServiceHealthMonitor.getMemoryStatus();
+        ui  .addEmptyLine(3)
+            .addHeading(3, "After GC")
+            .addKeyValue("Designated memory", NumberUtil.getReadableByteSize(mStatus.max))
+            .addKeyValue("Allocated memory", NumberUtil.getReadableByteSize(mStatus.total))
+            .addKeyValue("Free memory", NumberUtil.getReadableByteSize(mStatus.free))
+            .addKeyValue("Used memory", NumberUtil.getReadableByteSize(mStatus.used))
             .addKeyValue(
-                "Used memory",
-                NumberUtil.round((Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / (1024D * 1024D), 1) + "MB"
+                "Physical memory",
+                NumberUtil.getReadableByteSize(mStatus.physicalFree)
+                    + " / " + NumberUtil.getReadableByteSize(mStatus.physicalTotal)
+            )
+            .addKeyValue(
+                "Swap memory",
+                NumberUtil.getReadableByteSize(mStatus.swapFree)
+                    + " / " + NumberUtil.getReadableByteSize(mStatus.swapTotal)
             )
             .addEmptyLine()
             .addBlockLink("GarbageCollect", "?gc=run");

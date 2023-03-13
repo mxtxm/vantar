@@ -83,7 +83,7 @@ public class SqlBackup {
             if (ui != null) {
                 ui.addPre(
                     "finished in: " + ((System.currentTimeMillis() - startTime) / 1000) + "s" +
-                        "\n" + FileUtil.getSizeMb(dumpPath) + "Mb"
+                        "\n" + FileUtil.getSizeReadable(dumpPath)
                 );
             }
         }
@@ -127,7 +127,7 @@ public class SqlBackup {
 
             ui  .addPre(
                 "finished in: " + ((System.currentTimeMillis() - startTime) / 1000) + "s" +
-                    "\n" + FileUtil.getSizeMb(zipPath) + "Mb"
+                    "\n" + FileUtil.getSizeReadable(zipPath)
                 )
                 .containerEnd()
                 .write();

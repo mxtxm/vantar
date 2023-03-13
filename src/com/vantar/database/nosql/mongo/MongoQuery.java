@@ -78,11 +78,11 @@ class MongoQuery {
             if (sort != null) {
                 find.sort(sort);
             }
-            if (limit != null) {
-                find.limit(limit);
-            }
             if (skip != null) {
                 find.skip(skip);
+            }
+            if (limit != null) {
+                find.limit(limit);
             }
 
             return new MongoQueryResult(find, dtoResult);
@@ -158,12 +158,13 @@ class MongoQuery {
         if (sort != null) {
             query.add(new Document("$sort", sort));
         }
-        if (limit != null) {
-            query.add(new Document("$limit", limit));
-        }
         if (skip != null) {
             query.add(new Document("$skip", skip));
         }
+        if (limit != null) {
+            query.add(new Document("$limit", limit));
+        }
+
         try {
             return MongoConnection.getDatabase().getCollection(dto.getStorage()).aggregate(query).allowDiskUse(true);
         } catch (Exception e) {

@@ -12,12 +12,17 @@ import com.vantar.locale.*;
 import com.vantar.queue.Queue;
 import com.vantar.service.Services;
 import com.vantar.service.auth.*;
+import com.vantar.service.healthmonitor.ServiceHealthMonitor;
 import com.vantar.util.number.NumberUtil;
 import com.vantar.util.string.StringUtil;
 import com.vantar.web.*;
 import org.slf4j.*;
+import javax.management.MBeanServerConnection;
 import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.lang.management.*;
 import java.lang.reflect.*;
+import java.nio.file.*;
 import java.util.*;
 
 
@@ -145,32 +150,66 @@ public class Admin {
         ui.addEmptyLine(2);
 
         if (AdminAuth.isRoot(ui)) {
-            ui  .addEmptyLine()
-                .addHeading(3, Locale.getString(VantarKey.ADMIN_MEMORY))
-                .addKeyValue("Designated memory", NumberUtil.round(Runtime.getRuntime().maxMemory() / (1024D * 1024D), 1) + "MB")
-                .addKeyValue("Allocated memory", NumberUtil.round(Runtime.getRuntime().totalMemory() / (1024D * 1024D), 1) + "MB")
-                .addKeyValue("Free memory", NumberUtil.round(Runtime.getRuntime().freeMemory() / (1024D * 1024D), 1) + "MB")
-                .addKeyValue(
-                    "Used memory",
-                    NumberUtil.round((Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / (1024D * 1024D), 1) + "MB"
-                )
-                .addEmptyLine();
 
-            ui  .addKeyValue("Mongo ", MongoConnection.isUp() ? "on" : "off")
+            ui  .addEmptyLine()
+                .addHeading(3, Locale.getString(VantarKey.ADMIN_MEMORY));
+            ServiceHealthMonitor.MemoryStatus mStatus = ServiceHealthMonitor.getMemoryStatus();
+            if (!mStatus.ok) {
+                ui.addErrorMessage("WARNING! LOW MEMORY");
+            }
+            ui  .addKeyValue("Designated memory", NumberUtil.getReadableByteSize(mStatus.max))
+                .addKeyValue("Allocated memory", NumberUtil.getReadableByteSize(mStatus.total))
+                .addKeyValue("Free memory", NumberUtil.getReadableByteSize(mStatus.free))
+                .addKeyValue("Used memory", NumberUtil.getReadableByteSize(mStatus.used))
+                .addKeyValue(
+                    "Physical memory",
+                    NumberUtil.getReadableByteSize(mStatus.physicalFree)
+                        + " / " + NumberUtil.getReadableByteSize(mStatus.physicalTotal)
+                )
+                .addKeyValue(
+                    "Swap memory",
+                    NumberUtil.getReadableByteSize(mStatus.swapFree)
+                        + " / " + NumberUtil.getReadableByteSize(mStatus.swapTotal)
+                );
+
+
+            for (ServiceHealthMonitor.DiskStatus s : ServiceHealthMonitor.getDiskStatus()) {
+                ui  .addEmptyLine()
+                    .addHeading(3, Locale.getString(VantarKey.ADMIN_DISK_SPACE) + " " + s.name);
+                if (!s.ok) {
+                    ui.addErrorMessage("WARNING! LOW DISK SPACE");
+                }
+                ui  .addKeyValue("Free", NumberUtil.getReadableByteSize(s.free))
+                    .addKeyValue("Used", NumberUtil.getReadableByteSize(s.used))
+                    .addKeyValue("Total", NumberUtil.getReadableByteSize(s.total));
+            }
+
+
+            ui  .addEmptyLine()
+                .addHeading(3, Locale.getString(VantarKey.ADMIN_PROCESSOR));
+            ServiceHealthMonitor.ProcessorStatus pStatus = ServiceHealthMonitor.getProcessorStatus();
+            if (!pStatus.ok) {
+                ui.addErrorMessage("WARNING! JVM PROCESSOR USAGE IS HIGH");
+            }
+            ui  .addKeyValue("JVM processor usage", pStatus.jvmLoadPercent + "%")
+                .addKeyValue("System processor usage", pStatus.systemLoadPercent + "%");
+
+
+            ui  .addEmptyLine()
+                .addHeading(3, Locale.getString(VantarKey.ADMIN_RUNNING_SERVICES))
+                .addKeyValue("Mongo ", MongoConnection.isUp() ? "on" : "off")
                 .addKeyValue("ElasticSearch ", ElasticConnection.isUp() ? "on" : "off")
                 .addKeyValue("Sql ", SqlConnection.isUp() ? "on" : "off")
                 .addKeyValue("RabbitMQ ", Queue.isUp() ? "on" : "off");
 
             synchronized (Services.upServices) {
                 ui  .addEmptyLine()
-                    .addHeading(3, Locale.getString(VantarKey.ADMIN_RUNNING_SERVICES))
-                    .addEmptyLine()
                     .addKeyValue(
                         Locale.getString(VantarKey.ADMIN_RUNNING_SERVICES_COUNT),
                         Locale.getString(VantarKey.ADMIN_RUNNING_SERVICES_ON_THIS_SERVER)
                     );
                 Services.upServices.forEach((service, info) ->
-                    ui.addKeyValue(service + " (" + info.instanceCount + ")", info.isEnabledOnThisServer));
+                    ui.addKeyValue(service + " (" + info.instanceCount + ")", info.isEnabledOnThisServer ? "on" : "off"));
             }
         }
 

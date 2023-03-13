@@ -46,6 +46,14 @@ public class FileUtil {
         return 0;
     }
 
+    public static String getSizeReadable(String filepath) {
+        File file = new File(filepath);
+        if (file.exists()) {
+            return NumberUtil.getReadableByteSize(file.length());
+        }
+        return "0";
+    }
+
     public static DateTime getLastModify(String filepath) {
         try {
             BasicFileAttributes attr = Files.readAttributes(Paths.get(filepath), BasicFileAttributes.class);

@@ -286,6 +286,8 @@ public class DefaultStringsEn {
         tokens.put(VantarKey.ADMIN_ACTION_LOG_USER, "User actions");
         tokens.put(VantarKey.ADMIN_ACTION_LOG_REQUEST, "Request/Response logs");
         tokens.put(VantarKey.ADMIN_MEMORY, "Memory");
+        tokens.put(VantarKey.ADMIN_DISK_SPACE, "Disk space");
+        tokens.put(VantarKey.ADMIN_PROCESSOR, "Processor");
         tokens.put(VantarKey.ADMIN_BACKUP_UPLOAD, "Upload backup file");
         tokens.put(VantarKey.ADMIN_BACKUP_UPLOAD_FILE, "Backup file");
 

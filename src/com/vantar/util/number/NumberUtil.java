@@ -195,4 +195,22 @@ public class NumberUtil {
     public static float value(Number value, float defaultValue) {
         return value == null ? defaultValue : (float) value;
     }
+
+    /**
+     * Human readable byte sizes
+     * @param value
+     * @return string value e.g: 12B 2.3KB 45MB 21GB
+     */
+    public static String getReadableByteSize(long value) {
+        if (value < 1024) {
+            return value + "B";
+        }
+        if (value < 1024 * 1024) {
+            return NumberUtil.round(value / 1024f, 1) + "KB";
+        }
+        if (value < 1024 * 1024 * 1024) {
+            return NumberUtil.round(value / 1048576f, 1) + "MB";
+        }
+        return NumberUtil.round(value / 1073741824f, 2) + "GB";
+    }
 }

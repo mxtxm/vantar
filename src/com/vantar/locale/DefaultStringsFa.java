@@ -287,6 +287,8 @@ public class DefaultStringsFa {
         tokens.put(VantarKey.ADMIN_ACTION_LOG_USER, "لاگ کاربران");
         tokens.put(VantarKey.ADMIN_ACTION_LOG_REQUEST, "لاگ درخواست ها");
         tokens.put(VantarKey.ADMIN_MEMORY, "حافظه");
+        tokens.put(VantarKey.ADMIN_DISK_SPACE, "دیسک");
+        tokens.put(VantarKey.ADMIN_PROCESSOR, "پردازنده");
         tokens.put(VantarKey.ADMIN_BACKUP_UPLOAD, "آپلور فایل بکاپ");
         tokens.put(VantarKey.ADMIN_BACKUP_UPLOAD_FILE, "فایل بکاپ");
 

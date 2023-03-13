@@ -40,7 +40,7 @@ public class MongoMapping {
         return document;
     }
 
-    public static Document getFieldValuesAsDocument(Dto dto, Dto.Action action) {
+    protected static Document getFieldValuesAsDocument(Dto dto, Dto.Action action) {
         Document document = new Document();
 
         for (StorableData info : dto.getStorableData()) {

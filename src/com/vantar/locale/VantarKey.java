@@ -271,6 +271,8 @@ public enum VantarKey implements LangKey {
     ADMIN_ACTION_LOG_USER,
     ADMIN_ACTION_LOG_REQUEST,
     ADMIN_MEMORY,
+    ADMIN_DISK_SPACE,
+    ADMIN_PROCESSOR,
 
     ADMIN_BACKUP_UPLOAD,
     ADMIN_BACKUP_UPLOAD_FILE,
@@ -279,5 +281,4 @@ public enum VantarKey implements LangKey {
     ADMIN_RESET_SIGNIN_FAILS,
 
     METHOD_CALL_TIME_LIMIT,
-
 }

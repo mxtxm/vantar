@@ -97,7 +97,7 @@ public class MongoBackup {
             if (ui != null) {
                 ui.addPre(
                     "finished in: " + ((System.currentTimeMillis() - startTime) / 1000) + "s" +
-                    "\n" + r + " records" + "\n" + FileUtil.getSizeMb(dumpPath) + "Mb"
+                    "\n" + r + " records" + "\n" + FileUtil.getSizeReadable(dumpPath)
                 );
             }
         } catch (IOException | DatabaseException e) {
@@ -141,7 +141,7 @@ public class MongoBackup {
             if (ui != null) {
                 ui.addPre(
                     "finished in: " + ((System.currentTimeMillis() - startTime) / 1000) + "s" +
-                        "\n" + r + " records" + "\n" + FileUtil.getSizeMb(dumpPath) + "Mb"
+                        "\n" + r + " records" + "\n" + FileUtil.getSizeReadable(dumpPath)
                 );
             }
         } catch (IOException | DatabaseException e) {
@@ -257,7 +257,7 @@ public class MongoBackup {
             ui .addPre(
                     "finished in: " + ((System.currentTimeMillis() - startTime) / 1000) + "s" +
                     "\n" + r + " records" +
-                    "\n" + FileUtil.getSizeMb(zipPath) + "Mb"
+                    "\n" + FileUtil.getSizeReadable(zipPath)
                 )
                 .containerEnd()
                 .write();

@@ -6,6 +6,7 @@ import com.vantar.locale.Locale;
 import com.vantar.locale.*;
 import com.vantar.service.Services;
 import com.vantar.service.cache.ServiceDtoCache;
+import com.vantar.service.healthmonitor.ServiceHealthMonitor;
 import com.vantar.util.number.NumberUtil;
 import com.vantar.util.object.*;
 import com.vantar.web.*;
@@ -32,12 +33,23 @@ public class AdminCache {
             return;
         }
 
-        ui  .addKeyValue("Max memory", NumberUtil.round(Runtime.getRuntime().maxMemory() / 1024D, 1) + "KB")
-            .addKeyValue("Total memory", NumberUtil.round(Runtime.getRuntime().totalMemory() / 1024D, 1) + "KB")
-            .addKeyValue("Free memory", NumberUtil.round(Runtime.getRuntime().freeMemory() / 1024D, 1) + "KB")
+        ServiceHealthMonitor.MemoryStatus mStatus = ServiceHealthMonitor.getMemoryStatus();
+        if (!mStatus.ok) {
+            ui.addErrorMessage("WARNING! LOW MEMORY");
+        }
+        ui  .addKeyValue("Designated memory", NumberUtil.getReadableByteSize(mStatus.max))
+            .addKeyValue("Allocated memory", NumberUtil.getReadableByteSize(mStatus.total))
+            .addKeyValue("Free memory", NumberUtil.getReadableByteSize(mStatus.free))
+            .addKeyValue("Used memory", NumberUtil.getReadableByteSize(mStatus.used))
             .addKeyValue(
-                "Used memory",
-                NumberUtil.round((Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1024D, 1) + "KB"
+                "Physical memory",
+                NumberUtil.getReadableByteSize(mStatus.physicalFree)
+                    + " / " + NumberUtil.getReadableByteSize(mStatus.physicalTotal)
+            )
+            .addKeyValue(
+                "Swap memory",
+                NumberUtil.getReadableByteSize(mStatus.swapFree)
+                    + " / " + NumberUtil.getReadableByteSize(mStatus.swapTotal)
             );
 
         long sum = 0L;

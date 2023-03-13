@@ -109,7 +109,7 @@ public class CommonModelMongo extends CommonModel {
             }
         }
 
-        dto = getByIdX(dto);
+        //dto = getByIdX(dto);
 
         if (Services.isUp(ServiceUserActionLog.class)) {
             ServiceUserActionLog.add(Dto.Action.INSERT, dto);
@@ -183,8 +183,6 @@ public class CommonModelMongo extends CommonModel {
         }
 
         if (logEvent) {
-            dto = getByIdX(dto);
-
             if (Services.isUp(ServiceUserActionLog.class)) {
                 ServiceUserActionLog.add(Dto.Action.INSERT, dto);
             }

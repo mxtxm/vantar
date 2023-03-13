@@ -41,12 +41,12 @@ public class AdminSystemHealthController extends RouteToMethod {
     public void systemHealthReport(Params params, HttpServletResponse response) {
         // resources
         Map<String, String> resources = new HashMap<>(5, 1);
-        resources.put("DesignatedMemory", NumberUtil.round(Runtime.getRuntime().maxMemory() / (1024D * 1024D), 1) + "MB");
-        resources.put("AllocatedMemory", NumberUtil.round(Runtime.getRuntime().totalMemory() / (1024D * 1024D), 1) + "MB");
-        resources.put("FreeMemory", NumberUtil.round(Runtime.getRuntime().freeMemory() / (1024D * 1024D), 1) + "MB");
+        resources.put("DesignatedMemory", NumberUtil.getReadableByteSize(Runtime.getRuntime().maxMemory()));
+        resources.put("AllocatedMemory", NumberUtil.getReadableByteSize(Runtime.getRuntime().totalMemory()));
+        resources.put("FreeMemory", NumberUtil.getReadableByteSize(Runtime.getRuntime().freeMemory()));
         resources.put(
             "UsedMemory",
-            NumberUtil.round((Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / (1024D * 1024D), 1) + "MB"
+            NumberUtil.getReadableByteSize((Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()))
         );
         health.put("Resources", resources);
 

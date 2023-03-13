@@ -101,7 +101,7 @@ public class ElasticBackup {
                 ui.addPre(
                     "finished in: " + ((System.currentTimeMillis() - startTime) / 1000) + "s" +
                         "\n" + r + " records" +
-                        "\n" + FileUtil.getSizeMb(dumpPath) + "Mb"
+                        "\n" + FileUtil.getSizeReadable(dumpPath)
                 );
             }
         } catch (IOException e) {
@@ -183,7 +183,7 @@ public class ElasticBackup {
         ui  .addPre(
                 "finished in: " + ((System.currentTimeMillis() - startTime) / 1000) + "s" +
                 "\n" + r + " records" +
-                "\n" + FileUtil.getSizeMb(zipPath) + "Mb"
+                "\n" + FileUtil.getSizeReadable(zipPath)
             )
             .containerEnd()
             .write();
