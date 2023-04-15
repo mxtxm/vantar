@@ -59,13 +59,13 @@ public class DtoDictionary {
         }
 
         info.insertExclude = new ArrayList<>(6);
-        info.insertExclude.add("id");
+        info.insertExclude.add(VantarParam.ID);
         info.insertExclude.add("create_t");
         info.insertExclude.add("createT");
         info.insertExclude.add("update_t");
         info.insertExclude.add("updateT");
         info.updateExclude = new ArrayList<>(6);
-        info.insertExclude.add("id");
+        info.insertExclude.add(VantarParam.ID);
         info.insertExclude.add("create_t");
         info.insertExclude.add("createT");
         info.insertExclude.add("update_t");
@@ -75,7 +75,7 @@ public class DtoDictionary {
             dtoClass.getField("name");
             info.present.add("name");
         } catch (NoSuchFieldException e) {
-            info.present.add("id");
+            info.present.add(VantarParam.ID);
         }
 
         if (StringUtil.isNotEmpty(command)) {

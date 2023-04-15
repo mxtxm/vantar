@@ -119,7 +119,7 @@ public class SqlArtaSynch {
                 continue;
             }
 
-            if (name.equals("id")) {
+            if (name.equals(VantarParam.ID)) {
                 content.append("    public $id = array(\n" +
                     "        'key' => true,\n" +
                     "    );\n\n"

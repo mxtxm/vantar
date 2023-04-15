@@ -59,7 +59,7 @@ public class AdminQueue {
             return;
         }
 
-        Set<String> include = new HashSet<>(10);
+        Set<String> include = new HashSet<>(10, 1);
         for (String queueName : Queue.connection.getQueues()) {
             if (params.isChecked(queueName)) {
                 include.add(queueName);

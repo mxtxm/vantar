@@ -151,7 +151,7 @@ public class AdminData {
         if (queryData == null) {
             q = new QueryBuilder(dto)
                 .page(params.getInteger("page", 1), params.getInteger("count", AdminData.N_PER_PAGE))
-                .sort(params.getString("sort", "id") + ":" + params.getString("sortpos", "desc"));
+                .sort(params.getString("sort", VantarParam.ID) + ":" + params.getString("sortpos", "desc"));
         } else {
             try {
                 queryData.setDto(dto);
@@ -219,7 +219,7 @@ public class AdminData {
         if (!params.isChecked("f")) {
             dto.setDeleteLogical(false);
             QueryBuilder q = new QueryBuilder(dto);
-            q.condition().inNumber("id", params.getLongList(VantarParam.ID));
+            q.condition().inNumber(VantarParam.ID, params.getLongList(VantarParam.ID));
 
             if (dtoInfo.dbms.equals(DtoDictionary.Dbms.SQL)) {
                 if (SqlConnection.isUp()) {

@@ -1,5 +1,6 @@
 package com.vantar.database.dto;
 
+import com.vantar.common.VantarParam;
 import com.vantar.database.common.ValidationError;
 import com.vantar.web.Params;
 import java.lang.annotation.Annotation;
@@ -9,7 +10,7 @@ import java.util.*;
 
 public interface Dto {
 
-    String ID = "id";
+    String ID = VantarParam.ID;
 
     String getStorage();
     boolean isEmpty();

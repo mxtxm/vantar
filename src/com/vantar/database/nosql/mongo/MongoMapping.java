@@ -44,7 +44,7 @@ public class MongoMapping {
         Document document = new Document();
 
         for (StorableData info : dto.getStorableData()) {
-            if (info.name.equals("id")) {
+            if (info.name.equals(VantarParam.ID)) {
                 info.name = Mongo.ID;
                 if (action.equals(Dto.Action.INSERT)) {
                     info.isNull = false;
@@ -205,7 +205,7 @@ public class MongoMapping {
                     if (fieldName == null) {
                         continue;
                     }
-                    if (fieldName.equals("id")) {
+                    if (fieldName.equals(VantarParam.ID)) {
                         group.columns[i] = Mongo.ID;
                     } else if (fieldName.endsWith(".id")) {
                         group.columns[i] = StringUtil.replace(fieldName, ".id", "." + Mongo.ID);
@@ -303,7 +303,7 @@ public class MongoMapping {
 
             String fieldName = item.fieldName;
             if (fieldName != null) {
-                if (fieldName.equals("id")) {
+                if (fieldName.equals(VantarParam.ID)) {
                     fieldName = Mongo.ID;
                 } else if (fieldName.endsWith(".id")) {
                     fieldName = StringUtil.replace(fieldName, ".id", "." + Mongo.ID);
@@ -471,7 +471,7 @@ public class MongoMapping {
                 case IN_DTO: {
                     String[] parts = StringUtil.split(fieldName, ':');
                     fieldName = parts[0].trim();
-                    if (fieldName.equals("id")) {
+                    if (fieldName.equals(VantarParam.ID)) {
                         fieldName = Mongo.ID;
                     }
                     String fieldNameInner = parts.length == 2 ? parts[1].trim() : Mongo.ID;

@@ -1,7 +1,7 @@
 package com.vantar.admin.model.document;
 
 import com.vantar.admin.model.Admin;
-import com.vantar.common.Settings;
+import com.vantar.common.*;
 import com.vantar.database.datatype.Location;
 import com.vantar.database.dto.*;
 import com.vantar.util.collection.CollectionUtil;
@@ -191,7 +191,7 @@ public class DtoDocumentData {
 
                 if (isKey) {
                     sb.append("</strong>");
-                    if (prop.equals("id")) {
+                    if (prop.equals(VantarParam.ID)) {
                         sb.append(" ").append(obj.getClass().getSimpleName()).append(" id (primary key) ");
                     }
                     sb.append(" [update/delete condition]");

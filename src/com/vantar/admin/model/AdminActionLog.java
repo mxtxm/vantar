@@ -22,7 +22,7 @@ public class AdminActionLog {
         WebUi ui = Admin.getUi(Locale.getString(VantarKey.ADMIN_ACTION_LOG), params, response, true);
 
         String clazz = params.getString(VantarParam.DTO);
-        Long id = params.getLong("id");
+        Long id = params.getLong(VantarParam.ID);
         ui.addHeading(clazz + " (" + id + ")");
 
         QueryBuilder q = new QueryBuilder(new UserLog());

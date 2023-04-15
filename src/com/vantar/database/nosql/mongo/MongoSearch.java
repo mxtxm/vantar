@@ -1,6 +1,7 @@
 package com.vantar.database.nosql.mongo;
 
 import com.mongodb.client.*;
+import com.vantar.common.VantarParam;
 import com.vantar.database.dto.Dto;
 import com.vantar.database.query.*;
 import com.vantar.exception.*;
@@ -20,9 +21,9 @@ public class MongoSearch {
         for (String property : properties) {
             property = property.trim();
             if (property.equals(Mongo.ID)) {
-                property = "id";
+                property = VantarParam.ID;
             }
-            String p = property.equals("id") ? Mongo.ID : property;
+            String p = property.equals(VantarParam.ID) ? Mongo.ID : property;
             condition.append(p, dto.getPropertyValue(property));
         }
 
@@ -51,9 +52,9 @@ public class MongoSearch {
 
     public static boolean exists(Dto dto, String property) throws DatabaseException {
         if (property.equals(Mongo.ID)) {
-            property = "id";
+            property = VantarParam.ID;
         }
-        String p = property.equals("id") ? Mongo.ID : property;
+        String p = property.equals(VantarParam.ID) ? Mongo.ID : property;
         try {
             return MongoConnection.getDatabase().getCollection(dto.getStorage())
                 .find(
@@ -69,7 +70,7 @@ public class MongoSearch {
     }
 
     public static boolean existsById(Dto dto) throws DatabaseException {
-        return exists(dto, "id");
+        return exists(dto, VantarParam.ID);
     }
 
     public static boolean existsByDto(Dto dto) throws DatabaseException {

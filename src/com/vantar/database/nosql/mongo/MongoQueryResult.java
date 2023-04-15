@@ -90,10 +90,10 @@ public class MongoQueryResult extends QueryResultBase implements QueryResult, Au
     }
 
     public Map<String, String> asKeyValue(String keyField, String valueField) throws NoContentException, DatabaseException {
-        if (keyField.equals("id")) {
+        if (keyField.equals(VantarParam.ID)) {
             keyField = Mongo.ID;
         }
-        if (valueField.equals("id")) {
+        if (valueField.equals(VantarParam.ID)) {
             valueField = Mongo.ID;
         }
         Map<String, String> result = new HashMap<>(1000, 1);
@@ -119,10 +119,10 @@ public class MongoQueryResult extends QueryResultBase implements QueryResult, Au
     public Map<String, String> asKeyValue(KeyValueData definition) throws NoContentException, DatabaseException {
         String keyField = definition.getKeyField();
         String valueField = definition.getValueField();
-        if (keyField.equals("id")) {
+        if (keyField.equals(VantarParam.ID)) {
             keyField = Mongo.ID;
         }
-        if (valueField.equals("id")) {
+        if (valueField.equals(VantarParam.ID)) {
             valueField = Mongo.ID;
         }
         Map<String, String> result = new HashMap<>();
@@ -205,8 +205,9 @@ public class MongoQueryResult extends QueryResultBase implements QueryResult, Au
                 }
 
                 if (type == List.class || type == Set.class) {
-                    Class<?>[] g = ClassUtil.getGenericTypes(field);
-                    if (g == null || g.length != 1) {
+                    Generics generics = field.getAnnotation(Generics.class);
+                    Class<?>[] g = generics == null ? ClassUtil.getGenericTypes(field) : generics.value();
+                    if (g == null || g.length == 0) {
                         log.warn(" ! type/value miss-match ({}.{})", dto.getClass().getName(), field.getName());
                         continue;
                     }
@@ -220,7 +221,8 @@ public class MongoQueryResult extends QueryResultBase implements QueryResult, Au
                         || listType == Boolean.class
                         || listType.getSuperclass() == Integer.class
                         || listType.getSuperclass() == Long.class
-                        || listType.getSuperclass() == Double.class) {
+                        || listType.getSuperclass() == Double.class
+                        || listType.getSuperclass() == Float.class) {
 
                         try {
                             v = document.getList(name, listType);
@@ -243,22 +245,20 @@ public class MongoQueryResult extends QueryResultBase implements QueryResult, Au
                                 listType.getSimpleName(), name, document.get(name), dto.getClass().getName(), dto, e
                             );
                         }
-
                         if (docs == null) {
                             setFieldNullValue(dto, field);
                             continue;
                         }
-
-                        Collection<Dto> list = type == List.class ? new ArrayList<>(docs.size()) : new HashSet<>(docs.size(), 1);
+                        Collection<Dto> coll = type == List.class ? new ArrayList<>(docs.size()) : new HashSet<>(docs.size(), 1);
                         for (Document d : docs) {
                             Dto obj = (Dto) ClassUtil.getInstance(listType);
                             if (obj == null) {
                                 continue;
                             }
                             mapRecordToObject(d, obj, obj.getFields());
-                            list.add(obj);
+                            coll.add(obj);
                         }
-                        field.set(dto, list);
+                        field.set(dto, coll);
                     } else {
                         v = Json.d.listFromJson(Json.d.toJson(document.get(name)), listType);
                         field.set(dto, v != null && type == Set.class ? new HashSet<>(v) : v);
@@ -277,9 +277,15 @@ public class MongoQueryResult extends QueryResultBase implements QueryResult, Au
                             log.warn(" ! type/value miss-match ({}.{})", dto.getClass().getName(), field.getName());
                             continue;
                         }
-
-                        field.set(dto, documentToMap(v, g[0], g[1], Arrays.stream(g, 2, g.length).toArray(Class<?>[]::new)));
-                        //field.set(dto, documentToMap(v, g[0], g[1], null));
+                        field.set(
+                            dto,
+                            documentToMap(
+                                v,
+                                g[0],
+                                g[1],
+                                g.length > 2 ? Arrays.stream(g, 2, g.length).toArray(Class<?>[]::new) : null
+                            )
+                        );
                     }
                     continue;
                 }

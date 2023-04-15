@@ -16,6 +16,8 @@ import com.vantar.util.string.StringUtil;
 import org.slf4j.*;
 import java.io.*;
 import java.util.*;
+import java.util.stream.*;
+
 
 /**
  * static: ignored
@@ -218,28 +220,33 @@ public class Jackson {
         }
     }
 
-    public String extractString(String json, String key) {
-        JsonNode node = getNode(json, key);
+    public String extractRaw(String json, String... key) {
+        JsonNode node = key.length == 1 ? getNode(json, key[0]) : getNodePath(json, key);
+        return node == null ? null : node.toString();
+    }
+
+    public String extractString(String json, String... key) {
+        JsonNode node = key.length == 1 ? getNode(json, key[0]) : getNodePath(json, key);
         return node == null ? null : node.asText();
     }
 
-    public Long extractLong(String json, String key) {
-        JsonNode node = getNode(json, key);
+    public Long extractLong(String json, String... key) {
+        JsonNode node = key.length == 1 ? getNode(json, key[0]) : getNodePath(json, key);
         return node == null ? null : node.asLong();
     }
 
-    public Integer extractInteger(String json, String key) {
-        JsonNode node = getNode(json, key);
+    public Integer extractInteger(String json, String... key) {
+        JsonNode node = key.length == 1 ? getNode(json, key[0]) : getNodePath(json, key);
         return node == null ? null : node.asInt();
     }
 
-    public Boolean extractBoolean(String json, String key) {
-        JsonNode node = getNode(json, key);
+    public Boolean extractBoolean(String json, String... key) {
+        JsonNode node = key.length == 1 ? getNode(json, key[0]) : getNodePath(json, key);
         return node == null ? null : node.asBoolean();
     }
 
-    public Double extractDouble(String json, String key) {
-        JsonNode node = getNode(json, key);
+    public Double extractDouble(String json, String... key) {
+        JsonNode node = key.length == 1 ? getNode(json, key[0]) : getNodePath(json, key);
         return node == null ? null : node.asDouble();
     }
 
@@ -277,6 +284,21 @@ public class Jackson {
         } catch (Exception e) {
             return null;
         }
+    }
+
+    private JsonNode getNodePath(String json, String[] keys) {
+        JsonNode node = null;
+        for (String key : keys) {
+            if (node == null) {
+                node = getNode(json, key);
+            } else {
+                node = node.findValue(key);
+                if (node == null) {
+                    return null;
+                }
+            }
+        }
+        return node;
     }
 
     // < < < FROM JSON

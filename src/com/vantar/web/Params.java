@@ -758,6 +758,7 @@ public class Params {
         }
     }
 
+
     public static class Uploaded implements Closeable {
 
         private VantarKey error;
@@ -766,7 +767,12 @@ public class Params {
 
 
         public Uploaded(VantarKey error) {
-            this.error = error;
+            if (error != null) {
+                this.error = error;
+            }
+            if (!isUploaded()) {
+                this.error = VantarKey.REQUIRED;
+            }
         }
 
         public Uploaded(Part filePart) {
@@ -782,7 +788,12 @@ public class Params {
         }
 
         public boolean isUploaded() {
-            return VantarKey.REQUIRED != error && filePart != null && filePart.getContentType() != null
+            return filePart != null && filePart.getContentType() != null
+                && filePart.getSubmittedFileName() != null;
+        }
+
+        public boolean isUploadedOk() {
+            return error == null && filePart != null && filePart.getContentType() != null
                 && filePart.getSubmittedFileName() != null;
         }
 

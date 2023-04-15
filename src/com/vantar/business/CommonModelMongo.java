@@ -938,9 +938,9 @@ public class CommonModelMongo extends CommonModel {
 
     @SuppressWarnings("unchecked")
     public static <D extends Dto> D getById(Params params, D dto) throws VantarException {
-        Long id = params.getLong("id");
+        Long id = params.getLong(VantarParam.ID);
         if (id == null) {
-            id = params.extractFromJson("id", Long.class);
+            id = params.extractFromJson(VantarParam.ID, Long.class);
         }
         if (!NumberUtil.isIdValid(id)) {
             throw new InputException(VantarKey.INVALID_ID, dto.getClass().getSimpleName() + ".id");

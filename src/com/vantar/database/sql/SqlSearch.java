@@ -60,7 +60,7 @@ public class SqlSearch extends SqlQueryHelper {
     }
 
     public boolean existsById(Dto dto) throws DatabaseException {
-        return exists(dto, "id");
+        return exists(dto, VantarParam.ID);
     }
 
     public boolean existsByDto(Dto dto) throws DatabaseException {

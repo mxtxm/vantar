@@ -370,7 +370,7 @@ public abstract class DtoBase implements Dto {
                 return propertyNames;
             }
         }
-        propertyNames.add("id");
+        propertyNames.add(VantarParam.ID);
         return propertyNames;
     }
 
@@ -384,11 +384,17 @@ public abstract class DtoBase implements Dto {
         try {
             for (String propertyName : getPresentationPropertyNames()) {
                 Field field = getField(propertyName);
-                sb.append(
-                    field.isAnnotationPresent(Localized.class) && bLang != null ?
-                        ((Map<String, String>) field.get(this)).get(bLang) :
-                        field.get(this).toString()
-                )
+                Object value = field.get(this);
+                sb
+                    .append(
+                        value == null ?
+                            "" :
+                            (
+                                field.isAnnotationPresent(Localized.class) && bLang != null ?
+                                    ((Map<String, String>) value).get(bLang) :
+                                    value.toString()
+                            )
+                    )
                     .append(separator);
             }
             sb.setLength(sb.length() - separator.length());
@@ -464,7 +470,7 @@ public abstract class DtoBase implements Dto {
         Map<String, String> propertyNameMap,
         String... include) {
 
-        HashSet<String> includeSet;
+        Set<String> includeSet;
         if (include.length == 0) {
             includeSet = null;
         } else {

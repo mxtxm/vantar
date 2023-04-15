@@ -35,7 +35,7 @@ public class Settings {
     public static Set<String> getKeys() {
         Set<String> k1 = config.propertyNames();
         Set<String> k2 = tune.propertyNames();
-        Set<String> keys = new HashSet<>();
+        Set<String> keys = new HashSet<>(20, 1);
         if (k1 != null) {
             keys.addAll(k1);
         }

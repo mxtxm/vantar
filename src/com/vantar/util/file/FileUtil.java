@@ -462,9 +462,31 @@ public class FileUtil {
         );
     }
 
+    public static boolean readLines(String path, ReadCallback callback) {
+        try (BufferedReader reader = new BufferedReader(new FileReader(path))) {
+            String line = reader.readLine();
+            while (line != null) {
+                if (!callback.get(line)) {
+                    break;
+                }
+                line = reader.readLine();
+            }
+            return true;
+        } catch (IOException e) {
+            log.error("! {}", path, e);
+        }
+        return false;
+    }
+
 
     public interface BeforeZipCallback {
 
         boolean accept(String filename);
+    }
+
+
+    public interface ReadCallback {
+
+        boolean get(String data);
     }
 }

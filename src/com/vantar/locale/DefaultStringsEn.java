@@ -10,14 +10,14 @@ public class DefaultStringsEn {
     static {
         tokens = new HashMap<>(300, 1);
         // auth
-        tokens.put(VantarKey.USER_PASSWORD_EMPTY, "Username or password is empty");
-        tokens.put(VantarKey.USER_NOT_EXISTS, "User does not exists");
-        tokens.put(VantarKey.USER_DISABLED, "User is disabled");
-        tokens.put(VantarKey.USER_DISABLED_MAX_FAILED, "User is disabled because of to many failed signings");
-        tokens.put(VantarKey.WRONG_PASSWORD, "Wrong password");
-        tokens.put(VantarKey.MISSING_AUTH_TOKEN, "Missing authentication token");
-        tokens.put(VantarKey.INVALID_AUTH_TOKEN, "Invalid authentication token");
-        tokens.put(VantarKey.EXPIRED_AUTH_TOKEN, "Expired authentication token");
+        tokens.put(VantarKey.USER_PASSWORD_EMPTY, "Username or password is empty.");
+        tokens.put(VantarKey.USER_NOT_EXISTS, "User does not exists.");
+        tokens.put(VantarKey.USER_DISABLED, "User '{0}' is disabled.");
+        tokens.put(VantarKey.USER_DISABLED_MAX_FAILED, "User '{0}' is disabled. Too many failed sign-in attempts.");
+        tokens.put(VantarKey.WRONG_PASSWORD, "User '{0}'. Wrong password.");
+        tokens.put(VantarKey.MISSING_AUTH_TOKEN, "Missing authentication token.");
+        tokens.put(VantarKey.INVALID_AUTH_TOKEN, "Invalid authentication token.");
+        tokens.put(VantarKey.EXPIRED_AUTH_TOKEN, "Expired authentication token.");
         tokens.put(VantarKey.NO_ACCESS, "No access");
         tokens.put(VantarKey.USER_REPO_NOT_SET, "User repo event not set, authentication requires repo to access database");
         tokens.put(VantarKey.USER_ALREADY_SIGNED_IN, "User is already signed in");

@@ -11,10 +11,10 @@ public class DefaultStringsFa {
         tokens = new HashMap<>(300, 1);
         // auth
         tokens.put(VantarKey.USER_PASSWORD_EMPTY, "نام کاربری و یا رمز عبور خالی است");
-        tokens.put(VantarKey.USER_NOT_EXISTS, "کاربر در سیستم وجود ندارد");
-        tokens.put(VantarKey.USER_DISABLED, "کاربر غیر فعال است");
-        tokens.put(VantarKey.USER_DISABLED_MAX_FAILED, "بعلت تلاش های ناموفق بیش از حد کاربر غیر فعال شد");
-        tokens.put(VantarKey.WRONG_PASSWORD, "رمز عبور نادرست است");
+        tokens.put(VantarKey.USER_NOT_EXISTS, "کاربر '{0}' در سیستم وجود ندارد");
+        tokens.put(VantarKey.USER_DISABLED, "کاربر '{0}' غیر فعال است");
+        tokens.put(VantarKey.USER_DISABLED_MAX_FAILED, "بعلت تلاش های ناموفق بیش از حد کاربر {0} غیر فعال شد");
+        tokens.put(VantarKey.WRONG_PASSWORD, "رمز عبور '{0}' نادرست است");
         tokens.put(VantarKey.MISSING_AUTH_TOKEN, "شناسه هویت کاربر پیدا نشد، دوباره به سیستم وارد شوید");
         tokens.put(VantarKey.INVALID_AUTH_TOKEN, "شناسه هویت کاربر نادرست است، دوباره به سیستم وارد شوید");
         tokens.put(VantarKey.EXPIRED_AUTH_TOKEN, "شناسه هویت کاربر باطل شده است، دوباره به سیستم وارد شوید");

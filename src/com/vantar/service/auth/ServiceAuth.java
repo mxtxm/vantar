@@ -219,32 +219,32 @@ public class ServiceAuth extends Permit implements Services.Service {
         try {
             signinBundle = event.getUserPassword(username);
         } catch (NoContentException e) {
-            throw new AuthException(VantarKey.USER_NOT_EXISTS);
+            throw new AuthException(VantarKey.USER_NOT_EXISTS, "?");
         } catch (Exception e) {
             log.warn(" ! failed to get signinBundle\n", e);
             throw new ServerException(VantarKey.FETCH_FAIL);
         }
 
         if (signinBundle.commonUser.getAccessStatus().equals(AccessStatus.DISABLED)) {
-            throw new AuthException(VantarKey.USER_DISABLED);
+            throw new AuthException(VantarKey.USER_DISABLED, signinBundle.commonUser.getUsername());
         }
         if (signinBundle.commonUser.getAccessStatus().equals(AccessStatus.UNSUBSCRIBED)) {
-            throw new AuthException(VantarKey.USER_NOT_EXISTS);
+            throw new AuthException(VantarKey.USER_NOT_EXISTS, signinBundle.commonUser.getUsername());
         }
 
         Integer c = signinFail.get(signinBundle.commonUser.getId());
         if (c != null && c > maxSigninFail) {
-            throw new AuthException(VantarKey.USER_DISABLED_MAX_FAILED);
+            throw new AuthException(VantarKey.USER_DISABLED_MAX_FAILED, signinBundle.commonUser.getUsername());
         }
 
         if (signinBundle.commonUserPassword == null) {
             log.error(" ! commonUserPassword is null > \n{}", signinBundle);
             addFail(signinBundle.commonUser.getId());
-            throw new AuthException(VantarKey.WRONG_PASSWORD);
+            throw new AuthException(VantarKey.WRONG_PASSWORD, signinBundle.commonUser.getUsername());
         }
         if (!signinBundle.commonUserPassword.passwordEquals(password)) {
             addFail(signinBundle.commonUser.getId());
-            throw new AuthException(VantarKey.WRONG_PASSWORD);
+            throw new AuthException(VantarKey.WRONG_PASSWORD, signinBundle.commonUser.getUsername());
         }
 
         tokenData = new TokenData(signinBundle.commonUser);

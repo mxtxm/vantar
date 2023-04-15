@@ -1089,7 +1089,7 @@ public class WebUi {
         // PAGE
         int pageNo = params.getInteger("page-no", 1);
         int pageLength = params.getInteger("page-length", AdminData.N_PER_PAGE);
-        String sort = params.getString("sort", "id");
+        String sort = params.getString("sort", VantarParam.ID);
         String sortPos = params.getString("sortpos", "desc");
 
         html.append("<form id='dto-list-form' method='post'>");
