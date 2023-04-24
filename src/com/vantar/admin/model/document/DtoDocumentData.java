@@ -70,7 +70,7 @@ public class DtoDocumentData {
                     "<pre>" + Json.getWithNulls().toJsonPretty(getAsJsonExampleDto(ClassUtil.getClass(searchResult))) + "</pre>\n";
             } catch (Exception e) {
                 sample = "";
-                Admin.log.warn("! could not create search example for ({})", searchResult);
+                Admin.log.warn("! could not create search example for ({})", searchResult, e);
             }
 
             return
@@ -283,11 +283,12 @@ public class DtoDocumentData {
 
             if (genericType.isEnum()) {
                 Class<? extends Enum<?>> enumType = (Class<? extends Enum<?>>) genericType;
+                json.append('"');
                 for (Enum<?> x : enumType.getEnumConstants()) {
-                    json.append('"').append(x.name()).append("\", ");
+                    json.append(x.name()).append(" | ");
                 }
-                json.setLength(json.length() - 2);
-
+                json.setLength(json.length() - 3);
+                json.append('"');
             } else if (ClassUtil.isInstantiable(genericType, Dto.class)) {
                 if (genericType.equals(dto)) {
                     json.append("{\"RECURSIVE\":\"RECURSIVE\"}");
@@ -299,7 +300,7 @@ public class DtoDocumentData {
             } else if (genericType == String.class) {
                 json.append("\"STRING\"");
             } else if (genericType == Boolean.class) {
-                json.append("true,");
+                json.append("true");
             } else if (genericType == Location.class) {
                 json.append("{\"latitude\":0,\"longitude\":0}");
             } else if (genericType == List.class || genericType == Set.class || genericType == Collection.class) {
@@ -330,11 +331,12 @@ public class DtoDocumentData {
 
             if (genericType.isEnum()) {
                 Class<? extends Enum<?>> enumType = (Class<? extends Enum<?>>) genericType;
+                json.append('"');
                 for (Enum<?> x : enumType.getEnumConstants()) {
-                    json.append('"').append(x.name()).append("\", ");
+                    json.append(x.name()).append(" | ");
                 }
-                json.setLength(json.length() - 2);
-
+                json.setLength(json.length() - 3);
+                json.append('"');
             } else if (ClassUtil.isInstantiable(genericType, Dto.class)) {
                 json.append(getAsJsonExampleDto(genericType));
             } else if (ClassUtil.isInstantiable(genericType, Number.class)) {
@@ -342,7 +344,7 @@ public class DtoDocumentData {
             } else if (genericType == String.class) {
                 json.append("\"STRING\"");
             } else if (genericType == Boolean.class) {
-                json.append("true,");
+                json.append("true");
             } else if (genericType == Location.class) {
                 json.append("{\"latitude\":0,\"longitude\":0}");
             } else if (genericType == List.class || genericType == Set.class || genericType == Collection.class) {
@@ -358,6 +360,9 @@ public class DtoDocumentData {
     }
 
     public String getAsJsonExampleDto(Class<?> gType) {
+        if (gType == null) {
+            return "";
+        }
         boolean excludeAll = false;
         if (exclude != null) {
             for (String x : exclude) {
@@ -463,18 +468,20 @@ public class DtoDocumentData {
 
     private static List<Field> getProperties(Class<?> cls, String[] exclude, boolean ignoreNoStore) {
         List<Field> properties = new ArrayList<>();
-        for (Field field : cls.getFields()) {
-            int m = field.getModifiers();
-            if (Modifier.isFinal(m) || Modifier.isStatic(m)) {
-                continue;
+        if (cls != null) {
+            for (Field field : cls.getFields()) {
+                int m = field.getModifiers();
+                if (Modifier.isFinal(m) || Modifier.isStatic(m)) {
+                    continue;
+                }
+                if (ignoreNoStore && field.isAnnotationPresent(NoStore.class)) {
+                    continue;
+                }
+                if (CollectionUtil.contains(exclude, field.getName())) {
+                    continue;
+                }
+                properties.add(field);
             }
-            if (ignoreNoStore && field.isAnnotationPresent(NoStore.class)) {
-                continue;
-            }
-            if (CollectionUtil.contains(exclude, field.getName())) {
-                continue;
-            }
-            properties.add(field);
         }
         return properties;
     }
