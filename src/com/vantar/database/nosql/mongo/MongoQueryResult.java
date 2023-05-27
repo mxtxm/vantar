@@ -228,7 +228,7 @@ public class MongoQueryResult extends QueryResultBase implements QueryResult, Au
                             v = document.getList(name, listType);
                             field.set(dto, v != null && type == Set.class ? new HashSet<>(v) : v);
                         } catch (Exception e) {
-                            log.error(
+                            log.warn(
                                 " !! can not get List<{}> from database ({}:{}) > ({}, {})\n",
                                 listType.getSimpleName(), name, document.get(name), dto.getClass().getName(), dto, e
                             );
@@ -240,7 +240,7 @@ public class MongoQueryResult extends QueryResultBase implements QueryResult, Au
                             docs = document.getList(name, Document.class);
                         } catch (Exception e) {
                             docs = null;
-                            log.error(
+                            log.warn(
                                 " ! can not get List<{}> from database ({}:{}) > ({}, {})\n",
                                 listType.getSimpleName(), name, document.get(name), dto.getClass().getName(), dto, e
                             );
@@ -336,7 +336,7 @@ public class MongoQueryResult extends QueryResultBase implements QueryResult, Au
                 field.set(dto, value);
 
             } catch (Exception e) {
-                log.error(" !! ({}:{}) > ({}, {})\n", name, document.get(name), dto.getClass(), dto, e);
+                log.warn(" !! ({}:{}) > ({}, {})\n", name, document.get(name), dto.getClass(), dto, e);
                 try {
                     setFieldNullValue(dto, field);
                 } catch (Exception ignore) {

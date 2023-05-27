@@ -135,7 +135,7 @@ public class Settings {
     }
 
     public static WebConfig web() {
-        if (tune instanceof MongoConfig) {
+        if (tune instanceof WebConfig) {
             return (WebConfig) tune;
         }
         if (config instanceof WebConfig) {

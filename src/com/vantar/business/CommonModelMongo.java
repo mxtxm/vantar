@@ -100,7 +100,7 @@ public class CommonModelMongo extends CommonModel {
             throw new ServerException(VantarKey.INSERT_FAIL);
         }
 
-        CommonModel.afterDataChange(dto);
+        CommonModel.afterDataChange(dto.getClass());
         if (event != null) {
             try {
                 event.afterWrite(dto);
@@ -108,8 +108,6 @@ public class CommonModelMongo extends CommonModel {
                 throw new InputException(VantarKey.NO_CONTENT);
             }
         }
-
-        //dto = getByIdX(dto);
 
         if (Services.isUp(ServiceUserActionLog.class)) {
             ServiceUserActionLog.add(Dto.Action.INSERT, dto);
@@ -173,7 +171,7 @@ public class CommonModelMongo extends CommonModel {
             throw new ServerException(VantarKey.INSERT_FAIL);
         }
 
-        CommonModel.afterDataChange(dto);
+        CommonModel.afterDataChange(dto.getClass());
         if (event != null) {
             try {
                 event.afterWrite(dto);
@@ -273,7 +271,7 @@ public class CommonModelMongo extends CommonModel {
             throw new ServerException(VantarKey.UPDATE_FAIL);
         }
 
-        CommonModel.afterDataChange(dto);
+        CommonModel.afterDataChange(dto.getClass());
         if (event != null) {
             try {
                 event.afterWrite(dto);
@@ -395,7 +393,7 @@ public class CommonModelMongo extends CommonModel {
             throw new ServerException(VantarKey.UPDATE_FAIL);
         }
 
-        CommonModel.afterDataChange(dto);
+        CommonModel.afterDataChange(dto.getClass());
         if (event != null) {
             try {
                 event.afterWrite(dto);
@@ -459,7 +457,7 @@ public class CommonModelMongo extends CommonModel {
 
         try {
             ResponseMessage r = ResponseMessage.success(VantarKey.DELETE_SUCCESS, Mongo.delete(dto));
-            CommonModel.afterDataChange(dto);
+            CommonModel.afterDataChange(dto.getClass());
             if (event != null) {
                 try {
                     event.afterWrite(dto);
@@ -546,7 +544,7 @@ public class CommonModelMongo extends CommonModel {
                 VantarKey.DELETE_SUCCESS,
                 q == null ? Mongo.delete(dto) : Mongo.delete(q)
             );
-            CommonModel.afterDataChange(dto);
+            CommonModel.afterDataChange(dto.getClass());
             if (event != null) {
                 try {
                     event.afterWrite(dto);
@@ -613,7 +611,7 @@ public class CommonModelMongo extends CommonModel {
                 }
 
                 Mongo.delete(dto);
-                CommonModel.afterDataChange(dto);
+                CommonModel.afterDataChange(dto.getClass());
 
                 if (Services.isUp(ServiceUserActionLog.class)) {
                     ServiceUserActionLog.add(Dto.Action.DELETE, dto);
@@ -621,7 +619,7 @@ public class CommonModelMongo extends CommonModel {
             }
 
             if (!ids.isEmpty()) {
-                afterDataChange(dto);
+                afterDataChange(dto.getClass());
             }
         } catch (DatabaseException e) {
             log.error(" !! {} : {}\n", dto.getClass().getSimpleName(), dto, e);
@@ -672,7 +670,7 @@ public class CommonModelMongo extends CommonModel {
 
                 Mongo.unset(dto.getStorage(), dto.getId(), Mongo.LOGICAL_DELETE_FIELD);
 
-                afterDataChange(dto);
+                afterDataChange(dto.getClass());
 
                 if (Services.isUp(ServiceUserActionLog.class)) {
                     ServiceUserActionLog.add(Dto.Action.UN_DELETE, dto);
@@ -680,7 +678,7 @@ public class CommonModelMongo extends CommonModel {
             }
 
             if (!ids.isEmpty()) {
-                afterDataChange(dto);
+                afterDataChange(dto.getClass());
             }
 
         } catch (DatabaseException e) {
@@ -705,7 +703,7 @@ public class CommonModelMongo extends CommonModel {
             Mongo.deleteAll(collection);
             Mongo.Sequence.remove(collection);
             Mongo.Index.remove(collection);
-            afterDataChange(dto);
+            afterDataChange(dto.getClass());
             if (Services.isUp(ServiceUserActionLog.class)) {
                 ServiceUserActionLog.add(Dto.Action.PURGE, dto);
             }
@@ -936,11 +934,15 @@ public class CommonModelMongo extends CommonModel {
         }
     }
 
-    @SuppressWarnings("unchecked")
     public static <D extends Dto> D getById(Params params, D dto) throws VantarException {
-        Long id = params.getLong(VantarParam.ID);
+        return getById(params, VantarParam.ID, dto);
+    }
+
+    @SuppressWarnings("unchecked")
+    public static <D extends Dto> D getById(Params params, String idParam, D dto) throws VantarException {
+        Long id = params.getLong(idParam);
         if (id == null) {
-            id = params.extractFromJson(VantarParam.ID, Long.class);
+            id = params.extractFromJson(idParam, Long.class);
         }
         if (!NumberUtil.isIdValid(id)) {
             throw new InputException(VantarKey.INVALID_ID, dto.getClass().getSimpleName() + ".id");

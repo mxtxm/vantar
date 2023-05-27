@@ -26,6 +26,10 @@ public class Queue {
         return connection != null && connection.isUp();
     }
 
+    public static void connect(QueueConfig config) {
+        connection = new QueueConnection(config, new DefaultQueueExceptionHandler());
+    }
+
     public static void connect(QueueConfig config, QueueExceptionHandler exceptionHandler) {
         connection = new QueueConnection(config, exceptionHandler);
     }
@@ -253,12 +257,12 @@ public class Queue {
 
                         @Override
                         public void handleCancel(String consumerTag) {
-                            take.fail(queueName, takerId);
+                            take.cancel(queueName, takerId);
                         }
 
                         @Override
                         public void handleShutdownSignal(String consumerTag, ShutdownSignalException sig) {
-                            take.fail(queueName, takerId);
+                            take.shutDown(queueName, takerId);
                         }
                     }
                 );
@@ -297,7 +301,7 @@ public class Queue {
     }
 
     /**
-     * get emitted (broadcasted to all) message
+     * get emitted (broad casted to all) message
      */
     public static String receive(String exchangeName, TakeCallback take) {
         return receive(exchangeName, take, DEFAULT_TAKER_ID);
@@ -327,12 +331,12 @@ public class Queue {
 
                     @Override
                     public void handleCancel(String consumerTag) {
-                        take.fail(queueName, takerId);
+                        take.cancel(queueName, takerId);
                     }
 
                     @Override
                     public void handleShutdownSignal(String consumerTag, ShutdownSignalException sig) {
-                        take.fail(queueName, takerId);
+                        take.shutDown(queueName, takerId);
                     }
                 });
 

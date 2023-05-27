@@ -99,8 +99,10 @@ public interface Dto {
     void beforeJson();
     boolean beforeInsert();
     boolean beforeUpdate();
+    boolean beforeDelete();
     void afterInsert();
     void afterUpdate();
+    void afterDelete();
     void afterSetData();
     void afterFetchData(long i);
     void afterFetchData();

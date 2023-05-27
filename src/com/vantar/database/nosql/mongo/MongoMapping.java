@@ -192,7 +192,7 @@ public class MongoMapping {
             mongoQuery.skip = q.getSkip();
         }
         if (!q.conditionIsEmpty()) {
-            Document matches = getMongoMatches(q.getCondition(), q.getDto());
+            Document matches = getMongoMatches(q.getCondition(), q.getDto(), false);
             if (matches != null) {
                 mongoQuery.matches = matches;
             }
@@ -265,14 +265,13 @@ public class MongoMapping {
         }
     }
 
-    public static Document getMongoMatches(QueryCondition qCondition, Dto dto) {
+    public static Document getMongoMatches(QueryCondition qCondition, Dto dto, boolean logicalDeletedAdded) {
         if (!dto.isDeleteLogicalEnabled() && (qCondition == null || qCondition.q.size() == 0)) {
             return null;
         }
 
         QueryCondition condition;
-        if (dto.isDeleteLogicalEnabled() && dto.getDeletedQueryPolicy() != Dto.QueryDeleted.SHOW_ALL) {
-
+        if (!logicalDeletedAdded && dto.isDeleteLogicalEnabled() && dto.getDeletedQueryPolicy() != Dto.QueryDeleted.SHOW_ALL) {
             if (qCondition == null) {
                 condition = new QueryCondition(dto.getStorage());
             } else if (qCondition.operator.equals(AND)) {
@@ -297,7 +296,7 @@ public class MongoMapping {
         List<Bson> matches = new ArrayList<>(10);
         for (QueryMatchItem item : condition.q) {
             if (item.type == QUERY) {
-                matches.add(getMongoMatches(item.queryValue, dto));
+                matches.add(getMongoMatches(item.queryValue, dto, true));
                 continue;
             }
 
@@ -460,7 +459,7 @@ public class MongoMapping {
                     break;
 
                 case IN_LIST: {
-                    Document innerMatch = getMongoMatches(item.queryValue, dto);
+                    Document innerMatch = getMongoMatches(item.queryValue, dto, true);
                     if (innerMatch == null || innerMatch.isEmpty()) {
                         continue;
                     }
@@ -476,7 +475,7 @@ public class MongoMapping {
                     }
                     String fieldNameInner = parts.length == 2 ? parts[1].trim() : Mongo.ID;
 
-                    Document innerMatch = getMongoMatches(item.queryValue, item.dto);
+                    Document innerMatch = getMongoMatches(item.queryValue, item.dto, true);
                     if (innerMatch == null || innerMatch.isEmpty()) {
                         continue;
                     }

@@ -50,27 +50,41 @@ public class AdminData {
                     return;
                 }
 
-                ui.beginFloatBox("db-box", info.getDtoClassName(), info.title)
-                    .addTag(info.dbms.toString())
-                    .addBlockLink(
-                        Locale.getString(VantarKey.ADMIN_DATA_LIST),
-                        "/admin/data/list?" + VantarParam.DTO + "=" + dtoName
+                ui
+                    .beginFloatBoxLink(
+                        "/admin/data/list?" + VantarParam.DTO + "=" + dtoName,
+                        info.dbms.toString(),
+                        "db-box",
+                        info.getDtoClassName(),
+                        info.title
                     )
-                    .addBlockLink(
+                    .addLink(
                         Locale.getString(VantarKey.ADMIN_NEW_RECORD),
-                        "/admin/data/insert?" + VantarParam.DTO + "=" + dtoName
+                        "/admin/data/insert?" + VantarParam.DTO + "=" + dtoName,
+                        true,
+                        false,
+                        "dto-action-link"
                     )
-                    .addBlockLink(
+                    .addLink(
                         Locale.getString(VantarKey.ADMIN_IMPORT),
-                        "/admin/data/import?" + VantarParam.DTO + "=" + dtoName
+                        "/admin/data/import?" + VantarParam.DTO + "=" + dtoName,
+                        true,
+                        false,
+                        "dto-action-link"
                     )
-                    .addBlockLink(
+                    .addLink(
                         Locale.getString(VantarKey.ADMIN_EXPORT),
-                        "/admin/data/export?" + VantarParam.DTO + "=" + dtoName
+                        "/admin/data/export?" + VantarParam.DTO + "=" + dtoName,
+                        true,
+                        false,
+                        "dto-action-link"
                     )
-                    .addBlockLink(
+                    .addLink(
                         Locale.getString(VantarKey.ADMIN_DATABASE_DELETE_ALL),
-                        "/admin/data/purge?" + VantarParam.DTO + "=" + dtoName
+                        "/admin/data/purge?" + VantarParam.DTO + "=" + dtoName,
+                        true,
+                        false,
+                        "dto-action-link"
                     )
                     .containerEnd();
             });
@@ -80,11 +94,20 @@ public class AdminData {
 
         ui.beginBox("NOSTORE");
         noStores.forEach(info ->
-            ui.beginFloatBox("db-box-nostore", info.getDtoClassName(), info.title)
+            ui.beginFloatBoxLink(
+                "/admin/data/fields?" + VantarParam.DTO + "=" + info.getDtoClassName(),
+                null,
+                "db-box db-box-nostore",
+                info.getDtoClassName(),
+                info.title
+            )
                 .addTag("")
-                .addBlockLink(
+                .addLink(
                     Locale.getString(VantarKey.ADMIN_DATA_FIELDS),
-                    "/admin/data/fields?" + VantarParam.DTO + "=" + info.getDtoClassName()
+                    "/admin/data/fields?" + VantarParam.DTO + "=" + info.getDtoClassName(),
+                    true,
+                    false,
+                    "dto-action-link"
                 )
                 .containerEnd()
         );

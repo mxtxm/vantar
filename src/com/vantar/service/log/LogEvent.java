@@ -1,12 +1,10 @@
 package com.vantar.service.log;
 
-import com.rabbitmq.client.*;
 import com.vantar.business.CommonRepoMongo;
 import com.vantar.database.dto.Dto;
 import com.vantar.database.nosql.mongo.*;
 import com.vantar.database.query.QueryBuilder;
 import com.vantar.exception.DatabaseException;
-import com.vantar.queue.QueueExceptionHandler;
 import com.vantar.service.log.dto.Log;
 import com.vantar.util.datetime.DateTime;
 import com.vantar.util.object.ObjectUtil;
@@ -107,7 +105,13 @@ public class LogEvent {
                 }
             }
             String m = message.toString();
-            log.error(m);
+            if (level.equals(ERROR) || level.equals(FATAL)) {
+                log.error(m);
+            } else if (level.equals(INFO)) {
+                log.info(m);
+            } else {
+                log.debug(m);
+            }
             CommonRepoMongo.insert(new Log(tag, level, m));
         } catch (Exception e) {
             log.error(" !! {} {}\n", tag, values, e);
@@ -151,38 +155,6 @@ public class LogEvent {
         } catch (DatabaseException e) {
             log.error(" !! getErrorTags", e);
             return new ArrayList<>();
-        }
-    }
-
-
-    public static class QueueExceptionHandlerCustom implements QueueExceptionHandler {
-
-        public void handleReturnListenerException(Channel channel, Throwable e) {
-            fatal(com.vantar.queue.QueueExceptionHandlerBase.class, "handleReturnListenerException", channel, e);
-        }
-
-        public void handleChannelRecoveryException(Channel channel, Throwable e) {
-            fatal(com.vantar.queue.QueueExceptionHandlerBase.class, "handleChannelRecoveryException", channel, e);
-        }
-
-        public void handleConfirmListenerException(Channel channel, Throwable e) {
-            fatal(com.vantar.queue.QueueExceptionHandlerBase.class, "handleConfirmListenerException", channel, e);
-        }
-
-        public void handleConnectionRecoveryException(Connection conn, Throwable e) {
-            fatal(com.vantar.queue.QueueExceptionHandlerBase.class, "handleConnectionRecoveryException", conn, e);
-        }
-
-        public void handleConsumerException(Channel channel, Throwable e, Consumer consumer, String consumerTag, String methodName) {
-            fatal(com.vantar.queue.QueueExceptionHandlerBase.class, "handleConsumerException", consumerTag, methodName, channel, e);
-        }
-
-        public void handleTopologyRecoveryException(Connection conn, Channel channel, TopologyRecoveryException e) {
-            fatal(com.vantar.queue.QueueExceptionHandlerBase.class, "handleTopologyRecoveryException", conn, channel, e);
-        }
-
-        public void handleUnexpectedConnectionDriverException(Connection conn, Throwable e) {
-            fatal(com.vantar.queue.QueueExceptionHandlerBase.class, "handleUnexpectedConnectionDriverException", conn, e);
         }
     }
 }

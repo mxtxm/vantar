@@ -15,6 +15,8 @@ import java.util.*;
 
 public class DtoDocumentData {
 
+    private Class<?> previousGtype;
+
     public String dto;
     public String format;
     public String enumClass;
@@ -363,6 +365,11 @@ public class DtoDocumentData {
         if (gType == null) {
             return "";
         }
+        if (gType.equals(previousGtype)) {
+            previousGtype = null;
+            return "\"RECURSIVE\"";
+        }
+        previousGtype = gType;
         boolean excludeAll = false;
         if (exclude != null) {
             for (String x : exclude) {

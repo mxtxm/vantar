@@ -13,6 +13,7 @@ import com.vantar.util.number.NumberUtil;
 import com.vantar.util.object.*;
 import com.vantar.util.string.StringUtil;
 import org.slf4j.*;
+import java.util.*;
 
 
 public abstract class CommonModel {
@@ -22,18 +23,50 @@ public abstract class CommonModel {
 
     protected static final Logger log = LoggerFactory.getLogger(CommonModel.class);
 
+    private static Set<String> disabledDtoClasses;
+
 
     public static void afterDataChange(Dto dto) {
-        if (dto.hasAnnotation(Cache.class)) {
+        afterDataChange(dto.getClass());
+    }
+
+    public static void afterDataChange(Class<? extends Dto> dtoClass) {
+        if (dtoClass.isAnnotationPresent(Cache.class)) {
+            String dtoName = dtoClass.getSimpleName();
+            if (disabledDtoClasses != null && disabledDtoClasses.contains(dtoName)) {
+                return;
+            }
             ServiceDtoCache service;
             try {
                 service = Services.get(ServiceDtoCache.class);
-            } catch (ServiceException e) {
-                return;
+                service.update(dtoName);
+            } catch (ServiceException ignore) {
+
             }
-            String dtoName = dto.getClass().getSimpleName();
-            service.update(dtoName);
             Services.messaging.broadcast(VantarParam.MESSAGE_DATABASE_UPDATED, dtoName);
+        }
+    }
+
+    public static void disableDtoCache(Dto dto) {
+        disableDtoCache(dto.getClass());
+    }
+
+    public static void disableDtoCache(Class<? extends Dto> dtoClass) {
+        String dtoName = dtoClass.getSimpleName();
+        if (disabledDtoClasses == null) {
+            disabledDtoClasses = new HashSet<>(5, 1);
+        }
+        disabledDtoClasses.add(dtoName);
+    }
+
+    public static void enableDtoCache(Dto dto) {
+        enableDtoCache(dto.getClass());
+    }
+
+    public static void enableDtoCache(Class<? extends Dto> dtoClass) {
+        String dtoName = dtoClass.getSimpleName();
+        if (disabledDtoClasses != null) {
+            disabledDtoClasses.remove(dtoName);
         }
     }
 

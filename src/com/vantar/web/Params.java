@@ -897,4 +897,12 @@ public class Params {
         }
         return user;
     }
+
+    public CommonUser getCurrentUserIfExists() {
+        try {
+            return ServiceAuth.getCurrentSignedInUser(this);
+        } catch (ServiceException e) {
+            return null;
+        }
+    }
 }

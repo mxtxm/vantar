@@ -11,6 +11,7 @@ public class PageData {
     public List<? extends Dto> data;
     public int page;
     public int length;
+    public int recordCount;
     public long total;
 
 
@@ -19,6 +20,9 @@ public class PageData {
         this.page = page;
         this.length = length;
         this.total = total;
+        if (data != null) {
+            recordCount = data.size();
+        }
     }
 
     public <T extends Dto> PageData(List<T> data) {
@@ -26,6 +30,7 @@ public class PageData {
         this.page = 1;
         this.length = data.size();
         this.total = this.length;
+        recordCount = data.size();
     }
 
     public <T extends Dto> PageData() {

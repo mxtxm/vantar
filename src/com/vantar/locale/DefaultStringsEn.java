@@ -12,9 +12,9 @@ public class DefaultStringsEn {
         // auth
         tokens.put(VantarKey.USER_PASSWORD_EMPTY, "Username or password is empty.");
         tokens.put(VantarKey.USER_NOT_EXISTS, "User does not exists.");
-        tokens.put(VantarKey.USER_DISABLED, "User '{0}' is disabled.");
-        tokens.put(VantarKey.USER_DISABLED_MAX_FAILED, "User '{0}' is disabled. Too many failed sign-in attempts.");
-        tokens.put(VantarKey.WRONG_PASSWORD, "User '{0}'. Wrong password.");
+        tokens.put(VantarKey.USER_DISABLED, "User \"{0}\" is disabled.");
+        tokens.put(VantarKey.USER_DISABLED_MAX_FAILED, "User \"{0}\" is disabled. Too many failed sign-in attempts.");
+        tokens.put(VantarKey.WRONG_PASSWORD, "User \"{0}\". Wrong password.");
         tokens.put(VantarKey.MISSING_AUTH_TOKEN, "Missing authentication token.");
         tokens.put(VantarKey.INVALID_AUTH_TOKEN, "Invalid authentication token.");
         tokens.put(VantarKey.EXPIRED_AUTH_TOKEN, "Expired authentication token.");
@@ -25,38 +25,38 @@ public class DefaultStringsEn {
         tokens.put(VantarKey.ADMIN_REQUIRES_ROOT, "Unauthorized! This request requires 'root' access.");
 
         // datetime
-        tokens.put(VantarKey.INVALID_DATETIME, "Invalid datetime: {0}");
-        tokens.put(VantarKey.INVALID_DATE, "Invalid date: {0}");
-        tokens.put(VantarKey.INVALID_TIME, "Invalid time: {0}");
-        tokens.put(VantarKey.INVALID_TIMEZONE, "Invalid timezone: {0}");
+        tokens.put(VantarKey.INVALID_DATETIME, "Invalid datetime: \"{0}\"");
+        tokens.put(VantarKey.INVALID_DATE, "Invalid date: \"{0}\"");
+        tokens.put(VantarKey.INVALID_TIME, "Invalid time: \"{0}\"");
+        tokens.put(VantarKey.INVALID_TIMEZONE, "Invalid timezone: \"{0}\"");
 
         // validation
-        tokens.put(VantarKey.REQUIRED, "{0}: is required");
-        tokens.put(VantarKey.REQUIRED_OR, "{0}: at least one is required");
-        tokens.put(VantarKey.REQUIRED_XOR, "{0}: one and only one is required");
-        tokens.put(VantarKey.DATA_TYPE, "{0}: invalid data type");
-        tokens.put(VantarKey.UNIQUE, "{0}: must be unique");
-        tokens.put(VantarKey.REFERENCE, "{0}: reference ({1}) not exists");
-        tokens.put(VantarKey.PARENT_CHILD, "{0}: impossible parent and child");
-        tokens.put(VantarKey.ILLEGAL, "{0}: illegal access");
-        tokens.put(VantarKey.EMPTY_ID, "{0}: can not be empty");
-        tokens.put(VantarKey.INVALID_ID, "{0}: invalid id");
-        tokens.put(VantarKey.REGEX, "{0}: invalid data");
-        tokens.put(VantarKey.STRING_LENGTH_EXCEED, "{0}: string to long");
-        tokens.put(VantarKey.MAX_EXCEED, "{0}: value too big");
-        tokens.put(VantarKey.MIN_EXCEED, "{0}: value too small");
-        tokens.put(VantarKey.INVALID_VALUE, "{0}: value is not valid");
-        tokens.put(VantarKey.INVALID_FIELD, "{0}: field is not valid");
-        tokens.put(VantarKey.EVENT_REJECT, "{0}: custom validation error");
-        tokens.put(VantarKey.IO_ERROR, "{0}: file upload system error");
-        tokens.put(VantarKey.FILE_SIZE, "{0}: file upload, allowed file-size ({1})");
-        tokens.put(VantarKey.FILE_TYPE, "{0}: unsupported file type, allowed file-type ({1})");
+        tokens.put(VantarKey.REQUIRED, "\"{0}\": is required");
+        tokens.put(VantarKey.REQUIRED_OR, "\"{0}\": at least one is required");
+        tokens.put(VantarKey.REQUIRED_XOR, "\"{0}\": one and only one is required");
+        tokens.put(VantarKey.DATA_TYPE, "\"{0}\": invalid data type");
+        tokens.put(VantarKey.UNIQUE, "\"{0}\": must be unique");
+        tokens.put(VantarKey.REFERENCE, "\"{0}\": reference ({1}) not exists");
+        tokens.put(VantarKey.PARENT_CHILD, "\"{0}\": impossible parent and child");
+        tokens.put(VantarKey.ILLEGAL, "\"{0}\": illegal access");
+        tokens.put(VantarKey.EMPTY_ID, "\"{0}\": can not be empty");
+        tokens.put(VantarKey.INVALID_ID, "\"{0}\": invalid id");
+        tokens.put(VantarKey.REGEX, "\"{0}\": invalid data");
+        tokens.put(VantarKey.STRING_LENGTH_EXCEED, "\"{0}\": string to long");
+        tokens.put(VantarKey.MAX_EXCEED, "\"{0}\": value too big");
+        tokens.put(VantarKey.MIN_EXCEED, "\"{0}\": value too small");
+        tokens.put(VantarKey.INVALID_VALUE, "\"{0}\": value is not valid");
+        tokens.put(VantarKey.INVALID_FIELD, "\"{0}\": field is not valid");
+        tokens.put(VantarKey.EVENT_REJECT, "\"{0}\": custom validation error");
+        tokens.put(VantarKey.IO_ERROR, "\"{0}\": file upload system error");
+        tokens.put(VantarKey.FILE_SIZE, "\"{0}\": file upload, allowed file-size ({1})");
+        tokens.put(VantarKey.FILE_TYPE, "\"{0}\": unsupported file type, allowed file-type ({1})");
         tokens.put(VantarKey.NO_SEARCH_COMMAND, "no search commands");
         tokens.put(VantarKey.INVALID_METHOD, "invalid HTTP method");
-        tokens.put(VantarKey.SEARCH_PARAM_INVALID_CONDITION_TYPE, "{0}: search condition requires condition type");
-        tokens.put(VantarKey.SEARCH_PARAM_COL_MISSING, "{0}: search condition requires search column");
-        tokens.put(VantarKey.SEARCH_PARAM_VALUE_INVALID, "{0}: search condition value is invalid");
-        tokens.put(VantarKey.SEARCH_PARAM_VALUE_MISSING, "{0}: search condition value is missing");
+        tokens.put(VantarKey.SEARCH_PARAM_INVALID_CONDITION_TYPE, "\"{0}\": search condition requires condition type");
+        tokens.put(VantarKey.SEARCH_PARAM_COL_MISSING, "\"{0}\": search condition requires search column");
+        tokens.put(VantarKey.SEARCH_PARAM_VALUE_INVALID, "\"{0}\": search condition value is invalid");
+        tokens.put(VantarKey.SEARCH_PARAM_VALUE_MISSING, "\"{0}\": search condition value is missing");
         tokens.put(VantarKey.INVALID_GEO_LOCATION, "invalid location");
 
         // data fetch
@@ -67,13 +67,13 @@ public class DefaultStringsEn {
         tokens.put(VantarKey.UPLOAD_SUCCESS, "File uploaded successfully");
         tokens.put(VantarKey.UPLOAD_FAIL, "File uploaded failed");
         tokens.put(VantarKey.INSERT_SUCCESS, "Data inserted successfully");
-        tokens.put(VantarKey.INSERT_MANY_SUCCESS, "{0} items inserted successfully");
+        tokens.put(VantarKey.INSERT_MANY_SUCCESS, "\"{0}\" items inserted successfully");
         tokens.put(VantarKey.INSERT_FAIL, "Insert failed");
         tokens.put(VantarKey.UPDATE_SUCCESS, "Data updated successfully");
-        tokens.put(VantarKey.UPDATE_MANY_SUCCESS, "({0}) items updated successfully");
+        tokens.put(VantarKey.UPDATE_MANY_SUCCESS, "(\"{0}\") items updated successfully");
         tokens.put(VantarKey.UPDATE_FAIL, "Update failed");
         tokens.put(VantarKey.DELETE_SUCCESS, "Data deleted successfully");
-        tokens.put(VantarKey.DELETE_MANY_SUCCESS, "({0}) items deleted successfully");
+        tokens.put(VantarKey.DELETE_MANY_SUCCESS, "(\"{0}\") items deleted successfully");
         tokens.put(VantarKey.DELETE_FAIL, "Delete failed");
         tokens.put(VantarKey.IMPORT_FAIL, "Data import failed");
         tokens.put(VantarKey.BATCH_INSERT_FAIL, "Batch insert failed");
@@ -81,7 +81,7 @@ public class DefaultStringsEn {
 
         // system errors
         tokens.put(VantarKey.UNEXPECTED_ERROR, "Unexpected server error");
-        tokens.put(VantarKey.METHOD_UNAVAILABLE, "Server error: method({0}) is unavailable");
+        tokens.put(VantarKey.METHOD_UNAVAILABLE, "Server error: method(\"{0}\") is unavailable");
         tokens.put(VantarKey.CAN_NOT_CREATE_DTO, "Server error: failed to create data object");
         tokens.put(VantarKey.ARTA_FILE_CREATE_ERROR, "Server error: Arta SQL database synch failed");
 
@@ -116,9 +116,9 @@ public class DefaultStringsEn {
 
         tokens.put(VantarKey.ADMIN_DATABASE, "Database administrator");
         tokens.put(VantarKey.ADMIN_DATABASE_STATUS, "status");
-        tokens.put(VantarKey.ADMIN_DATABASE_STATUS_PARAM, "status {0}");
+        tokens.put(VantarKey.ADMIN_DATABASE_STATUS_PARAM, "status \"{0}\"");
         tokens.put(VantarKey.ADMIN_DATABASE_CREATE_INDEX, "Create indexes");
-        tokens.put(VantarKey.ADMIN_DATABASE_DELETE_ALL, "Delete all data");
+        tokens.put(VantarKey.ADMIN_DATABASE_DELETE_ALL, "Purge");
         tokens.put(VantarKey.ADMIN_DATABASE_DELETE_OPTIONAL, "Delete selected data");
         tokens.put(VantarKey.ADMIN_DATABASE_SYNCH, "Synch");
         tokens.put(VantarKey.ADMIN_DATABASE_INDEX_DEF, "Index definition");
@@ -158,23 +158,23 @@ public class DefaultStringsEn {
         tokens.put(VantarKey.ADMIN_DATABASE_TITLE, "Database");
         tokens.put(VantarKey.ADMIN_DELETE, "Delete");
         tokens.put(VantarKey.ADMIN_UPDATE, "Update");
-        tokens.put(VantarKey.ADMIN_STATUS, "{0} status");
-        tokens.put(VantarKey.ADMIN_RECORD_COUNT, "{0} records");
-        tokens.put(VantarKey.ADMIN_DATABASE_SYNCH_TITLE, "{0} synch");
+        tokens.put(VantarKey.ADMIN_STATUS, "\"{0}\" status");
+        tokens.put(VantarKey.ADMIN_RECORD_COUNT, "\"{0}\" records");
+        tokens.put(VantarKey.ADMIN_DATABASE_SYNCH_TITLE, "\"{0}\" synch");
         tokens.put(VantarKey.ADMIN_DATABASE_SYNCH_CONFIRM, "Start synch");
         tokens.put(VantarKey.ADMIN_DATABASE_SYNCH_RUNNING, "Synchronizing database with system objects...");
         tokens.put(VantarKey.ADMIN_FINISHED, "Finished");
-        tokens.put(VantarKey.ADMIN_DATABASE_INDEX_CREATE, "Create indexes for {0}");
+        tokens.put(VantarKey.ADMIN_DATABASE_INDEX_CREATE, "Create indexes for \"{0}\"");
         tokens.put(VantarKey.ADMIN_DATABASE_INDEX_VIEW, "View indexes...");
         tokens.put(VantarKey.ADMIN_DATABASE_INDEX_REMOVE, "Delete indexes if exists");
         tokens.put(VantarKey.ADMIN_DATABASE_INDEX_CREATE_START, "Creating indexed");
-        tokens.put(VantarKey.ADMIN_INDEX_TITLE, "Indexes of {0}");
-        tokens.put(VantarKey.ADMIN_DATABASE_REMOVE, "Removing database {0} ...");
+        tokens.put(VantarKey.ADMIN_INDEX_TITLE, "Indexes of \"{0}\"");
+        tokens.put(VantarKey.ADMIN_DATABASE_REMOVE, "Removing database \"{0}\" ...");
         tokens.put(VantarKey.ADMIN_DELAY, "Delay in seconds");
         tokens.put(VantarKey.ADMIN_DELETE_EXCLUDE, "Exclude objects");
         tokens.put(VantarKey.ADMIN_DELETE_INCLUDE, "Include objects");
         tokens.put(VantarKey.ADMIN_IGNORE, "Pass on");
-        tokens.put(VantarKey.ADMIN_IMPORT_TITLE, "Import init data {0} ...");
+        tokens.put(VantarKey.ADMIN_IMPORT_TITLE, "Import init data \"{0}\" ...");
         tokens.put(VantarKey.ADMIN_IMPORT_EXCLUDE, "Exclude objects");
         tokens.put(VantarKey.ADMIN_ELASTIC_INDEX_DEF, "ELASTIC index definition ...");
         tokens.put(VantarKey.ADMIN_ELASTIC_SETTINGS, "ELASTIC index settings ...");
@@ -249,7 +249,7 @@ public class DefaultStringsEn {
         tokens.put(VantarKey.ADMIN_ADMIN_PANEL, "Administrator dashboard");
         tokens.put(VantarKey.ADMIN_SUBMIT, "Submit");
         tokens.put(VantarKey.ADMIN_CACHE, "Cached data");
-        tokens.put(VantarKey.ADMIN_SERVICE_IS_OFF, "{0} is not enabled");
+        tokens.put(VantarKey.ADMIN_SERVICE_IS_OFF, "\"{0}\" is not enabled");
         tokens.put(VantarKey.ADMIN_SIGN_IN, "Sign into Administrator dashboard");
         tokens.put(VantarKey.ADMIN_DATA, "Data");
 
@@ -264,10 +264,10 @@ public class DefaultStringsEn {
         tokens.put(VantarKey.SIGN_IN, "Sign in");
 
         // business
-        tokens.put(VantarKey.BUSINESS_WRITTEN_COUNT,   "Added records    ({0})");
-        tokens.put(VantarKey.BUSINESS_ERROR_COUNT,     "Error count      ({0})");
-        tokens.put(VantarKey.BUSINESS_DUPLICATE_COUNT, "Duplicate record ({0})");
-        tokens.put(VantarKey.BUSINESS_SERIAL_MAX,      "Last primary key ({0})");
+        tokens.put(VantarKey.BUSINESS_WRITTEN_COUNT,   "Added records    (\"{0}\")");
+        tokens.put(VantarKey.BUSINESS_ERROR_COUNT,     "Error count      (\"{0}\")");
+        tokens.put(VantarKey.BUSINESS_DUPLICATE_COUNT, "Duplicate record (\"{0}\")");
+        tokens.put(VantarKey.BUSINESS_SERIAL_MAX,      "Last primary key (\"{0}\")");
 
         tokens.put(VantarKey.SHOW_NOT_DELETED, "Show not deleted");
         tokens.put(VantarKey.SHOW_DELETED, "Show deleted");
@@ -294,7 +294,7 @@ public class DefaultStringsEn {
         tokens.put(VantarKey.SELECT_ALL, "Select all");
         tokens.put(VantarKey.ADMIN_RESET_SIGNIN_FAILS, "Reset failed signins");
 
-        tokens.put(VantarKey.METHOD_CALL_TIME_LIMIT, "Must wait {0}minutes before another call");
+        tokens.put(VantarKey.METHOD_CALL_TIME_LIMIT, "Must wait \"{0}\"minutes before another call");
 
     }
 

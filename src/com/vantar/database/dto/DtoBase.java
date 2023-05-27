@@ -232,8 +232,9 @@ public abstract class DtoBase implements Dto {
     }
 
     public List<String> annotatedProperties(Class<? extends Annotation> annotation) {
-        List<String> properties = new ArrayList<>();
-        for (Field field : getClass().getFields()) {
+        Field[] f = getClass().getFields();
+        List<String> properties = new ArrayList<>(f.length);
+        for (Field field : f) {
             if (field.isAnnotationPresent(annotation)) {
                 properties.add(field.getName());
             }
@@ -321,10 +322,11 @@ public abstract class DtoBase implements Dto {
     }
 
     public Field[] getFields() {
-        List<Field> fields = new ArrayList<>();
-        for (Field f : getClass().getFields()) {
-            if (isDataField(f)) {
-                fields.add(f);
+        Field[] f = getClass().getFields();
+        List<Field> fields = new ArrayList<>(f.length);
+        for (Field field : f) {
+            if (isDataField(field)) {
+                fields.add(field);
             }
         }
         return fields.toArray(new Field[0]);
@@ -343,8 +345,9 @@ public abstract class DtoBase implements Dto {
     }
 
     public List<String> getPresentationPropertyNames() {
-        List<String> propertyNames = new ArrayList<>();
-        for (Field field : getClass().getFields()) {
+        Field[] f = getClass().getFields();
+        List<String> propertyNames = new ArrayList<>(f.length);
+        for (Field field : f) {
             if (field.isAnnotationPresent(Present.class)) {
                 propertyNames.add(field.getName());
             }
@@ -423,8 +426,9 @@ public abstract class DtoBase implements Dto {
     }
 
     public Map<String, Class<?>> getPropertyTypes() {
-        Map<String, Class<?>> types = new LinkedHashMap<>();
-        for (Field field : getClass().getFields()) {
+        Field[] f = getClass().getFields();
+        Map<String, Class<?>> types = new LinkedHashMap<>(f.length, 1);
+        for (Field field : f) {
             if (isDataField(field)) {
                 types.put(field.getName(), field.getType());
             }
@@ -433,8 +437,9 @@ public abstract class DtoBase implements Dto {
     }
 
     public String[] getProperties() {
-        List<String> properties = new ArrayList<>();
-        for (Field field : getClass().getFields()) {
+        Field[] f = getClass().getFields();
+        List<String> properties = new ArrayList<>(f.length);
+        for (Field field : f) {
             if (isDataField(field)) {
                 properties.add(field.getName());
             }
@@ -443,8 +448,9 @@ public abstract class DtoBase implements Dto {
     }
 
     public String[] getProperties(String... exclude) {
-        List<String> properties = new ArrayList<>();
-        for (Field field : getClass().getFields()) {
+        Field[] f = getClass().getFields();
+        List<String> properties = new ArrayList<>(f.length);
+        for (Field field : f) {
             if (isDataField(field) && !CollectionUtil.contains(exclude, field.getName())) {
                 properties.add(field.getName());
             }
@@ -487,8 +493,9 @@ public abstract class DtoBase implements Dto {
             }
         }
 
-        Map<String, Object> properties = new LinkedHashMap<>();
-        for (Field field : getClass().getFields()) {
+        Field[] f = getClass().getFields();
+        Map<String, Object> properties = new LinkedHashMap<>(f.length);
+        for (Field field : f) {
             if (isNotDataField(field)) {
                 continue;
             }
@@ -531,9 +538,10 @@ public abstract class DtoBase implements Dto {
     }
 
     public List<StorableData> getStorableData() {
-        List<StorableData> data = new ArrayList<>();
+        Field[] f = getClass().getFields();
+        List<StorableData> data = new ArrayList<>(f.length);
         try {
-            for (Field field : getClass().getFields()) {
+            for (Field field : f) {
                 if (isNotDataField(field)) {
                     continue;
                 }
@@ -822,8 +830,9 @@ public abstract class DtoBase implements Dto {
         }
         setDtoSetConfigs(excludes, nulls, (String) map.get(VantarParam.SET_ACTION), action);
 
-        List<ValidationError> errors = new ArrayList<>();
-        for (Field field : getClass().getFields()) {
+        Field[] f = getClass().getFields();
+        List<ValidationError> errors = new ArrayList<>(f.length);
+        for (Field field : f) {
             if (isNotDataField(field)) {
                 continue;
             }
@@ -891,7 +900,7 @@ public abstract class DtoBase implements Dto {
     }
 
     public List<ValidationError> setPropertyValue(String name, Object value, Action action) {
-        List<ValidationError> errors = new ArrayList<>();
+        List<ValidationError> errors = new ArrayList<>(8);
         Field field = getField(name);
         if (field == null) {
             errors.add(new ValidationError(name, VantarKey.INVALID_FIELD));
@@ -1028,8 +1037,9 @@ public abstract class DtoBase implements Dto {
     // > > > validate
 
     public List<ValidationError> validate(Action action) {
-        List<ValidationError> errors = new ArrayList<>();
-        for (Field field : getClass().getFields()) {
+        Field[] f = getClass().getFields();
+        List<ValidationError> errors = new ArrayList<>(f.length);
+        for (Field field : f) {
             if (isDataField(field)) {
                 validateField(field, null, action, errors);
             }
@@ -1252,11 +1262,19 @@ public abstract class DtoBase implements Dto {
         return true;
     }
 
+    public boolean beforeDelete() {
+        return true;
+    }
+
     public void afterInsert() {
 
     }
 
     public void afterUpdate() {
+
+    }
+
+    public void afterDelete() {
 
     }
 

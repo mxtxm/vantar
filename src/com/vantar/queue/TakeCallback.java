@@ -5,5 +5,7 @@ public interface TakeCallback {
 
     boolean getItem(Packet item, int takerId);
 
-    void fail(String queueName, int workerId);
+    void cancel(String queueName, int workerId);
+
+    void shutDown(String queueName, int workerId);
 }

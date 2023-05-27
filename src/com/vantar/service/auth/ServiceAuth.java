@@ -471,6 +471,10 @@ public class ServiceAuth extends Permit implements Services.Service {
         signinFail = new ConcurrentHashMap<>(MAX_VERIFY_TOKENS);
     }
 
+    public void unlockUser(long userId) {
+        signinFail.remove(userId);
+    }
+
     public boolean isOk() {
         return true;
     }

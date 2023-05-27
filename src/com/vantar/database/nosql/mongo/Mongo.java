@@ -10,9 +10,11 @@ import com.vantar.exception.DatabaseException;
 import com.vantar.locale.VantarKey;
 import com.vantar.util.collection.CollectionUtil;
 import com.vantar.util.number.NumberUtil;
+import com.vantar.util.object.ClassUtil;
 import com.vantar.util.string.StringUtil;
 import org.bson.Document;
 import org.slf4j.*;
+import java.lang.reflect.Field;
 import java.util.*;
 
 
@@ -253,6 +255,8 @@ public class Mongo {
         if (dto.getClearIdOnInsert() || dto.getId() == null) {
             dto.setId(Sequence.getNext(dto));
         }
+
+        runInnerBeforeInsert(dto);
         if (!dto.beforeInsert()) {
             throw new DatabaseException(VantarKey.EVENT_REJECT);
         }
@@ -307,6 +311,7 @@ public class Mongo {
                 dto.setId(Sequence.getNext(dto));
             }
 
+            runInnerBeforeInsert(dto);
             if (!dto.beforeInsert()) {
                 throw new DatabaseException(VantarKey.EVENT_REJECT);
             }
@@ -325,6 +330,66 @@ public class Mongo {
 
         for (Dto dto : dtos) {
             dto.afterInsert();
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private static void runInnerBeforeInsert(Dto dto) {
+        try {
+            for (Field field : dto.getFields()) {
+                Class<?> t = field.getType();
+                if (ClassUtil.implementsInterface(t, Dto.class)) {
+                    Dto innerDto;
+                    try {
+                        innerDto = (Dto) field.get(dto);
+                    } catch (IllegalAccessException e) {
+                        continue;
+                    }
+                    if (innerDto == null) {
+                        continue;
+                    }
+                    runInnerBeforeInsert(innerDto);
+                    innerDto.beforeInsert();
+                } else if (ClassUtil.implementsInterface(t, Collection.class)) {
+                    Class<?>[] gTypes = ClassUtil.getGenericTypes(field);
+                    if (gTypes == null || gTypes.length == 0 || !ClassUtil.implementsInterface(gTypes[0], Dto.class)) {
+                        continue;
+                    }
+                    Collection<? extends Dto> innerDtos;
+                    try {
+                        innerDtos = (Collection<? extends Dto>) field.get(dto);
+                    } catch (IllegalAccessException e) {
+                        continue;
+                    }
+                    if (innerDtos == null) {
+                        continue;
+                    }
+                    for (Dto listDto : innerDtos) {
+                        runInnerBeforeInsert(listDto);
+                        listDto.beforeInsert();
+                    }
+                } else if (ClassUtil.implementsInterface(t, Map.class)) {
+                    Class<?>[] gTypes = ClassUtil.getGenericTypes(field);
+                    if (gTypes == null || gTypes.length < 2 || !ClassUtil.implementsInterface(gTypes[1], Dto.class)) {
+                        continue;
+                    }
+                    Map<?, ? extends Dto> innerDtos;
+                    try {
+                        innerDtos = (Map<?, ? extends Dto>) field.get(dto);
+                    } catch (IllegalAccessException e) {
+                        continue;
+                    }
+                    if (innerDtos == null) {
+                        continue;
+                    }
+                    for (Dto listDto : innerDtos.values()) {
+                        runInnerBeforeInsert(listDto);
+                        listDto.beforeInsert();
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.error("! {}", dto);
         }
     }
 
@@ -406,6 +471,7 @@ public class Mongo {
         UpdateOptions options = new UpdateOptions();
         options.upsert(upsert);
 
+        runInnerBeforeUpdate(dto);
         if (!dto.beforeUpdate()) {
             throw new DatabaseException(VantarKey.EVENT_REJECT);
         }
@@ -425,6 +491,66 @@ public class Mongo {
             throw new DatabaseException(e);
         }
         dto.afterUpdate();
+    }
+
+    @SuppressWarnings("unchecked")
+    private static void runInnerBeforeUpdate(Dto dto) {
+        try {
+            for (Field field : dto.getFields()) {
+                Class<?> t = field.getType();
+                if (ClassUtil.implementsInterface(t, Dto.class)) {
+                    Dto innerDto;
+                    try {
+                        innerDto = (Dto) field.get(dto);
+                    } catch (IllegalAccessException e) {
+                        continue;
+                    }
+                    if (innerDto == null) {
+                        continue;
+                    }
+                    runInnerBeforeUpdate(innerDto);
+                    innerDto.beforeUpdate();
+                } else if (ClassUtil.implementsInterface(t, Collection.class)) {
+                    Class<?>[] gTypes = ClassUtil.getGenericTypes(field);
+                    if (gTypes == null || gTypes.length == 0 || !ClassUtil.implementsInterface(gTypes[0], Dto.class)) {
+                        continue;
+                    }
+                    Collection<? extends Dto> innerDtos;
+                    try {
+                        innerDtos = (Collection<? extends Dto>) field.get(dto);
+                    } catch (IllegalAccessException e) {
+                        continue;
+                    }
+                    if (innerDtos == null) {
+                        continue;
+                    }
+                    for (Dto listDto : innerDtos) {
+                        runInnerBeforeUpdate(listDto);
+                        listDto.beforeUpdate();
+                    }
+                } else if (ClassUtil.implementsInterface(t, Map.class)) {
+                    Class<?>[] gTypes = ClassUtil.getGenericTypes(field);
+                    if (gTypes == null || gTypes.length < 2 || !ClassUtil.implementsInterface(gTypes[1], Dto.class)) {
+                        continue;
+                    }
+                    Map<?, ? extends Dto> innerDtos;
+                    try {
+                        innerDtos = (Map<?, ? extends Dto>) field.get(dto);
+                    } catch (IllegalAccessException e) {
+                        continue;
+                    }
+                    if (innerDtos == null) {
+                        continue;
+                    }
+                    for (Dto listDto : innerDtos.values()) {
+                        runInnerBeforeUpdate(listDto);
+                        listDto.beforeUpdate();
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.error("! {}", dto);
+        }
     }
 
     /* UPDATE < < < */
@@ -464,7 +590,12 @@ public class Mongo {
             update(storage, new MongoQuery(q).matches, new Document(LOGICAL_DELETE_FIELD, LOGICAL_DELETE_VALUE));
             return 1L;
         }
-        return delete(storage, new MongoQuery(q).matches);
+        if (!dto.beforeDelete()) {
+            throw new DatabaseException(VantarKey.EVENT_REJECT);
+        }
+        long id = delete(storage, new MongoQuery(q).matches);
+        dto.afterDelete();
+        return id;
     }
 
     public static long delete(Dto condition) throws DatabaseException {
@@ -473,16 +604,24 @@ public class Mongo {
             MongoMapping.getFieldValuesAsDocument(condition, Dto.Action.GET) :
             new Document(ID, id);
 
+        if (!condition.beforeDelete()) {
+            throw new DatabaseException(VantarKey.EVENT_REJECT);
+        }
+
         if (condition.getDeleteLogicalState()) {
             update(condition.getStorage(), conditionDocument, new Document(LOGICAL_DELETE_FIELD, LOGICAL_DELETE_VALUE));
+            condition.afterDelete();
             return 1L;
         }
 
         try {
-            return MongoConnection.getDatabase()
+            long idd = MongoConnection.getDatabase()
                 .getCollection(condition.getStorage())
                 .deleteMany(conditionDocument)
                 .getDeletedCount();
+
+            condition.afterDelete();
+            return idd;
         } catch (Exception e) {
             log.error("! delete {}", condition, e);
             throw new DatabaseException(e);
@@ -580,7 +719,7 @@ public class Mongo {
     public static void increaseValue(QueryBuilder q, String fieldName, long value) throws DatabaseException {
         try {
             MongoConnection.getDatabase().getCollection(q.getDto().getStorage()).updateOne(
-                MongoMapping.getMongoMatches(q.condition(), q.getDto()),
+                MongoMapping.getMongoMatches(q.condition(), q.getDto(), true),
                 new Document("$inc", new Document(fieldName, value))
             );
         } catch (Exception e) {
@@ -606,7 +745,7 @@ public class Mongo {
 
         try {
             MongoConnection.getDatabase().getCollection(q.getDto().getStorage()).updateOne(
-                MongoMapping.getMongoMatches(q.condition(), q.getDto()),
+                MongoMapping.getMongoMatches(q.condition(), q.getDto(), true),
                 new Document("$inc", docs)
             );
         } catch (Exception e) {

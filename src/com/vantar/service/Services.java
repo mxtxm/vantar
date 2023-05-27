@@ -363,7 +363,7 @@ public class Services {
      */
     public static void connectToDataSources(Set<Class<?>> dependencies) {
         if (dependencies.contains(Queue.class)) {
-            Queue.connect(Settings.queue(), new LogEvent.QueueExceptionHandlerCustom());
+            Queue.connect(Settings.queue());
         }
         if (dependencies.contains(MongoConnection.class)) {
             MongoConnection.connect(Settings.mongo());

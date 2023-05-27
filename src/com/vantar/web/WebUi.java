@@ -164,12 +164,24 @@ public class WebUi {
         return this;
     }
 
+    public WebUi addLink(String text, String url, boolean newWindow, boolean block, String className) {
+        html.append(getLink(text, url, newWindow, block, className));
+        return this;
+    }
+
     public String getLink(String text, String url, boolean newWindow, boolean block) {
+        return getLink(text, url, newWindow, block, null);
+    }
+
+    public String getLink(String text, String url, boolean newWindow, boolean block, String className) {
         StringBuilder s = new StringBuilder();
         if (block) {
             s.append("<p class='link'>\n");
         }
         s.append("<a");
+        if (className != null) {
+            s.append(" class='").append(className).append("'");
+        }
         if (newWindow) {
             s.append(" target='_blank'");
         }
@@ -282,11 +294,23 @@ public class WebUi {
         openTags.push("    </div>\n</div>\n");
         StringBuilder t = new StringBuilder(escapeWithNtoBr(title[0]));
         for (int i = 1; i < title.length; ++i) {
-            t.append("    <p>").append(escapeWithNtoBr(escapeWithNtoBr(title[i]))).append("</p>\n");
+            t.append("    <p>").append(escapeWithNtoBr(title[i])).append("</p>\n");
         }
         html.append("<div class='float-box-empty clearfix ").append(boxFloat).append(" ").append(tClass)
             .append("'>\n    <h2 class='box-title'>").append(t).append("</h2>\n    <div class='solid-box-clear clearfix'>\n");
         return this;
+    }
+
+    public WebUi beginFloatBoxLink(String link, String tag, String tClass, String... title) {
+        openTags.push("    </div>\n</div>\n");
+        StringBuilder t = new StringBuilder((tag == null ? "" : "<span class='tag'>" + tag + "</span> ") + escapeWithNtoBr(title[0]));
+        for (int i = 1; i < title.length; ++i) {
+            t.append("    <p>").append(escapeWithNtoBr(title[i])).append("</p>\n");
+        }
+        html.append("<a href='" + getCompleteLink(link) + "' target='_blank'><div class='link-box float-box-empty clearfix ")
+            .append(boxFloat).append(" ").append(tClass)
+            .append("'>\n<h2 class='box-title'>").append(t).append("</h2></a>\n    <div class='solid-box-clear clearfix'>\n");
+       return this;
     }
 
     public WebUi beginAlignRight() {
@@ -1120,16 +1144,21 @@ public class WebUi {
             .append(Locale.getString(VantarKey.ADMIN_SORT)).append("</td>")
             .append("<td class='dto-list-form-option'>");
 
-        html.append("<select id='sort' name='sort'>");
-        for (String name : dto.getProperties()) {
-            html.append("<option ");
-            if (name.equals(sort)) {
-                html.append("selected='selected' ");
-            }
-            html.append("value='").append(name).append("'>").append(name).append("</option>");
-        }
-        html.append("</select>")
-            .append("<select id='sortpos' name='sortpos'>")
+
+        html.append("<input id='sort' name='sort' value='id'/>");
+
+//        html.append("<select id='sort' name='sort'>");
+//        for (String name : dto.getProperties()) {
+//            html.append("<option ");
+//            if (name.equals(sort)) {
+//                html.append("selected='selected' ");
+//            }
+//            html.append("value='").append(name).append("'>").append(name).append("</option>");
+//        }
+//        html.append("</select>");
+
+
+        html.append("<select id='sortpos' name='sortpos'>")
             .append("<option ");
         if ("asc".equals(sortPos)) {
             html.append("selected='selected' ");
@@ -1148,26 +1177,27 @@ public class WebUi {
 
         html.append("<tr>")
             .append("<td class='dto-list-form-title'>").append(Locale.getString(VantarKey.ADMIN_SEARCH)).append("</td>")
-            .append("<td class='dto-list-form-option'><div>")
-            .append("<select id='search-col'>");
+            .append("<td class='dto-list-form-option'><div>");
 
-        for (String name : dto.getProperties()) {
-            if (ClassUtil.isInstantiable(dto.getPropertyType(name), Dto.class)) {
-                DtoDictionary.Info obj = DtoDictionary.get(name);
-                if (obj == null) {
-                    continue;
-                }
-                for (String nameInner : obj.getDtoInstance().getProperties()) {
-                    nameInner = name + '.' + nameInner;
-                    html.append("<option value='").append(nameInner).append("'>").append(nameInner).append("</option>");
-                }
-            } else {
-                html.append("<option value='").append(name).append("'>").append(name).append("</option>");
-            }
-        }
+        html.append("<input id='search-col' value='id'/>");
+//        html.append("<select id='search-col'>");
+//        for (String name : dto.getProperties()) {
+//            if (ClassUtil.isInstantiable(dto.getPropertyType(name), Dto.class)) {
+//                DtoDictionary.Info obj = DtoDictionary.get(name);
+//                if (obj == null) {
+//                    continue;
+//                }
+//                for (String nameInner : obj.getDtoInstance().getProperties()) {
+//                    nameInner = name + '.' + nameInner;
+//                    html.append("<option value='").append(nameInner).append("'>").append(nameInner).append("</option>");
+//                }
+//            } else {
+//                html.append("<option value='").append(name).append("'>").append(name).append("</option>");
+//            }
+//        }
+//        html.append("</select>");
 
-        html.append("</select>")
-            .append("<select id='search-type'>")
+        html.append("<select id='search-type'>")
             .append("    <optgroup label='equal' selected='selected'>")
             .append("        <option value='EQUAL'>EQUAL</option>")
             .append("        <option value='NOT_EQUAL'>NOT_EQUAL</option>")

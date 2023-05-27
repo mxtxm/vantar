@@ -11,10 +11,10 @@ public class DefaultStringsFa {
         tokens = new HashMap<>(300, 1);
         // auth
         tokens.put(VantarKey.USER_PASSWORD_EMPTY, "نام کاربری و یا رمز عبور خالی است");
-        tokens.put(VantarKey.USER_NOT_EXISTS, "کاربر '{0}' در سیستم وجود ندارد");
-        tokens.put(VantarKey.USER_DISABLED, "کاربر '{0}' غیر فعال است");
-        tokens.put(VantarKey.USER_DISABLED_MAX_FAILED, "بعلت تلاش های ناموفق بیش از حد کاربر {0} غیر فعال شد");
-        tokens.put(VantarKey.WRONG_PASSWORD, "رمز عبور '{0}' نادرست است");
+        tokens.put(VantarKey.USER_NOT_EXISTS, "کاربر \"{0}\" در سیستم وجود ندارد");
+        tokens.put(VantarKey.USER_DISABLED, "کاربر \"{0}\" غیر فعال است");
+        tokens.put(VantarKey.USER_DISABLED_MAX_FAILED, "بعلت تلاش های ناموفق بیش از حد کاربر \"{0}\" غیر فعال شد");
+        tokens.put(VantarKey.WRONG_PASSWORD, "رمز عبور \"{0}\" نادرست است");
         tokens.put(VantarKey.MISSING_AUTH_TOKEN, "شناسه هویت کاربر پیدا نشد، دوباره به سیستم وارد شوید");
         tokens.put(VantarKey.INVALID_AUTH_TOKEN, "شناسه هویت کاربر نادرست است، دوباره به سیستم وارد شوید");
         tokens.put(VantarKey.EXPIRED_AUTH_TOKEN, "شناسه هویت کاربر باطل شده است، دوباره به سیستم وارد شوید");
@@ -23,38 +23,38 @@ public class DefaultStringsFa {
         tokens.put(VantarKey.USER_ALREADY_SIGNED_IN, "کاربر هم اکنون در سیسم وارد شده.");
 
         // datetime
-        tokens.put(VantarKey.INVALID_DATETIME, "{0}: تاریخ و زمان نادرست است");
-        tokens.put(VantarKey.INVALID_DATE, "{0}: تاریخ نادرست است");
-        tokens.put(VantarKey.INVALID_TIME, "{0}: زمان نادرست است");
-        tokens.put(VantarKey.INVALID_TIMEZONE, "{0}: محدوده زمانی نادرست است");
+        tokens.put(VantarKey.INVALID_DATETIME, "\"{0}\": تاریخ و زمان نادرست است");
+        tokens.put(VantarKey.INVALID_DATE, "\"{0}\": تاریخ نادرست است");
+        tokens.put(VantarKey.INVALID_TIME, "\"{0}\": زمان نادرست است");
+        tokens.put(VantarKey.INVALID_TIMEZONE, "\"{0}\": محدوده زمانی نادرست است");
 
         // validation
-        tokens.put(VantarKey.REQUIRED, "{0}: وارد کردن اجباری است");
-        tokens.put(VantarKey.REQUIRED_XOR, "{0}: وارد کردن تنها یکی از فیلدها اجباری است");
-        tokens.put(VantarKey.REQUIRED_OR, "{0}: وارد کردن یکی از فیلدها اجباری است");
-        tokens.put(VantarKey.DATA_TYPE, "{0}: نوع داده نادرست است");
-        tokens.put(VantarKey.UNIQUE, "{0}: باید در سیستم یکتا باشد، این مقدار هم اکنون در سیستم وارد شده است");
-        tokens.put(VantarKey.REFERENCE, "{0}: مبدا ({1}) وجود ندارد");
-        tokens.put(VantarKey.PARENT_CHILD, "{0}: ارتباط فرزندی ناممکن است");
-        tokens.put(VantarKey.ILLEGAL, "{0}: دسترسی ممنوع");
-        tokens.put(VantarKey.EMPTY_ID, "{0}: نباید خالی باشد");
-        tokens.put(VantarKey.INVALID_ID, "{0}: شناسه نادرست است");
-        tokens.put(VantarKey.REGEX, "{0}: مقدار نادرست است");
-        tokens.put(VantarKey.STRING_LENGTH_EXCEED, "{0}: زیادی بلند است");
-        tokens.put(VantarKey.MAX_EXCEED, "{0}: زیادی بزرگ است");
-        tokens.put(VantarKey.MIN_EXCEED, "{0}: زیادی کوچک است");
-        tokens.put(VantarKey.INVALID_VALUE, "{0}: مقدار نادرست است");
-        tokens.put(VantarKey.INVALID_FIELD, "{0}: فیلد نادرست است");
-        tokens.put(VantarKey.EVENT_REJECT, "{0}: خطای شخصی");
-        tokens.put(VantarKey.IO_ERROR, "{0}: خطای سیسمتی هنگام آپلود فایل");
-        tokens.put(VantarKey.FILE_SIZE, "{0}: خطای آپلود فایل - سایز مجاز برای فایل ({1})");
-        tokens.put(VantarKey.FILE_TYPE, "{0}: خطای آپلود فایل - فایل های مجاز برای آپلود ({1})");
+        tokens.put(VantarKey.REQUIRED, "\"{0}\": وارد کردن اجباری است");
+        tokens.put(VantarKey.REQUIRED_XOR, "\"{0}\": وارد کردن تنها یکی از فیلدها اجباری است");
+        tokens.put(VantarKey.REQUIRED_OR, "\"{0}\": وارد کردن یکی از فیلدها اجباری است");
+        tokens.put(VantarKey.DATA_TYPE, "\"{0}\": نوع داده نادرست است");
+        tokens.put(VantarKey.UNIQUE, "\"{0}\": باید در سیستم یکتا باشد، این مقدار هم اکنون در سیستم وارد شده است");
+        tokens.put(VantarKey.REFERENCE, "\"{0}\": مبدا (\"{1}\") وجود ندارد");
+        tokens.put(VantarKey.PARENT_CHILD, "\"{0}\": ارتباط فرزندی ناممکن است");
+        tokens.put(VantarKey.ILLEGAL, "\"{0}\": دسترسی ممنوع");
+        tokens.put(VantarKey.EMPTY_ID, "\"{0}\": نباید خالی باشد");
+        tokens.put(VantarKey.INVALID_ID, "\"{0}\": شناسه نادرست است");
+        tokens.put(VantarKey.REGEX, "\"{0}\": مقدار نادرست است");
+        tokens.put(VantarKey.STRING_LENGTH_EXCEED, "\"{0}\": زیادی بلند است");
+        tokens.put(VantarKey.MAX_EXCEED, "\"{0}\": زیادی بزرگ است");
+        tokens.put(VantarKey.MIN_EXCEED, "\"{0}\": زیادی کوچک است");
+        tokens.put(VantarKey.INVALID_VALUE, "\"{0}\": مقدار نادرست است");
+        tokens.put(VantarKey.INVALID_FIELD, "\"{0}\": فیلد نادرست است");
+        tokens.put(VantarKey.EVENT_REJECT, "\"{0}\": خطای شخصی");
+        tokens.put(VantarKey.IO_ERROR, "\"{0}\": خطای سیسمتی هنگام آپلود فایل");
+        tokens.put(VantarKey.FILE_SIZE, "\"{0}\": خطای آپلود فایل - سایز مجاز برای فایل (\"{1}\")");
+        tokens.put(VantarKey.FILE_TYPE, "\"{0}\": خطای آپلود فایل - فایل های مجاز برای آپلود (\"{1}\")");
         tokens.put(VantarKey.NO_SEARCH_COMMAND, "دستورات جستجتو فرستاده نشدند");
         tokens.put(VantarKey.INVALID_METHOD, "متد درخواست نادرست است");
-        tokens.put(VantarKey.SEARCH_PARAM_INVALID_CONDITION_TYPE, "{0}: شرط جستجو باید نوع شرط داشته باشد");
-        tokens.put(VantarKey.SEARCH_PARAM_COL_MISSING, "{0}: شرط جستجو باید فیلد جستجو داشته باشد");
-        tokens.put(VantarKey.SEARCH_PARAM_VALUE_INVALID, "{0}: مقدار شرط جستحو نادرست است");
-        tokens.put(VantarKey.SEARCH_PARAM_VALUE_MISSING, "{0}: مقدار شرط جستجو چا افتاده است");
+        tokens.put(VantarKey.SEARCH_PARAM_INVALID_CONDITION_TYPE, "\"{0}\": شرط جستجو باید نوع شرط داشته باشد");
+        tokens.put(VantarKey.SEARCH_PARAM_COL_MISSING, "\"{0}\": شرط جستجو باید فیلد جستجو داشته باشد");
+        tokens.put(VantarKey.SEARCH_PARAM_VALUE_INVALID, "\"{0}\": مقدار شرط جستحو نادرست است");
+        tokens.put(VantarKey.SEARCH_PARAM_VALUE_MISSING, "\"{0}\": مقدار شرط جستجو چا افتاده است");
         tokens.put(VantarKey.INVALID_GEO_LOCATION, "مکان جغرافیایی نادرست است");
 
         // data fetch
@@ -65,13 +65,13 @@ public class DefaultStringsFa {
         tokens.put(VantarKey.UPLOAD_SUCCESS, "فایل با موفقیت آپلود شذ");
         tokens.put(VantarKey.UPLOAD_FAIL, "فایل با موفقیت آپلود نشذ");
         tokens.put(VantarKey.INSERT_SUCCESS, "داده ها با موفقیت وارد گردید");
-        tokens.put(VantarKey.INSERT_MANY_SUCCESS, "{0} رکورد با موفقیت وارد گردید");
+        tokens.put(VantarKey.INSERT_MANY_SUCCESS, "\"{0}\" رکورد با موفقیت وارد گردید");
         tokens.put(VantarKey.INSERT_FAIL, "ورود اطلاعات دچار خطا شد");
         tokens.put(VantarKey.UPDATE_SUCCESS, "data updated successfully");
-        tokens.put(VantarKey.UPDATE_MANY_SUCCESS, "({0}) items updated successfully");
+        tokens.put(VantarKey.UPDATE_MANY_SUCCESS, "(\"{0}\") items updated successfully");
         tokens.put(VantarKey.UPDATE_FAIL, "ویرایش اطلاعات دچار خطا شد");
         tokens.put(VantarKey.DELETE_SUCCESS, "data deleted successfully");
-        tokens.put(VantarKey.DELETE_MANY_SUCCESS, "({0}) items deleted successfully");
+        tokens.put(VantarKey.DELETE_MANY_SUCCESS, "(\"{0}\") items deleted successfully");
         tokens.put(VantarKey.DELETE_FAIL, "پاک کردن اطلاعات دچار خطا شد");
         tokens.put(VantarKey.IMPORT_FAIL, "data import failed");
         tokens.put(VantarKey.BATCH_INSERT_FAIL, "ورود اطلاعات دسته ای دچار خطا شد");
@@ -79,7 +79,7 @@ public class DefaultStringsFa {
 
         // system errors
         tokens.put(VantarKey.UNEXPECTED_ERROR, "خطای ناخواسته در بک اند رخ داد");
-        tokens.put(VantarKey.METHOD_UNAVAILABLE, "server error: method({0}) is unavailable");
+        tokens.put(VantarKey.METHOD_UNAVAILABLE, "server error: method(\"{0}\") is unavailable");
         tokens.put(VantarKey.CAN_NOT_CREATE_DTO, "server error: failed to create data object");
         tokens.put(VantarKey.ARTA_FILE_CREATE_ERROR, "server error: Arta SQL database synch failed");
 
@@ -114,9 +114,9 @@ public class DefaultStringsFa {
 
         tokens.put(VantarKey.ADMIN_DATABASE, "مدیریت پایگاه داده");
         tokens.put(VantarKey.ADMIN_DATABASE_STATUS, "وضعیت");
-        tokens.put(VantarKey.ADMIN_DATABASE_STATUS_PARAM, "وضعیت {0}");
+        tokens.put(VantarKey.ADMIN_DATABASE_STATUS_PARAM, "وضعیت \"{0}\"");
         tokens.put(VantarKey.ADMIN_DATABASE_CREATE_INDEX, "ساختن ایندکس ها");
-        tokens.put(VantarKey.ADMIN_DATABASE_DELETE_ALL, "پاک سازی تمام داده ها");
+        tokens.put(VantarKey.ADMIN_DATABASE_DELETE_ALL, "نابودی");
         tokens.put(VantarKey.ADMIN_DATABASE_DELETE_OPTIONAL, "پاک سازی انتخابی داده ها");
         tokens.put(VantarKey.ADMIN_DATABASE_SYNCH, "همگام سازی");
         tokens.put(VantarKey.ADMIN_DATABASE_INDEX_DEF, "تعاریف ایندکس ها");
@@ -151,29 +151,29 @@ public class DefaultStringsFa {
 
         tokens.put(VantarKey.ADMIN_DATA_FIELDS, "فیلدها");
         tokens.put(VantarKey.ADMIN_DATA_LIST, "لیست داده ها");
-        tokens.put(VantarKey.ADMIN_NEW_RECORD, "رکورد جدید");
+        tokens.put(VantarKey.ADMIN_NEW_RECORD, "جدید");
         tokens.put(VantarKey.ADMIN_IMPORT, "ایمپورت");
         tokens.put(VantarKey.ADMIN_EXPORT, "اکسپورت");
         tokens.put(VantarKey.ADMIN_DATABASE_TITLE, "دیتابیس");
         tokens.put(VantarKey.ADMIN_DELETE, "پاک کردن");
         tokens.put(VantarKey.ADMIN_UPDATE, "بروز رسانی");
-        tokens.put(VantarKey.ADMIN_STATUS, "وضغیت {0}");
-        tokens.put(VantarKey.ADMIN_RECORD_COUNT, "تعداد رکوردهای {0}");
-        tokens.put(VantarKey.ADMIN_DATABASE_SYNCH_TITLE, "همگام سازی پایگاه داده های {0}");
+        tokens.put(VantarKey.ADMIN_STATUS, "وضغیت \"{0}\"");
+        tokens.put(VantarKey.ADMIN_RECORD_COUNT, "تعداد رکوردهای \"{0}\"");
+        tokens.put(VantarKey.ADMIN_DATABASE_SYNCH_TITLE, "همگام سازی پایگاه داده های \"{0}\"");
         tokens.put(VantarKey.ADMIN_DATABASE_SYNCH_CONFIRM, "همگام سازی آغاز شود");
         tokens.put(VantarKey.ADMIN_DATABASE_SYNCH_RUNNING, "همگام سازی پایگاه داده ها با آخرین نسخه کلاس های سیستم...");
         tokens.put(VantarKey.ADMIN_FINISHED, "پایان!");
-        tokens.put(VantarKey.ADMIN_DATABASE_INDEX_CREATE, "ساخت ایندکس های {0}");
+        tokens.put(VantarKey.ADMIN_DATABASE_INDEX_CREATE, "ساخت ایندکس های \"{0}\"");
         tokens.put(VantarKey.ADMIN_DATABASE_INDEX_VIEW, "دیدن ایندکس ها...");
         tokens.put(VantarKey.ADMIN_DATABASE_INDEX_REMOVE, "پاک کردن ایندکس ها در صورت وجود");
         tokens.put(VantarKey.ADMIN_DATABASE_INDEX_CREATE_START, "آغاز ساختن ایندکس ها");
-        tokens.put(VantarKey.ADMIN_INDEX_TITLE, "ایندکس های {0}");
-        tokens.put(VantarKey.ADMIN_DATABASE_REMOVE, " پاک سازی داده های {0} ...");
+        tokens.put(VantarKey.ADMIN_INDEX_TITLE, "ایندکس های \"{0}\"");
+        tokens.put(VantarKey.ADMIN_DATABASE_REMOVE, " پاک سازی داده های \"{0}\" ...");
         tokens.put(VantarKey.ADMIN_DELAY, "مکث به ثانیه");
         tokens.put(VantarKey.ADMIN_DELETE_EXCLUDE, "جدول یا مجموعه هایی که پاک نشوند");
         tokens.put(VantarKey.ADMIN_DELETE_INCLUDE, "جدول ها یا مجموعه هایی که از بین بروند");
         tokens.put(VantarKey.ADMIN_IGNORE, "رد داده شد");
-        tokens.put(VantarKey.ADMIN_IMPORT_TITLE, "ایمپورت داده های ابتدایی {0} ...");
+        tokens.put(VantarKey.ADMIN_IMPORT_TITLE, "ایمپورت داده های ابتدایی \"{0}\" ...");
         tokens.put(VantarKey.ADMIN_IMPORT_EXCLUDE, "جدول یا مجموعه هایی که ایمپورت نشوند");
         tokens.put(VantarKey.ADMIN_ELASTIC_INDEX_DEF, "تعاریف ایندکس های ELASTIC ...");
         tokens.put(VantarKey.ADMIN_ELASTIC_SETTINGS, "عمل گر های قابل اجرا بروی ایندکس ها ELASTIC ...");
@@ -250,7 +250,7 @@ public class DefaultStringsFa {
         tokens.put(VantarKey.ADMIN_ADMIN_PANEL, "پنل مدیریت سیستم");
         tokens.put(VantarKey.ADMIN_SUBMIT, "انجام شود");
         tokens.put(VantarKey.ADMIN_CACHE, "داده های کش شده");
-        tokens.put(VantarKey.ADMIN_SERVICE_IS_OFF, "{0} استفاده نشده است");
+        tokens.put(VantarKey.ADMIN_SERVICE_IS_OFF, "\"{0}\" استفاده نشده است");
         tokens.put(VantarKey.ADMIN_SIGN_IN, "ورود به مدیریت سیستم");
         tokens.put(VantarKey.ADMIN_DATA, "داده ها");
 
@@ -265,10 +265,10 @@ public class DefaultStringsFa {
         tokens.put(VantarKey.SIGN_IN, "ورود");
 
         // business
-        tokens.put(VantarKey.BUSINESS_WRITTEN_COUNT, "رکورد جدید نوشته شد" + " ({0})");
-        tokens.put(VantarKey.BUSINESS_ERROR_COUNT, "تعداد خطا" + "           ({0})");
-        tokens.put(VantarKey.BUSINESS_DUPLICATE_COUNT, "تعداد تکراری" + "        ({0})");
-        tokens.put(VantarKey.BUSINESS_SERIAL_MAX, "آخرین شناسه" + "         ({0})");
+        tokens.put(VantarKey.BUSINESS_WRITTEN_COUNT, "رکورد جدید نوشته شد" + " (\"{0}\")");
+        tokens.put(VantarKey.BUSINESS_ERROR_COUNT, "تعداد خطا" + "           (\"{0}\")");
+        tokens.put(VantarKey.BUSINESS_DUPLICATE_COUNT, "تعداد تکراری" + "        (\"{0}\")");
+        tokens.put(VantarKey.BUSINESS_SERIAL_MAX, "آخرین شناسه" + "         (\"{0}\")");
 
         tokens.put(VantarKey.SHOW_NOT_DELETED, "نمایش پاک نشده ها");
         tokens.put(VantarKey.SHOW_DELETED, "نمایش پاک شده ها");
@@ -295,7 +295,7 @@ public class DefaultStringsFa {
         tokens.put(VantarKey.SELECT_ALL, "انتخاب همه");
         tokens.put(VantarKey.ADMIN_RESET_SIGNIN_FAILS, "ریست کاربران غیرفعال");
 
-        tokens.put(VantarKey.METHOD_CALL_TIME_LIMIT, "برای اجرای دوباره نیاز به سپری شدن {0}دقیقه است");
+        tokens.put(VantarKey.METHOD_CALL_TIME_LIMIT, "برای اجرای دوباره نیاز به سپری شدن \"{0}\"دقیقه است");
 
     }
 

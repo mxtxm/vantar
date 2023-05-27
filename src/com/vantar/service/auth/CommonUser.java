@@ -21,7 +21,7 @@ public interface CommonUser extends Dto {
     String getUsername();
 
     CommonUserRole getRole();
-    List<? extends CommonUserRole> getRoles();
+    Collection<? extends CommonUserRole> getRoles();
 
     Long getId();
 

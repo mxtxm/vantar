@@ -143,13 +143,13 @@ public class ServiceMessaging {
             }
 
             @Override
-            public void fail(String queueName, int workerId) {
-                if (!serviceOn) {
-                    return;
-                }
-                if (event != null) {
-                    event.onMessageQueueFail(queueName);
-                }
+            public void cancel(String queueName, int workerId) {
+                log.info(" Queue({}, {}) shutdown", queueName, workerId);
+            }
+
+            @Override
+            public void shutDown(String queueName, int workerId) {
+                log.info(" Queue({}, {}) shutdown", queueName, workerId);
             }
         };
 
@@ -207,6 +207,5 @@ public class ServiceMessaging {
         void onReceive(int type, Message message);
 
         void onMessageQueueFail(String queue);
-
     }
 }

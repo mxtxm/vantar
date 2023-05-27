@@ -46,7 +46,7 @@ public class Permit {
         }
 
         // multi role
-        List<? extends CommonUserRole> roles = token.user.getRoles();
+        Collection<? extends CommonUserRole> roles = token.user.getRoles();
         if (ObjectUtil.isEmpty(roles)) {
             throw new AuthException(VantarKey.NO_ACCESS);
         }
@@ -81,7 +81,7 @@ public class Permit {
         }
 
         // multi role
-        List<? extends CommonUserRole> roles = token.user.getRoles();
+        Collection<? extends CommonUserRole> roles = token.user.getRoles();
         if (ObjectUtil.isEmpty(roles)) {
             throw new AuthException(VantarKey.NO_ACCESS);
         }
@@ -147,7 +147,7 @@ public class Permit {
         }
 
         // multi role
-        List<? extends CommonUserRole> roles = token.user.getRoles();
+        Collection<? extends CommonUserRole> roles = token.user.getRoles();
         if (ObjectUtil.isEmpty(roles)) {
             throw new AuthException(VantarKey.NO_ACCESS);
         }
@@ -214,7 +214,7 @@ public class Permit {
             }
 
             // multi role
-            List<? extends CommonUserRole> roles = token.user.getRoles();
+            Collection<? extends CommonUserRole> roles = token.user.getRoles();
             if (ObjectUtil.isEmpty(roles)) {
                 throw new AuthException(VantarKey.NO_ACCESS);
             }
@@ -236,7 +236,7 @@ public class Permit {
             }
 
             // multi feature
-            List<? extends CommonUserRole> roles = token.user.getRoles();
+            Collection<? extends CommonUserRole> roles = token.user.getRoles();
             if (ObjectUtil.isEmpty(roles)) {
                 throw new AuthException(VantarKey.NO_ACCESS);
             }
@@ -345,7 +345,7 @@ public class Permit {
         if (role != null) {
             return role.isRoot();
         }
-        List<? extends CommonUserRole> roles = Services.get(ServiceAuth.class).getCurrentUser(params).getRoles();
+        Collection<? extends CommonUserRole> roles = Services.get(ServiceAuth.class).getCurrentUser(params).getRoles();
         if (roles != null) {
             for (CommonUserRole roleC : roles) {
                 if (roleC.isRoot()) {
