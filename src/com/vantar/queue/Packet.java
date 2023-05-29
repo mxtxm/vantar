@@ -64,7 +64,7 @@ public class Packet {
     }
 
     public String getString() {
-        return data;
+        return StringUtil.trim(data, '"');
     }
 
     public Long getLong() {

@@ -44,7 +44,6 @@ public class ImportMongo extends CommonImport {
                     duplicate.getAndIncrement();
                     return;
                 }
-
                 CommonRepoMongo.insert(dto);
                 if (dto instanceof CommonUser) {
                     CommonModel.insertPassword(
@@ -60,7 +59,7 @@ public class ImportMongo extends CommonImport {
             }
         };
 
-        importDataX(imp, data, dto, presentField, ui);
+        importDataX(imp, data.trim(), dto, presentField, ui);
         long max;
         try {
             max = Mongo.Sequence.setToMax(dto);

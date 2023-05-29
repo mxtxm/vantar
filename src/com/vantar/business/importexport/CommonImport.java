@@ -16,7 +16,7 @@ public abstract class CommonImport {
 
 
     protected static void importDataX(Import importCallback, String data, Dto dto, List<String> presentField, WebUi ui) {
-        if (data.startsWith("[") && data.endsWith("[")) {
+        if (data.startsWith("[") && data.endsWith("]")) {
             importJsonList(importCallback, data, dto, presentField, ui);
         } else {
             String[] dataArray = StringUtil.split(data, '\n');
@@ -137,9 +137,8 @@ public abstract class CommonImport {
         if (list == null) {
             return;
         }
-
         for (Dto dtoX: list) {
-            dto = dtoX;
+            dto.set(dtoX);
 
             List<ValidationError> errors = dto.validate(Dto.Action.INSERT);
             String presentValue = dto.getPresentationValue();
@@ -147,7 +146,6 @@ public abstract class CommonImport {
                 importCallback.execute(presentValue, new HashMap<>(1, 1));
                 continue;
             }
-
             ui.addKeyValueFail(presentValue, ValidationError.toString(errors));
         }
     }
