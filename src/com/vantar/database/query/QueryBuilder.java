@@ -31,10 +31,20 @@ public class QueryBuilder {
     private List<QueryJoin> joins;
     private boolean isPagination;
     private List<String> union;
+    private String[] locales;
 
 
     public List<ValidationError> getErrors() {
         return errors;
+    }
+
+    public QueryBuilder setLocale(String... locales) {
+        this.locales = locales;
+        return this;
+    }
+
+    public String[] getLocale() {
+        return locales;
     }
 
     public QueryBuilder() {

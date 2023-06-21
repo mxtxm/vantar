@@ -478,37 +478,36 @@ public class CommonModelMongo extends CommonModel {
     }
 
     public static ResponseMessage deleteById(Dto dto) throws VantarException {
-        return deleteX(dto, null, true, null);
+        return deleteX(dto, true, null, null);
     }
     public static ResponseMessage deleteById(Dto dto, WriteEvent event) throws VantarException {
-        return deleteX(dto, null, true, event);
+        return deleteX(dto, true, event, null);
     }
 
     public static ResponseMessage delete(QueryBuilder q) throws VantarException {
-        return deleteX(null, q, true, null);
+        return deleteByQuery(q, true, null);
     }
     public static ResponseMessage delete(QueryBuilder q, WriteEvent event) throws VantarException {
-        return deleteX(null, q, true, event);
+        return deleteByQuery(q, true, event);
     }
 
     public static ResponseMessage deleteByIdNoLog(Dto dto) throws VantarException {
-        return deleteX(dto, null, false, null);
+        return deleteX(dto, false, null, null);
     }
     public static ResponseMessage deleteByIdNoLog(Dto dto, WriteEvent event) throws VantarException {
-        return deleteX(dto, null, false, event);
+        return deleteX(dto, false, event, null);
     }
 
     public static ResponseMessage deleteNoLog(QueryBuilder q) throws VantarException {
-        return deleteX(null, q, false, null);
+        return deleteByQuery(q, false, null);
     }
     public static ResponseMessage deleteNoLog(QueryBuilder q, WriteEvent event) throws VantarException {
-        return deleteX(null, q, false, event);
+        return deleteByQuery(q, false, event);
     }
 
-    public static ResponseMessage deleteX(Dto dto, QueryBuilder q, boolean logEvent, WriteEvent event) throws VantarException {
-        if (q != null) {
-            dto = q.getDto();
-        }
+    private static ResponseMessage deleteX(Dto dto, boolean logEvent, WriteEvent event
+        , List<DataDependency.Dependants> dependants) throws VantarException {
+
         if (event != null) {
             try {
                 event.beforeSet(dto);
@@ -517,11 +516,9 @@ public class CommonModelMongo extends CommonModel {
             }
         }
 
-        if (q == null) {
-            List<ValidationError> errors = dto.validate(Dto.Action.DELETE);
-            if (ObjectUtil.isNotEmpty(errors)) {
-                throw new InputException(errors);
-            }
+        List<ValidationError> errors = dto.validate(Dto.Action.DELETE);
+        if (ObjectUtil.isNotEmpty(errors)) {
+            throw new InputException(errors);
         }
 
         if (event != null) {
@@ -535,15 +532,16 @@ public class CommonModelMongo extends CommonModel {
         if (NumberUtil.isIdValid(dto.getId())) {
             List<DataDependency.Dependants> items = new DataDependency(dto).getDependencies();
             if (!items.isEmpty()) {
-                return ResponseMessage.success(VantarKey.DELETE_FAIL_HAS_DEPENDENCIES, items);
+                if (dependants == null) {
+                    return ResponseMessage.success(VantarKey.DELETE_FAIL_HAS_DEPENDENCIES, items);
+                }
+                dependants.addAll(items);
+                return null;
             }
         }
 
         try {
-            ResponseMessage r = ResponseMessage.success(
-                VantarKey.DELETE_SUCCESS,
-                q == null ? Mongo.delete(dto) : Mongo.delete(q)
-            );
+            ResponseMessage r = ResponseMessage.success(VantarKey.DELETE_SUCCESS, Mongo.delete(dto));
             CommonModel.afterDataChange(dto.getClass());
             if (event != null) {
                 try {
@@ -562,6 +560,29 @@ public class CommonModelMongo extends CommonModel {
             log.error(" !! {} : {}\n", dto.getClass().getSimpleName(), dto, e);
             throw new ServerException(VantarKey.DELETE_FAIL);
         }
+    }
+
+    private static ResponseMessage deleteByQuery(QueryBuilder q, boolean logEvent, WriteEvent event) throws VantarException {
+        List<DataDependency.Dependants> dependants = new ArrayList<>();
+        Dto sample = null;
+        try {
+            List<Dto> data = getData(q);
+            sample = data.get(0);
+            disableDtoCache(sample);
+            for (Dto dto : data) {
+                deleteX(dto, logEvent, event, dependants);
+            }
+        } catch (NoContentException nc) {
+            return ResponseMessage.success(VantarKey.DELETE_SUCCESS);
+        } finally {
+            if (sample != null) {
+                enableDtoCache(sample);
+                CommonModel.afterDataChange(sample.getClass());
+            }
+        }
+        return dependants.isEmpty() ?
+            ResponseMessage.success(VantarKey.DELETE_SUCCESS) :
+            ResponseMessage.success(VantarKey.DELETE_FAIL_HAS_DEPENDENCIES, dependants);
     }
 
     public static <T extends Dto> ResponseMessage deleteBatch(Params params, Class<T> tClass) throws VantarException {
@@ -733,7 +754,9 @@ public class CommonModelMongo extends CommonModel {
 
     public static void forEach(QueryBuilder q, QueryResultBase.Event event) throws VantarException {
         try {
-            MongoSearch.getData(q).forEach(event);
+            QueryResult result = MongoSearch.getData(q);
+            result.setLocale(q.getLocale());
+            result.forEach(event);
         } catch (DatabaseException e) {
             throw new ServerException(VantarKey.FETCH_FAIL);
         }
@@ -956,6 +979,22 @@ public class CommonModelMongo extends CommonModel {
             return d;
         }
         return getByIdX(dto, params.getLang());
+    }
+
+    @SuppressWarnings("unchecked")
+    public static <D extends Dto> D getById(D dto, Long id, String... locales) throws VantarException {
+        if (!NumberUtil.isIdValid(id)) {
+            throw new InputException(VantarKey.INVALID_ID, dto.getClass().getSimpleName() + ".id");
+        }
+        if (dto.hasAnnotation(Cache.class)) {
+            D d = (D) Services.get(ServiceDtoCache.class).getMap(dto.getClass()).get(id);
+            if (d == null) {
+                throw new NoContentException();
+            }
+            return d;
+        }
+        dto.setId(id);
+        return getByIdX(dto, locales);
     }
 
     @SuppressWarnings("unchecked")

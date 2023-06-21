@@ -159,8 +159,8 @@ public class DtoDictionary {
                     info.add(item);
                     continue;
                 }
-                for (Dbms dbms : dbmses){
-                    if (item.dbms.equals(dbms)) {
+                for (Dbms dbms : dbmses) {
+                    if (dbms.equals(item.dbms)) {
                         info.add(item);
                         break;
                     }

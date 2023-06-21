@@ -156,11 +156,7 @@ public class DateTimeFormatter {
     }
 
     public DateTimeFormatter getDateTimePersian() {
-        DateTimeFormatter x = PersianDateUtil.toPersian(year, month, day);
-        x.year = year;
-        x.month = month;
-        x.day = day;
-        return x;
+        return PersianDateUtil.toPersian(year, month, day);
     }
 
     public String getDate() {

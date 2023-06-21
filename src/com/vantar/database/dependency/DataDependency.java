@@ -5,7 +5,7 @@ import com.vantar.database.dto.*;
 import com.vantar.database.query.QueryBuilder;
 import com.vantar.exception.*;
 import com.vantar.util.collection.CollectionUtil;
-import com.vantar.util.object.ClassUtil;
+import com.vantar.util.object.*;
 import org.slf4j.*;
 import java.lang.reflect.Field;
 import java.util.*;
@@ -18,8 +18,8 @@ public class DataDependency {
 
     private final Class<? extends Dto> dtoClass;
     private DtoDictionary.Dbms dbms;
-    private Dto dtoToQuery;
-    private Long id;
+    private Dto dependantDto;
+    private final Long id;
     private List<Dependants> dependencies;
     private int recursiveCount;
 
@@ -36,54 +36,56 @@ public class DataDependency {
         }
     }
 
-    public List<Dependants> getDependencies(long id) {
-        this.id = id;
-        return getDependencies();
-    }
-
     public List<Dependants> getDependencies() {
+        dependencies = new ArrayList<>();
         if (id == null || dbms == null) {
             return dependencies;
         }
-        dtoToQuery = null;
-        dependencies = new ArrayList<>();
 
-        for (DtoDictionary.Info hostDtoInfo : DtoDictionary.getAll(dbms, DtoDictionary.Dbms.NOSTORE)) {
-            dtoToQuery = hostDtoInfo.getDtoInstance();
-            for (Field hostField : hostDtoInfo.dtoClass.getFields()) {
-                if (!DtoBase.isDataField(hostField)) {
+        dependantDto = null;
+        for (DtoDictionary.Info dtoInfo : DtoDictionary.getAll(dbms)) {
+            dependantDto = dtoInfo.getDtoInstance();
+            for (Field field : dtoInfo.dtoClass.getFields()) {
+                if (!DtoBase.isDataField(field)) {
                     continue;
                 }
 
-                Depends depends = hostField.getAnnotation(Depends.class);
+                // explicit dependency (the only way to identify dependency)
+                Depends depends = field.getAnnotation(Depends.class);
                 if (depends != null && depends.value().equals(dtoClass)) {
-                    putAnnotatedDependencies(hostField, "");
+                    putAnnotatedDependencies(field, "");
                     continue;
                 }
 
+                // dont crawl itself, if has self reference then @Depends would have caught it
+                if (dtoInfo.dtoClass.equals(dtoClass)) {
+                    continue;
+                }
+
+                // crawl to find dependency (find any reference that leads to @Depends)
                 recursiveCount = 1;
                 dtoClass1 = null;
                 dtoClass2 = null;
                 dtoClass3 = null;
-                putNotAnnotatedDependencies(hostField, "");
+                putNotAnnotatedDependencies(field, "");
             }
         }
 
         return dependencies;
     }
 
-    private void putAnnotatedDependencies(Field hostField, String prefix) {
-        Class<?> hostFieldType = hostField.getType();
-        String hostFieldName = prefix + hostField.getName();
+    private void putAnnotatedDependencies(Field dependentField, String prefix) {
+        Class<?> dependentFieldType = dependentField.getType();
+        String dependentFieldName = prefix + dependentField.getName();
 
-        if (CollectionUtil.isCollection(hostFieldType)) {
+        if (CollectionUtil.isCollection(dependentFieldType)) {
             /*
              * (3) field is Collection<Long> and items are fks to "target dto"
              */
-            Class<?> gClass = ClassUtil.getGenericTypes(hostField)[0];
+            Class<?> gClass = ClassUtil.getGenericTypes(dependentField)[0];
             if (gClass.equals(Long.class)) {
-                Dependants d = getDependantDataIn(hostFieldName);
-                if (d != null) {
+                Dependants d = getDependantDataIn(dependentFieldName);
+                if (!Dependants.isEmpty(d)) {
                     dependencies.add(d);
                 }
                 return;
@@ -94,8 +96,8 @@ public class DataDependency {
              *     Dto-class="target dto".class and the objects are copies of some "target dto" records
              */
             if (gClass.equals(dtoClass)) {
-                Dependants d = getDependantDataIn(hostFieldName + ".id");
-                if (d != null) {
+                Dependants d = getDependantDataIn(dependentFieldName + ".id");
+                if (!Dependants.isEmpty(d)) {
                     dependencies.add(d);
                 }
                 return;
@@ -105,9 +107,9 @@ public class DataDependency {
         /*
          * (1) field is Long and is a fk to "target dto"
          */
-        if (hostFieldType.equals(Long.class)) {
-            Dependants d = getDependantDataEquals(hostFieldName);
-            if (d != null) {
+        if (dependentFieldType.equals(Long.class)) {
+            Dependants d = getDependantDataEquals(dependentFieldName);
+            if (!Dependants.isEmpty(d)) {
                 dependencies.add(d);
             }
             return;
@@ -117,27 +119,25 @@ public class DataDependency {
          * (2) field is Dto where
          *     Dto-class="target dto".class and the object is a copy of a "target dto" record
          */
-        if (ClassUtil.isInstantiable(hostFieldType, Dto.class)) {
-            Dependants d = getDependantDataEquals(hostFieldName + ".id");
-            if (d != null) {
+        if (ClassUtil.isInstantiable(dependentFieldType, Dto.class)) {
+            Dependants d = getDependantDataEquals(dependentFieldName + ".id");
+            if (!Dependants.isEmpty(d)) {
                 dependencies.add(d);
             }
         }
     }
 
-    private void putNotAnnotatedDependencies(Field hostField, String prefix) {
+    private void putNotAnnotatedDependencies(Field dependentField, String prefix) {
         if (recursiveCount > RECURSIVE_THRESHOLD) {
-            log.debug(" ! ended recursion at {} iterations", recursiveCount);
-            log.debug("{} {}", hostField.getName(), prefix);
             return;
         }
         ++recursiveCount;
 
-        String hostFieldName = hostField.getName();
-        Class<?> hostFieldType = hostField.getType();
+        String dependentFieldName = dependentField.getName();
+        Class<?> dependentFieldType = dependentField.getType();
 
-        if (CollectionUtil.isCollection(hostFieldType)) {
-            Class<?> gClass = ClassUtil.getGenericTypes(hostField)[0];
+        if (CollectionUtil.isCollection(dependentFieldType)) {
+            Class<?> gClass = ClassUtil.getGenericTypes(dependentField)[0];
 
             /*
              * (8) field is Collection<Dto>
@@ -146,7 +146,7 @@ public class DataDependency {
                 if (endRecursion(gClass)) {
                     return;
                 }
-                putCrawlDependencies(gClass, prefix + hostFieldName + '.');
+                putCrawlDependencies(gClass, prefix + dependentFieldName + '.');
             }
             return;
         }
@@ -154,27 +154,27 @@ public class DataDependency {
         /*
          * (7) field is a Dto > crawl inside it until a "target dto" dependency is found
          */
-        if (ClassUtil.isInstantiable(hostFieldType, Dto.class)) {
-            if (!endRecursion(hostFieldType)) {
-                putCrawlDependencies(hostField.getType(), prefix + hostFieldName + '.');
+        if (ClassUtil.isInstantiable(dependentFieldType, Dto.class)) {
+            if (!endRecursion(dependentFieldType)) {
+                putCrawlDependencies(dependentField.getType(), prefix + dependentFieldName + '.');
             }
         }
     }
 
-    private boolean endRecursion(Class <?> hostFieldType) {
+    private boolean endRecursion(Class <?> dependentFieldType) {
         if (dtoClass1 == null) {
-            dtoClass1 = hostFieldType;
+            dtoClass1 = dependentFieldType;
         } else if (dtoClass2 == null) {
-            if (hostFieldType.equals(dtoClass1)) {
-                dtoClass2 = hostFieldType;
+            if (dependentFieldType.equals(dtoClass1)) {
+                dtoClass2 = dependentFieldType;
             } else {
-                dtoClass1 = hostFieldType;
+                dtoClass1 = dependentFieldType;
             }
         } else if (dtoClass3 == null) {
-            if (hostFieldType.equals(dtoClass2)) {
-                dtoClass3 = hostFieldType;
+            if (dependentFieldType.equals(dtoClass2)) {
+                dtoClass3 = dependentFieldType;
             } else {
-                dtoClass1 = hostFieldType;
+                dtoClass1 = dependentFieldType;
                 dtoClass2 = null;
             }
         } else {
@@ -228,7 +228,7 @@ public class DataDependency {
     }
 
     private Dependants getDependantData(String fieldName, boolean in) {
-        QueryBuilder q = new QueryBuilder(dtoToQuery);
+        QueryBuilder q = new QueryBuilder(dependantDto);
         if (in) {
             q.condition().in(fieldName, id);
         } else {
@@ -237,11 +237,11 @@ public class DataDependency {
         if (dbms.equals(DtoDictionary.Dbms.MONGO)) {
             try {
                 List<Dto> dtos = CommonModelMongo.getData(q);
-                return new Dependants(dtoToQuery.getClass().getName(), dtos);
+                return new Dependants(dependantDto.getClass().getName(), dtos);
             } catch (NoContentException ignore) {
 
             } catch (VantarException e) {
-                log.error("! query failed {}({}, {})", dtoToQuery.getClass().getName(), fieldName, id);
+                log.error("! query failed {}({}, {})", dependantDto.getClass().getName(), fieldName, id);
             }
         }
         return null;
@@ -261,10 +261,16 @@ public class DataDependency {
         public String toString() {
             StringBuilder sb = new StringBuilder();
             for (Dto dto : dtos) {
-                sb.append(dto.getId()).append(", ");
+                sb.append(dto.getId()).append("+ ");
             }
-            sb.setLength(sb.length() - 2);
+            if (sb.length() > 1) {
+                sb.setLength(sb.length() - 2);
+            }
             return name + '(' + sb.toString() + ')';
+        }
+
+        public static boolean isEmpty(Dependants dependants) {
+            return dependants == null || ObjectUtil.isEmpty(dependants.dtos);
         }
     }
 }

@@ -1,5 +1,6 @@
 package com.vantar.util.datetime;
 
+import com.vantar.admin.model.Admin;
 import com.vantar.exception.DateTimeException;
 import com.vantar.util.json.Json;
 import com.vantar.util.object.ObjectUtil;
@@ -206,31 +207,52 @@ public class DateTimeRange {
         return values;
     }
 
+
     /**
      * Get a list of year-months between the bounds. e.i: 202201, 202202, ...
      * @return list of months
      */
     public List<Integer> getYearMonthsBetween() {
+        return getYearMonthsBetween(false);
+    }
+
+    public List<Integer> getYearMonthsBetweenPersian() {
+        return getYearMonthsBetween(true);
+    }
+
+    private List<Integer> getYearMonthsBetween(boolean persian) {
+        DateTimeFormatter minF;
+        DateTimeFormatter maxF;
+        if (persian) {
+            minF = dateMin.formatter().getDateTimePersian();
+            maxF = dateMax.formatter().getDateTimePersian();
+        } else {
+            minF = dateMin.formatter();
+            maxF = dateMax.formatter();
+        }
+        int minY = minF.year;
+        int maxY = maxF.year;
+        int minM = minF.month;
+        int maxM = maxF.month;
+
         List<Integer> values = new ArrayList<>(100);
-        int minY = dateMin.formatter().year;
-        if (minY == dateMax.formatter().year) {
-            for (int i = dateMin.formatter().month, l = dateMax.formatter().month ; i <= l ; ++i) {
+        if (minY == maxY) {
+            for (int i = minM; i <= maxM; ++i) {
                 values.add(minY * 100 + i);
             }
             return values;
         }
 
-        for (int i = dateMin.formatter().month ; i <= 12 ; ++i) {
+        for (int i = minM ; i <= 12 ; ++i) {
             values.add(minY * 100 + i);
         }
-        int yMax = dateMax.formatter().year;
-        for (int i = dateMin.formatter().year + 1 ; i < yMax ; ++i) {
+        for (int i = minY + 1 ; i < maxY ; ++i) {
             for (int j = 1; j <= 12; ++j) {
                 values.add(i * 100 + j);
             }
         }
-        for (int i = 1, mMax = dateMax.formatter().month ; i <= mMax ; ++i) {
-            values.add(yMax * 100 + i);
+        for (int i = 1; i <= maxM; ++i) {
+            values.add(maxY * 100 + i);
         }
         return values;
     }
@@ -248,12 +270,21 @@ public class DateTimeRange {
     }
 
     private List<Integer> getYearMonthDaysBetweenX(boolean persian) {
-        int minY = dateMin.formatter().year;
-        int maxY = dateMax.formatter().year;
-        int minM = dateMin.formatter().month;
-        int maxM = dateMax.formatter().month;
-        int minD = dateMin.formatter().day;
-        int maxD = dateMax.formatter().day;
+        DateTimeFormatter minF;
+        DateTimeFormatter maxF;
+        if (persian) {
+            minF = dateMin.formatter().getDateTimePersian();
+            maxF = dateMax.formatter().getDateTimePersian();
+        } else {
+            minF = dateMin.formatter();
+            maxF = dateMax.formatter();
+        }
+        int minY = minF.year;
+        int maxY = maxF.year;
+        int minM = minF.month;
+        int maxM = maxF.month;
+        int minD = minF.day;
+        int maxD = maxF.day;
 
         List<Integer> values = new ArrayList<>((maxY - minY) * 365);
 
@@ -296,7 +327,6 @@ public class DateTimeRange {
                 }
             }
         }
-
         return values;
     }
 

@@ -148,7 +148,11 @@ public class MongoQueryResult extends QueryResultBase implements QueryResult, Au
     private void mapRecordToDto(Document document) {
         mapRecordToObject(document, dto, fields);
         if (event != null) {
-            event.afterSetData(dto);
+            try {
+                event.afterSetData(dto);
+            } catch (VantarException ignore) {
+
+            }
         }
     }
 

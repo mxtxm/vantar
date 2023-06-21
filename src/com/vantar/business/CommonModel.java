@@ -68,6 +68,7 @@ public abstract class CommonModel {
         if (disabledDtoClasses != null) {
             disabledDtoClasses.remove(dtoName);
         }
+        afterDataChange(dtoClass);
     }
 
     public static void insertPassword(Dto user, String password) throws ServerException {
