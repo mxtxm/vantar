@@ -204,7 +204,11 @@ public class MongoQueryResult extends QueryResultBase implements QueryResult, Au
                         continue;
                     }
                     List<Double> coordinates = (List<Double>) point.get(VantarParam.COORDINATE);
-                    field.set(dto, new Location(coordinates.get(0), coordinates.get(1)));
+                    if (coordinates.size() == 2) {
+                        field.set(dto, new Location(coordinates.get(0), coordinates.get(1)));
+                    } else if (coordinates.size() == 3) {
+                        field.set(dto, new Location(coordinates.get(0), coordinates.get(1), coordinates.get(2)));
+                    }
                     continue;
                 }
 

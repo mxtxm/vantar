@@ -91,7 +91,9 @@ public class MongoMapping {
             if (location.latitude == null || location.longitude == null) {
                 return null;
             }
-            return new Point(new Position(location.latitude, location.longitude));
+            return location.height == null ?
+                new Point(new Position(location.latitude, location.longitude)) :
+                new Point(new Position(location.latitude, location.longitude, location.height));
 
         } else if (info.type.equals(com.vantar.database.datatype.Polygon.class)) {
             com.vantar.database.datatype.Polygon polygon = (com.vantar.database.datatype.Polygon) info.value;
@@ -101,7 +103,11 @@ public class MongoMapping {
                     if (location.latitude == null || location.longitude == null) {
                         continue;
                     }
-                    positions.add(new Position(location.latitude, location.longitude));
+                    if (location.height == null) {
+                        positions.add(new Position(location.latitude, location.longitude));
+                    } else {
+                        positions.add(new Position(location.latitude, location.longitude, location.height));
+                    }
                 }
             }
             return new Polygon(positions);

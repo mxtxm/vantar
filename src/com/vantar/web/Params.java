@@ -645,7 +645,7 @@ public class Params {
         String locationString = getString(key);
         Location location = locationString != null ?
             new Location(locationString) :
-            new Location(getDouble(key + "_latitude"), getDouble(key + "_longitude"));
+            new Location(getDouble(key + "_latitude"), getDouble(key + "_longitude"), getDouble(key + "_altitude"));
         return location.isEmpty() ? null : location;
     }
 

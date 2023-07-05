@@ -102,6 +102,41 @@ public class PersianDateUtil {
         return new DateTimeFormatter(jy, jm, jd);
     }
 
+    public static DateTimeFormatter toPersian(int year, int month, int day, int hour, int minute, int second) {
+        int jdn = getJulianDayNumber(year, month, day);
+
+        int gy = getGregorianDate(jdn).year; // Calculate Gregorian year (gy).
+        int jy = gy - 621;
+        JCal r = jalCal(jy, false);
+        int jd;
+        int jm;
+        int k = jdn - getJulianDayNumber(gy, 3, r.march);
+
+        // find number of days that passed since 1 Farvardin.
+        if (k >= 0) {
+            if (k <= 185) {
+                // The first 6 months.
+                jm = 1 + div(k, 31);
+                jd = mod(k, 31) + 1;
+                return new DateTimeFormatter(jy, jm, jd);
+            } else {
+                // The remaining months.
+                k -= 186;
+            }
+        } else {
+            // Previous Jalaali year.
+            jy -= 1;
+            k += 179;
+            if (r.leap == 1) {
+                k += 1;
+            }
+        }
+        jm = 7 + div(k, 30);
+        jd = mod(k, 30) + 1;
+
+        return new DateTimeFormatter(jy, jm, jd, hour, minute, day);
+    }
+
     /**
      * Convert date
      * @param year year

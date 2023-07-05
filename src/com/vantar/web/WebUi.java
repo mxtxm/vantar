@@ -3,6 +3,7 @@ package com.vantar.web;
 import com.vantar.admin.model.*;
 import com.vantar.business.CommonModelMongo;
 import com.vantar.common.VantarParam;
+import com.vantar.database.datatype.Location;
 import com.vantar.database.dto.*;
 import com.vantar.database.query.PageData;
 import com.vantar.exception.*;
@@ -1038,6 +1039,11 @@ public class WebUi {
                     value = "";
                 } else {
                     iType = null;
+                }
+                if (value instanceof Location) {
+                    Location location = (Location) value;
+                    setAdditive("<a target='_blank' href='https://www.google.com/maps/search/?api=1&query="
+                        + location.latitude + "," + location.longitude + "'>map</a>");
                 }
                 addInput(name, name, value == null ? null : value.toString(), iType);
             }

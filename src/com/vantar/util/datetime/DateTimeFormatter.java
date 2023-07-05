@@ -49,6 +49,16 @@ public class DateTimeFormatter {
         hasTime = false;
     }
 
+    public DateTimeFormatter(int year, int month, int day, int hour, int minute, int second) {
+        this.year = year;
+        this.month = month;
+        this.day = day;
+        this.hour = hour;
+        this.minute = minute;
+        this.second = second;
+        hasTime = true;
+    }
+
     public void putDate(DateTimeFormatter dateTimeFormatter) {
         if (dateTimeFormatter == null) {
             addError(VantarKey.INVALID_DATE);
@@ -156,7 +166,7 @@ public class DateTimeFormatter {
     }
 
     public DateTimeFormatter getDateTimePersian() {
-        return PersianDateUtil.toPersian(year, month, day);
+        return PersianDateUtil.toPersian(year, month, day, hour, minute, day);
     }
 
     public String getDate() {

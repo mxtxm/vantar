@@ -856,7 +856,8 @@ public abstract class DtoBase implements Dto {
                 if (v == null) {
                     value = new Location(
                         NumberUtil.toNumber(map.get(key + "_latitude"), Double.class),
-                        NumberUtil.toNumber(map.get(key + "_longitude"), Double.class)
+                        NumberUtil.toNumber(map.get(key + "_longitude"), Double.class),
+                        NumberUtil.toNumber(map.get(key + "_altitude"), Double.class)
                     );
                 } else {
                     value = Location.toLocation(v);

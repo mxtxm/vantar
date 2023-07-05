@@ -51,7 +51,7 @@ abstract public class QueryResultBase {
         throw new NoContentException();
     }
 
-    public <T extends Dto> List<T> asList() throws DatabaseException {
+    public <T extends Dto> List<T> asList() throws DatabaseException, NoContentException {
         try {
             List<T> data = new ArrayList<>();
             while (next()) {
@@ -62,27 +62,36 @@ abstract public class QueryResultBase {
                 dto = dto.getClass().getConstructor().newInstance();
             }
 
+            if (data.isEmpty()) {
+                throw new NoContentException();
+            }
             return data;
+        } catch (NoContentException e) {
+            throw e;
         } catch (NoSuchMethodException | IllegalAccessException | InstantiationException | InvocationTargetException
             | VantarException e) {
             log.error("! data > dto({})", dto, e);
-            return new ArrayList<>(1);
+            throw new NoContentException();
         } finally {
             close();
         }
     }
 
-    public <T extends Dto> Map<Object, T> asMap(String keyField) throws DatabaseException {
+    public <T extends Dto> Map<Object, T> asMap(String keyField) throws DatabaseException, NoContentException {
         Map<Object, T> data = new HashMap<>(1000);
         try {
             while (next()) {
                 data.put(dto.getPropertyValue(keyField), (T) dto);
                 dto = dto.getClass().getConstructor().newInstance();
             }
+
+            if (data.isEmpty()) {
+                throw new NoContentException();
+            }
             return data;
         } catch (NoSuchMethodException | IllegalAccessException | InstantiationException | InvocationTargetException e) {
             log.error("! data > dto({})", dto, e);
-            return new HashMap<>(1, 1);
+            throw new NoContentException();
         } finally {
             close();
         }
