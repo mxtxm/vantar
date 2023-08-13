@@ -494,7 +494,7 @@ public class StringUtil {
      * @return updated string (null if string == null)
      */
     public static String remove(String string, String removeString) {
-        if (isEmpty(string) || isEmpty(removeString)) {
+        if (isEmpty(string)) {
             return string;
         }
 

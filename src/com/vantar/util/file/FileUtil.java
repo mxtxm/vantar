@@ -16,7 +16,7 @@ import java.util.zip.*;
 
 public class FileUtil {
 
-    private static final Logger log = LoggerFactory.getLogger(FileUtil.class);
+    protected static final Logger log = LoggerFactory.getLogger(FileUtil.class);
 
 
     public static String toFilename(String string) {
@@ -289,18 +289,8 @@ public class FileUtil {
         return structure;
     }
 
-    public static String getTempDirectory() {
-        return StringUtil.rtrim(System.getProperty("java.io.tmpdir"), '/') + '/';
-    }
-
-    public static String makeTempDirectory() {
-        String path = getTempDirectory() + "vt" + StringUtil.getRandomString(8) + '/';
-        removeDirectory(path);
-        return makeDirectory(path) ? path : null;
-    }
-
     public static String getTempFilename() {
-        return getUniqueName(getTempDirectory());
+        return getUniqueName(DirUtil.getTempDirectory());
     }
 
     public static String getUniqueName(String directory) {
@@ -316,103 +306,9 @@ public class FileUtil {
         return Files.exists(Paths.get(path));
     }
 
-    /**
-     * true = dir exists now
-     */
-    public static boolean makeDirectory(String path) {
-        if (exists(path)) {
-            return true;
-        }
-
-        if (System.getProperty("os.name").toLowerCase().contains("windows")) {
-            try {
-                Files.createDirectories(Paths.get(path));
-                return true;
-            } catch (IOException e) {
-                log.error(" !! {}", path, e);
-                return false;
-            }
-        }
-
-        Set<PosixFilePermission> fullPermission = new HashSet<>(10, 1);
-        fullPermission.add(PosixFilePermission.OWNER_EXECUTE);
-        fullPermission.add(PosixFilePermission.OWNER_READ);
-        fullPermission.add(PosixFilePermission.OWNER_WRITE);
-        fullPermission.add(PosixFilePermission.GROUP_EXECUTE);
-        fullPermission.add(PosixFilePermission.GROUP_READ);
-        fullPermission.add(PosixFilePermission.GROUP_WRITE);
-        fullPermission.add(PosixFilePermission.OTHERS_EXECUTE);
-        fullPermission.add(PosixFilePermission.OTHERS_READ);
-        fullPermission.add(PosixFilePermission.OTHERS_WRITE);
-
-        try {
-            Files.createDirectories(Paths.get(path), PosixFilePermissions.asFileAttribute(fullPermission));
-            Files.setPosixFilePermissions(Paths.get(path), fullPermission);
-            return true;
-        } catch (IOException e) {
-            log.error(" !! {}", path, e);
-            return false;
-        }
-    }
-
-    public static String[] getDirectoryFiles(String path) {
-        File[] files = new File(path).listFiles();
-        if (files == null) {
-            return new String[] {};
-        }
-        String[] filenames = new String[files.length];
-        for (int i = 0; i < files.length; i++) {
-            filenames[i] = files[i].getPath();
-        }
-        Arrays.sort(filenames);
-        return filenames;
-    }
-
-    public static boolean removeDirectory(String path) {
-        try {
-            Files.walk(Paths.get(path))
-                .sorted(Comparator.reverseOrder())
-                .map(Path::toFile)
-                .filter(item -> !item.getPath().equals(path))
-                .forEach(File::delete);
-            return true;
-        } catch (NoSuchFileException ignore) {
-
-        } catch (IOException e) {
-            log.error(" !! {}", path, e);
-        }
-        return false;
-    }
-
-    public static void giveAllPermissions(String path) {
-        if (System.getProperty("os.name").toLowerCase().contains("windows")) {
-            return;
-        }
-
-        Set<PosixFilePermission> fullPermission = new HashSet<>(10, 1);
-        fullPermission.add(PosixFilePermission.OWNER_EXECUTE);
-        fullPermission.add(PosixFilePermission.OWNER_READ);
-        fullPermission.add(PosixFilePermission.OWNER_WRITE);
-        fullPermission.add(PosixFilePermission.GROUP_EXECUTE);
-        fullPermission.add(PosixFilePermission.GROUP_READ);
-        fullPermission.add(PosixFilePermission.GROUP_WRITE);
-        fullPermission.add(PosixFilePermission.OTHERS_EXECUTE);
-        fullPermission.add(PosixFilePermission.OTHERS_READ);
-        fullPermission.add(PosixFilePermission.OTHERS_WRITE);
-
-        try {
-            Files.setPosixFilePermissions(Paths.get(path), fullPermission);
-            for (String file : getDirectoryFiles(path)) {
-                Files.setPosixFilePermissions(Paths.get(file), fullPermission);
-            }
-        } catch (IOException e) {
-            log.error(" !! {}", path, e);
-        }
-    }
-
     public static boolean move(String target, String destination) {
         Path path = Paths.get(destination);
-        makeDirectory(path.getParent().toString());
+        DirUtil.makeDirectory(path.getParent().toString());
 
         try {
             Files.delete(path);
@@ -437,7 +333,7 @@ public class FileUtil {
 
         }
 
-        makeDirectory(path.getParent().toString());
+        DirUtil.makeDirectory(path.getParent().toString());
 
         try {
             Files.copy(Paths.get(target), path);

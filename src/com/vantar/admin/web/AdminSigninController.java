@@ -47,7 +47,7 @@ public class AdminSigninController extends RouteToMethod {
                 ui.redirect("/admin/index");
                 return;
             } catch (AuthException e) {
-                Admin.log.info(" ! admin dashboard rejected: ", e);
+                Admin.log.info(" ! admin dashboard rejected: {}", e.getMessage());
                 ui.addErrorMessage(e);
             }
         }

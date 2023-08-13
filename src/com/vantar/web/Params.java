@@ -852,7 +852,7 @@ public class Params {
 
         public boolean moveTo(String path, String filename) {
             path = StringUtil.rtrim(path, '/') + '/';
-            FileUtil.makeDirectory(path);
+            DirUtil.makeDirectory(path);
             path += filename == null ? (Paths.get(filePart.getSubmittedFileName()).getFileName().toString()) : filename;
 
             Path p = Paths.get(path);

@@ -30,6 +30,7 @@ public class ServiceBackup implements Services.Service {
     public Integer intervalHour;
     public Integer deleteOldFilesAfterDays;
     public String path;
+    public String exclude;
 
 
     public void start() {
@@ -76,10 +77,12 @@ public class ServiceBackup implements Services.Service {
         String tail = "-" + (lastRun.formatter().getDateTimeSimple()) + ".dump";
         logs.add("begin: " + lastRun.formatter().getDateTime());
 
+        Set<String> excludeDtos = StringUtil.splitToSet(exclude, ',');
+
         try {
             if (StringUtil.contains(dbms, DtoDictionary.Dbms.MONGO.toString())) {
                 LogEvent.beat(this.getClass(), "Mongo backed-up start...");
-                MongoBackup.dump(path + "mongo" + tail, null, null);
+                MongoBackup.dump(path + "mongo" + tail, null, excludeDtos, null);
                 LogEvent.beat(this.getClass(), "Mongo backed-up");
                 logs.add("success: " + lastRun.formatter().getDateTime() + " mongo");
             }

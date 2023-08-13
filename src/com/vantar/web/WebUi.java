@@ -897,6 +897,7 @@ public class WebUi {
 
             setAdditive(dto, name, Required.class, "<pre class='required'>*</pre>");
             setAdditive(dto, name, Unique.class, "<pre class='unique'>unique</pre>");
+            setAdditive(dto, name, UniqueCi.class, "<pre class='unique'>unique</pre>");
             Default a = dto.getAnnotation(name, Default.class);
             if (a != null) {
                 setAdditive(

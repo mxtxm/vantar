@@ -11,18 +11,14 @@ import com.vantar.locale.Locale;
 import com.vantar.locale.*;
 import com.vantar.queue.Queue;
 import com.vantar.service.Services;
-import com.vantar.service.auth.*;
+import com.vantar.service.auth.ServiceAuth;
 import com.vantar.service.healthmonitor.ServiceHealthMonitor;
 import com.vantar.util.number.NumberUtil;
 import com.vantar.util.string.StringUtil;
 import com.vantar.web.*;
 import org.slf4j.*;
-import javax.management.MBeanServerConnection;
 import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.lang.management.*;
 import java.lang.reflect.*;
-import java.nio.file.*;
 import java.util.*;
 
 
@@ -39,6 +35,7 @@ public class Admin {
             menu.put(Locale.getString(VantarKey.ADMIN_MENU_DATA), "/admin/data");
             menu.put(Locale.getString(VantarKey.ADMIN_MENU_ADVANCED), "/admin/advanced");
             menu.put(Locale.getString(VantarKey.ADMIN_MENU_SCHEDULE), "/admin/schedule");
+            menu.put(Locale.getString(VantarKey.ADMIN_MENU_PATCH), "/admin/patch");
             menu.put(Locale.getString(VantarKey.ADMIN_MENU_QUERY), "/admin/query/index");
         }
         menu.put(Locale.getString(VantarKey.ADMIN_MENU_DOCUMENTS), "/admin/document/index");

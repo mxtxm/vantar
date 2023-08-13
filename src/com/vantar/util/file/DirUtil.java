@@ -1,6 +1,10 @@
 package com.vantar.util.file;
 
+import com.vantar.util.string.StringUtil;
+import org.apache.commons.io.FileUtils;
 import java.io.*;
+import java.nio.file.*;
+import java.nio.file.attribute.*;
 import java.util.*;
 
 
@@ -105,7 +109,7 @@ public class DirUtil {
 
     private static void doCopyDirectory(File srcDir, File destDir, List<String> exclusionList) throws IOException {
         File[] srcFiles = listFiles(srcDir);
-        FileUtil.makeDirectory(destDir.getAbsolutePath());
+        makeDirectory(destDir.getAbsolutePath());
         for (File srcFile : srcFiles) {
             File dstFile = new File(destDir, srcFile.getName());
             if (exclusionList == null || !exclusionList.contains(srcFile.getCanonicalPath())) {
@@ -135,6 +139,129 @@ public class DirUtil {
             }
         }
         return directoryToBeDeleted.delete();
+    }
+//    public static boolean removeDirectory(String path) {
+//        try {
+//            Files.walk(Paths.get(path))
+//                .sorted(Comparator.reverseOrder())
+//                .map(Path::toFile)
+//                .filter(item -> !item.getPath().equals(path))
+//                .forEach(File::delete);
+//            return true;
+//        } catch (NoSuchFileException ignore) {
+//
+//        } catch (IOException e) {
+//            FileUtil.log.error(" !! {}", path, e);
+//        }
+//        return false;
+//    }
+
+
+
+
+    public static String getTempDirectory() {
+        return StringUtil.rtrim(System.getProperty("java.io.tmpdir"), '/') + '/';
+    }
+
+    public static String makeTempDirectory() {
+        String path = getTempDirectory() + "vt" + StringUtil.getRandomString(8) + '/';
+        removeDirectory(path);
+        return makeDirectory(path) ? path : null;
+    }
+
+    /**
+     * true = dir exists now
+     */
+    public static boolean makeDirectory(String path) {
+        if (FileUtil.exists(path)) {
+            return true;
+        }
+
+        if (System.getProperty("os.name").toLowerCase().contains("windows")) {
+            try {
+                Files.createDirectories(Paths.get(path));
+                return true;
+            } catch (IOException e) {
+                FileUtil.log.error(" !! {}", path, e);
+                return false;
+            }
+        }
+
+        Set<PosixFilePermission> fullPermission = new HashSet<>(10, 1);
+        fullPermission.add(PosixFilePermission.OWNER_EXECUTE);
+        fullPermission.add(PosixFilePermission.OWNER_READ);
+        fullPermission.add(PosixFilePermission.OWNER_WRITE);
+        fullPermission.add(PosixFilePermission.GROUP_EXECUTE);
+        fullPermission.add(PosixFilePermission.GROUP_READ);
+        fullPermission.add(PosixFilePermission.GROUP_WRITE);
+        fullPermission.add(PosixFilePermission.OTHERS_EXECUTE);
+        fullPermission.add(PosixFilePermission.OTHERS_READ);
+        fullPermission.add(PosixFilePermission.OTHERS_WRITE);
+
+        try {
+            Files.createDirectories(Paths.get(path), PosixFilePermissions.asFileAttribute(fullPermission));
+            Files.setPosixFilePermissions(Paths.get(path), fullPermission);
+            return true;
+        } catch (IOException e) {
+            FileUtil.log.error(" !! {}", path, e);
+            return false;
+        }
+    }
+
+    public static String[] getDirectoryFiles(String path) {
+        File[] files = new File(path).listFiles();
+        if (files == null) {
+            return new String[] {};
+        }
+        String[] filenames = new String[files.length];
+        for (int i = 0; i < files.length; i++) {
+            filenames[i] = files[i].getPath();
+        }
+        Arrays.sort(filenames);
+        return filenames;
+    }
+
+     public static void giveAllPermissions(String path) {
+        if (System.getProperty("os.name").toLowerCase().contains("windows")) {
+            return;
+        }
+
+        Set<PosixFilePermission> fullPermission = new HashSet<>(10, 1);
+        fullPermission.add(PosixFilePermission.OWNER_EXECUTE);
+        fullPermission.add(PosixFilePermission.OWNER_READ);
+        fullPermission.add(PosixFilePermission.OWNER_WRITE);
+        fullPermission.add(PosixFilePermission.GROUP_EXECUTE);
+        fullPermission.add(PosixFilePermission.GROUP_READ);
+        fullPermission.add(PosixFilePermission.GROUP_WRITE);
+        fullPermission.add(PosixFilePermission.OTHERS_EXECUTE);
+        fullPermission.add(PosixFilePermission.OTHERS_READ);
+        fullPermission.add(PosixFilePermission.OTHERS_WRITE);
+
+        try {
+            Files.setPosixFilePermissions(Paths.get(path), fullPermission);
+            for (String file : getDirectoryFiles(path)) {
+                Files.setPosixFilePermissions(Paths.get(file), fullPermission);
+            }
+        } catch (IOException e) {
+            FileUtil.log.error(" !! {}", path, e);
+        }
+    }
+
+    public static void rename(String oldPath, String newPath) {
+        (new File(oldPath)).renameTo(new File(newPath));
+    }
+
+    /**
+     * Move/rename source directory to target. if target is not empty source contents will be copied into target
+     * @param source
+     * @param target
+     */
+    public static void move(String source, String target) {
+        try {
+            Files.move(Paths.get(source), Paths.get(target), StandardCopyOption.REPLACE_EXISTING);
+        } catch (IOException e) {
+            FileUtil.log.error(" !! {} > {}", source, target, e);
+        }
     }
 
 

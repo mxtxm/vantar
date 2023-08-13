@@ -23,7 +23,7 @@ public interface QueryResult {
 
     <T extends Dto> List<T> asList() throws NoContentException, DatabaseException;
 
-    void forEach(QueryResultBase.Event event) throws DatabaseException;
+    void forEach(QueryResultBase.EventForeach event) throws DatabaseException;
 
     <T extends Dto> Map<Object, T> asMap(String keyField) throws NoContentException, DatabaseException;
 

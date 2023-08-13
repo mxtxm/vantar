@@ -5,7 +5,7 @@ import com.vantar.database.dto.*;
 import com.vantar.exception.DatabaseException;
 import com.vantar.locale.VantarKey;
 import com.vantar.util.datetime.DateTime;
-import com.vantar.util.file.FileUtil;
+import com.vantar.util.file.*;
 import com.vantar.util.string.StringUtil;
 import org.slf4j.*;
 import java.io.*;
@@ -26,8 +26,8 @@ public class SqlArtaSynch {
     }
 
     public SqlArtaSynch cleanup() {
-        FileUtil.removeDirectory(workDir + "models");
-        FileUtil.removeDirectory(workDir + "_temp");
+        DirUtil.removeDirectory(workDir + "models");
+        DirUtil.removeDirectory(workDir + "_temp");
         return this;
     }
 

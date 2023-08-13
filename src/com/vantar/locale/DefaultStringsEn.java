@@ -91,6 +91,7 @@ public class DefaultStringsEn {
         tokens.put(VantarKey.ADMIN_MENU_DATA, "Data");
         tokens.put(VantarKey.ADMIN_MENU_ADVANCED, "Advanced");
         tokens.put(VantarKey.ADMIN_MENU_SCHEDULE, "Schedule");
+        tokens.put(VantarKey.ADMIN_MENU_PATCH, "Patches");
         tokens.put(VantarKey.ADMIN_MENU_QUERY, "Queries");
         tokens.put(VantarKey.ADMIN_MENU_DOCUMENTS, "Documents");
         tokens.put(VantarKey.ADMIN_MENU_SIGN_OUT, "Sign out");
@@ -259,6 +260,8 @@ public class DefaultStringsEn {
         tokens.put(VantarKey.ADMIN_SCHEDULE_RUN_FAIL, "run failed");
         tokens.put(VantarKey.ADMIN_SCHEDULE_RUN_SUCCESS, "run successfully");
 
+        tokens.put(VantarKey.ADMIN_RUN_TIME, "run time");
+
         tokens.put(VantarKey.USERNAME, "Username");
         tokens.put(VantarKey.PASSWORD, "Password");
         tokens.put(VantarKey.SIGN_IN, "Sign in");
@@ -296,6 +299,10 @@ public class DefaultStringsEn {
 
         tokens.put(VantarKey.METHOD_CALL_TIME_LIMIT, "Must wait \"{0}\"minutes before another call");
 
+        tokens.put(VantarKey.ADMIN_FAIL, "fail count");
+        tokens.put(VantarKey.ADMIN_FAIL_MSG, "fail message");
+        tokens.put(VantarKey.ADMIN_SUCCESS, "success count");
+        tokens.put(VantarKey.ADMIN_SUCCESS_MSG, "success message");
     }
 
     public static String getString(LangKey key) {

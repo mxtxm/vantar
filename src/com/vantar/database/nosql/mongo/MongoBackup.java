@@ -23,10 +23,10 @@ public class MongoBackup {
 
 
     public static void dump(String dumpPath, WebUi ui) {
-        dump(dumpPath, null, ui);
+        dump(dumpPath, null, null, ui);
     }
 
-    public static void dump(String dumpPath, DateTimeRange dateRange, WebUi ui) {
+    public static void dump(String dumpPath, DateTimeRange dateRange, Set<String> excludeDtos, WebUi ui) {
         MongoDatabase database;
         try {
             database = MongoConnection.getDatabase();
@@ -45,6 +45,10 @@ public class MongoBackup {
         long startTime = System.currentTimeMillis();
         try (ZipOutputStream zip = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(dumpPath)))) {
             for (String collection : MongoConnection.getCollections()) {
+                if (excludeDtos != null && excludeDtos.contains(collection)) {
+                    continue;
+                }
+
                 long startCollectionTime = System.currentTimeMillis();
                 zip.putNextEntry(new ZipEntry(collection + ".dump"));
                 int l = 0;

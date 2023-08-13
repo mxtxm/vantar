@@ -12,7 +12,7 @@ import java.util.stream.*;
 public class EnumUtil {
 
     private static final Logger log = LoggerFactory.getLogger(EnumUtil.class);
-    private static final Pattern PATTERN_ENUM_INVALID_CHARS = Pattern.compile("[^a-zA-Z0-9]");
+    private static final Pattern PATTERN_ENUM_INVALID_CHARS = Pattern.compile("[^a-zA-Z0-9_]");
 
     /**
      * Get a list of enum values as string

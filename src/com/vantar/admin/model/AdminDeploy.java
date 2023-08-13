@@ -4,7 +4,7 @@ import com.vantar.common.Settings;
 import com.vantar.exception.*;
 import com.vantar.locale.*;
 import com.vantar.util.datetime.DateTime;
-import com.vantar.util.file.FileUtil;
+import com.vantar.util.file.*;
 import com.vantar.util.os.Command;
 import com.vantar.util.string.StringUtil;
 import com.vantar.web.*;
@@ -33,7 +33,7 @@ public class AdminDeploy {
             if (uploaded.moveTo(Settings.config.getProperty("deploy.path"), "ROOT-"
                 + new DateTime().formatter().getDateTimeAsFilename() + ".war")) {
 
-                FileUtil.giveAllPermissions(Settings.config.getProperty("deploy.path"));
+                DirUtil.giveAllPermissions(Settings.config.getProperty("deploy.path"));
                 ui.addMessage("done!");
             } else {
                 ui.addMessage(Locale.getString(VantarKey.UPLOAD_FAIL));
@@ -68,7 +68,7 @@ public class AdminDeploy {
             return;
         }
 
-        for (String path : FileUtil.getDirectoryFiles(Settings.config.getProperty("deploy.dir"))) {
+        for (String path : DirUtil.getDirectoryFiles(Settings.config.getProperty("deploy.dir"))) {
             String[] parts = StringUtil.split(path, '/');
             String filename = parts[parts.length - 1];
 

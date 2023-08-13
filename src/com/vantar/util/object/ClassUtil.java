@@ -3,6 +3,7 @@ package com.vantar.util.object;
 import com.vantar.util.collection.*;
 import com.vantar.util.string.StringUtil;
 import java.io.*;
+import java.lang.annotation.Annotation;
 import java.lang.reflect.*;
 import java.net.URL;
 import java.util.*;
@@ -211,7 +212,7 @@ public class ClassUtil {
     public static List<Class<?>> getClasses(String packageName) {
         ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
         if (classLoader == null) {
-            return new ArrayList<>();
+            return new ArrayList<>(1);
         }
 
         Enumeration<URL> resources;
@@ -231,6 +232,12 @@ public class ClassUtil {
         for (File directory : dirs) {
             classes.addAll(findClasses(directory, packageName));
         }
+        return classes;
+    }
+
+    public static List<Class<?>> getClasses(String packageName, Class<? extends Annotation> annotation) {
+        List<Class<?>> classes = getClasses(packageName);
+        classes.removeIf(c -> !c.isAnnotationPresent(annotation));
         return classes;
     }
 

@@ -5,7 +5,7 @@ import com.vantar.common.Settings;
 import com.vantar.database.dto.*;
 import com.vantar.exception.DatabaseException;
 import com.vantar.util.datetime.DateTimeRange;
-import com.vantar.util.file.FileUtil;
+import com.vantar.util.file.*;
 import com.vantar.util.string.StringUtil;
 import com.vantar.web.*;
 
@@ -21,7 +21,7 @@ public class SqlBackup {
             ui.addHeading("PostgreSQL " + Settings.sql().getDbDatabase() + " > " + dumpPath).write();
         }
 
-        String tempDir = FileUtil.makeTempDirectory();
+        String tempDir = DirUtil.makeTempDirectory();
         if (tempDir == null) {
             if (ui != null) {
                 ui.addErrorMessage("امکان ساختن دایرکتوری موقت نبود.").write();
@@ -78,7 +78,7 @@ public class SqlBackup {
             }
 
             FileUtil.zip(tempDir, dumpPath);
-            FileUtil.removeDirectory(tempDir);
+            DirUtil.removeDirectory(tempDir);
 
             if (ui != null) {
                 ui.addPre(
@@ -95,16 +95,16 @@ public class SqlBackup {
     public static void restore(String zipPath, boolean deleteData, WebUi ui) {
         ui.addHeading("PostgreSQL " + zipPath + " > " + Settings.sql().getDbDatabase()).write();
 
-        String tmpDir = FileUtil.makeTempDirectory();
+        String tmpDir = DirUtil.makeTempDirectory();
         FileUtil.unzip(zipPath, tmpDir);
-        FileUtil.giveAllPermissions(tmpDir);
+        DirUtil.giveAllPermissions(tmpDir);
 
         long startTime = System.currentTimeMillis();
 
         try (SqlConnection connection = new SqlConnection()) {
             CommonRepoSql repo = new CommonRepoSql(connection);
 
-            for (String dumpPath : FileUtil.getDirectoryFiles(tmpDir)) {
+            for (String dumpPath : DirUtil.getDirectoryFiles(tmpDir)) {
                 if (FileUtil.getSize(dumpPath) < 2) {
                     continue;
                 }
@@ -132,7 +132,7 @@ public class SqlBackup {
                 .containerEnd()
                 .write();
         } finally {
-            FileUtil.removeDirectory(tmpDir);
+            DirUtil.removeDirectory(tmpDir);
         }
     }
 }

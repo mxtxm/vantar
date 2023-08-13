@@ -11,7 +11,7 @@ import com.vantar.locale.*;
 import com.vantar.service.Services;
 import com.vantar.service.backup.ServiceBackup;
 import com.vantar.util.datetime.*;
-import com.vantar.util.file.FileUtil;
+import com.vantar.util.file.*;
 import com.vantar.util.object.ObjectUtil;
 import com.vantar.util.string.StringUtil;
 import com.vantar.web.*;
@@ -66,7 +66,7 @@ public class AdminBackup {
         if (dbms.equals(DtoDictionary.Dbms.SQL)) {
             SqlBackup.dump(dbDumpFilename, dateRange, ui);
         } else if (dbms.equals(DtoDictionary.Dbms.MONGO)) {
-            MongoBackup.dump(dbDumpFilename, dateRange, ui);
+            MongoBackup.dump(dbDumpFilename, dateRange, backup.exclude == null ? null : StringUtil.splitToSet(backup.exclude, ','), ui);
         } else if (dbms.equals(DtoDictionary.Dbms.ELASTIC)) {
             ElasticBackup.dump(dbDumpFilename, dateRange, ui);
         }
@@ -131,7 +131,7 @@ public class AdminBackup {
         if (!params.isChecked("f")) {
             List<String> files = new ArrayList<>(10);
             String dbmsName = dbms.toString().toLowerCase();
-            for (String path : FileUtil.getDirectoryFiles(backup.getPath())) {
+            for (String path : DirUtil.getDirectoryFiles(backup.getPath())) {
                 if (!StringUtil.contains(path, dbmsName)) {
                     continue;
                 }
@@ -195,7 +195,7 @@ public class AdminBackup {
         ui  .beginFormPost()
             .addEmptyLine();
 
-        for (String path : FileUtil.getDirectoryFiles(backup.getPath())) {
+        for (String path : DirUtil.getDirectoryFiles(backup.getPath())) {
             if (!path.endsWith(DUMP_FILE_EXT)) {
                 continue;
             }

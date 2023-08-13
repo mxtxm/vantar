@@ -3,7 +3,7 @@ package com.vantar.admin.model.document;
 import com.vantar.admin.model.*;
 import com.vantar.common.Settings;
 import com.vantar.database.dto.*;
-import com.vantar.util.file.FileUtil;
+import com.vantar.util.file.*;
 import com.vantar.util.object.*;
 import com.vantar.util.string.StringUtil;
 import java.lang.reflect.*;
@@ -140,7 +140,7 @@ public class DtoDocumentCreator {
             // < < < inner class
         }
 
-        FileUtil.makeDirectory(Settings.config.getProperty("documents.dir"));
+        DirUtil.makeDirectory(Settings.config.getProperty("documents.dir"));
         FileUtil.write(Settings.config.getProperty("documents.dir") + "objects.md", document.toString());
     }
 }

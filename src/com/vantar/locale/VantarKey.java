@@ -80,6 +80,7 @@ public enum VantarKey implements LangKey {
     ADMIN_MENU_DATA,
     ADMIN_MENU_ADVANCED,
     ADMIN_MENU_SCHEDULE,
+    ADMIN_MENU_PATCH,
     ADMIN_MENU_QUERY,
     ADMIN_MENU_DOCUMENTS,
     ADMIN_MENU_SIGN_OUT,
@@ -254,6 +255,8 @@ public enum VantarKey implements LangKey {
     ADMIN_SCHEDULE_RUN_SUCCESS,
     ADMIN_SCHEDULE_RUN_FAIL,
 
+    ADMIN_RUN_TIME,
+
     SHOW_NOT_DELETED,
     SHOW_DELETED,
     SHOW_ALL,
@@ -281,4 +284,9 @@ public enum VantarKey implements LangKey {
     ADMIN_RESET_SIGNIN_FAILS,
 
     METHOD_CALL_TIME_LIMIT,
+
+    ADMIN_FAIL,
+    ADMIN_FAIL_MSG,
+    ADMIN_SUCCESS,
+    ADMIN_SUCCESS_MSG,
 }

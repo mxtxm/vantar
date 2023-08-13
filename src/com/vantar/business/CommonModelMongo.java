@@ -744,7 +744,7 @@ public class CommonModelMongo extends CommonModel {
 
 
 
-    public static void forEach(Dto dto, QueryResultBase.Event event) throws VantarException {
+    public static void forEach(Dto dto, QueryResultBase.EventForeach event) throws VantarException {
         try {
             MongoSearch.getAllData(dto).forEach(event);
         } catch (DatabaseException e) {
@@ -752,7 +752,7 @@ public class CommonModelMongo extends CommonModel {
         }
     }
 
-    public static void forEach(QueryBuilder q, QueryResultBase.Event event) throws VantarException {
+    public static void forEach(QueryBuilder q, QueryResultBase.EventForeach event) throws VantarException {
         try {
             QueryResult result = MongoSearch.getData(q);
             result.setLocale(q.getLocale());
@@ -801,7 +801,7 @@ public class CommonModelMongo extends CommonModel {
         return search(q, event, params.getLang());
     }
 
-    public static PageData searchForEach(Params params, Dto dto, Dto dtoView, QueryEvent event) throws VantarException {
+    public static PageData searchForEach(Params params, Dto dto, Dto dtoView, QueryEventForeach event) throws VantarException {
         QueryData queryData = params.getQueryData();
         queryData.setDto(dto, dtoView);
 
@@ -850,7 +850,7 @@ public class CommonModelMongo extends CommonModel {
         }
     }
 
-    public static PageData searchForEach(QueryBuilder q, QueryResultBase.Event event, String... locales) throws VantarException {
+    public static PageData searchForEach(QueryBuilder q, QueryResultBase.EventForeach event, String... locales) throws VantarException {
         try {
             return MongoSearch.getPageForeach(q, event, locales);
         } catch (DatabaseException e) {
@@ -1207,13 +1207,21 @@ public class CommonModelMongo extends CommonModel {
 
 
 
-    // > > > checkings
+    // > > > checking
 
 
 
     public static List<ValidationError> getUniqueViolation(Dto dto) throws DatabaseException {
         List<ValidationError> errors = null;
         for (String fieldName : dto.annotatedProperties(Unique.class)) {
+            if (!MongoSearch.isUnique(dto, fieldName)) {
+                if (errors == null) {
+                    errors = new ArrayList<>(5);
+                }
+                errors.add(new ValidationError(fieldName, VantarKey.UNIQUE));
+            }
+        }
+        for (String fieldName : dto.annotatedProperties(UniqueCi.class)) {
             if (!MongoSearch.isUnique(dto, fieldName)) {
                 if (errors == null) {
                     errors = new ArrayList<>(5);

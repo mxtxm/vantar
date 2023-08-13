@@ -89,6 +89,7 @@ public class DefaultStringsFa {
         tokens.put(VantarKey.ADMIN_MENU_DATA, "داده‌ها");
         tokens.put(VantarKey.ADMIN_MENU_ADVANCED, "پیشرفته");
         tokens.put(VantarKey.ADMIN_MENU_SCHEDULE, "برنامه زمانی");
+        tokens.put(VantarKey.ADMIN_MENU_PATCH, "وصله");
         tokens.put(VantarKey.ADMIN_MENU_QUERY, "جستار‌ها");
         tokens.put(VantarKey.ADMIN_MENU_DOCUMENTS, "مستندها");
         tokens.put(VantarKey.ADMIN_MENU_SIGN_OUT, "خروج");
@@ -260,6 +261,8 @@ public class DefaultStringsFa {
         tokens.put(VantarKey.ADMIN_SCHEDULE_RUN_FAIL, "اجرا نشد");
         tokens.put(VantarKey.ADMIN_SCHEDULE_RUN_SUCCESS, "با موفقیت اجرا شد");
 
+        tokens.put(VantarKey.ADMIN_RUN_TIME, "زمان اجرا");
+
         tokens.put(VantarKey.USERNAME, "نام کاربری");
         tokens.put(VantarKey.PASSWORD, "رمز");
         tokens.put(VantarKey.SIGN_IN, "ورود");
@@ -297,6 +300,10 @@ public class DefaultStringsFa {
 
         tokens.put(VantarKey.METHOD_CALL_TIME_LIMIT, "برای اجرای دوباره نیاز به سپری شدن \"{0}\"دقیقه است");
 
+        tokens.put(VantarKey.ADMIN_FAIL, "");
+        tokens.put(VantarKey.ADMIN_FAIL_MSG, "");
+        tokens.put(VantarKey.ADMIN_SUCCESS, "");
+        tokens.put(VantarKey.ADMIN_SUCCESS_MSG, "");
     }
 
     public static String getString(LangKey key) {

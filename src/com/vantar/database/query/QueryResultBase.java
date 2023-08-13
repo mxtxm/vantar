@@ -97,7 +97,7 @@ abstract public class QueryResultBase {
         }
     }
 
-    public void forEach(Event event) throws DatabaseException {
+    public void forEach(EventForeach event) throws DatabaseException {
         try {
             while (next()) {
                 event.afterSetData(dto);
@@ -122,5 +122,11 @@ abstract public class QueryResultBase {
         void afterSetData(Dto dto) throws VantarException;
 
         void afterSetData(Dto dto, List<?> data) throws VantarException;
+    }
+
+
+    public interface EventForeach {
+
+        void afterSetData(Dto dto) throws VantarException;
     }
 }

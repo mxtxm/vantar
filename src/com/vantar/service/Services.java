@@ -8,6 +8,7 @@ import com.vantar.database.nosql.mongo.MongoConnection;
 import com.vantar.database.sql.SqlConnection;
 import com.vantar.queue.Queue;
 import com.vantar.service.messaging.ServiceMessaging;
+import com.vantar.service.patch.Patcher;
 import com.vantar.util.datetime.DateTime;
 import com.vantar.util.object.*;
 import com.vantar.util.string.StringUtil;
@@ -19,7 +20,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class Services {
 
-    private static final Logger log = LoggerFactory.getLogger(Services.class);
+    public static final Logger log = LoggerFactory.getLogger(Services.class);
 
     public static final String ID = UUID.randomUUID().toString();
     public static Map<String, Integer> serviceCount;
@@ -157,6 +158,8 @@ public class Services {
         if (doEvents && event != null) {
             event.afterStart();
         }
+
+        Patcher.run();
     }
 
     private static void setFieldValue(Object object, String name, String value) {

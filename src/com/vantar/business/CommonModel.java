@@ -141,6 +141,13 @@ public abstract class CommonModel {
     }
 
 
+    public interface QueryEventForeach extends QueryResultBase.EventForeach {
+
+        void beforeQuery(QueryBuilder q) throws VantarException;
+
+    }
+
+
     public interface BatchEvent {
 
         boolean beforeInsert(Dto dto);

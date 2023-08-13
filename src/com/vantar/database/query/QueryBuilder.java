@@ -549,6 +549,16 @@ public class QueryBuilder {
         isPagination = true;
     }
 
+    public void disablePagination() {
+        isPagination = false;
+    }
+
+    public void disableLimit() {
+        isPagination = false;
+        skip = null;
+        limit = null;
+    }
+
     public boolean isPagination() {
         return isPagination;
     }

@@ -195,7 +195,7 @@ public class MongoSearch {
         );
     }
 
-    public static PageData getPageForeach(QueryBuilder q, QueryResultBase.Event event, String... locales)
+    public static PageData getPageForeach(QueryBuilder q, QueryResultBase.EventForeach event, String... locales)
         throws DatabaseException {
 
         MongoQuery mongoQuery = new MongoQuery(q);
