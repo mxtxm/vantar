@@ -20,6 +20,8 @@ import javax.servlet.http.HttpServletResponse;
     "/admin/data/import",
     "/admin/data/export",
     "/admin/data/log",
+    "/admin/data/log/rows",
+    "/admin/data/log/object",
 
     "/admin/data/sql/status",
     "/admin/data/mongo/status",
@@ -74,7 +76,15 @@ public class AdminDataController extends RouteToMethod {
     }
 
     public void dataLog(Params params, HttpServletResponse response) throws FinishException {
-        AdminActionLog.record(params, response);
+        AdminActionLog.loadLogPage(params, response);
+    }
+
+    public void dataLogRows(Params params, HttpServletResponse response) throws FinishException {
+        Response.writeString(response, AdminActionLog.getRows(params));
+    }
+
+    public void dataLogObject(Params params, HttpServletResponse response) {
+        Response.writeString(response, AdminActionLog.getObject(params));
     }
 
     public void dataSqlStatus(Params params, HttpServletResponse response) throws FinishException {

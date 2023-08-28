@@ -97,7 +97,7 @@ public class ObjectUtil {
             return throwableToString((Throwable) object);
         }
         try {
-            String s = Json.d.toJson(object);
+            String s = Json.d.toJsonPretty(object);
             return s == null ? object.toString() : s;
         } catch (Exception e) {
             return object.toString();

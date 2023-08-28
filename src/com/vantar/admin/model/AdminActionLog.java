@@ -1,9 +1,9 @@
 package com.vantar.admin.model;
 
-import com.vantar.business.CommonRepoMongo;
+import com.vantar.business.*;
 import com.vantar.common.VantarParam;
 import com.vantar.database.dto.*;
-import com.vantar.database.query.QueryBuilder;
+import com.vantar.database.query.*;
 import com.vantar.exception.*;
 import com.vantar.locale.*;
 import com.vantar.locale.Locale;
@@ -11,6 +11,7 @@ import com.vantar.service.Services;
 import com.vantar.service.auth.*;
 import com.vantar.service.cache.ServiceDtoCache;
 import com.vantar.service.log.dto.UserLog;
+import com.vantar.util.json.Json;
 import com.vantar.web.*;
 import javax.servlet.http.HttpServletResponse;
 import java.util.*;
@@ -18,47 +19,102 @@ import java.util.*;
 
 public class AdminActionLog {
 
-    public static void record(Params params, HttpServletResponse response) throws FinishException {
+    public static void loadLogPage(Params params, HttpServletResponse response) throws FinishException {
         WebUi ui = Admin.getUi(Locale.getString(VantarKey.ADMIN_ACTION_LOG), params, response, true);
 
         String clazz = params.getString(VantarParam.DTO);
         Long id = params.getLong(VantarParam.ID);
         ui.addHeading(clazz + " (" + id + ")");
 
-        QueryBuilder q = new QueryBuilder(new UserLog());
-        q.condition().equal("className", clazz);
-        q.condition().equal("objectId", id);
-        q.sort("id:desc");
+//        QueryBuilder q = new QueryBuilder(new UserLog.View());
+//        q.limit(10);
+//        q.condition().equal("className", clazz);
+//        q.condition().equal("objectId", id);
+//        q.sort("id:desc");
 
-        List<UserLog> data;
-        try {
-            data = CommonRepoMongo.getData(q);
-        } catch (DatabaseException e) {
-            ui.addErrorMessage(e);
-            ui.finish();
-            return;
-        } catch (NoContentException e) {
-            ui.addErrorMessage(Locale.getString(VantarKey.NO_CONTENT));
-            ui.finish();
-            return;
-        }
+//        List<UserLog.View> data;
+//        try {
+//            data = CommonRepoMongo.getData(q);
+//        } catch (DatabaseException e) {
+//            ui.addErrorMessage(e);
+//            ui.finish();
+//            return;
+//        } catch (NoContentException e) {
+//            ui.addErrorMessage(Locale.getString(VantarKey.NO_CONTENT));
+//            ui.finish();
+//            return;
+//        }
+
+//        ServiceDtoCache cache;
+//        try {
+//            cache = Services.get(ServiceDtoCache.class);
+//        } catch (ServiceException e) {
+//            ui.addErrorMessage(e).write();
+//            return;
+//        }
+
+//        for (UserLog.View dto : data) {
+//            ui.addLogRow(
+//                dto,
+//                cache == null || dto.userId == null ? null : cache.getDto(ServiceAuth.getUserClass(), dto.userId)
+//            );
+  //      }
+
+        ui.addLogPage(clazz, id);
+
+        ui.finish();
+    }
+
+    public static String getRows(Params params) {
+        String clazz = params.getString(VantarParam.DTO);
+        Long id = params.getLong(VantarParam.ID);
+        Integer page = params.getInteger("page", 1);
 
         ServiceDtoCache cache;
         try {
             cache = Services.get(ServiceDtoCache.class);
         } catch (ServiceException e) {
-            ui.addErrorMessage(e).write();
-            return;
+            return "ERROR";
         }
 
-        for (UserLog dto : data) {
-            ui.addLogRow(
-                dto,
-                cache == null || dto.userId == null ? null : cache.getDto(ServiceAuth.getUserClass(), dto.userId)
-            );
+        QueryBuilder q = new QueryBuilder(new UserLog.View());
+        q.page(page, 5);
+        q.condition().equal("className", clazz);
+        q.condition().equal("objectId", id);
+        q.sort("id:desc");
+
+        WebUi ui = new WebUi(params);
+        try {
+            CommonModelMongo.forEach(q, dto -> {
+                UserLog.View log = (UserLog.View) dto;
+                ui.addLogRows(
+                    log,
+                    cache == null || log.userId == null ? null : cache.getDto(ServiceAuth.getUserClass(), log.userId)
+                );
+
+            });
+        } catch (NoContentException e) {
+            return "FINISHED";
+        } catch (VantarException e) {
+            return "ERROR";
         }
 
-        ui.finish();
+        return ui.getString();
+    }
+
+    public static String getObject(Params params) {
+        try {
+            String object = CommonModelMongo.getById(params, new UserLog()).object;
+            if (object == null) {
+                return "";
+            } else if (Json.isJsonShallow(object)) {
+                return Json.d.toJsonPretty(object);
+            } else {
+                return object;
+            }
+        } catch (VantarException e) {
+            return "";
+        }
     }
 
     public static void request(Params params, HttpServletResponse response) throws FinishException {

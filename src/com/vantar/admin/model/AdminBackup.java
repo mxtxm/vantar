@@ -39,6 +39,7 @@ public class AdminBackup {
         }
 
         DateTimeRange dateRange = params.getDateRange("datemin", "datemax");
+        String exclude = params.getString("exclude");
         String dbDumpFilename = params.getString(
             "dumpfile",
             backup.getPath() + dbms.toString().toLowerCase() + "-"
@@ -50,6 +51,7 @@ public class AdminBackup {
                 .addMessage(Locale.getString(VantarKey.ADMIN_BACKUP_MSG2))
                 .beginFormPost()
                 .addInput(Locale.getString(VantarKey.ADMIN_BACKUP_FILE_PATH), "dumpfile", dbDumpFilename)
+                .addInput(Locale.getString(VantarKey.ADMIN_IMPORT_EXCLUDE), "exclude", backup.exclude)
                 .addInput(Locale.getString(VantarKey.ADMIN_DATE_FROM), "datemin",
                     dateRange.dateMin == null ? "" : dateRange.dateMin.formatter().getDateTimePersian())
                 .addInput(Locale.getString(VantarKey.ADMIN_DATE_TO), "datemax",
@@ -66,7 +68,7 @@ public class AdminBackup {
         if (dbms.equals(DtoDictionary.Dbms.SQL)) {
             SqlBackup.dump(dbDumpFilename, dateRange, ui);
         } else if (dbms.equals(DtoDictionary.Dbms.MONGO)) {
-            MongoBackup.dump(dbDumpFilename, dateRange, backup.exclude == null ? null : StringUtil.splitToSet(backup.exclude, ','), ui);
+            MongoBackup.dump(dbDumpFilename, dateRange, exclude == null ? null : StringUtil.splitToSet(exclude, ','), ui);
         } else if (dbms.equals(DtoDictionary.Dbms.ELASTIC)) {
             ElasticBackup.dump(dbDumpFilename, dateRange, ui);
         }

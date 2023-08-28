@@ -36,7 +36,7 @@ public class WebUi {
     public static final String LINK_SEPARATOR = ">>>";
 
     public Params params;
-    private final HttpServletResponse response;
+    private HttpServletResponse response;
     private boolean written;
 
     private StringBuilder html = new StringBuilder(100000);
@@ -53,6 +53,26 @@ public class WebUi {
     private StringBuilder additive;
     private final HtmlEscape escape = new HtmlEscape();
 
+
+    public WebUi(Params params) {
+        authToken = params.getString(VantarParam.AUTH_TOKEN);
+        lang = params.getLang();
+        if (lang.equals("fa")) {
+            direction = "rtl";
+            boxFloat = "float-right";
+            align = "right";
+            alignKey = "left";
+            alignValue = "right";
+        } else {
+            lang = "en";
+            direction = "ltr";
+            boxFloat = "float-left";
+            align = "left";
+            alignKey = "right";
+            alignValue = "left";
+        }
+        this.params = params;
+    }
 
     public WebUi(Params params, HttpServletResponse response) {
         authToken = params.getString(VantarParam.AUTH_TOKEN);
@@ -365,7 +385,25 @@ public class WebUi {
         return this;
     }
 
-    public WebUi addLogRow(UserLog userLog, CommonUser user) {
+    public WebUi addLogPage(String clazz, Long id) {
+        html.append("<div id='log-rows'></div><input id='pageLog' value='1' style='display:none'/><div><button id='more' onclick=\"loadRows('" + clazz + "', " + id + ")\">more</button></div>");
+
+        html.append("<script>"
+            + "function loadRows(clazz, id) { var p = parseInt($('#pageLog').val(), 10); $('#pageLog').val(p+1); "
+            + " getString('/admin/data/log/rows', {dto:clazz,id:id,page:p}, '")
+            .append(authToken).append("', 'en', function(o) { if (o=='FINISHED') { $('#more').hide(); return;} $('#log-rows').append(o)}, ); } "
+
+            + "function setObject(id) { if ($('#log-object').hasClass('loaded')) {return;} "
+            + " $('#log-object').addClass('loaded'); getString('/admin/data/log/object', {id:id}, '")
+            .append(authToken).append("', 'en', function(o) {$('#log-object' + id).html(o)}, ); }</script>");
+
+        setJs("/js/jquery.min.js");
+        setJs("/js/vantar.js");
+        setJs("/js/webservice.js");
+        return this;
+    }
+
+    public void addLogRows(UserLog.View userLog, CommonUser user) {
         html.append("<div class='log-row clearfix'>");
 
         html.append("<div class='log-col-user'>")
@@ -383,9 +421,8 @@ public class WebUi {
         html.append("<div class='log-col-request'>")
             .append("<p class='ip'>").append(userLog.ip).append("</p><pre class='headers'>");
         if (userLog.headers != null) {
-            userLog.headers.forEach((k, v) -> {
-                html.append("<strong>").append(k).append("</strong>: ").append(escape(v)).append("\n");
-            });
+            userLog.headers.forEach((k, v) ->
+                html.append("<strong>").append(k).append("</strong>: ").append(escape(v)).append("\n"));
         }
         html.append("</pre></div>");
 
@@ -397,13 +434,8 @@ public class WebUi {
             }
             html.append("</strong>\n");
         }
-        if (userLog.object == null) {
-            // nothing
-        } else if (Json.isJsonShallow(userLog.object)) {
-            html.append(escape(Json.d.toJsonPretty(userLog.object)));
-        } else {
-            html.append(escape(userLog.object));
-        }
+        html.append("</pre><textarea id='log-object" + userLog.id + "' onclick='setObject(").append(userLog.id).append(")' class='object'>");
+        html.append("</textarea><pre class='object'>");
         if (userLog.uploadedFiles != null) {
             html.append("\n\n<strong>files:</strong>");
             for (String file : userLog.uploadedFiles) {
@@ -411,8 +443,10 @@ public class WebUi {
             }
         }
         html.append("</pre></div></div>");
+    }
 
-        return this;
+    public String getString() {
+        return html.toString();
     }
 
     public WebUi beginContainer(String id, String className) {

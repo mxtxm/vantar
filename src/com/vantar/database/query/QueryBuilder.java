@@ -185,6 +185,7 @@ public class QueryBuilder {
 
     public QueryBuilder setDto(Dto dto) {
         this.dto = dto;
+        dtoResult = dto;
         return this;
     }
 
@@ -330,6 +331,11 @@ public class QueryBuilder {
 
     public QueryBuilder setCondition(QueryCondition condition) {
         this.condition = condition;
+        return this;
+    }
+
+    public QueryBuilder clearConditions() {
+        this.condition = null;
         return this;
     }
 

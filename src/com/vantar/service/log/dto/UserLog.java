@@ -32,4 +32,32 @@ public class UserLog extends DtoBase {
     public String object;
 
     public Map<String, Object> extraData;
+
+
+    @Storage("UserLog")
+    public static class View extends DtoBase {
+
+        public Long id;
+
+        public Long userId;
+        public Long threadId;
+        public String action;
+        public Integer status;
+        public String requestType;
+        public String url;
+        public String ip;
+        @Timestamp
+        @CreateTime
+        public DateTime time;
+
+        public String className;
+
+        public List<String> uploadedFiles;
+        @StoreString
+        public Map<String, String> headers;
+
+        public Long objectId;
+
+        public Map<String, Object> extraData;
+    }
 }
