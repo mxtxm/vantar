@@ -15,7 +15,6 @@ import com.vantar.util.string.StringUtil;
 import org.slf4j.*;
 import java.lang.reflect.Field;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 
 
 public class Services {
@@ -24,7 +23,7 @@ public class Services {
 
     public static final String ID = UUID.randomUUID().toString();
     public static Map<String, Integer> serviceCount;
-    public static final Map<String, ServiceInfo> upServices = new ConcurrentHashMap<>(14);
+    public static final Map<String, ServiceInfo> upServices = new LinkedHashMap<>(20, 1);
     public static ServiceMessaging messaging;
 
     private static Event event;
@@ -247,21 +246,31 @@ public class Services {
     }
 
     private static void stopServices(boolean doEvents) {
+        log.info("> stopping services");
+
         if (doEvents && event != null) {
             event.beforeStop();
         }
 
-        upServices.forEach((tClass, info) -> {
+        ListIterator<Map.Entry<String, ServiceInfo>> iterator =
+            new ArrayList<>(upServices.entrySet()).listIterator(upServices.size());
+
+        while (iterator.hasPrevious()) {
+            Map.Entry<String, ServiceInfo> entry = iterator.previous();
+            ServiceInfo info = entry.getValue();
             if (info.instance != null) {
                 stopService(info.instance);
             }
-        });
+        }
 
         messaging.stop();
+        log.info(" >> '{}' stopped gracefully", ServiceMessaging.class.getSimpleName());
 
         if (doEvents && event != null) {
             event.afterStop();
         }
+
+        log.info("< stopping services");
     }
 
     private static void stopService(Service service) {
@@ -353,7 +362,7 @@ public class Services {
     }
 
     public static synchronized void resetTotalServiceCount() {
-        serviceCount = new ConcurrentHashMap<>();
+        serviceCount = new LinkedHashMap<>(20, 1);
         serviceCount.put(ID, getEnabled());
     }
 
@@ -369,6 +378,7 @@ public class Services {
             Queue.connect(Settings.queue());
         }
         if (dependencies.contains(MongoConnection.class)) {
+            MongoConnection.isShutdown = false;
             MongoConnection.connect(Settings.mongo());
         }
         if (dependencies.contains(SqlConnection.class)) {

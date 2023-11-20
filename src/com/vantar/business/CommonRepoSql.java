@@ -5,7 +5,6 @@ import com.vantar.database.common.ValidationError;
 import com.vantar.database.dto.*;
 import com.vantar.database.nosql.elasticsearch.ElasticSearch;
 import com.vantar.database.query.*;
-import com.vantar.database.query.data.QueryData;
 import com.vantar.database.sql.*;
 import com.vantar.exception.*;
 import com.vantar.locale.VantarKey;
@@ -142,10 +141,6 @@ public class CommonRepoSql extends SqlExecute {
             result.setLocale(locales);
         }
         return result.asList();
-    }
-
-    public Object search(QueryData queryData, String... locales) throws DatabaseException, NoContentException, InputException {
-        return search(new QueryBuilder(queryData), locales);
     }
 
     public Object search(QueryBuilder q, String... locales) throws DatabaseException, NoContentException {

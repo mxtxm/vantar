@@ -41,7 +41,6 @@ public class MongoQueryResult extends QueryResultBase implements QueryResult, Au
 
     public MongoQueryResult(AggregateIterable<Document> cursor, Dto dto) {
         this.dto = dto;
-        cursor.allowDiskUse(true);
         this.cursorA = cursor.cursor();
         iterator = cursor.iterator();
         fields = dto.getClass().getFields();
@@ -213,8 +212,7 @@ public class MongoQueryResult extends QueryResultBase implements QueryResult, Au
                 }
 
                 if (type == List.class || type == Set.class) {
-                    Generics generics = field.getAnnotation(Generics.class);
-                    Class<?>[] g = generics == null ? ClassUtil.getGenericTypes(field) : generics.value();
+                    Class<?>[] g = ClassUtil.getGenericTypes(field);
                     if (g == null || g.length == 0) {
                         log.warn(" ! type/value miss-match ({}.{})", dto.getClass().getName(), field.getName());
                         continue;
@@ -279,8 +277,7 @@ public class MongoQueryResult extends QueryResultBase implements QueryResult, Au
                     if (v == null) {
                         setFieldNullValue(dto, field);
                     } else {
-                        Generics generics = field.getAnnotation(Generics.class);
-                        Class<?>[] g = generics == null ? ClassUtil.getGenericTypes(field) : generics.value();
+                        Class<?>[] g = ClassUtil.getGenericTypes(field);
                         if (g == null || g.length < 2) {
                             log.warn(" ! type/value miss-match ({}.{})", dto.getClass().getName(), field.getName());
                             continue;
@@ -536,7 +533,7 @@ public class MongoQueryResult extends QueryResultBase implements QueryResult, Au
                 log.warn(" ! can not get generic type to fetch d={} dto={} f={} t={}", document, dtoX, fieldX, type);
                 return;
             }
-            type = types[0];
+            Class<?> typeGeneric = types[0];
 
             List<Long> ids = document.getList(fieldX.getAnnotation(Fetch.class).value(), Long.class);
             if (ids == null) {
@@ -546,7 +543,7 @@ public class MongoQueryResult extends QueryResultBase implements QueryResult, Au
             Collection<Object> dtos = type == List.class ? new ArrayList<>(ids.size()) : new HashSet<>(ids.size(), 1);
             for (Long id : ids) {
                 try {
-                    dtos.add(MongoSearch.getDto((Class<? extends Dto>) type, id, getLocales()));
+                    dtos.add(MongoQuery.getDto((Class<? extends Dto>) typeGeneric, id, getLocales()));
                 } catch (NoContentException ignore) {
 
                 }
@@ -561,7 +558,7 @@ public class MongoQueryResult extends QueryResultBase implements QueryResult, Au
         }
 
         try {
-            fieldX.set(dtoX, MongoSearch.getDto((Class<? extends Dto>) fieldX.getType(), id, getLocales()));
+            fieldX.set(dtoX, MongoQuery.getDto((Class<? extends Dto>) fieldX.getType(), id, getLocales()));
         } catch (NoContentException e) {
             fieldX.set(dtoX, null);
         }
@@ -577,7 +574,7 @@ public class MongoQueryResult extends QueryResultBase implements QueryResult, Au
             }
             if (id != null) {
                 try {
-                    fetchByFkCache.put(fkData.fk(), MongoSearch.getDto(fkData.dto(), id, getLocales()));
+                    fetchByFkCache.put(fkData.fk(), MongoQuery.getDto(fkData.dto(), id, getLocales()));
                 } catch (NoContentException ignore) {
 
                 }

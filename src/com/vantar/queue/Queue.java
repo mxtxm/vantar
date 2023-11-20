@@ -354,16 +354,20 @@ public class Queue {
         if (channel != null) {
             try {
                 channel.basicCancel(workerTag);
+            } catch (AlreadyClosedException ignore) {
+
             } catch (IOException e) {
                 log.error(" !! rabbitmq channel basicCancel abort failed\n", e);
             }
             try {
                 channel.abort();
-            } catch (IOException e) {
-                log.error(" !! rabbitmq channel abort failed\n", e);
+            } catch (AlreadyClosedException | IOException ignore) {
+
             }
             try {
                 channel.close();
+            } catch (AlreadyClosedException ignore) {
+
             } catch (IOException | TimeoutException e) {
                 log.error(" !! rabbitmq channel close failed\n", e);
             }

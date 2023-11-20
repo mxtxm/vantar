@@ -3,7 +3,7 @@ package com.vantar.common;
 
 public class VantarParam {
 
-    public static final String VERSION = "2.62";
+    public static final String VERSION = "3.7";
 
     public static final String QUEUE_NAME_USER_ACTION_LOG = "user-action-log";
 
@@ -30,6 +30,9 @@ public class VantarParam {
     public static final String AUTH_TOKEN = "x";
     public static final int SUCCESS = 1;
     public static final int FAIL = 0;
+
+    public static final int PAGINATION_DEFAULT_PAGE = 1;
+    public static final int PAGINATION_DEFAULT_SIZE = 20;
 
     public static final String LANG = "lang";
     public static final String ID = "id";

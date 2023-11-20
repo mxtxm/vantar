@@ -183,7 +183,7 @@ public class ElasticSearch {
         try {
             SearchResponse searchResponse = ElasticConnection.getClient().search(request, RequestOptions.DEFAULT);
             SearchHits hits = searchResponse.getHits();
-            return new ElasticQueryResult(hits.getHits(), q.getDtoResult());
+            return new ElasticQueryResult(hits.getHits(), q.getDto());
         } catch (Throwable e) {
             throw new DatabaseException(e);
         }

@@ -1,6 +1,7 @@
 package com.vantar.admin.model;
 
-import com.vantar.database.dto.DtoDictionary;
+import com.vantar.database.common.ValidationError;
+import com.vantar.database.dto.*;
 import com.vantar.database.nosql.elasticsearch.ElasticBackup;
 import com.vantar.database.nosql.mongo.MongoBackup;
 import com.vantar.database.query.QueryBuilder;
@@ -91,25 +92,65 @@ public class AdminBackup {
 
         String dbDumpFilename = params.getString(
             "dumpfile",
-            backup.getPath() + dbms.toString().toLowerCase() + "-query-"
-                + (new DateTime().formatter().getDateTimeSimple()) + DUMP_FILE_EXT
+            backup.getPath() + dbms.toString().toLowerCase() + "-dto-query" + DUMP_FILE_EXT
         );
 
         if (!params.isChecked("f")) {
+            List<DtoDictionary.Info> dtoList = DtoDictionary.getAll();
+            Map<String, String> dtos = new HashMap<>(dtoList.size(), 1);
+            for (DtoDictionary.Info i : dtoList) {
+                dtos.put(i.getDtoClassName(), i.getDtoClassName());
+            }
             ui  .beginFormPost()
                 .addInput(Locale.getString(VantarKey.ADMIN_BACKUP_FILE_PATH), "dumpfile", dbDumpFilename)
-                .addTextArea("Query", "query")
+                .addSelect("DTO", "dto-class", dtos)
+                .addTextArea(
+                    "Query",
+                    "query",
+                    "{\n" +
+                    "    \"pagination\": false,\n" +
+                    "    \"page\": 1,\n" +
+                    "    \"length\": 100,\n" +
+                    "    \"condition\": {\n" +
+                    "        \"operator\": \"AND\",\n" +
+                    "        \"items\": [\n" +
+                    "            {\n" +
+                    "                \"col\": \"id\",\n" +
+                    "                \"type\": \"BETWEEN\",\n" +
+                    "                \"values\": [1,10000]  \n" +
+                    "            }\n" +
+                    "        ]\n" +
+                    "    }\n" +
+                    "}")
                 .addSubmit(Locale.getString(VantarKey.ADMIN_BACKUP_CREATE_START))
                 .finish();
             return;
         }
 
-        try {
-            QueryBuilder q = new QueryBuilder(params.getQueryData("query"));
-            MongoBackup.dumpQuery(dbDumpFilename, q, ui);
-        } catch (InputException e) {
-            ui.addErrorMessage(e);
+        QueryBuilder q;
+        String dtoClass = params.getString("dto-class");
+        if (dtoClass != null) {
+            DtoDictionary.Info info = DtoDictionary.get(dtoClass);
+            if (info != null) {
+                q = params.getQueryBuilder("query", info.getDtoInstance());
+            } else {
+                q = params.getQueryBuilder("query");
+            }
+        } else {
+            q = params.getQueryBuilder("query");
         }
+
+        if (q == null) {
+            ui.write().addErrorMessage("q=EMPTY").finish();
+            return;
+        }
+        List<ValidationError> errors = q.getErrors();
+        if (errors != null) {
+            ui.write().addErrorMessage(ValidationError.toString(errors)).finish();
+            return;
+        }
+
+        MongoBackup.dumpQuery(dbDumpFilename, q, ui);
 
         ui.finish();
     }

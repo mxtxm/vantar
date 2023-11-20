@@ -2,6 +2,8 @@ package com.vantar.service.cache;
 
 import com.vantar.business.*;
 import com.vantar.database.dto.*;
+import com.vantar.database.nosql.mongo.MongoQuery;
+import com.vantar.database.query.QueryResult;
 import com.vantar.database.sql.SqlConnection;
 import com.vantar.exception.*;
 import com.vantar.service.Services;
@@ -127,7 +129,9 @@ public class ServiceDtoCache implements Services.Service {
 
         if (info.dtoClass.isAnnotationPresent(Mongo.class)) {
             try {
-                dtos = info.queryCache == null ? CommonRepoMongo.getAll(dto) : CommonRepoMongo.getData(info.queryCache);
+                dtos = info.queryCache == null ?
+                    MongoQuery.getAllData(dto).asList() :
+                    MongoQuery.getData(info.queryCache).asList();
             } catch (NoContentException ignore) {
 
             } catch (Exception e) {

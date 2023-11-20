@@ -22,6 +22,7 @@ public enum VantarKey implements LangKey {
     INVALID_DATETIME,
 
     // validation
+    MUST_BE_POST_MULTIPART,
     REQUIRED,
     REQUIRED_OR,
     REQUIRED_XOR,
@@ -235,8 +236,6 @@ public enum VantarKey implements LangKey {
     BUSINESS_ERROR_COUNT,
     BUSINESS_DUPLICATE_COUNT,
     BUSINESS_SERIAL_MAX,
-
-    NO_SEARCH_COMMAND,
 
     ADMIN_DELETE_TOKEN,
     ADMIN_DELETE_TOKEN_DESCRIPTION,

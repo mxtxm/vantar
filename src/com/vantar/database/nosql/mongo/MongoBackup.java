@@ -164,6 +164,7 @@ public class MongoBackup {
     }
 
     public static void restore(String zipPath, boolean deleteData, boolean toCamelCase, WebUi ui) {
+        Admin.log.info("---> RESTORING database");
         MongoDatabase database;
         try {
             database = MongoConnection.getDatabase();
@@ -192,7 +193,13 @@ public class MongoBackup {
         if (deleteData) {
             try {
                 for (String s : MongoConnection.getCollections()) {
-                    Mongo.deleteAll(s);
+                    try {
+                        Mongo.deleteAll(s);
+                    } catch (DatabaseException e) {
+                        if (ui != null) {
+                            ui.addErrorMessage(e);
+                        }
+                    }
                 }
             } catch (DatabaseException e) {
                 if (ui != null) {
@@ -258,6 +265,7 @@ public class MongoBackup {
         }
 
         if (ui != null) {
+            Admin.log.info("<--- finished RESTORING database");
             ui .addPre(
                     "finished in: " + ((System.currentTimeMillis() - startTime) / 1000) + "s" +
                     "\n" + r + " records" +
@@ -266,7 +274,12 @@ public class MongoBackup {
                 .containerEnd()
                 .write();
 
-            AdminDatabase.createMongoIndex(ui, true);
+            try {
+                AdminDatabase.createMongoIndex(ui, true);
+            } catch (Exception e) {
+                Admin.log.error("! restore failed to create database indexes.", e);
+                ui.addErrorMessage("Failed to create indexes.");
+            }
 
             ui.finish();
         }

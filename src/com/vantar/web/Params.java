@@ -2,7 +2,9 @@ package com.vantar.web;
 
 import com.vantar.common.VantarParam;
 import com.vantar.database.datatype.Location;
-import com.vantar.database.query.data.QueryData;
+import com.vantar.database.dto.Dto;
+import com.vantar.database.query.QueryBuilder;
+import com.vantar.web.query.QueryData;
 import com.vantar.exception.*;
 import com.vantar.locale.Locale;
 import com.vantar.locale.*;
@@ -236,6 +238,7 @@ public class Params {
     // > > > GET
 
 
+
     @SuppressWarnings("unchecked")
     public <T> T getX(String key) {
         return map == null ? null : (T) map.get(key);
@@ -261,6 +264,14 @@ public class Params {
 
         String v = request == null ? null : request.getParameter(key);
         return v == null ? null : StringUtil.remove(v, '\r');
+    }
+
+    public Object getObjectRequired(String key, Class<?> typeClass) throws InputException {
+        Object v = getObject(key, typeClass);
+        if (v == null) {
+            throw new InputException(VantarKey.REQUIRED, key);
+        }
+        return v;
     }
 
     public Object getObject(String key, Class<?> typeClass) {
@@ -294,6 +305,14 @@ public class Params {
         return null;
     }
 
+    public String getStringRequired(String key) throws InputException {
+        String v = getString(key);
+        if (v == null) {
+            throw new InputException(VantarKey.REQUIRED, key);
+        }
+        return v;
+    }
+
     public String getString(String key) {
         return getString(key, null);
     }
@@ -302,6 +321,14 @@ public class Params {
         typeMisMatch = false;
         String value = getParameter(key);
         return value == null || value.isEmpty() ? defaultValue : value.trim();
+    }
+
+    public char getCharacterRequired(String key) throws InputException {
+        Character v = getCharacter(key);
+        if (v == null) {
+            throw new InputException(VantarKey.REQUIRED, key);
+        }
+        return v;
     }
 
     public Character getCharacter(String key) {
@@ -313,6 +340,14 @@ public class Params {
         typeMisMatch = StringUtil.isNotEmpty(value) && value.length() > 1;
         Character c = StringUtil.toCharacter(value);
         return c == null ? defaultValue : c;
+    }
+
+    public int getIntegerRequired(String key) throws InputException {
+        Integer v = getInteger(key);
+        if (v == null) {
+            throw new InputException(VantarKey.REQUIRED, key);
+        }
+        return v;
     }
 
     public Integer getInteger(String key) {
@@ -327,6 +362,14 @@ public class Params {
         return isNull ? defaultValue : number;
     }
 
+    public long getLongRequired(String key) throws InputException {
+        Long v = getLong(key);
+        if (v == null) {
+            throw new InputException(VantarKey.REQUIRED, key);
+        }
+        return v;
+    }
+
     public Long getLong(String key) {
         return getLong(key, null);
     }
@@ -337,6 +380,14 @@ public class Params {
         boolean isNull = number == null;
         typeMisMatch = isNull && StringUtil.isNotEmpty(value);
         return isNull ? defaultValue : number;
+    }
+
+    public double getDoubleRequired(String key) throws InputException {
+        Double v = getDouble(key);
+        if (v == null) {
+            throw new InputException(VantarKey.REQUIRED, key);
+        }
+        return v;
     }
 
     public Double getDouble(String key) {
@@ -351,6 +402,14 @@ public class Params {
         return isNull ? defaultValue : number;
     }
 
+    public float getFloatRequired(String key) throws InputException {
+        Float v = getFloat(key);
+        if (v == null) {
+            throw new InputException(VantarKey.REQUIRED, key);
+        }
+        return v;
+    }
+
     public Float getFloat(String key) {
         return getFloat(key, null);
     }
@@ -363,6 +422,14 @@ public class Params {
         return isNull ? defaultValue : number;
     }
 
+    public boolean getBooleanRequired(String key) throws InputException {
+        Boolean v = getBoolean(key);
+        if (v == null) {
+            throw new InputException(VantarKey.REQUIRED, key);
+        }
+        return v;
+    }
+
     public Boolean getBoolean(String key) {
         return getBoolean(key, null);
     }
@@ -373,6 +440,14 @@ public class Params {
         boolean isNull = b == null;
         typeMisMatch = isNull && StringUtil.isNotEmpty(value);
         return isNull ? defaultValue : b;
+    }
+
+    public DateTime getDateTimeRequired(String key) throws InputException {
+        DateTime v = getDateTime(key);
+        if (v == null) {
+            throw new InputException(VantarKey.REQUIRED, key);
+        }
+        return v;
     }
 
     public DateTime getDateTime(String key) {
@@ -404,9 +479,18 @@ public class Params {
     }
 
 
+
     // > > > GET COLLECTION
 
 
+
+    public <T> List<T> getListRequired(String key, Class<T> type) throws InputException {
+        List<T> v = getList(key, type);
+        if (v == null) {
+            throw new InputException(VantarKey.REQUIRED, key);
+        }
+        return v;
+    }
 
     public <T> List<T> getList(String key, Class<T> type) {
         if (ignoreParams != null && ignoreParams.contains(key)) {
@@ -422,6 +506,14 @@ public class Params {
         List<T> list = CollectionUtil.toList(object, type);
         typeMisMatch = (list == null || list.isEmpty()) && isEmpty;
         return list;
+    }
+
+    public <T> Set<T> getSetRequired(String key, Class<T> type) throws InputException {
+        Set<T> v = getSet(key, type);
+        if (v == null) {
+            throw new InputException(VantarKey.REQUIRED, key);
+        }
+        return v;
     }
 
     public <T> Set<T> getSet(String key, Class<T> typeClass) {
@@ -442,8 +534,24 @@ public class Params {
         }
     }
 
+    public List<Integer> getIntegerListRequired(String key) throws InputException {
+        List<Integer> v = getIntegerList(key);
+        if (v == null) {
+            throw new InputException(VantarKey.REQUIRED, key);
+        }
+        return v;
+    }
+
     public List<Integer> getIntegerList(String key) {
         return getList(key, Integer.class);
+    }
+
+    public Set<Integer> getIntegerSetRequired(String key) throws InputException {
+        Set<Integer> v = getIntegerSet(key);
+        if (v == null) {
+            throw new InputException(VantarKey.REQUIRED, key);
+        }
+        return v;
     }
 
     public Set<Integer> getIntegerSet(String key) {
@@ -451,8 +559,24 @@ public class Params {
         return value == null ? null : new HashSet<>(value);
     }
 
+    public List<Long> getLongListRequired(String key) throws InputException {
+        List<Long> v = getLongList(key);
+        if (v == null) {
+            throw new InputException(VantarKey.REQUIRED, key);
+        }
+        return v;
+    }
+
     public List<Long> getLongList(String key) {
         return getList(key, Long.class);
+    }
+
+    public Set<Long> getLongSetRequired(String key) throws InputException {
+        Set<Long> v = getLongSet(key);
+        if (v == null) {
+            throw new InputException(VantarKey.REQUIRED, key);
+        }
+        return v;
     }
 
     public Set<Long> getLongSet(String key) {
@@ -460,8 +584,24 @@ public class Params {
         return value == null ? null : new HashSet<>(value);
     }
 
+    public List<Double> getDoubleListRequired(String key) throws InputException {
+        List<Double> v = getDoubleList(key);
+        if (v == null) {
+            throw new InputException(VantarKey.REQUIRED, key);
+        }
+        return v;
+    }
+
     public List<Double> getDoubleList(String key) {
         return getList(key, Double.class);
+    }
+
+    public Set<Double> getDoubleSetRequired(String key) throws InputException {
+        Set<Double> v = getDoubleSet(key);
+        if (v == null) {
+            throw new InputException(VantarKey.REQUIRED, key);
+        }
+        return v;
     }
 
     public Set<Double> getDoubleSet(String key) {
@@ -469,8 +609,24 @@ public class Params {
         return value == null ? null : new HashSet<>(value);
     }
 
+    public List<Float> getFloatListRequired(String key) throws InputException {
+        List<Float> v = getFloatList(key);
+        if (v == null) {
+            throw new InputException(VantarKey.REQUIRED, key);
+        }
+        return v;
+    }
+
     public List<Float> getFloatList(String key) {
         return getList(key, Float.class);
+    }
+
+    public Set<Float> getFloatSetRequired(String key) throws InputException {
+        Set<Float> v = getFloatSet(key);
+        if (v == null) {
+            throw new InputException(VantarKey.REQUIRED, key);
+        }
+        return v;
     }
 
     public Set<Float> getFloatSet(String key) {
@@ -478,8 +634,24 @@ public class Params {
         return value == null ? null : new HashSet<>(value);
     }
 
+    public List<String> getStringListRequired(String key) throws InputException {
+        List<String> v = getStringList(key);
+        if (v == null) {
+            throw new InputException(VantarKey.REQUIRED, key);
+        }
+        return v;
+    }
+
     public List<String> getStringList(String key) {
         return getList(key, String.class);
+    }
+
+    public Set<String> getStringSetRequired(String key) throws InputException {
+        Set<String> v = getStringSet(key);
+        if (v == null) {
+            throw new InputException(VantarKey.REQUIRED, key);
+        }
+        return v;
     }
 
     public Set<String> getStringSet(String key) {
@@ -492,6 +664,14 @@ public class Params {
     // > > > GET ENUM
 
 
+
+    public <E extends Enum<?>> E getEnumRequired(String key, Class<E> type) throws InputException {
+        E v = getEnum(key, type);
+        if (v == null) {
+            throw new InputException(VantarKey.REQUIRED, key);
+        }
+        return v;
+    }
 
     public <E extends Enum<?>> E getEnum(String key, Class<E> type) {
         return getEnum(key, type, null);
@@ -574,27 +754,43 @@ public class Params {
     }
 
 
+
     // > > > GET DATABASE QUERY
 
 
 
-    public QueryData getQueryData() {
-        return normalizeQueryData(getJson(QueryData.class));
+    public QueryBuilder getQueryBuilder() {
+        return getQueryBuilder((Dto) null);
     }
 
-    public QueryData getQueryData(String key) {
-        String json = getString(key);
-        return json == null ? null : normalizeQueryData(Json.d.fromJson(json, QueryData.class));
-    }
-
-    private QueryData normalizeQueryData(QueryData q) {
+    public QueryBuilder getQueryBuilder(Dto dto) {
+        QueryData q = getJson(QueryData.class);
         if (q == null) {
             return null;
         }
         if (q.lang != null) {
             set(VantarParam.LANG, q.lang);
         }
-        return q;
+        return q.getQueryBuilder(dto);
+    }
+
+    public QueryBuilder getQueryBuilder(String key) {
+        return getQueryBuilder(key, null);
+    }
+
+    public QueryBuilder getQueryBuilder(String key, Dto dto) {
+        String json = getString(key);
+        if (json == null) {
+            return null;
+        }
+        QueryData q = Json.d.fromJson(json, QueryData.class);
+        if (q == null) {
+            return null;
+        }
+        if (q.lang != null) {
+            set(VantarParam.LANG, q.lang);
+        }
+        return q.getQueryBuilder(dto);
     }
 
 
@@ -641,6 +837,14 @@ public class Params {
 
 
 
+    public Location getLocationRequired(String key) throws InputException {
+        Location v = getLocation(key);
+        if (v == null || v.isEmpty() || !v.isValid()) {
+            throw new InputException(VantarKey.REQUIRED, key);
+        }
+        return v;
+    }
+
     public Location getLocation(String key) {
         String locationString = getString(key);
         Location location = locationString != null ?
@@ -673,10 +877,26 @@ public class Params {
         return range;
     }
 
+    public DateTimeRange getDateTimeRangeRequired(String dateMin, String dateMax) throws InputException {
+        DateTimeRange v = getDateTimeRange(dateMin, dateMax);
+        if (v == null || v.isEmpty() || !v.isValid()) {
+            throw new InputException(VantarKey.REQUIRED, dateMin + "," + dateMax);
+        }
+        return v;
+    }
+
     public DateTimeRange getDateTimeRange(String dateMin, String dateMax) {
         DateTimeRange range = new DateTimeRange(getDateTime(dateMin), getDateTime(dateMax));
         range.adjustDateTimeRange();
         return range;
+    }
+
+    public DateTimeRange getDateTimeRangeRequired(String key) throws InputException {
+        DateTimeRange v = getDateTimeRange(key);
+        if (v == null || v.isEmpty() || !v.isValid()) {
+            throw new InputException(VantarKey.REQUIRED, key);
+        }
+        return v;
     }
 
     public DateTimeRange getDateTimeRange(String key) {
@@ -707,10 +927,26 @@ public class Params {
         return range;
     }
 
+    public DateTimeRange getDateRangeRequired(String dateMin, String dateMax) throws InputException {
+        DateTimeRange v = getDateRange(dateMin, dateMax);
+        if (v == null || v.isEmpty() || !v.isValid()) {
+            throw new InputException(VantarKey.REQUIRED, dateMin + "," + dateMax);
+        }
+        return v;
+    }
+
     public DateTimeRange getDateRange(String dateMin, String dateMax) {
         DateTimeRange range = new DateTimeRange(getDateTime(dateMin), getDateTime(dateMax));
         range.adjustDateRange();
         return range;
+    }
+
+    public DateTimeRange getDateRangeRequired(String key) throws InputException {
+        DateTimeRange v = getDateRange(key);
+        if (v == null || v.isEmpty() || !v.isValid()) {
+            throw new InputException(VantarKey.REQUIRED, key);
+        }
+        return v;
     }
 
     public DateTimeRange getDateRange(String key) {
@@ -728,6 +964,7 @@ public class Params {
     // > > > UPLOAD
 
 
+
     private List<String> uploadFiles;
     private boolean fileUploaded = false;
 
@@ -737,15 +974,25 @@ public class Params {
 
     public Uploaded upload(String name) {
         if (request == null) {
+            log.error("! bad upload request request=null");
             return new Uploaded(VantarKey.REQUIRED);
         }
+        String contentType = request.getContentType();
+        if (!"post".equalsIgnoreCase(request.getMethod())) {
+            log.error("! bad upload request method={} content-type={}", request.getMethod(), contentType);
+            return new Uploaded(VantarKey.MUST_BE_POST_MULTIPART);
+        }
+        if (contentType == null || !contentType.toLowerCase().contains("multipart")) {
+            log.error("! bad upload request method={} content-type={}", request.getMethod(), contentType);
+            return new Uploaded(VantarKey.MUST_BE_POST_MULTIPART);
+        }
+
         fileUploaded = true;
         try {
             Part filePart = request.getPart(name);
             if (filePart == null || filePart.getSize() == 0) {
                 return new Uploaded(VantarKey.REQUIRED);
             }
-
             Uploaded upload = new Uploaded(filePart);
             if (uploadFiles == null) {
                 uploadFiles = new ArrayList<>(10);
@@ -753,7 +1000,7 @@ public class Params {
             uploadFiles.add(upload.getOriginalFilename());
             return upload;
         } catch (IOException | ServletException e) {
-            log.warn(" ! ({}) is multi-part?\n", name, e);
+            log.error("! bad upload request key={} method={} content-type={}", name, request.getMethod(), contentType, e);
             return new Uploaded(VantarKey.IO_ERROR);
         }
     }
@@ -769,6 +1016,7 @@ public class Params {
         public Uploaded(VantarKey error) {
             if (error != null) {
                 this.error = error;
+                return;
             }
             if (!isUploaded()) {
                 this.error = VantarKey.REQUIRED;

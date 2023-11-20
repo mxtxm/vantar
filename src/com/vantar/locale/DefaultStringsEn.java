@@ -32,6 +32,7 @@ public class DefaultStringsEn {
 
         // validation
         tokens.put(VantarKey.REQUIRED, "\"{0}\": is required");
+        tokens.put(VantarKey.MUST_BE_POST_MULTIPART, "wrong request method, must be POST (multipart/form-data encoded)");
         tokens.put(VantarKey.REQUIRED_OR, "\"{0}\": at least one is required");
         tokens.put(VantarKey.REQUIRED_XOR, "\"{0}\": one and only one is required");
         tokens.put(VantarKey.DATA_TYPE, "\"{0}\": invalid data type");
@@ -51,7 +52,6 @@ public class DefaultStringsEn {
         tokens.put(VantarKey.IO_ERROR, "\"{0}\": file upload system error");
         tokens.put(VantarKey.FILE_SIZE, "\"{0}\": file upload, allowed file-size ({1})");
         tokens.put(VantarKey.FILE_TYPE, "\"{0}\": unsupported file type, allowed file-type ({1})");
-        tokens.put(VantarKey.NO_SEARCH_COMMAND, "no search commands");
         tokens.put(VantarKey.INVALID_METHOD, "invalid HTTP method");
         tokens.put(VantarKey.SEARCH_PARAM_INVALID_CONDITION_TYPE, "\"{0}\": search condition requires condition type");
         tokens.put(VantarKey.SEARCH_PARAM_COL_MISSING, "\"{0}\": search condition requires search column");

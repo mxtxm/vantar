@@ -22,6 +22,7 @@ public class DtoDictionary {
         NOSTORE,
     }
 
+    // <group, <dtoName, info>>
     private static final Map<String, Map<String, Info>> index = new LinkedHashMap<>();
     private static String tempCategory;
 
@@ -191,6 +192,9 @@ public class DtoDictionary {
      * Get by class name or storage name
      */
     public static Info get(String name) {
+        if (name == null) {
+            return null;
+        }
         for (Map<String, Info> bucket : index.values()) {
             Info i = bucket.get(name);
             if (i != null) {
@@ -209,12 +213,24 @@ public class DtoDictionary {
         return get(type.getSimpleName());
     }
 
-    public static <T> T getInstance(Class<T> fieldType) {
-        T instance = ClassUtil.getInstance(fieldType);
-        if (!(instance instanceof Dto)) {
+    public static Dto getInstance(String className) {
+        if (className == null) {
             return null;
         }
-        return instance;
+        for (Map<String, Info> bucket : index.values()) {
+            Info i = bucket.get(className);
+            if (i != null) {
+                return i.getDtoInstance();
+            }
+        }
+        return null;
+    }
+
+    public static <T extends Dto> T getInstance(Class<T> classType) {
+        if (classType == null) {
+            return null;
+        }
+        return ClassUtil.getInstance(classType);
     }
 
 

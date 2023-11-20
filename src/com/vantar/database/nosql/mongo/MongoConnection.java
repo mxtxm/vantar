@@ -14,7 +14,8 @@ public class MongoConnection {
     public static MongoConfig config;
     private static MongoClient mongoClient;
     private static MongoDatabase database;
-    private static boolean isUp;
+    private static boolean isUp = false;
+    public static boolean isShutdown = false;
 
 
     public static boolean isEnabled() {
@@ -25,7 +26,10 @@ public class MongoConnection {
         return isUp;
     }
 
-    public static void connect(MongoConfig config) {
+    public synchronized static void connect(MongoConfig config) {
+        if (isShutdown) {
+            return;
+        }
         MongoConnection.config = config;
         MongoClientOptions.Builder o = MongoClientOptions.builder()
             .connectTimeout(config.getMongoConnectTimeout())
@@ -38,8 +42,7 @@ public class MongoConnection {
                 }
             })
             .cursorFinalizerEnabled(false)
-            .connectionsPerHost(200)
-            .connectTimeout(0)
+            .connectionsPerHost(2000)
             .serverSelectionTimeout(config.getMongoServerSelectionTimeout());
 
         MongoClientOptions options = o.build();
@@ -95,6 +98,9 @@ public class MongoConnection {
     }
 
     public static MongoDatabase getDatabase() throws DatabaseException {
+        if (isShutdown) {
+            throw new DatabaseException("mongo is down");
+        }
         if (!isUp || mongoClient == null || database == null) {
             connect(config);
         }
@@ -104,9 +110,11 @@ public class MongoConnection {
         return database;
     }
 
-    public static void shutdown() {
+    public synchronized static void shutdown() {
+        isShutdown = true;
         mongoClient.close();
-        Mongo.log.info(" >> closed mongo connection");
+        isUp = false;
+        Mongo.log.info(" >> mongo connection closed");
     }
 
     public static MongoIterable<String> getCollections() throws DatabaseException {

@@ -24,8 +24,11 @@ public class ImportMongo extends CommonImport {
         ui.beginBox2(dto.getClass().getSimpleName()).write();
 
         if (deleteAll) {
+            String collection = dto.getStorage();
             try {
-                CommonRepoMongo.purge(dto.getStorage());
+                Mongo.deleteAll(collection);
+                Mongo.Index.remove(collection);
+                Mongo.Sequence.remove(collection);
             } catch (DatabaseException e) {
                 ui.addErrorMessage(e);
                 log.error(" !! {} : {} > {}\n", dto.getClass().getSimpleName(), dto, data, e);
@@ -40,11 +43,11 @@ public class ImportMongo extends CommonImport {
 
         Import imp = (String presentValue, Map<String, Object> values) -> {
             try {
-                if (dto.getId() == null ? CommonRepoMongo.existsByDto(dto) : CommonRepoMongo.existsById(dto)) {
+                if (dto.getId() == null ? CommonModelMongo.existsByDto(dto) : CommonModelMongo.existsById(dto)) {
                     duplicate.getAndIncrement();
                     return;
                 }
-                CommonRepoMongo.insert(dto);
+                CommonModelMongo.insert(dto);
                 if (dto instanceof CommonUser) {
                     CommonModel.insertPassword(
                         dto,
@@ -53,7 +56,7 @@ public class ImportMongo extends CommonImport {
                 }
 
                 success.getAndIncrement();
-            } catch (DatabaseException | ServerException e) {
+            } catch (VantarException e) {
                 ui.addErrorMessage(presentValue + " " + Locale.getString(VantarKey.IMPORT_FAIL));
                 failed.getAndIncrement();
             }

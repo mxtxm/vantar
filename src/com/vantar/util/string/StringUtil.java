@@ -93,7 +93,7 @@ public class StringUtil {
      * @param string string to convert
      * @return number or (null if string == null)
      */
-    public static Integer scrapeInt(String string) {
+    public static Integer scrapeInteger(String string) {
         if (string == null) {
             return null;
         }
@@ -629,7 +629,7 @@ public class StringUtil {
                 break;
             }
         }
-        return string.substring(0, i);
+        return i <= 0 ? "" : string.substring(0, i);
     }
 
     /**
@@ -756,7 +756,8 @@ public class StringUtil {
      * @return splatted parts (null if string == null, [string] if string == "")
      */
     public static Set<String> splitToSet(String string, char separator) {
-        return new HashSet<>(Arrays.asList(split(string, separator)));
+        String[] a = split(string, separator);
+        return a == null ? null : new HashSet<>(Arrays.asList(a));
     }
 
     /**
@@ -767,7 +768,8 @@ public class StringUtil {
      * @return splatted parts (null if string == null, [string] if string == "")
      */
     public static Set<String> splitToSetTrim(String string, char separator) {
-        return new HashSet<>(Arrays.asList(splitTrim(string, separator)));
+        String[] a = splitTrim(string, separator);
+        return a == null ? null : new HashSet<>(Arrays.asList(a));
     }
 
     /**
@@ -778,7 +780,8 @@ public class StringUtil {
      * @return splatted parts (null if string == null, [string] if string == "")
      */
     public static List<String> splitToList(String string, char separator) {
-        return Arrays.asList(split(string, separator));
+        String[] a = split(string, separator);
+        return a == null ? null : Arrays.asList(a);
     }
 
     /**
@@ -789,7 +792,8 @@ public class StringUtil {
      * @return splatted parts (null if string == null, [string] if string == "")
      */
     public static List<String> splitToListTrim(String string, char separator) {
-        return Arrays.asList(splitTrim(string, separator));
+        String[] a = splitTrim(string, separator);
+        return a == null ? null : Arrays.asList(a);
     }
 
     /**
@@ -856,7 +860,8 @@ public class StringUtil {
      * @return splatted parts (null if string == null, [string] if separator == null or "" or string == "")
      */
     public static Set<String> splitToSet(String string, String separator) {
-        return new HashSet<>(Arrays.asList(split(string, separator)));
+        String[] a = split(string, separator);
+        return a == null ? null : new HashSet<>(Arrays.asList(a));
     }
 
     /**

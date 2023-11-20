@@ -116,7 +116,7 @@ public class SqlSearch extends SqlQueryHelper {
 
     public QueryResult getData(QueryBuilder q) throws DatabaseException {
         SqlParams sqlParams = SqlMapping.queryBuilderToSql(q, SqlMapping.CountMethod.NONE);
-        return getData(q.getDtoResult(), sqlParams.getTemplate(), sqlParams.getValues());
+        return getData(q.getDto(), sqlParams.getTemplate(), sqlParams.getValues());
     }
 
     public QueryResult getData(Dto dto, String sql, List<Object> params) throws DatabaseException {
@@ -158,7 +158,7 @@ public class SqlSearch extends SqlQueryHelper {
                 q,
                 getFullCount ? SqlMapping.CountMethod.INCLUDE_TOTAL_COUNT : SqlMapping.CountMethod.NONE
             );
-            result = getData(q.getDtoResult(), sqlParams.getTemplate(), sqlParams.getValues());
+            result = getData(q.getDto(), sqlParams.getTemplate(), sqlParams.getValues());
             if (locales.length > 0) {
                 result.setLocale(locales);
             }
@@ -172,7 +172,7 @@ public class SqlSearch extends SqlQueryHelper {
 
         } else {
             SqlParams sqlParams = SqlMapping.queryBuilderToSql(q, SqlMapping.CountMethod.NONE);
-            result = getData(q.getDtoResult(), sqlParams.getTemplate(), sqlParams.getValues());
+            result = getData(q.getDto(), sqlParams.getTemplate(), sqlParams.getValues());
             if (locales.length > 0) {
                 result.setLocale(locales);
             }

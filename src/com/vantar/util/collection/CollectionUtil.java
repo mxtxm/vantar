@@ -72,7 +72,7 @@ public class CollectionUtil {
      * @param typeClass the type
      * @return true it is
      */
-    public static boolean isCollectionAndMap(Class<?> typeClass) {
+    public static boolean isCollectionOrMap(Class<?> typeClass) {
         return isMap(typeClass) || isCollection(typeClass);
     }
 
@@ -81,7 +81,7 @@ public class CollectionUtil {
      * @param object the object
      * @return true it is
      */
-    public static boolean isCollectionAndMap(Object object) {
+    public static boolean isCollectionOrMap(Object object) {
         return isMap(object) || isCollection(object);
     }
 
@@ -90,7 +90,7 @@ public class CollectionUtil {
      * @param typeClass the type
      * @return true it is
      */
-    public static boolean isCollectionAndMapAndArray(Class<?> typeClass) {
+    public static boolean isCollectionOrMapOrArray(Class<?> typeClass) {
         return isMap(typeClass) || isCollection(typeClass) || isArray(typeClass);
     }
 
@@ -99,7 +99,7 @@ public class CollectionUtil {
      * Is object a map or a collection or an array
      * @return true it is
      */
-    public static boolean isCollectionAndMapAndArray(Object object) {
+    public static boolean isCollectionOrMapOrArray(Object object) {
         return isMap(object) || isCollection(object) || isArray(object);
     }
 
@@ -644,5 +644,43 @@ public class CollectionUtil {
                 map.put(k, v);
             }
         }
+    }
+
+    public static boolean equalsCollection(Collection<?> collectionA, Collection<?> collectionB) {
+        if (collectionA.size() != collectionB.size()) {
+            return false;
+        }
+        for (Object oA : collectionA) {
+            boolean found = false;
+            for (Object oB : collectionB) {
+                if (oA instanceof Collection && oB instanceof Collection) {
+                    if (equalsCollection((Collection<?>) oA, (Collection<?>) oB)) {
+                        found = true;
+                        break;
+                    }
+                }
+                if (oA.equals(oB)) {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public static boolean equalsMap(Map<?, ?> mapA, Map<?, ?> mapB) {
+        if (mapA.size() != mapB.size()) {
+            return false;
+        }
+        if (!equalsCollection(mapA.keySet(), mapB.keySet())) {
+            return false;
+        }
+        if (!equalsCollection(mapA.values(), mapB.values())) {
+            return false;
+        }
+        return true;
     }
 }

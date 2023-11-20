@@ -1,6 +1,5 @@
 package com.vantar.service.log;
 
-import com.vantar.business.CommonRepoMongo;
 import com.vantar.database.dto.Dto;
 import com.vantar.database.nosql.mongo.*;
 import com.vantar.database.query.QueryBuilder;
@@ -112,7 +111,7 @@ public class LogEvent {
             } else {
                 log.debug(m);
             }
-            CommonRepoMongo.insert(new Log(tag, level, m));
+            Mongo.insert(new Log(tag, level, m));
         } catch (Exception e) {
             log.error(" !! {} {}\n", tag, values, e);
         }
@@ -131,7 +130,7 @@ public class LogEvent {
 
         List<String> logs = new ArrayList<>();
         try {
-            for (Dto item : MongoSearch.getData(q).asList()) {
+            for (Dto item : MongoQuery.getData(q).asList()) {
                 Log logItem = (Log) item;
                 logs.add(logItem.createT.toString() + "  " + logItem.level + "\n" + logItem.message);
             }
@@ -147,7 +146,7 @@ public class LogEvent {
             q.addGroup("tag", Mongo.ID);
 
             List<String> result = new ArrayList<>(30);
-            for (Document document : MongoSearch.getAggregate(q)) {
+            for (Document document : MongoQuery.getAggregate(q)) {
                 result.add((String) document.get(Mongo.ID));
             }
 

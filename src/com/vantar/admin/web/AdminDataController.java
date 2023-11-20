@@ -26,6 +26,8 @@ import javax.servlet.http.HttpServletResponse;
     "/admin/data/sql/status",
     "/admin/data/mongo/status",
     "/admin/data/elastic/status",
+
+    "/admin/data/archive/switch",
 })
 @MultipartConfig(
     location="/tmp",
@@ -97,5 +99,9 @@ public class AdminDataController extends RouteToMethod {
 
     public void dataElasticStatus(Params params, HttpServletResponse response) throws FinishException {
         AdminData.statusElastic(params, response);
+    }
+
+    public void dataArchiveSwitch(Params params, HttpServletResponse response) throws FinishException {
+        AdminData.archiveSwitch(params, response, DtoDictionary.get(params.getString("dto")));
     }
 }

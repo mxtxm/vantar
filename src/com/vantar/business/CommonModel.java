@@ -2,7 +2,7 @@ package com.vantar.business;
 
 import com.vantar.common.VantarParam;
 import com.vantar.database.dto.*;
-import com.vantar.database.nosql.mongo.MongoSearch;
+import com.vantar.database.nosql.mongo.MongoQuery;
 import com.vantar.database.query.*;
 import com.vantar.exception.*;
 import com.vantar.locale.VantarKey;
@@ -14,16 +14,15 @@ import com.vantar.util.object.*;
 import com.vantar.util.string.StringUtil;
 import org.slf4j.*;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 
 public abstract class CommonModel {
 
-    public static boolean SEARCH_POLICY_ALLOW_EMPTY_CONDITION = true;
-    public static boolean SEARCH_POLICY_THROW_ON_CONDITION_ERROR = true;
-
     protected static final Logger log = LoggerFactory.getLogger(CommonModel.class);
 
     private static Set<String> disabledDtoClasses;
+    private static final Map<String, Object> locks = new ConcurrentHashMap<>(500, 1);
 
 
     public static void afterDataChange(Dto dto) {
@@ -85,7 +84,7 @@ public abstract class CommonModel {
                 userPassword.setId(user.getId());
                 userPassword.setPassword(password);
                 try {
-                    if (MongoSearch.existsById(userPassword)) {
+                    if (MongoQuery.existsById(userPassword)) {
                         CommonModelMongo.update(userPassword);
                     } else {
                         CommonModelMongo.insert(userPassword);
@@ -123,6 +122,71 @@ public abstract class CommonModel {
             fields.setLength(fields.length() - 2);
             throw new InputException(VantarKey.REQUIRED, fields.toString());
         }
+    }
+
+    public static Object mutex(String key, Mutex m) throws Exception {
+        MutexParams mp = new MutexParams();
+        locks.computeIfAbsent(key, k -> {
+            try {
+                mp.returnValue = m.block();
+            } catch (VantarException e) {
+                mp.exception = e;
+            }
+            return null;
+        });
+        if (mp.exception != null) {
+            throw mp.exception;
+        }
+        return mp.returnValue;
+    }
+
+    public static Object mutex(Dto dto, MutexDto m) throws Exception {
+        MutexParams mp = new MutexParams();
+        locks.computeIfAbsent(dto.getClass().getSimpleName() + dto.getId(), k -> {
+            try {
+                mp.returnValue = m.block(dto);
+            } catch (VantarException e) {
+                mp.exception = e;
+            }
+            return null;
+        });
+        if (mp.exception != null) {
+            throw mp.exception;
+        }
+        return mp.returnValue;
+    }
+
+    public static Object mutex(Class<? extends Dto> dtoClass, Long id, Mutex m) throws Exception {
+        MutexParams mp = new MutexParams();
+        locks.computeIfAbsent(dtoClass.getSimpleName() + id, k -> {
+            try {
+                mp.returnValue = m.block();
+            } catch (VantarException e) {
+                mp.exception = e;
+            }
+            return null;
+        });
+        if (mp.exception != null) {
+            throw mp.exception;
+        }
+        return mp.returnValue;
+    }
+
+
+    public interface Mutex {
+
+        Object block() throws VantarException;
+    }
+
+    public interface MutexDto {
+
+        Object block(Dto dto) throws VantarException;
+    }
+
+    private static class MutexParams {
+
+        public Exception exception;
+        public Object returnValue;
     }
 
 

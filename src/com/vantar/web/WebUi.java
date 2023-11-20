@@ -11,6 +11,7 @@ import com.vantar.locale.Locale;
 import com.vantar.locale.*;
 import com.vantar.service.Services;
 import com.vantar.service.auth.*;
+import com.vantar.service.dbarchive.ServiceDbArchive;
 import com.vantar.service.log.ServiceUserActionLog;
 import com.vantar.service.log.dto.UserLog;
 import com.vantar.util.collection.CollectionUtil;
@@ -26,7 +27,7 @@ import java.lang.reflect.Field;
 import java.util.*;
 import java.util.stream.Collectors;
 
-
+@SuppressWarnings("unchecked")
 public class WebUi {
 
     private static final Logger log = LoggerFactory.getLogger(WebUi.class);
@@ -197,7 +198,7 @@ public class WebUi {
     public String getLink(String text, String url, boolean newWindow, boolean block, String className) {
         StringBuilder s = new StringBuilder();
         if (block) {
-            s.append("<p class='link'>\n");
+            s.append("<p class='link'>");
         }
         s.append("<a");
         if (className != null) {
@@ -206,9 +207,9 @@ public class WebUi {
         if (newWindow) {
             s.append(" target='_blank'");
         }
-        s.append(" href='").append(getCompleteLink(url)).append("'>").append(escapeWithNtoBr(text)).append("</a>\n");
+        s.append(" href='").append(getCompleteLink(url)).append("'>").append(escapeWithNtoBr(text)).append("</a>");
         if (block) {
-            s.append("</p>\n");
+            s.append("</p>");
         }
         return s.toString();
     }
@@ -355,8 +356,15 @@ public class WebUi {
     }
 
     public WebUi addKeyValue(Object key, Object value, String classs) {
-        key = StringUtil.replace(escape(key == null ? "" : key.toString()), "\n", "<br/>");
-        value = StringUtil.replace(escape(value == null ? "NULL" : value.toString()), "\n", "<br/><br/>");
+        return addKeyValue(key, value, classs, true);
+    }
+
+    public WebUi addKeyValue(Object key, Object value, String classs, boolean isEscape) {
+        String k = isEscape ? escape(key == null ? "" : key.toString()) : (key == null ? "" : key.toString());
+        String v = isEscape ? escape(value == null ? "NULL" : value.toString()) : (value == null ? "NULL" : value.toString());
+
+        key = StringUtil.replace(k, "\n", "<br/>");
+        value = StringUtil.replace(v, "\n", "<br/><br/>");
         String kc = StringUtil.isEmpty(classs) ? "" : " key-" + classs;
         String vc = StringUtil.isEmpty(classs) ? "" : " value-" + classs;
 
@@ -730,8 +738,8 @@ public class WebUi {
 
     public WebUi addTextArea(String label, String name, Object defaultValue, String tClass) {
         return addWidgetRow(label, name,
-            "    <textarea autocomplete='off' class='vtx " + (tClass == null ? "" : tClass) + "' name='" + name
-            + "' id='" + name + "' style='direction:" + alignValue + "'>\n"
+            "    <textarea autocomplete='off' class='vtx vtx-" + name + " " + (tClass == null ? "" : tClass)
+            + "' name='" + name + "' id='" + name + "' style='direction:" + alignValue + "'>\n"
             + (defaultValue == null ? "" : defaultValue) + "</textarea>\n");
     }
 
@@ -1147,7 +1155,29 @@ public class WebUi {
                 .append(" | <a href='").append(getCompleteLink("/admin/data/purge?dto=" + className))
                 .append("'>").append(Locale.getString(VantarKey.ADMIN_DATABASE_DELETE_ALL)).append("</a>");
         }
+
         html.append("</div>");
+
+        if (dto.hasAnnotation(Archive.class)) {
+            html.append("<div id='archives'>");
+            ServiceDbArchive.ArchiveInfo aInfo = ServiceDbArchive.getArchives().get(className);
+            if (aInfo == null || ObjectUtil.isEmpty(aInfo.collections)) {
+                html.append("no archives");
+            } else {
+                String linkM = className.equalsIgnoreCase(aInfo.activeCollection) ?
+                    "(active)" :
+                    getLink("switch", "/admin/data/archive/switch?dto=" + className + "&a=" + className, true, false);
+                addKeyValue("current", className + " " + linkM, "", false);
+
+                aInfo.collections.forEach((name, date) -> {
+                    String link = name.equalsIgnoreCase(aInfo.activeCollection) ?
+                        "(active)" :
+                        getLink("switch", "/admin/data/archive/switch?dto=" + className + "&a=" + name, true, false);
+                    addKeyValue(date, name + " " + link, "", false);
+                });
+            }
+            html.append("</div>");
+        }
 
         // PAGE
         // SORT
@@ -1373,7 +1403,7 @@ public class WebUi {
                 for (String name : fields) {
                     Class<?> type = dto.getPropertyType(name);
                     if ((!name.equals("name") && !name.equals("title")) &&
-                        (CollectionUtil.isCollectionAndMap(type) || ClassUtil.isInstantiable(type, Dto.class))) {
+                        (CollectionUtil.isCollectionOrMap(type) || ClassUtil.isInstantiable(type, Dto.class))) {
                         continue;
                     }
 
@@ -1416,7 +1446,7 @@ public class WebUi {
                 Class<?> type = dto.getPropertyType(name);
 
                 if ((!name.equals("name") && !name.equals("title")) &&
-                    (CollectionUtil.isCollectionAndMap(type) || ClassUtil.isInstantiable(type, Dto.class))) {
+                    (CollectionUtil.isCollectionOrMap(type) || ClassUtil.isInstantiable(type, Dto.class))) {
                     continue;
                 }
 

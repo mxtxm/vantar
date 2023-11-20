@@ -30,6 +30,7 @@ public class DefaultStringsFa {
 
         // validation
         tokens.put(VantarKey.REQUIRED, "\"{0}\": وارد کردن اجباری است");
+        tokens.put(VantarKey.MUST_BE_POST_MULTIPART, "متد رکویست نادرست است باید POST multipart/form-data باشد");
         tokens.put(VantarKey.REQUIRED_XOR, "\"{0}\": وارد کردن تنها یکی از فیلدها اجباری است");
         tokens.put(VantarKey.REQUIRED_OR, "\"{0}\": وارد کردن یکی از فیلدها اجباری است");
         tokens.put(VantarKey.DATA_TYPE, "\"{0}\": نوع داده نادرست است");
@@ -49,7 +50,6 @@ public class DefaultStringsFa {
         tokens.put(VantarKey.IO_ERROR, "\"{0}\": خطای سیسمتی هنگام آپلود فایل");
         tokens.put(VantarKey.FILE_SIZE, "\"{0}\": خطای آپلود فایل - سایز مجاز برای فایل (\"{1}\")");
         tokens.put(VantarKey.FILE_TYPE, "\"{0}\": خطای آپلود فایل - فایل های مجاز برای آپلود (\"{1}\")");
-        tokens.put(VantarKey.NO_SEARCH_COMMAND, "دستورات جستجتو فرستاده نشدند");
         tokens.put(VantarKey.INVALID_METHOD, "متد درخواست نادرست است");
         tokens.put(VantarKey.SEARCH_PARAM_INVALID_CONDITION_TYPE, "\"{0}\": شرط جستجو باید نوع شرط داشته باشد");
         tokens.put(VantarKey.SEARCH_PARAM_COL_MISSING, "\"{0}\": شرط جستجو باید فیلد جستجو داشته باشد");

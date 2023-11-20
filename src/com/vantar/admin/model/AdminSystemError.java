@@ -2,7 +2,6 @@ package com.vantar.admin.model;
 
 import com.vantar.business.*;
 import com.vantar.database.dto.Dto;
-import com.vantar.database.nosql.mongo.MongoSearch;
 import com.vantar.database.query.QueryBuilder;
 import com.vantar.exception.*;
 import com.vantar.locale.Locale;
@@ -48,10 +47,10 @@ public class AdminSystemError {
         ui.beginBox(dto.tag);
 
         try {
-            long count = CommonRepoMongo.delete(dto);
+            long count = (long) CommonModelMongo.deleteById(dto).value;
             ui.addMessage(Locale.getString(VantarKey.DELETE_SUCCESS));
             ui.addMessage(count + Locale.getString(VantarKey.ADMIN_RECORDS));
-        } catch (DatabaseException e) {
+        } catch (VantarException e) {
             ui.addErrorMessage(Locale.getString(VantarKey.DELETE_FAIL));
             ui.addErrorMessage(e);
         }

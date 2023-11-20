@@ -4,7 +4,7 @@ import com.vantar.business.*;
 import com.vantar.common.VantarParam;
 import com.vantar.database.dto.DtoDictionary;
 import com.vantar.database.nosql.elasticsearch.ElasticConnection;
-import com.vantar.database.nosql.mongo.MongoConnection;
+import com.vantar.database.nosql.mongo.*;
 import com.vantar.database.sql.SqlConnection;
 import com.vantar.exception.*;
 import com.vantar.queue.Queue;
@@ -186,7 +186,7 @@ public class AdminSystemHealthController extends RouteToMethod {
                 for (DtoDictionary.Info info : DtoDictionary.getAll(DtoDictionary.Dbms.MONGO)) {
                     stats.put(
                         info.dtoClass.getSimpleName(),
-                        CommonRepoMongo.count(info.getDtoInstance().getStorage())
+                        MongoQuery.count(info.getDtoInstance().getStorage())
                     );
                 }
             } catch (DatabaseException ignore) {

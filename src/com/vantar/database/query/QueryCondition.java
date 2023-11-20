@@ -12,7 +12,7 @@ public class QueryCondition {
     public List<QueryMatchItem> q = new ArrayList<>(25);
     public QueryOperator operator;
     public String storage;
-    public boolean dump = false;
+    public boolean inspect = false;
 
 
     public QueryCondition() {
@@ -33,8 +33,8 @@ public class QueryCondition {
         this.operator = operator;
     }
 
-    public QueryCondition dump() {
-        dump = true;
+    public QueryCondition inspect() {
+        inspect = true;
         return this;
     }
 

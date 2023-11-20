@@ -13,6 +13,7 @@ public class PageData {
     public int length;
     public int recordCount;
     public long total;
+    public String errors;
 
 
     public <T extends Dto> PageData(List<T> data, int page, int length, long total) {

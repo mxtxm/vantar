@@ -41,7 +41,7 @@ public class ServiceBackup implements Services.Service {
         try {
             startDateTime = new DateTime(f.year + "-" + f.month + "-" + f.day + " " + startHour + ":0:0");
         } catch (DateTimeException ignore) {
-
+            return;
         }
         while (startDateTime.isBefore(now)) {
             startDateTime.addHours(intervalHour);

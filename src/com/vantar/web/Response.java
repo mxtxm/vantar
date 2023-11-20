@@ -28,6 +28,7 @@ public class Response {
 
     private static boolean logResponse;
 
+
     static {
         if (Settings.web() != null) {
             logResponse = Settings.web().logResponse();

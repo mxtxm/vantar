@@ -1,5 +1,6 @@
 package com.vantar.util.object;
 
+import com.vantar.database.dto.Generics;
 import com.vantar.util.collection.*;
 import com.vantar.util.string.StringUtil;
 import java.io.*;
@@ -67,6 +68,11 @@ public class ClassUtil {
     public static Class<?>[] getGenericTypes(Field field) {
         if (field == null) {
             return null;
+        }
+
+        Generics generics = field.getAnnotation(Generics.class);
+        if (generics != null) {
+            return generics.value();
         }
 
         Type t = field.getGenericType();

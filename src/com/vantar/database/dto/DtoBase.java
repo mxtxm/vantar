@@ -6,6 +6,7 @@ import com.vantar.database.datatype.Location;
 import com.vantar.exception.DateTimeException;
 import com.vantar.locale.Locale;
 import com.vantar.locale.VantarKey;
+import com.vantar.service.dbarchive.ServiceDbArchive;
 import com.vantar.util.bool.BoolUtil;
 import com.vantar.util.collection.CollectionUtil;
 import com.vantar.util.datetime.*;
@@ -70,13 +71,26 @@ public abstract class DtoBase implements Dto {
     }
 
 
+    /**
+     * if Archive      ---> get storage from ServiceDbArchive
+     * if Storage      ---> storage = Storage.value
+     * if is sub-class ---> storage = getStorage(ParentClass)
+     * else            ---> storage = ClassName
+     */
     public String getStorage() {
         return getStorage(getClass());
     }
 
     public static String getStorage(Class<?> dtoClass) {
-        return dtoClass.isAnnotationPresent(Storage.class) ?
-            dtoClass.getAnnotation(Storage.class).value() : dtoClass.getSimpleName();
+        if (dtoClass.isAnnotationPresent(Archive.class)) {
+            return ServiceDbArchive.getStorage(dtoClass);
+        }
+        Storage storage = dtoClass.getAnnotation(Storage.class);
+        if (storage != null) {
+            return storage.value();
+        }
+        Class<?> upperClass = dtoClass.getDeclaringClass();
+        return upperClass == null ? dtoClass.getSimpleName() : getStorage(upperClass);
     }
 
     public void setId(Long id) {
@@ -313,7 +327,6 @@ public abstract class DtoBase implements Dto {
             return getClass().getField(name.trim());
         } catch (NoSuchFieldException x) {
             try {
-                //return getClass().getField(StringUtil.toCamelCase(name.trim()));
                 return getClass().getField(name.trim());
             } catch (NoSuchFieldException e) {
                 return null;
@@ -330,6 +343,38 @@ public abstract class DtoBase implements Dto {
             }
         }
         return fields.toArray(new Field[0]);
+    }
+
+    public String[] getFieldNames() {
+        Field[] f = getClass().getFields();
+        Set<String> fields = new HashSet<>(f.length);
+        for (Field field : f) {
+            if (!isDataField(field)) {
+                continue;
+            }
+
+            FetchCache fetchCache = field.getAnnotation(FetchCache.class);
+            if (fetchCache != null) {
+                String v = fetchCache.field();
+                fields.add(StringUtil.isEmpty(v) ? fetchCache.value() : v);
+                continue;
+            }
+
+            Fetch fetch = field.getAnnotation(Fetch.class);
+            if (fetch != null) {
+                fields.add(fetch.value());
+                continue;
+            }
+
+            FetchByFk fetchByFk = field.getAnnotation(FetchByFk.class);
+            if (fetchByFk != null) {
+                fields.add(fetchByFk.fk());
+                continue;
+            }
+
+            fields.add(field.getName());
+        }
+        return fields.toArray(new String[0]);
     }
 
     public Object getPropertyValue(String name) {
@@ -911,6 +956,7 @@ public abstract class DtoBase implements Dto {
         return errors;
     }
 
+    @SuppressWarnings("unchecked")
     private void setPropertyValue(Field field, Object value, Action action, List<ValidationError> errors) {
         Class<?> type = field.getType();
         String name = field.getName();
@@ -1221,6 +1267,21 @@ public abstract class DtoBase implements Dto {
                 }
                 return false;
             }
+
+            if (v1 instanceof Collection || v2 instanceof Collection) {
+                if (!CollectionUtil.equalsCollection((Collection<?>) v1, (Collection<?>) v2)) {
+                    return false;
+                }
+                continue;
+            }
+
+            if (v1 instanceof Map || v2 instanceof Map) {
+                if (!CollectionUtil.equalsMap((Map<?, ?>) v1, (Map<?, ?>) v2)) {
+                    return false;
+                }
+                continue;
+            }
+
             if (!v1.equals(v2)) {
                 return false;
             }

@@ -5,7 +5,6 @@ import com.vantar.database.common.ValidationError;
 import com.vantar.database.dto.*;
 import com.vantar.database.nosql.elasticsearch.*;
 import com.vantar.database.query.*;
-import com.vantar.database.query.data.QueryData;
 import com.vantar.exception.*;
 import com.vantar.locale.VantarKey;
 import com.vantar.util.object.ObjectUtil;
@@ -112,10 +111,6 @@ public class CommonRepoElastic extends ElasticWrite {
             result.setLocale(locales);
         }
         return result.asList();
-    }
-
-    public static Object search(QueryData queryData, String... locales) throws DatabaseException, NoContentException, InputException {
-        return search(new QueryBuilder(queryData), locales);
     }
 
     public static Object search(QueryBuilder q, String... locales) throws DatabaseException, NoContentException {

@@ -21,7 +21,8 @@ public class QueueConnection {
     private final QueueConfig config;
     private final QueueExceptionHandler exceptionHandler;
 
-    private boolean isUp;
+    private boolean isUp = false;
+    public boolean isShutdown = false;
 
 
     public boolean isUp() {
@@ -34,6 +35,10 @@ public class QueueConnection {
     }
 
     private Connection getConnection() {
+        if (isShutdown) {
+            return null;
+        }
+
         if (connection == null || !connection.isOpen()) {
             ConnectionFactory factory = new ConnectionFactory();
             factory.setHost(config.getRabbitMqHost());
@@ -63,6 +68,10 @@ public class QueueConnection {
     }
 
     public synchronized Channel getChannel(String queueName) {
+        if (isShutdown) {
+            return null;
+        }
+
         Deque<Channel> channels = this.channels.get(queueName);
         if (channels == null) {
             this.channels.put(queueName, new ArrayDeque<>());
@@ -103,15 +112,19 @@ public class QueueConnection {
 
     public synchronized void removeChannels() {
         for (String queueName : channels.keySet()) {
-            removeChannels(queueName);
+            removeChannelsX(queueName);
         }
         channels = new HashMap<>(20, 1);
     }
 
     public synchronized void removeChannels(String queueName) {
-        Deque<Channel> qChannels = channels.remove(queueName);
-        while (qChannels.peek() != null) {
-            Channel channel = qChannels.pop();
+        removeChannelsX(queueName);
+        channels.remove(queueName);
+    }
+
+    private void removeChannelsX(String queueName) {
+        Deque<Channel> qChannels = channels.get(queueName);
+        for (Channel channel : qChannels) {
             try {
                 channel.abort();
             } catch (IOException ignore) {
@@ -119,7 +132,7 @@ public class QueueConnection {
             }
             try {
                 channel.close();
-            } catch (IOException | TimeoutException ignore) {
+            } catch (IOException | AlreadyClosedException | TimeoutException ignore) {
 
             }
         }
@@ -132,6 +145,7 @@ public class QueueConnection {
     }
 
     public void shutdown() {
+        isShutdown = true;
         try {
             if (config.rabbitmqDestroyQueuesAtShutdown()) {
                 Queue.deleteAll();
@@ -143,6 +157,7 @@ public class QueueConnection {
         } catch (AlreadyClosedException | IOException e) {
             log.error(" !! rabbitmq failed to shutdown\n", e);
         }
+        isUp = false;
     }
 
     public String[] getQueues() {

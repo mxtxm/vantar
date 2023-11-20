@@ -1,11 +1,12 @@
 package com.vantar.admin.model;
 
 import com.vantar.admin.Dto.QueryDictionary;
-import com.vantar.business.CommonRepoMongo;
+import com.vantar.business.*;
 import com.vantar.common.VantarParam;
+import com.vantar.database.common.ValidationError;
 import com.vantar.database.dto.DtoDictionary;
 import com.vantar.database.nosql.elasticsearch.ElasticSearch;
-import com.vantar.database.nosql.mongo.MongoSearch;
+import com.vantar.database.nosql.mongo.MongoQuery;
 import com.vantar.database.query.*;
 import com.vantar.database.sql.*;
 import com.vantar.exception.*;
@@ -27,7 +28,7 @@ public class AdminQuery {
         q.sort("group:asc");
         try {
             String group = null;
-            List<QueryDictionary> items = CommonRepoMongo.getData(q);
+            List<QueryDictionary> items = CommonModelMongo.getData(q);
             for (QueryDictionary item: items) {
                 if (group == null || !group.equals(item.group)) {
                     group = item.group;
@@ -38,10 +39,10 @@ public class AdminQuery {
                 }
                 ui.addBlockLink(item.title, "/admin/query/get?" + VantarParam.ID + "=" + item.id);
             }
-        } catch (DatabaseException e) {
-            ui.addErrorMessage(e);
         } catch (NoContentException e) {
             ui.addMessage(Locale.getString(VantarKey.NO_CONTENT));
+        } catch (VantarException e) {
+            ui.addErrorMessage(e);
         }
 
         ui.finish();
@@ -78,12 +79,12 @@ public class AdminQuery {
         item.q = params.getString("q");
         try {
             if (item.id == null) {
-                CommonRepoMongo.insert(item);
+                CommonModelMongo.insert(item);
             } else {
-                CommonRepoMongo.update(item);
+                CommonModelMongo.update(item);
             }
             ui.addMessage(Locale.getString(VantarKey.INSERT_SUCCESS));
-        } catch (DatabaseException e) {
+        } catch (VantarException e) {
             ui.addErrorMessage(e);
         }
 
@@ -115,9 +116,9 @@ public class AdminQuery {
         }
 
         try {
-            CommonRepoMongo.delete(item);
+            CommonModelMongo.deleteById(item);
             ui.addMessage(Locale.getString(VantarKey.DELETE_SUCCESS));
-        } catch (DatabaseException e) {
+        } catch (VantarException e) {
             ui.addErrorMessage(e);
         }
 
@@ -147,11 +148,14 @@ public class AdminQuery {
             .containerEnd().containerEnd().write();
 
         if (params.isChecked("f")) {
-            QueryBuilder q;
-            try {
-                q = new QueryBuilder(params.getQueryData("q"));
-            } catch (InputException e) {
-                ui.write().addErrorMessage(e).finish();
+            QueryBuilder q = params.getQueryBuilder("q");
+            if (q == null) {
+                ui.write().addErrorMessage("q=EMPTY").finish();
+                return;
+            }
+            List<ValidationError> errors = q.getErrors();
+            if (errors != null) {
+                ui.write().addErrorMessage(ValidationError.toString(errors)).finish();
                 return;
             }
 
@@ -168,7 +172,7 @@ public class AdminQuery {
                         data = search.getPage(q);
                     }
                 } else if (dtoInfo.dbms.equals(DtoDictionary.Dbms.MONGO)) {
-                    data = MongoSearch.getPage(q, null);
+                    data = MongoQuery.getPage(q, null);
                 } else if (dtoInfo.dbms.equals(DtoDictionary.Dbms.ELASTIC)) {
                     data = ElasticSearch.getPage(q);
                 }
@@ -180,7 +184,7 @@ public class AdminQuery {
             }
 
             if (data != null) {
-                ui.addDtoList(data, true, q.getDtoResult().getProperties());
+                ui.addDtoList(data, true, q.getDto().getProperties());
             }
         }
 
@@ -199,8 +203,8 @@ public class AdminQuery {
         }
 
         try {
-            return CommonRepoMongo.getFirst(item);
-        } catch (DatabaseException | NoContentException e) {
+            return CommonModelMongo.getById(item);
+        } catch (VantarException e) {
             ui.addErrorMessage(e).finish();
             return null;
         }

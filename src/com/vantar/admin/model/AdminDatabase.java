@@ -305,9 +305,15 @@ public class AdminDatabase {
         ui.beginBox(Locale.getString(VantarKey.ADMIN_DATABASE_INDEX_CREATE, "MONGO...")).write();
 
         try {
-            CommonRepoMongo.createAllDtoIndexes(deleteIfExists);
+            for (DtoDictionary.Info info : DtoDictionary.getAll(DtoDictionary.Dbms.MONGO)) {
+                Dto dto = info.getDtoInstance();
+                if (deleteIfExists) {
+                    Mongo.Index.remove(dto);
+                }
+                Mongo.Index.create(dto);
+                ui.addMessage("Index created: " + dto.getClass().getSimpleName());
+            }
             ui.addMessage(Locale.getString(VantarKey.ADMIN_FINISHED));
-
         } catch (DatabaseException e) {
             ui.addErrorMessage(e);
         }
@@ -377,12 +383,12 @@ public class AdminDatabase {
             long count = 1;
             long total = 0;
             try {
-                total = CommonRepoMongo.count(dto.getStorage());
+                total = MongoQuery.count(dto.getStorage());
 
                 int i = 0;
                 while (count > 0 && i++ < DB_DELETE_TRIES) {
                     CommonModelMongo.purge(dto);
-                    count = CommonRepoMongo.count(dto.getStorage());
+                    count = MongoQuery.count(dto.getStorage());
                 }
                 msg = Locale.getString(count == 0 ? VantarKey.DELETE_SUCCESS : VantarKey.DELETE_FAIL);
             } catch (DatabaseException | VantarException e) {
@@ -403,7 +409,7 @@ public class AdminDatabase {
         WebUi ui = Admin.getUi("MONGO sequences", params, response, true);
 
         try {
-            Mongo.Sequence.getAll().forEach((key, value) -> ui.addKeyValue(key, value));
+            Mongo.Sequence.getAll().forEach(ui::addKeyValue);
         } catch (DatabaseException e) {
             ui.addErrorMessage(e);
         }
@@ -545,7 +551,7 @@ public class AdminDatabase {
                     count = 0;
                 } else {
                     CommonModelElastic.purgeData(dto.getStorage());
-                    count = CommonRepoMongo.count(dto.getStorage());
+                    //count = MongoQuery.count(dto.getStorage());
                 }
 
                 msg = Locale.getString(count == 0 ? VantarKey.DELETE_SUCCESS : VantarKey.DELETE_FAIL);
@@ -610,6 +616,7 @@ public class AdminDatabase {
         ui.containerEnd().containerEnd().write();
     }
 
+    @SuppressWarnings("unchecked")
     public static void getMappingElastic(Params params, HttpServletResponse response) throws FinishException {
         if (!ElasticConnection.isUp()) {
             return;

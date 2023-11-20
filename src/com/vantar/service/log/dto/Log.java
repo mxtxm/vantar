@@ -3,6 +3,7 @@ package com.vantar.service.log.dto;
 import com.vantar.database.dto.*;
 import com.vantar.util.datetime.DateTime;
 
+@Archive("500000R")
 @Mongo
 @Index({"tag:1", "createT:1"})
 public class Log extends DtoBase {

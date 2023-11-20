@@ -1,9 +1,9 @@
 package com.vantar.service.log;
 
-import com.vantar.business.CommonRepoMongo;
 import com.vantar.common.VantarParam;
 import com.vantar.database.dto.*;
 import com.vantar.database.nosql.elasticsearch.ElasticWrite;
+import com.vantar.database.nosql.mongo.Mongo;
 import com.vantar.exception.*;
 import com.vantar.queue.Queue;
 import com.vantar.queue.*;
@@ -190,7 +190,7 @@ public class ServiceUserActionLog implements Services.Service {
             }
 
         } catch (Exception e) {
-            LogEvent.error(this.getClass(), e);
+            log.error("! could not save log ", e);
         } finally {
             isBusy.set(false);
         }
@@ -210,14 +210,14 @@ public class ServiceUserActionLog implements Services.Service {
             try {
                 write.insert(item);
             } catch (DatabaseException e) {
-                LogEvent.error(this.getClass(), e);
+                log.error("! could not save log ", e);
             }
         }
 
         try {
             write.commit();
         } catch (DatabaseException e) {
-            LogEvent.fatal(this.getClass(), e);
+            log.error("! could not save log ", e);
             return;
         }
 
@@ -238,9 +238,9 @@ public class ServiceUserActionLog implements Services.Service {
         }
 
         try {
-            CommonRepoMongo.insert(items);
+            Mongo.insert(items);
         } catch (DatabaseException e) {
-            LogEvent.fatal(this.getClass(), e);
+            log.info("! could not save log {}", e.getMessage());
             return;
         }
 
@@ -255,15 +255,15 @@ public class ServiceUserActionLog implements Services.Service {
             write.insert(item);
             write.commit();
         } catch (DatabaseException e) {
-            LogEvent.fatal(ServiceUserActionLog.class, e);
+            log.error("! could not save log {}", item);
         }
     }
 
     private static void saveOnMongo(UserLog item) {
         try {
-            CommonRepoMongo.insert(item);
-        } catch (DatabaseException e) {
-            LogEvent.fatal(ServiceUserActionLog.class, e);
+            Mongo.insert(item);
+        } catch (Exception e) {
+            log.error("! could not save log {}", item);
         }
     }
 

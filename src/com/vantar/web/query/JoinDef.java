@@ -1,4 +1,4 @@
-package com.vantar.database.query.data;
+package com.vantar.web.query;
 
 /**
  * Join definition

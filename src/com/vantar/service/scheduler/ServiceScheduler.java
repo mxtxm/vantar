@@ -49,7 +49,7 @@ public class ServiceScheduler implements Services.Service {
                 } else {
 
                     // ClassName.Method,x(s/m/h);           x seconds/minutes/hours
-                    int startAt = StringUtil.scrapeInt(classNameOptions[1]);
+                    int startAt = StringUtil.scrapeInteger(classNameOptions[1]);
                     if (StringUtil.contains(classNameOptions[1], 'm')) {
                         startAt *= 60;
                     } else if (StringUtil.contains(classNameOptions[1], 'h')) {
@@ -74,7 +74,7 @@ public class ServiceScheduler implements Services.Service {
 
             // ClassName.Method,hh:mm,x(s/m/h);     starting from hh:mm, every x seconds/minutes/hours
             } else if (StringUtil.contains(classNameOptions[1], ':')) {
-                int repeatAt = StringUtil.scrapeInt(classNameOptions[2]);
+                int repeatAt = StringUtil.scrapeInteger(classNameOptions[2]);
                 if (StringUtil.contains(classNameOptions[1], 'm')) {
                     repeatAt *= 60;
                 } else if (StringUtil.contains(classNameOptions[1], 'h')) {
@@ -89,13 +89,13 @@ public class ServiceScheduler implements Services.Service {
 
             // ClassName.Method,x(s/m/h),y(s/m/h);  starting after x seconds/minutes/hours, repeat each x seconds/minutes/hours
             } else {
-                int startAt = StringUtil.scrapeInt(classNameOptions[1]);
+                int startAt = StringUtil.scrapeInteger(classNameOptions[1]);
                 if (StringUtil.contains(classNameOptions[1], 'm')) {
                     startAt *= 60;
                 } else if (StringUtil.contains(classNameOptions[1], 'h')) {
                     startAt *= 360;
                 }
-                int repeatAt = StringUtil.scrapeInt(classNameOptions[2]);
+                int repeatAt = StringUtil.scrapeInteger(classNameOptions[2]);
                 if (StringUtil.contains(classNameOptions[1], 'm')) {
                     repeatAt *= 60;
                 } else if (StringUtil.contains(classNameOptions[1], 'h')) {

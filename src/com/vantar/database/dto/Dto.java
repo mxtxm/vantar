@@ -46,6 +46,7 @@ public interface Dto {
 
     Field getField(String name);
     Field[] getFields();
+    String[] getFieldNames();
 
     Class<?> getPropertyType(String name);
     Class<?> getPropertyType(Field field);
@@ -106,6 +107,7 @@ public interface Dto {
     void afterSetData();
     void afterFetchData(long i);
     void afterFetchData();
+
 
 
     enum Action {

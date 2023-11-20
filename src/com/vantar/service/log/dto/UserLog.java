@@ -4,6 +4,7 @@ import com.vantar.database.dto.*;
 import com.vantar.util.datetime.DateTime;
 import java.util.*;
 
+@Archive("500000R")
 @Elastic
 @Mongo
 @Index({"userId:1", "transactionId:1", "className:1", "objectId:1", "action:1", "time:1", "url:1",})
@@ -34,7 +35,6 @@ public class UserLog extends DtoBase {
     public Map<String, Object> extraData;
 
 
-    @Storage("UserLog")
     public static class View extends DtoBase {
 
         public Long id;

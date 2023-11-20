@@ -3,19 +3,20 @@ package com.vantar.admin.model;
 import com.vantar.business.*;
 import com.vantar.business.importexport.ImportMongo;
 import com.vantar.common.*;
+import com.vantar.database.common.ValidationError;
 import com.vantar.database.dependency.DataDependency;
 import com.vantar.database.dto.*;
 import com.vantar.database.nosql.elasticsearch.*;
 import com.vantar.database.nosql.mongo.Mongo;
 import com.vantar.database.nosql.mongo.*;
 import com.vantar.database.query.*;
-import com.vantar.database.query.data.QueryData;
 import com.vantar.database.sql.*;
 import com.vantar.exception.*;
 import com.vantar.locale.Locale;
 import com.vantar.locale.*;
 import com.vantar.service.Services;
 import com.vantar.service.auth.CommonUser;
+import com.vantar.service.dbarchive.ServiceDbArchive;
 import com.vantar.util.datetime.DateTime;
 import com.vantar.util.file.FileUtil;
 import com.vantar.util.json.Json;
@@ -167,20 +168,17 @@ public class AdminData {
             return;
         }
         WebUi ui = Admin.getUiDto(Locale.getString(VantarKey.ADMIN_DATA_LIST), params, response, dtoInfo);
-
         Dto dto = dtoInfo.getDtoInstance();
-        QueryData queryData = params.getQueryData("jsonsearch");
-        QueryBuilder q;
-        if (queryData == null) {
+        QueryBuilder q = params.getQueryBuilder("jsonsearch", dto);
+        if (q == null) {
             q = new QueryBuilder(dto)
                 .page(params.getInteger("page", 1), params.getInteger("count", AdminData.N_PER_PAGE))
                 .sort(params.getString("sort", VantarParam.ID) + ":" + params.getString("sortpos", "desc"));
         } else {
-            try {
-                queryData.setDto(dto);
-                q = new QueryBuilder(queryData);
-            } catch (InputException e) {
-                ui.write().addErrorMessage(e).finish();
+            q.setDto(dto);
+            List<ValidationError> errors = q.getErrors();
+            if (errors != null) {
+                ui.write().addErrorMessage(ValidationError.toString(errors)).finish();
                 return;
             }
         }
@@ -206,7 +204,7 @@ public class AdminData {
                 }
             } else if (dtoInfo.dbms.equals(DtoDictionary.Dbms.MONGO)) {
                 if (MongoConnection.isUp()) {
-                    data = MongoSearch.getPage(q, null);
+                    data = MongoQuery.getPage(q, null);
                 } else {
                     ui.addMessage(Locale.getString(VantarKey.ADMIN_SERVICE_IS_OFF, "Mongo"));
                 }
@@ -224,7 +222,7 @@ public class AdminData {
             Admin.log.error("! {}", dto, e);
         }
 
-        ui.addDtoListWithHeader(data, dtoInfo, q.getDtoResult().getProperties());
+        ui.addDtoListWithHeader(data, dtoInfo, q.getDto().getProperties());
 
         ui.finish();
     }
@@ -814,7 +812,7 @@ public class AdminData {
             for (DtoDictionary.Info info : DtoDictionary.getAll(DtoDictionary.Dbms.MONGO)) {
                 ui.addKeyValue(
                     info.dtoClass.getSimpleName(),
-                    CommonRepoMongo.count(info.getDtoInstance().getStorage()) + " records"
+                    MongoQuery.count(info.getDtoInstance().getStorage()) + " records"
                 );
             }
         } catch (DatabaseException e) {
@@ -857,6 +855,24 @@ public class AdminData {
         Mongo.deleteAll(collection);
         Mongo.Index.remove(collection);
         Mongo.Sequence.remove(collection);
+    }
+
+    public static void archiveSwitch(Params params, HttpServletResponse response, DtoDictionary.Info dtoInfo) throws FinishException {
+        if (dtoInfo == null) {
+            return;
+        }
+        WebUi ui = Admin.getUiDto(Locale.getString(VantarKey.ADMIN_UPDATE), params, response, dtoInfo);
+
+        Dto dto = dtoInfo.getDtoInstance();
+        String a = params.getString("a");
+        if (StringUtil.isEmpty(a)) {
+            ui.addMessage("wrong params");
+        } else {
+            ServiceDbArchive.switchCollection(dto.getClass(), a);
+            ui.addMessage(dto.getClass().getSimpleName() + " storage switched to " + a + " refresh data page.");
+        }
+
+        ui.finish();
     }
 
 

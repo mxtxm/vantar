@@ -218,8 +218,8 @@ public class Mongo {
 //                    IndexOptions option = new IndexOptions();
 //                    option.collation(Collation.builder().locale("en_US").collationStrength(CollationStrength.SECONDARY).build());
                     MongoConnection.getDatabase().getCollection(dto.getStorage()).createIndex(indexes);
-                } catch (MongoCommandException e) {
-                    log.error("! index error {} {}", dto.getClass(), dto, e);
+                } catch (Exception e) {
+                    log.error("! create index error {} {}", dto.getClass(), dto, e);
                     throw new DatabaseException(e);
                 }
             }
@@ -710,7 +710,7 @@ public class Mongo {
     public static void increaseValue(Dto dto, String fieldName, long value) throws DatabaseException {
         QueryBuilder q = new QueryBuilder(dto);
         q.setConditionFromDtoEqualTextMatch();
-        if (!MongoSearch.exists(q)) {
+        if (!MongoQuery.exists(q)) {
             insert(dto);
         }
         increaseValue(q, fieldName, value);
@@ -731,7 +731,7 @@ public class Mongo {
     public static void increaseValues(Dto dto, List<String> fields, long value) throws DatabaseException {
         QueryBuilder q = new QueryBuilder(dto);
         q.setConditionFromDtoEqualTextMatch();
-        if (!MongoSearch.exists(q)) {
+        if (!MongoQuery.exists(q)) {
             insert(dto);
         }
         increaseValues(q, fields, value);

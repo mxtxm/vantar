@@ -128,13 +128,13 @@ public class AdminActionLog {
         q.sort("id:desc");
         List<UserLog> requests;
         try {
-            requests = CommonRepoMongo.getData(q);
-        } catch (DatabaseException e) {
-            ui.addErrorMessage(e);
-            ui.finish();
-            return;
+            requests = CommonModelMongo.getData(q);
         } catch (NoContentException e) {
             ui.addErrorMessage(Locale.getString(VantarKey.NO_CONTENT));
+            ui.finish();
+            return;
+        } catch (VantarException e) {
+            ui.addErrorMessage(e);
             ui.finish();
             return;
         }
@@ -148,16 +148,16 @@ public class AdminActionLog {
         q.sort("id:desc");
         Map<String, UserLog> responses = new HashMap<>(200, 1);
         try {
-            for (Dto dto : CommonRepoMongo.getData(q)) {
+            for (Dto dto : CommonModelMongo.getData(q)) {
                 UserLog uLog = (UserLog) dto;
                 responses.put(uLog.threadId + "-" + uLog.url, uLog);
             }
-        } catch (DatabaseException e) {
-            ui.addErrorMessage(e);
-            ui.finish();
-            return;
         } catch (NoContentException e) {
             ui.addErrorMessage(Locale.getString(VantarKey.NO_CONTENT));
+            ui.finish();
+            return;
+        } catch (VantarException e) {
+            ui.addErrorMessage(e);
             ui.finish();
             return;
         }
@@ -187,13 +187,13 @@ public class AdminActionLog {
         q.sort("id:desc");
         List<UserLog> requests;
         try {
-            requests = CommonRepoMongo.getData(q);
-        } catch (DatabaseException e) {
-            ui.addErrorMessage(e);
-            ui.finish();
-            return;
+            requests = CommonModelMongo.getData(q);
         } catch (NoContentException e) {
             ui.addErrorMessage(Locale.getString(VantarKey.NO_CONTENT));
+            ui.finish();
+            return;
+        } catch (VantarException e) {
+            ui.addErrorMessage(e);
             ui.finish();
             return;
         }

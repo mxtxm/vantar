@@ -188,6 +188,7 @@ public class Location {
         return hash;
     }
 
+    @SuppressWarnings({"unchecked", "rawtypes"})
     public static Location toLocation(Object value) {
         if (value instanceof Location) {
             return (Location) value;

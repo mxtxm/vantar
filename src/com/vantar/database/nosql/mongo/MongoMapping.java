@@ -29,12 +29,9 @@ public class MongoMapping {
         Document document = new Document();
         for (String item : sort) {
             String[] parts = StringUtil.splitTrim(item, ':');
-            if (parts[0].equals(DtoBase.ID)) {
-                parts[0] = Mongo.ID;
-            }
             document.append(
-                parts[0],
-                parts.length == 1 ? 1 : (parts[1].equalsIgnoreCase("asc") || parts[1].equalsIgnoreCase("1") ? 1 : -1)
+                parts[0].equals(DtoBase.ID) ? Mongo.ID : parts[0],
+                parts.length == 1 ? 1 : (parts[1].equalsIgnoreCase("asc") || parts[1].equals("1") ? 1 : -1)
             );
         }
         return document;
@@ -42,7 +39,6 @@ public class MongoMapping {
 
     protected static Document getFieldValuesAsDocument(Dto dto, Dto.Action action) {
         Document document = new Document();
-
         for (StorableData info : dto.getStorableData()) {
             if (info.name.equals(VantarParam.ID)) {
                 info.name = Mongo.ID;
@@ -58,7 +54,6 @@ public class MongoMapping {
                 document.put(info.name, getValueForDocument(info, action));
             }
         }
-
         return document;
     }
 
@@ -113,7 +108,7 @@ public class MongoMapping {
             return new Polygon(positions);
 
         } else if (info.value instanceof List) {
-            List<Object> list = new ArrayList<>();
+            List<Object> list = new ArrayList<>(((List<?>) info.value).size());
             for (Object v : (List) info.value) {
                 if (v != null) {
                     list.add(getValueForDocument(new StorableData(v.getClass(), v, false), action));
@@ -122,7 +117,7 @@ public class MongoMapping {
             return list;
 
         } else if (info.value instanceof Set) {
-            Set<Object> set = new HashSet<>();
+            Set<Object> set = new HashSet<>(((Set<?>) info.value).size());
             for (Object v : (Set) info.value) {
                 if (v != null) {
                     set.add(getValueForDocument(new StorableData(v.getClass(), v, false), action));
@@ -146,12 +141,12 @@ public class MongoMapping {
         return info.value;
     }
 
-    public static Document mapToDocument(Map<String, Object> data, Dto.Action action) {
+    private static Document mapToDocumentObject(Map<?, ?> data, Dto.Action action) {
         Document document = new Document();
         data.forEach((k, v) -> {
-            if (k !=null && v != null) {
+            if (k != null && v != null) {
                 document.put(
-                    Mongo.Escape.keyForStore(k),
+                    Mongo.Escape.keyForStore(k.toString()),
                     getValueForDocument(new StorableData(v.getClass(), v, false), action)
                 );
             }
@@ -159,12 +154,12 @@ public class MongoMapping {
         return document;
     }
 
-    public static Document mapToDocumentObject(Map<?, ?> data, Dto.Action action) {
+    public static Document mapToDocument(Map<String, Object> data, Dto.Action action) {
         Document document = new Document();
         data.forEach((k, v) -> {
-            if (k !=null && v != null) {
+            if (k != null && v != null) {
                 document.put(
-                    Mongo.Escape.keyForStore(k.toString()),
+                    Mongo.Escape.keyForStore(k),
                     getValueForDocument(new StorableData(v.getClass(), v, false), action)
                 );
             }
@@ -243,7 +238,7 @@ public class MongoMapping {
                         document.put(group.columns[0], new Document("$sum", 1));
                         break;
                     case AVG:
-                        mongoQuery.average(group.columns[0]);
+                        mongoQuery.setAverage(group.columns[0]);
                         break;
                     default:
                         int l = group.columns.length;
@@ -266,7 +261,7 @@ public class MongoMapping {
                 }
             }
             if (!document.isEmpty()) {
-                mongoQuery.group(document);
+                mongoQuery.setGroup(document);
             }
         }
     }
@@ -307,20 +302,31 @@ public class MongoMapping {
             }
 
             String fieldName = item.fieldName;
+            boolean searchInLastListItem = false;
             if (fieldName != null) {
                 if (fieldName.equals(VantarParam.ID)) {
                     fieldName = Mongo.ID;
                 } else if (fieldName.endsWith(".id")) {
                     fieldName = StringUtil.replace(fieldName, ".id", "." + Mongo.ID);
+                } else if (fieldName.endsWith(".-1")) {
+                    fieldName = StringUtil.remove(fieldName, ".-1");
+                    searchInLastListItem = true;
                 }
             }
 
+            String op = null;
             switch (item.type) {
                 case EQUAL:
-                    matches.add(new Document(fieldName, item.getValue()));
-                    break;
+                    op = "$eq";
                 case NOT_EQUAL:
-                    matches.add(new Document(fieldName, new Document("$ne", item.getValue())));
+                    if (op == null) {
+                        op = "$ne";
+                    }
+                    matches.add(
+                        searchInLastListItem ?
+                            getListLastElementExp(fieldName, item.getValue(), op) :
+                            new Document(fieldName, new Document(op, item.getValue()))
+                    );
                     break;
 
                 case LIKE:
@@ -337,12 +343,23 @@ public class MongoMapping {
                     break;
 
                 case IN:
-                    matches.add(new Document(fieldName, new Document("$in", Arrays.asList(item.getValues()))));
-                    break;
+                    op = "$in";
                 case NOT_IN:
-                    matches.add(new Document(fieldName, new Document("$nin", Arrays.asList(item.getValues()))));
+                    if (op == null) {
+                        op = "$nin";
+                    }
+                    matches.add(
+                        searchInLastListItem ?
+                            getListLastElementExp(fieldName, Arrays.asList(item.getValues()), op) :
+                            new Document(fieldName, new Document(op, Arrays.asList(item.getValues())))
+                    );
                     break;
                 case CONTAINS_ALL:
+                    matches.add(
+                        searchInLastListItem ?
+                            getListLastElementExp(fieldName, normalizeList(item.itemList), "$all") :
+                            new Document(fieldName, new Document("$all", normalizeList(item.itemList)))
+                    );
                     matches.add(new Document(fieldName, new Document("$all", normalizeList(item.itemList))));
                     break;
 
@@ -378,16 +395,24 @@ public class MongoMapping {
                     break;
                 }
                 case LESS_THAN:
-                    matches.add(new Document(fieldName, new Document("$lt", item.getValue())));
-                    break;
+                    op = "$lt";
                 case GREATER_THAN:
-                    matches.add(new Document(fieldName, new Document("$gt", item.getValue())));
-                    break;
+                    if (op == null) {
+                        op = "$gt";
+                    }
                 case LESS_THAN_EQUAL:
-                    matches.add(new Document(fieldName, new Document("$lte", item.getValue())));
-                    break;
+                    if (op == null) {
+                        op = "$lte";
+                    }
                 case GREATER_THAN_EQUAL:
-                    matches.add(new Document(fieldName, new Document("$gte", item.getValue())));
+                    if (op == null) {
+                        op = "$gte";
+                    }
+                    matches.add(
+                        searchInLastListItem ?
+                            getListLastElementExp(fieldName, item.getValue(), op) :
+                            new Document(fieldName, new Document(op, item.getValue()))
+                    );
                     break;
 
                 case IS_NULL: {
@@ -442,12 +467,7 @@ public class MongoMapping {
                     if (numbers[3] != null) {
                         geometry.append("$minDistance", numbers[3]);
                     }
-                    matches.add(
-                        new Document(
-                            fieldName,
-                            new Document("$near", geometry)
-                        )
-                    );
+                    matches.add(new Document(fieldName, new Document("$near", geometry)));
                     break;
 
                 case WITHIN:
@@ -459,9 +479,7 @@ public class MongoMapping {
                         pt.add(location.longitude);
                         polygon.add(pt);
                     }
-                    matches.add(
-                        Filters.geoWithinPolygon(fieldName, polygon)
-                    );
+                    matches.add(Filters.geoWithinPolygon(fieldName, polygon));
                     break;
 
                 case IN_LIST: {
@@ -469,24 +487,31 @@ public class MongoMapping {
                     if (innerMatch == null || innerMatch.isEmpty()) {
                         continue;
                     }
+
                     matches.add(new Document(fieldName, new Document("$elemMatch", innerMatch)));
                     break;
                 }
 
                 case IN_DTO: {
                     String[] parts = StringUtil.split(fieldName, ':');
+                    if (parts == null) {
+                        break;
+                    }
                     fieldName = parts[0].trim();
                     if (fieldName.equals(VantarParam.ID)) {
                         fieldName = Mongo.ID;
                     }
                     String fieldNameInner = parts.length == 2 ? parts[1].trim() : Mongo.ID;
+                    if (fieldNameInner.equals(VantarParam.ID)) {
+                        fieldNameInner = Mongo.ID;
+                    }
 
                     Document innerMatch = getMongoMatches(item.queryValue, item.dto, true);
                     if (innerMatch == null || innerMatch.isEmpty()) {
                         continue;
                     }
 
-                    MongoQuery q = new MongoQuery(item.dto, item.dto);
+                    MongoQuery q = new MongoQuery(item.dto);
                     q.matches = innerMatch;
                     q.columns = new String[] { fieldNameInner };
                     FindIterable<Document> cursor;
@@ -523,10 +548,17 @@ public class MongoMapping {
         }
 
         Document document = matches.isEmpty() ? new Document() : new Document(op, matches);
-        if (qCondition != null && qCondition.dump) {
+        if (qCondition != null && qCondition.inspect) {
             Mongo.log.info(" > mongo condition dump: {}", document);
         }
 
         return document;
+    }
+
+    private static Document getListLastElementExp(String fieldName, Object value, String op) {
+        List<Object> ex = new ArrayList<>(1);
+        ex.add(new Document("$last", "$" + fieldName));
+        ex.add(value);
+        return new Document("$expr", new Document(op, ex));
     }
 }

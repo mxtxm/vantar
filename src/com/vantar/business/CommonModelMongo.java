@@ -7,7 +7,6 @@ import com.vantar.database.dto.*;
 import com.vantar.database.nosql.mongo.Mongo;
 import com.vantar.database.nosql.mongo.*;
 import com.vantar.database.query.*;
-import com.vantar.database.query.data.QueryData;
 import com.vantar.exception.*;
 import com.vantar.locale.VantarKey;
 import com.vantar.service.Services;
@@ -746,7 +745,7 @@ public class CommonModelMongo extends CommonModel {
 
     public static void forEach(Dto dto, QueryResultBase.EventForeach event) throws VantarException {
         try {
-            MongoSearch.getAllData(dto).forEach(event);
+            MongoQuery.getAllData(dto).forEach(event);
         } catch (DatabaseException e) {
             throw new ServerException(VantarKey.FETCH_FAIL);
         }
@@ -754,7 +753,7 @@ public class CommonModelMongo extends CommonModel {
 
     public static void forEach(QueryBuilder q, QueryResultBase.EventForeach event) throws VantarException {
         try {
-            QueryResult result = MongoSearch.getData(q);
+            QueryResult result = MongoQuery.getData(q);
             result.setLocale(q.getLocale());
             result.forEach(event);
         } catch (DatabaseException e) {
@@ -763,35 +762,16 @@ public class CommonModelMongo extends CommonModel {
     }
 
     public static PageData search(Params params, Dto dto) throws VantarException {
-        return search(params, dto, dto, null);
+        return search(params, dto, null);
     }
 
     public static PageData search(Params params, Dto dto, QueryEvent event) throws VantarException {
-        return search(params, dto, dto, event);
-    }
-
-    public static PageData search(Params params, Dto dto, Dto dtoView) throws VantarException {
-        return search(params, dto, dtoView, null);
-    }
-
-    public static PageData search(Params params, Dto dto, Dto dtoView, QueryEvent event) throws VantarException {
-        QueryData queryData = params.getQueryData();
-        if (queryData == null) {
-            if (!SEARCH_POLICY_ALLOW_EMPTY_CONDITION) {
-                throw new InputException(VantarKey.NO_SEARCH_COMMAND);
-            }
+        QueryBuilder q = params.getQueryBuilder(dto);
+        if (q == null) {
             if (event == null) {
-                return new PageData(getAll(params, dtoView, null, null));
+                return new PageData(getAll(params, dto, null, null));
             }
-            queryData = new QueryData();
-        }
-
-        queryData.setDto(dto, dtoView);
-
-        QueryBuilder q = new QueryBuilder(queryData);
-        List<ValidationError> errors = q.getErrors();
-        if (ObjectUtil.isNotEmpty(errors) && SEARCH_POLICY_THROW_ON_CONDITION_ERROR) {
-            throw new InputException(errors);
+            q = new QueryBuilder(dto);
         }
 
         if (event != null) {
@@ -801,14 +781,10 @@ public class CommonModelMongo extends CommonModel {
         return search(q, event, params.getLang());
     }
 
-    public static PageData searchForEach(Params params, Dto dto, Dto dtoView, QueryEventForeach event) throws VantarException {
-        QueryData queryData = params.getQueryData();
-        queryData.setDto(dto, dtoView);
-
-        QueryBuilder q = new QueryBuilder(queryData);
-        List<ValidationError> errors = q.getErrors();
-        if (ObjectUtil.isNotEmpty(errors) && SEARCH_POLICY_THROW_ON_CONDITION_ERROR) {
-            throw new InputException(errors);
+    public static PageData searchForEach(Params params, Dto dto, QueryEventForeach event) throws VantarException {
+        QueryBuilder q = params.getQueryBuilder(dto);
+        if (q == null) {
+            q = new QueryBuilder(dto);
         }
 
         if (event != null) {
@@ -825,14 +801,14 @@ public class CommonModelMongo extends CommonModel {
     public static PageData search(QueryBuilder q, QueryEvent event, String... locales) throws VantarException {
         if (q.isPagination()) {
             try {
-                return MongoSearch.getPage(q, event, locales);
+                return MongoQuery.getPage(q, event, locales);
             } catch (DatabaseException e) {
                 throw new ServerException(VantarKey.FETCH_FAIL);
             }
         } else {
             QueryResult result;
             try {
-                result = MongoSearch.getData(q);
+                result = MongoQuery.getData(q);
             } catch (DatabaseException e) {
                 throw new ServerException(VantarKey.FETCH_FAIL);
             }
@@ -842,20 +818,32 @@ public class CommonModelMongo extends CommonModel {
             if (ObjectUtil.isNotEmpty(locales)) {
                 result.setLocale(locales);
             }
+            PageData data;
             try {
-                return new PageData(result.asList());
+                data = new PageData(result.asList());
             } catch (DatabaseException e) {
                 throw new ServerException(VantarKey.FETCH_FAIL);
             }
+            List<ValidationError> errors = q.getErrors();
+            if (errors != null) {
+                data.errors = ValidationError.toString(errors);
+            }
+            return data;
         }
     }
 
     public static PageData searchForEach(QueryBuilder q, QueryResultBase.EventForeach event, String... locales) throws VantarException {
+        PageData data;
         try {
-            return MongoSearch.getPageForeach(q, event, locales);
+            data =  MongoQuery.getPageForeach(q, event, locales);
         } catch (DatabaseException e) {
             throw new ServerException(VantarKey.FETCH_FAIL);
         }
+        List<ValidationError> errors = q.getErrors();
+        if (errors != null) {
+            data.errors = ValidationError.toString(errors);
+        }
+        return data;
     }
 
     public static <D extends Dto> List<D> getData(QueryBuilder q, String... locales) throws VantarException {
@@ -872,7 +860,7 @@ public class CommonModelMongo extends CommonModel {
 
     public static <D extends Dto> List<D> getData(QueryBuilder q, QueryEvent event, String... locales) throws VantarException {
         try {
-            QueryResult result = MongoSearch.getData(q);
+            QueryResult result = MongoQuery.getData(q);
             if (event != null) {
                 result.setEvent(event);
             }
@@ -907,7 +895,7 @@ public class CommonModelMongo extends CommonModel {
         throws VantarException {
 
         try {
-            QueryResult result = MongoSearch.getData(q);
+            QueryResult result = MongoQuery.getData(q);
             if (event != null) {
                 result.setEvent(event);
             }
@@ -922,7 +910,7 @@ public class CommonModelMongo extends CommonModel {
 
     public static <D extends Dto> Map<Object, D> getMap(Dto dto, String keyProperty, String... locales) throws VantarException {
         try {
-            QueryResult result = MongoSearch.getAllData(dto);
+            QueryResult result = MongoQuery.getAllData(dto);
             if (ObjectUtil.isNotEmpty(locales)) {
                 result.setLocale(locales);
             }
@@ -934,7 +922,7 @@ public class CommonModelMongo extends CommonModel {
 
     public static <D extends Dto> D getFirst(QueryBuilder q, String... locales) throws VantarException {
         try {
-            QueryResult result = MongoSearch.getData(q);
+            QueryResult result = MongoQuery.getData(q);
             if (ObjectUtil.isNotEmpty(locales)) {
                 result.setLocale(locales);
             }
@@ -947,7 +935,7 @@ public class CommonModelMongo extends CommonModel {
     public static <D extends Dto> D getFirst(Params params, QueryBuilder q) throws VantarException {
         String locales = params.getLang();
         try {
-            QueryResult result = MongoSearch.getData(q);
+            QueryResult result = MongoQuery.getData(q);
             if (ObjectUtil.isNotEmpty(locales)) {
                 result.setLocale(locales);
             }
@@ -1067,7 +1055,7 @@ public class CommonModelMongo extends CommonModel {
             return d;
         }
         try {
-            QueryResult result = MongoSearch.getAllData(dto);
+            QueryResult result = MongoQuery.getAllData(dto);
             if (event != null) {
                 result.setEvent(event);
             }
@@ -1116,10 +1104,14 @@ public class CommonModelMongo extends CommonModel {
     /**
      * Automatically fetches: cache, lang
      */
-    public static Map<String, String> getAsKeyValue(Params params, Dto dto, String keyProperty, String valueProperty)
+    public static Map<String, String> getKeyValue(Dto dto, String keyProperty, String valueProperty) throws VantarException {
+        return getKeyValue(null, dto, keyProperty, valueProperty);
+    }
+
+    public static Map<String, String> getKeyValue(Params params, Dto dto, String keyProperty, String valueProperty)
         throws VantarException {
 
-        String lang = params.getLangNoDefault();
+        String lang = params == null ? null : params.getLangNoDefault();
         if (dto.hasAnnotation(Cache.class)) {
             Map<String, String> result = new LinkedHashMap<>();
             for (Dto d : Services.get(ServiceDtoCache.class).getList(dto.getClass())) {
@@ -1141,7 +1133,7 @@ public class CommonModelMongo extends CommonModel {
 
         } else {
             try {
-                QueryResult result = MongoSearch.getAllData(dto);
+                QueryResult result = MongoQuery.getAllData(dto);
                 if (StringUtil.isNotEmpty(lang)) {
                     result.setLocale(lang);
                 }
@@ -1152,6 +1144,17 @@ public class CommonModelMongo extends CommonModel {
         }
     }
 
+    public static Map<String, String> getKeyValue(QueryBuilder q, String keyProperty, String valueProperty, String... locales)
+        throws VantarException {
+
+        try {
+            QueryResult result = MongoQuery.getData(q);
+            result.setLocale(locales);
+            return result.asKeyValue(keyProperty, valueProperty);
+        } catch (DatabaseException e) {
+            throw new ServerException(VantarKey.FETCH_FAIL);
+        }
+    }
 
 
     // > > > count exists
@@ -1159,7 +1162,7 @@ public class CommonModelMongo extends CommonModel {
 
     public static long count(QueryBuilder q) throws VantarException {
         try {
-            return MongoSearch.count(q);
+            return MongoQuery.count(q);
         } catch (DatabaseException e) {
             throw new ServerException(VantarKey.FETCH_FAIL);
         }
@@ -1167,7 +1170,7 @@ public class CommonModelMongo extends CommonModel {
 
     public static long count(String collectionName) throws VantarException {
         try {
-            return MongoSearch.count(collectionName);
+            return MongoQuery.count(collectionName);
         } catch (DatabaseException e) {
             throw new ServerException(VantarKey.FETCH_FAIL);
         }
@@ -1175,7 +1178,7 @@ public class CommonModelMongo extends CommonModel {
 
     public static boolean exists(QueryBuilder q) throws VantarException {
         try {
-            return MongoSearch.exists(q);
+            return MongoQuery.exists(q);
         } catch (DatabaseException e) {
             throw new ServerException(VantarKey.FETCH_FAIL);
         }
@@ -1183,7 +1186,7 @@ public class CommonModelMongo extends CommonModel {
 
     public static boolean exists(Dto dto, String property) throws VantarException {
         try {
-            return MongoSearch.exists(dto, property);
+            return MongoQuery.exists(dto, property);
         } catch (DatabaseException e) {
             throw new ServerException(VantarKey.FETCH_FAIL);
         }
@@ -1191,7 +1194,7 @@ public class CommonModelMongo extends CommonModel {
 
     public static boolean existsById(Dto dto) throws VantarException {
         try {
-            return MongoSearch.existsById(dto);
+            return MongoQuery.existsById(dto);
         } catch (DatabaseException e) {
             throw new ServerException(VantarKey.FETCH_FAIL);
         }
@@ -1199,7 +1202,7 @@ public class CommonModelMongo extends CommonModel {
 
     public static boolean existsByDto(Dto dto) throws ServerException {
         try {
-            return MongoSearch.existsByDto(dto);
+            return MongoQuery.existsByDto(dto);
         } catch (DatabaseException e) {
             throw new ServerException(VantarKey.FETCH_FAIL);
         }
@@ -1214,7 +1217,7 @@ public class CommonModelMongo extends CommonModel {
     public static List<ValidationError> getUniqueViolation(Dto dto) throws DatabaseException {
         List<ValidationError> errors = null;
         for (String fieldName : dto.annotatedProperties(Unique.class)) {
-            if (!MongoSearch.isUnique(dto, fieldName)) {
+            if (!MongoQuery.isUnique(dto, fieldName)) {
                 if (errors == null) {
                     errors = new ArrayList<>(5);
                 }
@@ -1222,7 +1225,7 @@ public class CommonModelMongo extends CommonModel {
             }
         }
         for (String fieldName : dto.annotatedProperties(UniqueCi.class)) {
-            if (!MongoSearch.isUnique(dto, fieldName)) {
+            if (!MongoQuery.isUnique(dto, fieldName)) {
                 if (errors == null) {
                     errors = new ArrayList<>(5);
                 }
@@ -1231,7 +1234,7 @@ public class CommonModelMongo extends CommonModel {
         }
         if (dto.getClass().isAnnotationPresent(UniqueGroup.class)) {
             for (String group : dto.getClass().getAnnotation(UniqueGroup.class).value()) {
-                if (!MongoSearch.isUnique(dto, StringUtil.split(group, VantarParam.SEPARATOR_COMMON))) {
+                if (!MongoQuery.isUnique(dto, StringUtil.split(group, VantarParam.SEPARATOR_COMMON))) {
                     if (errors == null) {
                         errors = new ArrayList<>(5);
                     }
@@ -1277,7 +1280,7 @@ public class CommonModelMongo extends CommonModel {
         q.condition().equal(Dto.ID, value);
 
         try {
-            if (!MongoSearch.exists(q)) {
+            if (!MongoQuery.exists(q)) {
                 errors.add(new ValidationError(name, VantarKey.REFERENCE, value));
             }
         } catch (DatabaseException e) {
