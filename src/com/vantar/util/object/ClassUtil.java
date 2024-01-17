@@ -3,11 +3,15 @@ package com.vantar.util.object;
 import com.vantar.database.dto.Generics;
 import com.vantar.util.collection.*;
 import com.vantar.util.string.StringUtil;
+import com.vantar.web.*;
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.HttpServletResponse;
 import java.io.*;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.*;
 import java.net.URL;
 import java.util.*;
+import org.slf4j.*;
 
 /**
  * Class utilities
@@ -421,11 +425,60 @@ public class ClassUtil {
      * @param method method name
      * @return trye if method is defined in the class
      */
-    public static boolean isClassMethod(Class<?> theClass, String method) {
+    public static boolean isClassMethod(Class<?> theClass, String method, Class<?>... params) {
         try {
-            return theClass.equals(theClass.getMethod(method).getDeclaringClass());
+            return theClass.equals(theClass.getMethod(method, params).getDeclaringClass());
         } catch (NoSuchMethodException e) {
             return false;
         }
+    }
+
+    public static void checkControllers(Logger log) {
+        log.info(" > checking controller classes...");
+        int c = 0;
+        int e = 0;
+        for (Class<?> controllerClass : ClassUtil.getClasses("com.proda.web.api")) {
+            ++c;
+            WebServlet webServlet = controllerClass.getAnnotation(WebServlet.class);
+            if (webServlet == null) {
+                log.error(" ! 'WebServlet' annotation missing from controller {}", controllerClass.getSimpleName());
+                continue;
+            }
+
+            for (String path : webServlet.value()) {
+                if (ClassUtil.extendsClass(controllerClass, RouteToMethod.class)) {
+
+                    String[] parts = StringUtil.split(path, '/');
+                    StringBuilder methodName = new StringBuilder(path.length()).append(parts.length < 3 ? "index" : parts[2]);
+                    for (int i = 3, l = parts.length; i < l; ++i) {
+                        String part = parts[i];
+                        methodName.append(Character.toUpperCase(part.charAt(0)));
+                        methodName.append(part.substring(1).toLowerCase());
+                    }
+                    String controllerMethod = methodName.toString();
+                    if (!ClassUtil.isClassMethod(controllerClass, controllerMethod, Params.class, HttpServletResponse.class)) {
+                        log.error(" ! missing link --> {}.{}", controllerClass.getName(), controllerMethod);
+                        ++e;
+                    }
+
+                } else if (ClassUtil.extendsClass(controllerClass, RouteToMethodParam.class)) {
+                    String[] parts = StringUtil.split(path, '/');
+                    StringBuilder methodName = new StringBuilder(path.length()).append(StringUtil.isEmpty(parts[1])
+                        ? "index" : parts[1]);
+
+                    for (int i = 2, l = parts.length; i < l; ++i) {
+                        String part = parts[i];
+                        methodName.append(Character.toUpperCase(part.charAt(0)));
+                        methodName.append(part.substring(1).toLowerCase());
+                    }
+                    String controllerMethod = methodName.toString();
+                    if (!ClassUtil.isClassMethod(controllerClass, controllerMethod, Params.class, HttpServletResponse.class)) {
+                        log.error(" ! missing link --> {}.{}", controllerClass.getName(), controllerMethod);
+                        ++e;
+                    }
+                }
+            }
+        }
+        log.info(" < checked {} controller classes. found {} missing links.", c, e);
     }
 }

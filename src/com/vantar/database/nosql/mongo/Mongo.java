@@ -6,11 +6,11 @@ import com.mongodb.client.model.*;
 import com.vantar.common.VantarParam;
 import com.vantar.database.dto.Dto;
 import com.vantar.database.query.QueryBuilder;
-import com.vantar.exception.DatabaseException;
+import com.vantar.exception.*;
 import com.vantar.locale.VantarKey;
 import com.vantar.util.collection.CollectionUtil;
 import com.vantar.util.number.NumberUtil;
-import com.vantar.util.object.ClassUtil;
+import com.vantar.util.object.*;
 import com.vantar.util.string.StringUtil;
 import org.bson.Document;
 import org.slf4j.*;
@@ -440,36 +440,24 @@ public class Mongo {
     }
 
     public static void update(QueryBuilder q) throws DatabaseException {
-        update(new MongoQuery(q).matches, q.getDto(), false, true);
+        update(new MongoQuery(q).matches, q.getDto(), true);
     }
 
     public static void update(Dto dto, Dto condition) throws DatabaseException {
-        update(MongoMapping.getFieldValuesAsDocument(condition, Dto.Action.GET), dto, false, true);
+        update(MongoMapping.getFieldValuesAsDocument(condition, Dto.Action.GET), dto, true);
     }
 
     public static void update(Dto dto) throws DatabaseException {
         Object id = dto.getId();
         if (id != null) {
-            update(new Document(ID, id), dto, false, false);
+            update(new Document(ID, id), dto, false);
         }
-    }
-
-    public static void upsert(Dto dto) throws DatabaseException {
-        Object id = dto.getId();
-        if (id == null) {
-            update(MongoMapping.getFieldValuesAsDocument(dto, Dto.Action.GET), dto, true, true);
-            return;
-        }
-        update(new Document(ID, id), dto, true, false);
     }
 
     // nulls not included
-    private static void update(Document condition, Dto dto, boolean upsert, boolean all) throws DatabaseException {
+    private static void update(Document condition, Dto dto, boolean all) throws DatabaseException {
         dto.setCreateTime(false);
         dto.setUpdateTime(true);
-
-        UpdateOptions options = new UpdateOptions();
-        options.upsert(upsert);
 
         runInnerBeforeUpdate(dto);
         if (!dto.beforeUpdate()) {
@@ -482,9 +470,9 @@ public class Mongo {
                 MongoMapping.getFieldValuesAsDocument(dto, dto.getAction(Dto.Action.UPDATE_FEW_COLS))
             );
             if (all) {
-                collection.updateMany(condition, toUpdate, options);
+                collection.updateMany(condition, toUpdate);
             } else {
-                collection.updateOne( condition, toUpdate, options);
+                collection.updateOne( condition, toUpdate);
             }
         } catch (Exception e) {
             log.error("! update({}, {})", condition, dto, e);
@@ -549,7 +537,7 @@ public class Mongo {
                 }
             }
         } catch (Exception e) {
-            log.error("! {}", dto);
+            log.error("! {} {}", dto.getClass(), dto.getId(), e);
         }
     }
 
@@ -672,7 +660,151 @@ public class Mongo {
 
     /* DELETE < < < */
 
-    public static void increaseValueById(String collectionName, long idValue, List<String> fields, long value) throws DatabaseException {
+
+    /* LIST add ITEM
+
+        user.getStorage(),
+        new Document("_id", 8496L),
+        "theList", 1000L
+
+        user.getStorage(),
+        new Document("_id", 8496L).append("aDto.theIdField", "theIdFieldValue"),
+        "aDto.$.theInnerList", 1900L
+
+     > > > */
+
+    public static void addToCollection(
+        String collectionName,
+        Document condition,
+        boolean isArray,
+        String fieldName,
+        Object item,
+        boolean updateMany
+    ) throws ServerException {
+
+        Object value = item;
+        if (item instanceof Collection) {
+            if (ObjectUtil.isNotEmpty(item)) {
+                List<?> list = new ArrayList<>((Collection<?>) item);
+                if (list.get(0) instanceof Dto) {
+                    List<Document> documents = new ArrayList<>(20);
+                    for (Object obj : list) {
+                        documents.add(MongoMapping.getFieldValuesAsDocument((Dto) obj, Dto.Action.UPDATE_FEW_COLS));
+                    }
+                    value = new Document("$each", documents);
+                } else {
+                    value = new Document("$each", item);
+                }
+            }
+        } else if (item instanceof Dto) {
+            value = MongoMapping.getFieldValuesAsDocument((Dto) item, Dto.Action.UPDATE_FEW_COLS);
+        }
+
+        Document update = new Document(isArray ? "$push" : "$addToSet", new Document(fieldName, value));
+
+        try {
+            if (updateMany) {
+                MongoConnection.getDatabase().getCollection(collectionName).updateMany(condition, update);
+            } else {
+                MongoConnection.getDatabase().getCollection(collectionName).updateOne(condition, update);
+            }
+        } catch (Exception e) {
+            log.error("! {} ({}) : ({} --add item--> {})", collectionName, condition, fieldName, value, e);
+            throw new ServerException(VantarKey.UPDATE_FAIL);
+        }
+    }
+
+    public static void removeFromCollection(
+        String collectionName,
+        Document condition,
+        String fieldName,
+        Object value,
+        boolean updateMany
+    ) throws ServerException {
+
+        Document update = new Document(value instanceof Collection ? "$pullAll" : "$pull", new Document(fieldName, value));
+        try {
+            if (updateMany) {
+                MongoConnection.getDatabase().getCollection(collectionName).updateMany(condition, update);
+            } else {
+                MongoConnection.getDatabase().getCollection(collectionName).updateOne(condition, update);
+            }
+        } catch (Exception e) {
+            log.error("! {} ({}) : ({} --remove item--> {})", collectionName, condition, fieldName, value, e);
+            throw new ServerException(VantarKey.UPDATE_FAIL);
+        }
+    }
+
+    /* LIST add ITEM < < < */
+
+
+    /* KeyVal add ITEM > > > */
+
+    public static void addToMap(
+        String collectionName,
+        Document condition,
+        String fieldName,
+        String key,
+        Object value,
+        boolean updateMany
+    ) throws ServerException {
+
+        Document v = new Document();
+        Document x = v;
+        for (String k : StringUtil.splitTrim(fieldName, '.')) {
+            Document vLast = new Document();
+            x.append(k, vLast);
+            x = vLast;
+        }
+
+        x.append(
+            key,
+            value instanceof Dto ? MongoMapping.getFieldValuesAsDocument((Dto) value, Dto.Action.UPDATE_FEW_COLS) : value
+        );
+log.error(">>>>>>{}  {}", condition, v);
+        try {
+            if (updateMany) {
+                MongoConnection.getDatabase().getCollection(collectionName).updateMany(condition, new Document("$set", v));
+            } else {
+                MongoConnection.getDatabase().getCollection(collectionName).updateOne(condition, new Document("$set", v));
+            }
+        } catch (Exception e) {
+            log.error("! {} ({}) : ({} --add k,v--> {},{})", collectionName, condition, fieldName, key, value, e);
+            throw new ServerException(VantarKey.UPDATE_FAIL);
+        }
+    }
+
+    /**
+     * fieldNameKey = "fieldName.key1.key2.key3"
+     */
+    public static void removeFromMap(
+        String collectionName,
+        Document condition,
+        String fieldNameKey,
+        boolean updateMany
+    ) throws ServerException {
+
+        Document update = new Document("$unset", new Document(fieldNameKey, ""));
+        try {
+            if (updateMany) {
+                MongoConnection.getDatabase().getCollection(collectionName).updateMany(condition, update);
+            } else {
+                MongoConnection.getDatabase().getCollection(collectionName).updateOne(condition, update);
+            }
+        } catch (Exception e) {
+            log.error("! {} ({}) : (--remove k,v--> {})", collectionName, condition, fieldNameKey, e);
+            throw new ServerException(VantarKey.UPDATE_FAIL);
+        }
+    }
+
+    /* KeyVal add ITEM < < < */
+
+
+
+
+    public static void increaseValueById(String collectionName, long idValue, List<String> fields, long value)
+        throws DatabaseException {
+
         Document docs = new Document();
         for (String f : fields) {
             docs.append(f, value);
@@ -755,39 +887,6 @@ public class Mongo {
     }
 
 
-
-
-    public static void addValueToSet(String collectionName, Document condition, String fieldName, Object item)
-        throws DatabaseException {
-
-        addValuesToSet(collectionName, condition, fieldName, item, null);
-    }
-
-    public static void addValuesToSet(String collectionName, Document condition, String fieldName, Collection<?> items)
-        throws DatabaseException {
-
-        addValuesToSet(collectionName, condition, fieldName, null, items);
-    }
-
-    private static void addValuesToSet(String collectionName, Document condition, String fieldName, Object item,
-        Collection<?> items) throws DatabaseException {
-
-        UpdateOptions options = new UpdateOptions();
-        options.upsert(true);
-        try {
-            MongoConnection.getDatabase().getCollection(collectionName).updateOne(
-                condition,
-                new Document("$addToSet", item == null ?
-                    new Document(fieldName, new Document("$each", items)) : new Document("$addToSet", item)),
-                options
-            );
-        } catch (Exception e) {
-            log.error("! addlist({}, {}, {}, {})", collectionName, fieldName, items, condition, e);
-            throw new DatabaseException(e);
-        }
-    }
-
-
     public static class Escape {
 
         public static String key(String key) {
@@ -834,6 +933,27 @@ public class Mongo {
                 out.add(object instanceof Document ? escapeDocument((Document) object) : object);
             }
             return out;
+        }
+    }
+
+
+
+
+
+
+
+
+    public static boolean exists(String collection, Document document) throws DatabaseException {
+        try {
+            return MongoConnection.getDatabase().getCollection(collection)
+                .find(document)
+                .projection(Projections.include(ID))
+                .limit(1)
+                .iterator()
+                .hasNext();
+        } catch (Exception e) {
+            log.error("! exists({})", collection, e);
+            throw new DatabaseException(e);
         }
     }
 }

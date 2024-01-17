@@ -135,7 +135,7 @@ public class AdminSystemHealthController extends RouteToMethod {
 
         }
 
-        Response.writeJsonPretty(response, health);
+        Response.writeJson(response, health);
     }
 
 
@@ -179,7 +179,6 @@ public class AdminSystemHealthController extends RouteToMethod {
 
     public static void systemDatabaseReport(Params params, HttpServletResponse response) {
         Map<String, Map<String, Long>> databases = new HashMap<>(5, 1);
-
         if (MongoConnection.isUp()) {
             Map<String, Long> stats = new HashMap<>(100, 1);
             try {
@@ -226,7 +225,6 @@ public class AdminSystemHealthController extends RouteToMethod {
             databases.put("Sql", stats);
         }
 
-        Response.writeJsonPretty(response, databases);
+        Response.writeJson(response, databases);
     }
-
 }

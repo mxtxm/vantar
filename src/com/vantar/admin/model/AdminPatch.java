@@ -1,12 +1,11 @@
 package com.vantar.admin.model;
 
-import com.vantar.business.CommonModelMongo;
+import com.vantar.business.ModelMongo;
 import com.vantar.common.Settings;
 import com.vantar.exception.*;
 import com.vantar.locale.*;
 import com.vantar.service.patch.*;
 import com.vantar.service.patch.dto.PatchHistory;
-import com.vantar.util.collection.CollectionUtil;
 import com.vantar.util.datetime.DateTime;
 import com.vantar.util.object.*;
 import com.vantar.web.*;
@@ -26,7 +25,7 @@ public class AdminPatch {
         }
 
         try {
-            List<PatchHistory> patches = CommonModelMongo.getAll(new PatchHistory());
+            List<PatchHistory> patches = ModelMongo.getAll(new PatchHistory());
             for (PatchHistory patch : patches) {
                 ui  .beginBox(patch.patchClass)
                     .addLinkNewPage(

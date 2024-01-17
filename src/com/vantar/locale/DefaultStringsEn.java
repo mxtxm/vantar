@@ -64,8 +64,8 @@ public class DefaultStringsEn {
         tokens.put(VantarKey.NO_CONTENT, "No content");
 
         // data write
-        tokens.put(VantarKey.UPLOAD_SUCCESS, "File uploaded successfully");
-        tokens.put(VantarKey.UPLOAD_FAIL, "File uploaded failed");
+        tokens.put(VantarKey.UPLOAD_SUCCESS, "File uploaded successfully \"{0}\"");
+        tokens.put(VantarKey.UPLOAD_FAIL, "File uploaded failed \"{0}\"");
         tokens.put(VantarKey.INSERT_SUCCESS, "Data inserted successfully");
         tokens.put(VantarKey.INSERT_MANY_SUCCESS, "\"{0}\" items inserted successfully");
         tokens.put(VantarKey.INSERT_FAIL, "Insert failed");
@@ -282,7 +282,7 @@ public class DefaultStringsEn {
 
         tokens.put(VantarKey.ADMIN_PAGING, "paging");
 
-        tokens.put(VantarKey.DELETE_FAIL_HAS_DEPENDENCIES, "Not deleted because of dependencies");
+        tokens.put(VantarKey.DELETE_FAIL_HAS_DEPENDENCIES, "Not deleted because of dependencies --> {0}");
 
         tokens.put(VantarKey.ADMIN_AUTH_FAILED, "Authentication failed: Session expired or not signed-in or not unauthorized");
 

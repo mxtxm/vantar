@@ -464,7 +464,7 @@ public class CommonModelSql extends CommonModel {
                         return;
                     }
 
-                    sqlExecute.insert(dto);
+                    //sqlExecute.insert(dto);
                     success.getAndIncrement();
                 } catch (DatabaseException e) {
                     ui.addErrorMessage(presentValue + " " + Locale.getString(VantarKey.IMPORT_FAIL));

@@ -1,6 +1,6 @@
 package com.vantar.service.patch;
 
-import com.vantar.business.CommonModelMongo;
+import com.vantar.business.ModelMongo;
 import com.vantar.common.Settings;
 import com.vantar.database.dto.DtoBase;
 import com.vantar.database.query.QueryBuilder;
@@ -38,7 +38,7 @@ public class Patcher extends DtoBase {
         QueryBuilder q = new QueryBuilder(new PatchHistory());
         q.condition().equal("patchClass", className);
         try {
-            CommonModelMongo.getFirst(q);
+            ModelMongo.getFirst(q);
         } catch (NoContentException e) {
             execPatchManually(className, null);
         } catch (Exception e) {
@@ -68,7 +68,7 @@ public class Patcher extends DtoBase {
 
             QueryBuilder q = new QueryBuilder(history);
             q.condition().equal("patchClass", className);
-            CommonModelMongo.deleteNoLog(q);
+            ModelMongo.deleteNoLog(q);
 
             history.patchClass = className;
             history.success = result.success;
@@ -76,7 +76,7 @@ public class Patcher extends DtoBase {
             history.successCount = result.successCount;
             history.failCount = result.failCount;
             Services.log.info(" << finished {} --> fail={} success={}", className, result.failCount, result.successCount);
-            CommonModelMongo.insertNoLog(history);
+            ModelMongo.insertNoLog(history);
         } catch (Throwable t) {
             Services.log.error(" ! Patcher {}", className, t);
         }

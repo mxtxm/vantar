@@ -192,10 +192,12 @@ public class MongoQueryResult extends QueryResultBase implements QueryResult, Au
                     field.set(dto, v == null ? null : Json.d.fromJson(v, type));
                     continue;
                 }
+
                 if (type.isEnum()) {
                     EnumUtil.setEnumValue(document.getString(name), type, dto, field);
                     continue;
                 }
+
                 if (type == Location.class) {
                     Document point = (Document) document.get(name);
                     if (point == null) {
@@ -233,6 +235,15 @@ public class MongoQueryResult extends QueryResultBase implements QueryResult, Au
                         try {
                             v = document.getList(name, listType);
                             field.set(dto, v != null && type == Set.class ? new HashSet<>(v) : v);
+                        } catch (ClassCastException e) {
+                            List<?> theList = document.getList(name, Object.class);
+                            if (theList != null) {
+                                List<Object> cList = new ArrayList<>(theList.size());
+                                for (Object o : theList) {
+                                    cList.add(ObjectUtil.convert(o, listType));
+                                }
+                                field.set(dto, type == Set.class ? new HashSet<>(cList) : cList);
+                            }
                         } catch (Exception e) {
                             log.warn(
                                 " !! can not get List<{}> from database ({}:{}) > ({}, {})\n",
@@ -422,8 +433,8 @@ public class MongoQueryResult extends QueryResultBase implements QueryResult, Au
             cachedClass = (Class<? extends Dto>) fieldX.getType();
         }
 
-        boolean isListSet = type == List.class || type == Set.class;
-        if (isListSet) {
+        boolean isCollection = type == List.class || type == Set.class;
+        if (isCollection) {
             Class<?>[] types = ClassUtil.getGenericTypes(fieldX);
             if (types == null || types.length == 0) {
                 log.warn(" ! can not get generic type to fetch d={} dto={} f={} t={}", document, dtoX, fieldX, type);
@@ -437,11 +448,12 @@ public class MongoQueryResult extends QueryResultBase implements QueryResult, Au
         }
 
         if (!cachedClass.isAnnotationPresent(Cache.class)) {
-            log.warn(" ! {}>{} is not cached", dtoX.getClass().getSimpleName(), cachedClass.getSimpleName());
+            log.warn(" ! d={} f={} {}>{} is not cached"
+                , dto.getClass().getSimpleName(), fieldX.getName(), dtoX.getClass().getSimpleName(), cachedClass.getSimpleName());
             return false;
         }
 
-        if (isListSet) {
+        if (isCollection) {
             List<Long> ids = document.getList(fk, Long.class);
             if (ids == null) {
                 return true;
@@ -449,8 +461,13 @@ public class MongoQueryResult extends QueryResultBase implements QueryResult, Au
 
             Collection<Object> dtos = type == List.class ? new ArrayList<>(ids.size()) : new HashSet<>(ids.size(), 1);
             for (Long id : ids) {
+                Dto targetDto = cache.getDto(cachedClass, id);
+                if (targetDto == null) {
+                    log.warn(" ! data missing ({}, id={})", cachedClass, id);
+                    continue;
+                }
                 if (straightFromCache) {
-                    dtos.add(cache.getDto(cachedClass, id));
+                    dtos.add(targetDto);
                     continue;
                 }
 
@@ -459,22 +476,19 @@ public class MongoQueryResult extends QueryResultBase implements QueryResult, Au
                     log.warn(" ! can not create object ({})", type);
                     return true;
                 }
-                Dto targetDto = cache.getDto(cachedClass, id);
-                if (targetDto == null) {
-                    log.warn(" ! data missing ({}, id={})", cachedClass, id);
-                    return true;
-                }
 
                 baseDto.set(targetDto, getLocales());
                 for (Field f : baseDto.getFields()) {
                     if (f.isAnnotationPresent(FetchCache.class)) {
-                        String fk2 = f.getAnnotation(FetchCache.class).field();
+                        String fk2 = f.getAnnotation(FetchCache.class).value();
+                        if (fk2.isEmpty()) {
+                            fk2 = f.getAnnotation(FetchCache.class).field();
+                        }
                         Document d = new Document(fk2, targetDto.getPropertyValue(fk2));
                         fetchFromCache(d, baseDto, f, f.getType());
                     }
-
                     if (f.isAnnotationPresent(Fetch.class)) {
-                        String fk2 = f.getAnnotation(FetchCache.class).field();
+                        String fk2 = f.getAnnotation(Fetch.class).value();
                         Document d = new Document(fk2, targetDto.getPropertyValue(fk2));
                         fetchFromDatabase(d, baseDto, f, f.getType());
                     }

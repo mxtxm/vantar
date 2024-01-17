@@ -9,7 +9,7 @@ import com.vantar.queue.Queue;
 import com.vantar.queue.*;
 import com.vantar.service.Services;
 import com.vantar.service.auth.*;
-import com.vantar.service.log.dto.UserLog;
+import com.vantar.service.log.dto.*;
 import com.vantar.util.json.*;
 import com.vantar.web.*;
 import org.slf4j.*;
@@ -101,24 +101,83 @@ public class ServiceUserActionLog implements Services.Service {
         userLog.action = action;
         userLog.threadId = Thread.currentThread().getId();
 
-        if (object == null && params != null) {
-            userLog.className = "Request";
-            userLog.object = params.toJsonString();
-        } else if (object != null) {
-            if (object instanceof String) {
-                userLog.object = (String) object;
-            } else {
-                userLog.className = object.getClass().getName();
-                userLog.object = Json.d.toJson(object);
-            }
+        if (object != null) {
+            Class<?> cl = object.getClass();
             if (object instanceof Dto) {
+                userLog.className = cl.getName();
+                userLog.classNameSimple = cl.getSimpleName();
+                userLog.object = Json.d.toJson(object);
                 userLog.objectId = ((Dto) object).getId();
+            } else if (object instanceof String) {
+                userLog.object = (String) object;
+            } else if (object instanceof DtoLogAction) {
+                DtoLogAction logAction = (DtoLogAction) object;
+                userLog.className = logAction.dtoClass.getName();
+                userLog.classNameSimple = logAction.dtoClass.getSimpleName();
+                userLog.object = Json.d.toJson(logAction.object);
+                userLog.objectId = logAction.id;
+            } else {
+                userLog.className = cl.getName();
+                userLog.classNameSimple = cl.getSimpleName();
+                userLog.object = Json.d.toJson(object);
             }
         }
 
-        if (userLogService.delayedStoreEnabled && Queue.isUp()) {
+        if (userLogService.delayedStoreEnabled && Services.isUp(Queue.class)) {
             Queue.add(VantarParam.QUEUE_NAME_USER_ACTION_LOG, new Packet(userLog));
             log.debug(" userLog > queue({})", VantarParam.QUEUE_NAME_USER_ACTION_LOG);
+        } else {
+            if (userLogService.dbms.equalsIgnoreCase(DtoDictionary.Dbms.ELASTIC.name())) {
+                saveOnElastic(userLog);
+            } else if (userLogService.dbms.equalsIgnoreCase(DtoDictionary.Dbms.MONGO.name())) {
+                saveOnMongo(userLog);
+            }
+        }
+    }
+
+    public static void addRequest(Params params) {
+        ServiceUserActionLog userLogService;
+        try {
+            userLogService = Services.get(ServiceUserActionLog.class);
+        } catch (ServiceException e) {
+            return;
+        }
+
+        UserWebLog userLog = new UserWebLog();
+        userLog.url = params.request.getRequestURI();
+        if (userLog.url.startsWith("/admin/")) {
+            return;
+        }
+        userLog.headers = params.getHeaders();
+        userLog.requestType = params.getMethod() + ": " +  params.type.name();
+        userLog.ip = params.getIp();
+        userLog.uploadedFiles = params.getUploadFiles();
+        try {
+            CommonUser user = Services.get(ServiceAuth.class).getCurrentUser(params);
+            if (user != null) {
+                userLog.userId = user.getId();
+                userLog.extraData = user.getExtraData();
+            }
+        } catch (Exception e) {
+            userLog.userId = null;
+        }
+
+        userLog.action = "REQUEST";
+        userLog.threadId = Thread.currentThread().getId();
+        userLog.className = "Params";
+        userLog.classNameSimple = Params.class.getSimpleName();
+        userLog.params = params.toJsonString();
+        userLog.objectId = params.getLong("id");
+        if (userLog.objectId == null) {
+            try {
+                userLog.objectId = params.extractFromJson("id", Long.class);
+            } catch (Exception ignore) {
+
+            }
+        }
+
+        if (userLogService.delayedStoreEnabled && Services.isUp(Queue.class)) {
+            Queue.add(VantarParam.QUEUE_NAME_USER_ACTION_LOG, new Packet(userLog));
         } else {
             if (userLogService.dbms.equalsIgnoreCase(DtoDictionary.Dbms.ELASTIC.name())) {
                 saveOnElastic(userLog);
@@ -136,7 +195,7 @@ public class ServiceUserActionLog implements Services.Service {
             return;
         }
 
-        UserLog userLog = new UserLog();
+        UserWebLog userLog = new UserWebLog();
         Params params = Params.getThreadParams();
         if (params != null) {
             userLog.url = params.request.getRequestURI();
@@ -151,17 +210,19 @@ public class ServiceUserActionLog implements Services.Service {
         userLog.headers = Response.getHeaders(response);
 
         if (object != null) {
-            if (object instanceof String) {
-                userLog.object = Json.d.toJson(object);
+            if (object instanceof Dto) {
+                userLog.objectId = ((Dto) object).getId();
+            } if (object instanceof String) {
+                userLog.params = (String) object;
             } else {
-                userLog.className = object.getClass().getName();
-                userLog.object = Json.d.toJson(object);
+                userLog.params = Json.d.toJson(object);
             }
+            userLog.className = object.getClass().getName();
+            userLog.classNameSimple = object.getClass().getSimpleName();
         }
 
-        if (userLogService.delayedStoreEnabled && Queue.isUp()) {
+        if (userLogService.delayedStoreEnabled && Services.isUp(Queue.class)) {
             Queue.add(VantarParam.QUEUE_NAME_USER_ACTION_LOG, new Packet(userLog));
-            log.debug(" userLog > queue({})", VantarParam.QUEUE_NAME_USER_ACTION_LOG);
         } else {
             if (userLogService.dbms.equalsIgnoreCase(DtoDictionary.Dbms.ELASTIC.name())) {
                 saveOnElastic(userLog);
@@ -206,7 +267,7 @@ public class ServiceUserActionLog implements Services.Service {
         write.startTransaction();
 
         for (Packet packet : packets) {
-            UserLog item = packet.getObject(UserLog.class);
+            UserLog item = packet.getObject();
             try {
                 write.insert(item);
             } catch (DatabaseException e) {
@@ -232,13 +293,20 @@ public class ServiceUserActionLog implements Services.Service {
         }
 
         List<UserLog> items = new ArrayList<>(packets.size());
+        List<UserWebLog> wItems = new ArrayList<>(packets.size());
 
         for (Packet packet : packets) {
-            items.add(packet.getObject(UserLog.class));
+            Object obj = packet.getObject();
+            if (obj instanceof UserWebLog) {
+                wItems.add((UserWebLog) obj);
+            } else {
+                items.add((UserLog) obj);
+            }
         }
 
         try {
             Mongo.insert(items);
+            Mongo.insert(wItems);
         } catch (DatabaseException e) {
             log.info("! could not save log {}", e.getMessage());
             return;
@@ -248,7 +316,7 @@ public class ServiceUserActionLog implements Services.Service {
         LogEvent.beat(this.getClass(), "insert");
     }
 
-    private static void saveOnElastic(UserLog item) {
+    private static void saveOnElastic(Dto item) {
         ElasticWrite write = new ElasticWrite();
         write.startTransaction();
         try {
@@ -259,7 +327,7 @@ public class ServiceUserActionLog implements Services.Service {
         }
     }
 
-    private static void saveOnMongo(UserLog item) {
+    private static void saveOnMongo(Dto item) {
         try {
             Mongo.insert(item);
         } catch (Exception e) {
@@ -269,5 +337,19 @@ public class ServiceUserActionLog implements Services.Service {
 
     public boolean isOk() {
         return true;
+    }
+
+
+    public static class DtoLogAction {
+
+        public Class<? extends Dto> dtoClass;
+        public Long id;
+        public Object object;
+
+        public DtoLogAction(Class<? extends Dto> dtoClass, Long id, Object object) {
+            this.dtoClass = dtoClass;
+            this.id = id;
+            this.object = object;
+        }
     }
 }

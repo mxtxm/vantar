@@ -169,6 +169,12 @@ public class AdminData {
         }
         WebUi ui = Admin.getUiDto(Locale.getString(VantarKey.ADMIN_DATA_LIST), params, response, dtoInfo);
         Dto dto = dtoInfo.getDtoInstance();
+
+        Event event = getEvent();
+        if (event != null) {
+            dto = event.dtoExchange(dto, "list");
+        }
+
         QueryBuilder q = params.getQueryBuilder("jsonsearch", dto);
         if (q == null) {
             q = new QueryBuilder(dto)
@@ -236,6 +242,10 @@ public class AdminData {
 
         Dto dto = dtoInfo.getDtoInstance();
         dto.setDeletedQueryPolicy(Dto.QueryDeleted.SHOW_ALL);
+        Event event = getEvent();
+        if (event != null) {
+            dto = event.dtoExchange(dto, "delete");
+        }
 
         if (!params.isChecked("f")) {
             dto.setDeleteLogical(false);
@@ -246,7 +256,7 @@ public class AdminData {
                 if (SqlConnection.isUp()) {
                     try (SqlConnection connection = new SqlConnection()) {
                         CommonRepoSql repo = new CommonRepoSql(connection);
-                        ui.addDeleteForm(repo.getData(q), dtoInfo.present);
+                        ui.addDeleteForm(repo.getData(q));
                     } catch (NoContentException x) {
                         ui.addMessage(Locale.getString(VantarKey.NO_CONTENT));
                     } catch (DatabaseException e) {
@@ -259,7 +269,7 @@ public class AdminData {
             } else if (dtoInfo.dbms.equals(DtoDictionary.Dbms.MONGO)) {
                 if (MongoConnection.isUp()) {
                     try {
-                        ui.addDeleteForm(CommonModelMongo.getData(q), dtoInfo.present);
+                        ui.addDeleteForm(ModelMongo.getData(q));
                     } catch (NoContentException x) {
                         ui.addMessage(Locale.getString(VantarKey.NO_CONTENT));
                     } catch (VantarException e) {
@@ -272,7 +282,7 @@ public class AdminData {
             } else if (dtoInfo.dbms.equals(DtoDictionary.Dbms.ELASTIC)) {
                 if (ElasticConnection.isUp()) {
                     try {
-                        ui.addDeleteForm(CommonRepoElastic.getData(q), dtoInfo.present);
+                        ui.addDeleteForm(CommonRepoElastic.getData(q));
                     } catch (NoContentException x) {
                         ui.addMessage(Locale.getString(VantarKey.NO_CONTENT));
                     } catch (DatabaseException e) {
@@ -288,7 +298,6 @@ public class AdminData {
             return;
         }
 
-        Event event = getEvent();
         if (event != null) {
             event.beforeDelete(dto);
         }
@@ -303,18 +312,18 @@ public class AdminData {
             } else if (dtoInfo.dbms.equals(DtoDictionary.Dbms.MONGO)) {
                 if (MongoConnection.isUp()) {
                     if (params.isChecked(VantarParam.LOGICAL_DELETED_UNDO)) {
-                        ui.addMessage(CommonModelMongo.unDeleteBatch(params, dto.getClass()).message);
+                        ui.addMessage(ModelMongo.unDeleteBatch(params, dto.getClass()).message);
                     } else {
                         dto.setDeleteLogical(params.isChecked("delete-logic"));
 
-                        ResponseMessage resp = CommonModelMongo.deleteBatch(params, dto.getClass());
+                        ResponseMessage resp = ModelMongo.deleteBatch(params, dto.getClass());
                         ui.addMessage(resp.message);
                         if (resp.value instanceof List) {
                             List<DataDependency.Dependants> items = (List<DataDependency.Dependants>) resp.value;
                             for (DataDependency.Dependants item : items) {
-                                ui.addHeading(item.name);
-                                for (Dto dtoDep : item.dtos) {
-                                    ui.addPre(dtoDep.toString());
+                                ui.addHeading(item.className);
+                                for (Map.Entry<Long, String> record : item.records.entrySet()) {
+                                    ui.addPre(record.getKey() + " - " + record.getValue());
                                 }
                             }
 
@@ -374,20 +383,19 @@ public class AdminData {
                 if (dtoInfo.dbms.equals(DtoDictionary.Dbms.MONGO)) {
                     if (MongoConnection.isUp()) {
                         if (params.isChecked(VantarParam.LOGICAL_DELETED_UNDO)) {
-                            ui.addMessage(CommonModelMongo.unDeleteBatch(params, dto.getClass()).message);
+                            ui.addMessage(ModelMongo.unDeleteBatch(params, dto.getClass()).message);
                         } else {
                             dto.setDeleteLogical(params.isChecked("delete-logic"));
-                            ResponseMessage resp = CommonModelMongo.deleteById(dto);
+                            ResponseMessage resp = ModelMongo.deleteById(dto);
                             ui.addMessage(resp.message);
                             if (resp.value instanceof List) {
                                 List<DataDependency.Dependants> items = (List<DataDependency.Dependants>) resp.value;
                                 for (DataDependency.Dependants item : items) {
-                                    ui.addHeading(item.name);
-                                    for (Dto dtoDep : item.dtos) {
-                                        ui.addPre(dtoDep.toString());
+                                    ui.addHeading(item.className);
+                                    for (Map.Entry<Long, String> record : item.records.entrySet()) {
+                                        ui.addPre(record.getKey() + " - " + record.getValue());
                                     }
                                 }
-
                             }
                         }
                     } else {
@@ -412,6 +420,8 @@ public class AdminData {
                 if (event != null) {
                     event.afterDelete(dto);
                 }
+            } catch (InputException e) {
+                ui.addErrorMessage(e);
             } catch (VantarException e) {
                 ui.addErrorMessage(e);
                 Admin.log.error("! {}", dto, e);
@@ -445,7 +455,7 @@ public class AdminData {
                     }
                 } else if (dtoInfo.dbms.equals(DtoDictionary.Dbms.MONGO)) {
                     if (MongoConnection.isUp()) {
-                        ui.addMessage(CommonModelMongo.purge(dto).message);
+                        ui.addMessage(ModelMongo.purge(dto).message);
                     } else {
                         ui.addMessage(Locale.getString(VantarKey.ADMIN_SERVICE_IS_OFF, "Mongo"));
                     }
@@ -476,6 +486,10 @@ public class AdminData {
         WebUi ui = Admin.getUiDto(Locale.getString(VantarKey.ADMIN_UPDATE), params, response, dtoInfo);
 
         Dto dto = dtoInfo.getDtoInstance();
+        Event event = getEvent();
+        if (event != null) {
+            dto = event.dtoExchange(dto, "update");
+        }
 
         if (!params.contains("f")) {
             dto.setId(params.getLong(VantarParam.ID));
@@ -485,7 +499,7 @@ public class AdminData {
                         CommonRepoSql repo = new CommonRepoSql(connection);
                         ui.addDtoUpdateForm(
                             repo.getById(dto),
-                            params.getString("root") == null ? dto.getProperties(dtoInfo.getUpdateExclude()) : dto.getProperties()
+                            dto.getProperties()
                         );
                     } catch (DatabaseException e) {
                         ui.addErrorMessage(e);
@@ -500,8 +514,8 @@ public class AdminData {
                 if (MongoConnection.isUp()) {
                     try {
                         ui.addDtoUpdateForm(
-                            CommonModelMongo.getById(dto),
-                            params.getString("root") == null ? dto.getProperties(dtoInfo.getUpdateExclude()) : dto.getProperties()
+                            ModelMongo.getById(dto),
+                            dto.getProperties()
                         );
                     } catch (NoContentException e) {
                         ui.addMessage(Locale.getString(VantarKey.NO_CONTENT));
@@ -517,7 +531,7 @@ public class AdminData {
                     try {
                         ui.addDtoUpdateForm(
                             CommonRepoElastic.getById(dto),
-                            params.getString("root") == null ? dto.getProperties(dtoInfo.getUpdateExclude()) : dto.getProperties()
+                            dto.getProperties()
                         );
                     } catch (DatabaseException e) {
                         ui.addErrorMessage(e);
@@ -534,7 +548,6 @@ public class AdminData {
             return;
         }
 
-        Event event = getEvent();
         if (event != null) {
             event.beforeUpdate(dto);
         }
@@ -548,7 +561,7 @@ public class AdminData {
                 }
             } else if (dtoInfo.dbms.equals(DtoDictionary.Dbms.MONGO)) {
                 if (MongoConnection.isUp()) {
-                    CommonModelMongo.updateJson(params, "asjson", dto, new CommonModel.WriteEvent() {
+                    ModelMongo.updateJson(params, "asjson", dto, new CommonModel.WriteEvent() {
                         @Override
                         public void beforeSet(Dto dto) {
 
@@ -605,17 +618,20 @@ public class AdminData {
         WebUi ui = Admin.getUiDto(Locale.getString(VantarKey.ADMIN_NEW_RECORD), params, response, dtoInfo);
 
         Dto dto = dtoInfo.getDtoInstance();
+        Event event = getEvent();
+        if (event != null) {
+            dto = event.dtoExchange(dto, "insert");
+        }
 
         if (!params.isChecked("f")) {
             ui.addDtoAddForm(
                 dto,
-                params.getString("root") == null ? dto.getProperties(dtoInfo.getInsertExclude()) : dto.getProperties()
+                dto.getProperties()
             );
             ui.finish();
             return;
         }
 
-        Event event = getEvent();
         if (event != null) {
             event.beforeInsert(dto);
         }
@@ -629,7 +645,7 @@ public class AdminData {
                 }
             } else if (dtoInfo.dbms.equals(DtoDictionary.Dbms.MONGO)) {
                 if (MongoConnection.isUp()) {
-                    CommonModelMongo.insertJson(params, "asjson", dto, new CommonModel.WriteEvent() {
+                    ModelMongo.insertJson(params, "asjson", dto, new CommonModel.WriteEvent() {
                         @Override
                         public void beforeSet(Dto dto) {
 
@@ -690,7 +706,7 @@ public class AdminData {
             }
         } else if (dtoIndex.dbms.equals(DtoDictionary.Dbms.MONGO)) {
             if (MongoConnection.isUp()) {
-                List<Dto> data = CommonModelMongo.getAll(dto);
+                List<Dto> data = ModelMongo.getAll(dto);
                 String json = Json.d.toJson(data);
                 String filepath = FileUtil.getTempFilename();
                 FileUtil.write(filepath, json);
@@ -729,7 +745,7 @@ public class AdminData {
                 CommonModelSql.importDataAdmin(
                     params.getString("import"),
                     dto,
-                    dtoIndex.present,
+                    dto.getPresentationPropertyNames(),
                     params.isChecked("deleteall"),
                     ui
                 );
@@ -741,7 +757,7 @@ public class AdminData {
                 ImportMongo.importDataAdmin(
                     params.getString("import"),
                     dto,
-                    dtoIndex.present,
+                    dto.getPresentationPropertyNames(),
                     params.isChecked("deleteall"),
                     ui
                 );
@@ -753,7 +769,7 @@ public class AdminData {
                 CommonModelElastic.importDataAdmin(
                     params.getString("import"),
                     dto,
-                    dtoIndex.present,
+                    dto.getPresentationPropertyNames(),
                     params.isChecked("deleteall"),
                     ui
                 );
@@ -878,6 +894,8 @@ public class AdminData {
 
     public interface Event {
 
+        Dto dtoExchange(Dto dto, String action);
+
         void beforeInsert(Dto dto);
         void afterInsert(Dto dto);
 
@@ -887,6 +905,7 @@ public class AdminData {
         void beforeDelete(Dto dto);
         void afterDelete(Dto dto);
     }
+
 
     private static Event getEvent() {
         String adminApp = Settings.getAdminApp();

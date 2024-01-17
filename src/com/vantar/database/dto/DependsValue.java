@@ -3,13 +3,12 @@ package com.vantar.database.dto;
 import java.lang.annotation.*;
 
 /**
- * for WebUi.
- * "none" : no form
- * "password" : input type
+ * Field value must exists in another collection
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
-public @interface Tags {
+public @interface DependsValue {
 
-    String[] value();
+    Class<? extends Dto> dto();
+    String field();
 }

@@ -62,8 +62,8 @@ public class DefaultStringsFa {
         tokens.put(VantarKey.NO_CONTENT, "بدون محتوا");
 
         // data write
-        tokens.put(VantarKey.UPLOAD_SUCCESS, "فایل با موفقیت آپلود شذ");
-        tokens.put(VantarKey.UPLOAD_FAIL, "فایل با موفقیت آپلود نشذ");
+        tokens.put(VantarKey.UPLOAD_SUCCESS, "\"{0}\" فایل با موفقیت آپلود شذ");
+        tokens.put(VantarKey.UPLOAD_FAIL, "\"{0}\" فایل با موفقیت آپلود نشذ");
         tokens.put(VantarKey.INSERT_SUCCESS, "داده ها با موفقیت وارد گردید");
         tokens.put(VantarKey.INSERT_MANY_SUCCESS, "\"{0}\" رکورد با موفقیت وارد گردید");
         tokens.put(VantarKey.INSERT_FAIL, "ورود اطلاعات دچار خطا شد");
@@ -283,7 +283,7 @@ public class DefaultStringsFa {
 
         tokens.put(VantarKey.ADMIN_PAGING, "صفحه بندی");
 
-        tokens.put(VantarKey.DELETE_FAIL_HAS_DEPENDENCIES, "بعلت وجود وابستگی امکان حذف وجود ندارد");
+        tokens.put(VantarKey.DELETE_FAIL_HAS_DEPENDENCIES, "بعلت وجود وابستگی امکان حذف وجود ندارد  --> {0}");
 
         tokens.put(VantarKey.ADMIN_AUTH_FAILED, "خظای احراز هویت کاربر: session فاسد شده یا وارد داشبورد نشدید یا دسترسی ندارید");
 

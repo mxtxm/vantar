@@ -27,7 +27,7 @@ public abstract class RouteAllToOneMethod extends RouteBase {
             Params.setThreadParams(params);
 
             if (logRequest) {
-                ServiceUserActionLog.add("REQUEST", null);
+                ServiceUserActionLog.addRequest(params);
                 log.debug(" > {}", request.getRequestURI());
             }
 

@@ -31,11 +31,7 @@ public class DtoDictionary {
         tempCategory = category;
     }
 
-    /**
-     * @param command: "present:name,id;insert-exclude:id;update-exclude:id;insert-include:id;update-include:id"
-     */
-    public static void add(String title, Class<? extends Dto> dtoClass, Integer onUpdateBroadcastMessage
-        , String command, QueryBuilder queryCache) {
+    public static void add(String title, Class<? extends Dto> dtoClass, Integer onUpdateBroadcastMessage, QueryBuilder queryCache) {
 
         Map<String, Info> catInfo = index.get(tempCategory);
         if (catInfo == null) {
@@ -59,93 +55,20 @@ public class DtoDictionary {
             info.dbms = Dbms.NOSTORE;
         }
 
-        info.insertExclude = new ArrayList<>(6);
-        info.insertExclude.add(VantarParam.ID);
-        info.insertExclude.add("create_t");
-        info.insertExclude.add("createT");
-        info.insertExclude.add("update_t");
-        info.insertExclude.add("updateT");
-        info.updateExclude = new ArrayList<>(6);
-        info.insertExclude.add(VantarParam.ID);
-        info.insertExclude.add("create_t");
-        info.insertExclude.add("createT");
-        info.insertExclude.add("update_t");
-        info.insertExclude.add("updateT");
-        info.present = new ArrayList<>(4);
-        try {
-            dtoClass.getField("name");
-            info.present.add("name");
-        } catch (NoSuchFieldException e) {
-            info.present.add(VantarParam.ID);
-        }
-
-        if (StringUtil.isNotEmpty(command)) {
-            for (String c : StringUtil.splitTrim(command, VantarParam.SEPARATOR_BLOCK)) {
-                String[] commandProperties = StringUtil.splitTrim(c, VantarParam.SEPARATOR_KEY_VAL);
-                String[] properties = StringUtil.splitTrim(commandProperties[1], VantarParam.SEPARATOR_COMMON);
-                switch (commandProperties[0]) {
-                    case "present":
-                        if (info.present == null) {
-                            info.present = new ArrayList<>(properties.length);
-                        }
-                        info.present.addAll(Arrays.asList(properties));
-                        break;
-
-                    case "insert-exclude":
-                        if (info.insertExclude == null) {
-                            info.insertExclude = new ArrayList<>(properties.length);
-                        }
-                        info.insertExclude.addAll(Arrays.asList(properties));
-                        break;
-
-                    case "insert-include":
-                        if (info.insertExclude != null) {
-                            for (String property : properties) {
-                                info.insertExclude.remove(property);
-                            }
-                        }
-                        break;
-
-                    case "update-exclude":
-                        if (info.updateExclude == null) {
-                            info.updateExclude = new ArrayList<>(properties.length);
-                        }
-                        info.updateExclude.addAll(Arrays.asList(properties));
-                        break;
-
-                    case "update-include":
-                        if (info.updateExclude != null) {
-                            for (String property : properties) {
-                                info.updateExclude.remove(property);
-                            }
-                        }
-                        break;
-                }
-            }
-        }
-
         catInfo.put(dtoClass.getSimpleName(), info);
         index.put(tempCategory, catInfo);
     }
 
-    public static void add(String title, Class<? extends Dto> dtoClass, Integer onUpdateBroadcastMessage, String command) {
-        add(title, dtoClass, onUpdateBroadcastMessage, command, null);
-    }
-
     public static void add(String title, Class<? extends Dto> dtoClass, Integer onUpdateBroadcastMessage) {
-        add(title, dtoClass, onUpdateBroadcastMessage, null, null);
-    }
-
-    public static void add(String title, Class<? extends Dto> dtoClass, String command) {
-        add(title, dtoClass, null, command, null);
+        add(title, dtoClass, onUpdateBroadcastMessage, null);
     }
 
     public static void add(String title, Class<? extends Dto> dtoClass) {
-        add(title, dtoClass, null, null, null);
+        add(title, dtoClass, null, null);
     }
 
     public static void add(String title, Class<? extends Dto> dtoClass, QueryBuilder queryCache) {
-        add(title, dtoClass, null, null, queryCache);
+        add(title, dtoClass, null, queryCache);
     }
 
     public static Map<String, Map<String, Info>> getStructure() {
@@ -240,20 +163,9 @@ public class DtoDictionary {
         public String category;
         public String title;
         public Class<? extends Dto> dtoClass;
-        public List<String> insertExclude;
-        public List<String> updateExclude;
-        public List<String> present;
         public Integer broadcastMessage;
         public QueryBuilder queryCache;
 
-
-        public String[] getInsertExclude() {
-            return insertExclude.toArray(new String[0]);
-        }
-
-        public String[] getUpdateExclude() {
-            return updateExclude.toArray(new String[0]);
-        }
 
         public Dto getDtoInstance() {
             try {

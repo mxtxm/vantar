@@ -14,6 +14,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.util.*;
 
 
+@SuppressWarnings("unchecked")
 public class AdminCache {
 
     public static void index(Params params, HttpServletResponse response) throws FinishException {

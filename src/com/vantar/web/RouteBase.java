@@ -37,16 +37,16 @@ public abstract class RouteBase extends HttpServlet {
             }
         }
 
-        if (logRequest) {
-            ServiceUserActionLog.add("REQUEST", null);
-            log.debug(" > {}", request.getRequestURI());
-        }
-
         Locale.setSelectedLocale(params);
         java.lang.reflect.Method method;
         String m = methodName.toString();
         try {
             method = this.getClass().getMethod(m, Params.class, HttpServletResponse.class);
+
+            if (logRequest && !method.isAnnotationPresent(NoLog.class)) {
+                ServiceUserActionLog.addRequest(params);
+                log.debug(" > {}", request.getRequestURI());
+            }
 
             if (method.isAnnotationPresent(CallTimeLimit.class)) {
                 if (lastCall == null) {

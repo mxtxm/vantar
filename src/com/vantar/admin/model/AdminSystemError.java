@@ -47,7 +47,7 @@ public class AdminSystemError {
         ui.beginBox(dto.tag);
 
         try {
-            long count = (long) CommonModelMongo.deleteById(dto).value;
+            long count = (long) ModelMongo.deleteById(dto).value;
             ui.addMessage(Locale.getString(VantarKey.DELETE_SUCCESS));
             ui.addMessage(count + Locale.getString(VantarKey.ADMIN_RECORDS));
         } catch (VantarException e) {
@@ -69,7 +69,7 @@ public class AdminSystemError {
         if (tag != null) {
             q.condition().equal("tag", tag);
         }
-        return CommonModelMongo.getData(q);
+        return ModelMongo.getData(q);
     }
 
 }

@@ -3,7 +3,7 @@ package com.vantar.database.sql;
 import com.vantar.common.VantarParam;
 import com.vantar.database.dto.*;
 import com.vantar.database.query.QueryBuilder;
-import com.vantar.exception.DatabaseException;
+import com.vantar.exception.*;
 import com.vantar.locale.VantarKey;
 import com.vantar.util.collection.CollectionUtil;
 import com.vantar.util.datetime.DateTime;
@@ -70,7 +70,7 @@ public class SqlExecute extends SqlQueryHelper {
         }
     }
 
-    public long insert(Dto dto) throws DatabaseException {
+    public long insert(Dto dto) throws DatabaseException, VantarException {
         dto.setCreateTime(true);
         long id = insert(dto.getStorage(), StorableData.toMap(dto.getStorableData()));
 
@@ -144,7 +144,7 @@ public class SqlExecute extends SqlQueryHelper {
         }
     }
 
-    public void insert(List<? extends Dto> data) throws DatabaseException {
+    public void insert(List<? extends Dto> data) throws DatabaseException, VantarException {
         StringBuilder sql = new StringBuilder(data.size() * 100);
         StringBuilder valueTemplates = new StringBuilder(100);
         Object[] values = new Object[0];
@@ -208,7 +208,7 @@ public class SqlExecute extends SqlQueryHelper {
         }
     }
 
-    public void update(Dto dto) throws DatabaseException {
+    public void update(Dto dto) throws DatabaseException, VantarException {
         if (!dto.beforeUpdate()) {
             throw new DatabaseException(VantarKey.EVENT_REJECT);
         }
@@ -233,7 +233,7 @@ public class SqlExecute extends SqlQueryHelper {
         );
     }
 
-    public void update(QueryBuilder q) throws DatabaseException {
+    public void update(QueryBuilder q) throws DatabaseException, VantarException {
         if (!q.getDto().beforeUpdate()) {
             throw new DatabaseException(VantarKey.EVENT_REJECT);
         }
@@ -256,7 +256,7 @@ public class SqlExecute extends SqlQueryHelper {
         execute("UPDATE " + table + " SET " + sqlParams.getTemplate() + " WHERE " + condition + ";", sqlParams.getValues());
     }
 
-    public void delete(Dto dto) throws DatabaseException {
+    public void delete(Dto dto) throws DatabaseException, VantarException {
         Long id = dto.getId();
         if (id == null) {
             delete(dto.getStorage(), StorableData.toMap(dto.getStorableData()));

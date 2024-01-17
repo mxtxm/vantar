@@ -13,6 +13,7 @@ import java.lang.reflect.*;
 import java.util.*;
 
 
+@SuppressWarnings("unchecked")
 public class DtoDocumentData {
 
     private Class<?> previousGtype;

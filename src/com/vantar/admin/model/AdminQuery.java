@@ -28,7 +28,7 @@ public class AdminQuery {
         q.sort("group:asc");
         try {
             String group = null;
-            List<QueryDictionary> items = CommonModelMongo.getData(q);
+            List<QueryDictionary> items = ModelMongo.getData(q);
             for (QueryDictionary item: items) {
                 if (group == null || !group.equals(item.group)) {
                     group = item.group;
@@ -79,9 +79,9 @@ public class AdminQuery {
         item.q = params.getString("q");
         try {
             if (item.id == null) {
-                CommonModelMongo.insert(item);
+                ModelMongo.insert(item);
             } else {
-                CommonModelMongo.update(item);
+                ModelMongo.update(item);
             }
             ui.addMessage(Locale.getString(VantarKey.INSERT_SUCCESS));
         } catch (VantarException e) {
@@ -116,7 +116,7 @@ public class AdminQuery {
         }
 
         try {
-            CommonModelMongo.deleteById(item);
+            ModelMongo.deleteById(item);
             ui.addMessage(Locale.getString(VantarKey.DELETE_SUCCESS));
         } catch (VantarException e) {
             ui.addErrorMessage(e);
@@ -203,7 +203,7 @@ public class AdminQuery {
         }
 
         try {
-            return CommonModelMongo.getById(item);
+            return ModelMongo.getById(item);
         } catch (VantarException e) {
             ui.addErrorMessage(e).finish();
             return null;

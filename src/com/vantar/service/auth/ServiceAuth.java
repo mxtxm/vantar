@@ -307,8 +307,8 @@ public class ServiceAuth extends Permit implements Services.Service {
         return user.getToken();
     }
 
-    public boolean verifyTokenExists(CommonUser user, TokenData.Type type) {
-        TokenData tokenData = verifyTokens.get(user.getToken());
+    public boolean verifyTokenExists(CommonUser user, String token, TokenData.Type type) {
+        TokenData tokenData = verifyTokens.get(token);
 
         if (tokenData == null) {
             return false;

@@ -2,7 +2,7 @@ package com.vantar.database.nosql.elasticsearch;
 
 import com.vantar.common.VantarParam;
 import com.vantar.database.dto.*;
-import com.vantar.exception.DatabaseException;
+import com.vantar.exception.*;
 import com.vantar.locale.VantarKey;
 import org.elasticsearch.action.DocWriteRequest;
 import org.elasticsearch.action.bulk.*;
@@ -22,7 +22,7 @@ public class ElasticWrite implements Closeable {
     private BulkRequest bulk;
 
 
-    public static long insertOne(Dto dto) throws DatabaseException {
+    public static long insertOne(Dto dto) throws DatabaseException, VantarException {
         dto.setCreateTime(true);
         dto.setUpdateTime(true);
         if (dto.getId() == null) {
@@ -47,7 +47,7 @@ public class ElasticWrite implements Closeable {
         return dto.getId();
     }
 
-    public static void upsertOne(Dto dto) throws DatabaseException {
+    public static void upsertOne(Dto dto) throws DatabaseException, VantarException {
         dto.setCreateTime(true);
         dto.setUpdateTime(true);
 
@@ -69,7 +69,7 @@ public class ElasticWrite implements Closeable {
         writeIndex(dto, null);
     }
 
-    public static void updateOne(Dto dto) throws DatabaseException {
+    public static void updateOne(Dto dto) throws DatabaseException, VantarException {
         dto.setCreateTime(false);
         dto.setUpdateTime(true);
         Long id = dto.getId();
@@ -108,7 +108,7 @@ public class ElasticWrite implements Closeable {
         bulk.add(new UpdateRequest(dto.getStorage(), dto.getId().toString()).doc(StorableData.toMap(dto.getStorableData())));
     }
 
-    public static void deleteOne(Dto dto) throws DatabaseException {
+    public static void deleteOne(Dto dto) throws DatabaseException, VantarException {
         DeleteRequest request = new DeleteRequest(dto.getStorage(), dto.getId().toString());
         try {
             checkFailure(ElasticConnection.getClient().delete(request, RequestOptions.DEFAULT));

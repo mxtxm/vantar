@@ -29,6 +29,7 @@ public class QueryBuilder {
     private List<String> columns;
     private List<ColumnMany> columnsMany;
     private List<QueryJoin> joins;
+    private boolean updateMany;
 
     private boolean isPagination;
     private long total;
@@ -450,5 +451,13 @@ public class QueryBuilder {
 
     public String toString() {
         return ObjectUtil.toStringViewable(this);
+    }
+
+    public boolean isUpdateMany() {
+        return updateMany;
+    }
+
+    public void setUpdateMany(boolean updateMany) {
+        this.updateMany = updateMany;
     }
 }

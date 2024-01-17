@@ -37,7 +37,7 @@ public class MongoMapping {
         return document;
     }
 
-    protected static Document getFieldValuesAsDocument(Dto dto, Dto.Action action) {
+    public static Document getFieldValuesAsDocument(Dto dto, Dto.Action action) {
         Document document = new Document();
         for (StorableData info : dto.getStorableData()) {
             if (info.name.equals(VantarParam.ID)) {
@@ -251,7 +251,7 @@ public class MongoMapping {
                         }
                         Document columnsDoc = new Document();
                         --l;
-                        for (int i = 0; i < l ; ++i) {
+                        for (int i = 0; i < l; ++i) {
                             columnsDoc.append(
                                 StringUtil.replace(group.columns[i], '.', '_'),
                                 "$" + group.columns[i]

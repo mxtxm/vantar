@@ -1,6 +1,5 @@
 package com.vantar.database.dto;
 
-import com.vantar.util.collection.CollectionUtil;
 import com.vantar.util.json.Json;
 import com.vantar.util.object.ClassUtil;
 import com.vantar.util.string.StringUtil;
@@ -96,38 +95,4 @@ public class DtoUtil {
         }
         return field;
     }
-
-    public static Map<String, Object> getDiff(Dto dtoA, Dto dtoB) {
-        if (dtoA == null && dtoB == null) {
-            return new HashMap<>(1, 1);
-        }
-        Map<String, Object> propertiesA = dtoA == null ? new HashMap<>(1, 1) : dtoA.getPropertyValuesIncludeNulls();
-        Map<String, Object> propertiesB = dtoB == null ? new HashMap<>(1, 1) : dtoB.getPropertyValuesIncludeNulls();
-        Collection<String> propertiesX = propertiesA == null ? propertiesB.keySet() : propertiesA.keySet();
-        Map<String, Object> diff = new HashMap<>(propertiesX.size(), 1);
-
-        for (String name : propertiesX) {
-            Class<?> type = (dtoA == null ? dtoB : dtoA).getPropertyType(name);
-            Object valueA = propertiesA == null ? null : propertiesA.get(name);
-            Object valueB = propertiesB == null ? null : propertiesB.get(name);
-
-            if (ClassUtil.isInstantiable(type, Collection.class)) {
-
-            } else if (ClassUtil.isInstantiable(type, Map.class)) {
-
-            } else if (ClassUtil.isInstantiable(type, Dto.class)) {
-                Map<String, Object> diffInner = getDiff((Dto) valueA, (Dto) valueB);
-                if (!diffInner.isEmpty()) {
-                    diff.put(name, diffInner);
-                }
-            } else {
-                if ((valueA != null && !valueA.equals(valueB)) || (valueB != null && !valueB.equals(valueA))) {
-                    diff.put(name, valueA + " --> " + valueB);
-                }
-            }
-        }
-
-        return diff;
-    }
-
 }

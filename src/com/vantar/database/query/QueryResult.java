@@ -2,8 +2,7 @@ package com.vantar.database.query;
 
 import com.vantar.database.common.KeyValueData;
 import com.vantar.database.dto.Dto;
-import com.vantar.exception.DatabaseException;
-import com.vantar.exception.NoContentException;
+import com.vantar.exception.*;
 import java.util.*;
 
 
@@ -23,7 +22,7 @@ public interface QueryResult {
 
     <T extends Dto> List<T> asList() throws NoContentException, DatabaseException;
 
-    void forEach(QueryResultBase.EventForeach event) throws DatabaseException;
+    void forEach(QueryResultBase.EventForeach event) throws VantarException;
 
     <T extends Dto> Map<Object, T> asMap(String keyField) throws NoContentException, DatabaseException;
 

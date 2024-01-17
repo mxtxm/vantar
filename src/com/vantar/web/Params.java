@@ -176,11 +176,11 @@ public class Params {
             case MAP:
                 return "MAP: " + Json.d.toJsonPretty(map);
             case FORM_DATA:
-                return "FORM-DATA: " + Json.d.toJsonPretty(request.getParameterMap());
+                return "FORM-DATA: " + Json.d.toJsonPretty(getRequestParams());
             case JSON:
                 return "JSON: " + getJson();
             case MULTI_PART:
-                return "MULTI_PART: " + Json.d.toJsonPretty(request.getParameterMap());
+                return "MULTI_PART: " + Json.d.toJsonPretty(getRequestParams());
         }
         return type + ": N/A";
     }
@@ -191,7 +191,7 @@ public class Params {
                 return Json.d.toJson(map);
             case FORM_DATA:
             case MULTI_PART:
-                return Json.d.toJson(request.getParameterMap());
+                return Json.d.toJson(getRequestParams());
             case JSON:
                 return getJson();
         }
@@ -223,6 +223,20 @@ public class Params {
                 continue;
             }
 
+            String[] values = request.getParameterValues(key);
+            params.putIfAbsent(key, values != null && values.length > 1 ? values : request.getParameter(key));
+        }
+        return params;
+    }
+
+    public Map<String, Object> getRequestParams() {
+        Map<String, Object> params = new HashMap<>(50, 1);
+        if (request == null) {
+            return params;
+        }
+        Enumeration<String> parameterNames = request.getParameterNames();
+        while (parameterNames.hasMoreElements()) {
+            String key = parameterNames.nextElement();
             String[] values = request.getParameterValues(key);
             params.putIfAbsent(key, values != null && values.length > 1 ? values : request.getParameter(key));
         }

@@ -10,7 +10,7 @@ public class VantarException extends Exception {
     private Object[] messageParams;
 
 
-    public VantarException(Exception e) {
+    public VantarException(Throwable e) {
         super(e);
     }
 

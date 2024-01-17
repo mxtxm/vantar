@@ -2,13 +2,13 @@ package com.vantar.database.nosql.mongo;
 
 import com.mongodb.client.*;
 import com.mongodb.client.model.Projections;
-import com.vantar.admin.model.Admin;
 import com.vantar.common.VantarParam;
-import com.vantar.database.dto.Dto;
+import com.vantar.database.dto.*;
 import com.vantar.database.query.*;
 import com.vantar.exception.*;
-import com.vantar.util.object.ClassUtil;
+import com.vantar.util.object.*;
 import org.bson.Document;
+import org.elasticsearch.client.security.user.User;
 import java.util.*;
 
 
@@ -57,7 +57,7 @@ public class MongoQuery {
     public long count() throws DatabaseException {
         try {
             return matches == null || matches.isEmpty() ?
-                MongoConnection.getDatabase().getCollection(storage).countDocuments() :
+                MongoConnection.getDatabase().getCollection(storage).estimatedDocumentCount() :
                 MongoConnection.getDatabase().getCollection(storage).countDocuments(matches);
         } catch (Exception e) {
             Mongo.log.error(" ! count --> {}", dto, e);
@@ -176,8 +176,11 @@ public class MongoQuery {
             if (property.equals(Mongo.ID)) {
                 property = VantarParam.ID;
             }
-            String p = property.equals(VantarParam.ID) ? Mongo.ID : property;
-            condition.append(p, dto.getPropertyValue(property));
+            Object v = dto.getPropertyValue(property);
+            if (properties.length == 1 && ObjectUtil.isEmpty(v)) {
+                return true;
+            }
+            condition.append(property.equals(VantarParam.ID) ? Mongo.ID : property, v);
         }
 
         try {
@@ -204,22 +207,11 @@ public class MongoQuery {
     }
 
     public static boolean exists(Dto dto, String property) throws DatabaseException {
-        if (property.equals(Mongo.ID)) {
-            property = VantarParam.ID;
-        }
-        String p = property.equals(VantarParam.ID) ? Mongo.ID : property;
-        try {
-            return MongoConnection.getDatabase().getCollection(dto.getStorage())
-                .find(
-                    new Document(p, dto.getPropertyValue(property))
-                        .append(Mongo.LOGICAL_DELETE_FIELD, new Document("$ne", Mongo.LOGICAL_DELETE_VALUE))
-                )
-                .iterator()
-                .hasNext();
-        } catch (Exception e) {
-            Mongo.log.error("! exists({})", dto, e);
-            throw new DatabaseException(e);
-        }
+        return Mongo.exists(
+            DtoBase.getStorage(dto.getClass()),
+                new Document(property.equals(VantarParam.ID) ? Mongo.ID : property, dto.getPropertyValue(property))
+                    .append(Mongo.LOGICAL_DELETE_FIELD, new Document("$ne", Mongo.LOGICAL_DELETE_VALUE))
+            );
     }
 
     public static boolean existsById(Dto dto) throws DatabaseException {
@@ -243,7 +235,7 @@ public class MongoQuery {
 
     public static long count(String collectionName) throws DatabaseException {
         try {
-            return MongoConnection.getDatabase().getCollection(collectionName).countDocuments();
+            return MongoConnection.getDatabase().getCollection(collectionName).estimatedDocumentCount();
         } catch (Exception e) {
             Mongo.log.error("! count {}", collectionName, e);
             throw new DatabaseException(e);
@@ -363,7 +355,11 @@ public class MongoQuery {
         }
 
         Integer limit = q.getLimit();
-        result.forEach(event);
+        try {
+            result.forEach(event);
+        } catch (VantarException ignore) {
+            // todo handle
+        }
 
         PageData pageData = new PageData();
         pageData.page = q.getPageNo();

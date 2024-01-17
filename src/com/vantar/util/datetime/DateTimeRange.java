@@ -187,21 +187,21 @@ public class DateTimeRange {
     public List<Integer> getMonthsBetween() {
         List<Integer> values = new ArrayList<>(100);
         if (dateMin.formatter().year == dateMax.formatter().year) {
-            for (int i = dateMin.formatter().month, l = dateMax.formatter().month ; i <= l ; ++i) {
+            for (int i = dateMin.formatter().month, l = dateMax.formatter().month; i <= l; ++i) {
                 values.add(i);
             }
             return values;
         }
 
-        for (int i = dateMin.formatter().month ; i <= 12 ; ++i) {
+        for (int i = dateMin.formatter().month; i <= 12; ++i) {
             values.add(i);
         }
-        for (int i = dateMin.formatter().year + 1, yMax = dateMax.formatter().year ; i < yMax ; ++i) {
+        for (int i = dateMin.formatter().year + 1, yMax = dateMax.formatter().year; i < yMax; ++i) {
             for (int j = 1; j <= 12; ++j) {
                 values.add(j);
             }
         }
-        for (int i = 1, mMax = dateMax.formatter().month ; i <= mMax ; ++i) {
+        for (int i = 1, mMax = dateMax.formatter().month; i <= mMax; ++i) {
             values.add(i);
         }
         return values;
@@ -243,10 +243,10 @@ public class DateTimeRange {
             return values;
         }
 
-        for (int i = minM ; i <= 12 ; ++i) {
+        for (int i = minM; i <= 12; ++i) {
             values.add(minY * 100 + i);
         }
-        for (int i = minY + 1 ; i < maxY ; ++i) {
+        for (int i = minY + 1; i < maxY; ++i) {
             for (int j = 1; j <= 12; ++j) {
                 values.add(i * 100 + j);
             }

@@ -43,11 +43,11 @@ public class ImportMongo extends CommonImport {
 
         Import imp = (String presentValue, Map<String, Object> values) -> {
             try {
-                if (dto.getId() == null ? CommonModelMongo.existsByDto(dto) : CommonModelMongo.existsById(dto)) {
+                if (dto.getId() == null ? ModelMongo.existsByDto(dto) : ModelMongo.existsById(dto)) {
                     duplicate.getAndIncrement();
                     return;
                 }
-                CommonModelMongo.insert(dto);
+                ModelMongo.insert(dto);
                 if (dto instanceof CommonUser) {
                     CommonModel.insertPassword(
                         dto,

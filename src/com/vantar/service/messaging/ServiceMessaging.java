@@ -23,7 +23,7 @@ public class ServiceMessaging {
 
 
     public void start() {
-        if (!Queue.isUp()) {
+        if (!Services.isUp(Queue.class)) {
             return;
         }
         serviceOn = true;
@@ -32,7 +32,7 @@ public class ServiceMessaging {
     }
 
     public void stop() {
-        if (!Queue.isUp()) {
+        if (!Services.isUp(Queue.class)) {
             return;
         }
         serviceOn = false;
@@ -45,7 +45,7 @@ public class ServiceMessaging {
     }
 
     public void broadcast(int type, String message) {
-        if (!Queue.isUp()) {
+        if (!Services.isUp(Queue.class)) {
             return;
         }
 
@@ -55,7 +55,7 @@ public class ServiceMessaging {
     }
 
     private void receive() {
-        if (!Queue.isUp()) {
+        if (!Services.isUp(Queue.class)) {
             return;
         }
 

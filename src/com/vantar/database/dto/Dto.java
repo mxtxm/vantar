@@ -3,6 +3,7 @@ package com.vantar.database.dto;
 import com.vantar.common.VantarParam;
 import com.vantar.database.common.ValidationError;
 import com.vantar.web.Params;
+import javax.ws.rs.DELETE;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.util.*;
@@ -122,6 +123,8 @@ public interface Dto {
         UPDATE_ALL_COLS_NO_ID,
         UPDATE_FEW_COLS,
         UPDATE_FEW_COLS_NO_ID,
+        UPDATE_ADD_ITEM,
+        UPDATE_REMOVE_ITEM,
 
         DELETE,
         UN_DELETE,

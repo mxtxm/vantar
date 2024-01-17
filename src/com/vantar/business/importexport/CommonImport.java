@@ -3,6 +3,7 @@ package com.vantar.business.importexport;
 import com.vantar.business.CommonModel;
 import com.vantar.database.common.ValidationError;
 import com.vantar.database.dto.Dto;
+import com.vantar.exception.VantarException;
 import com.vantar.util.json.Json;
 import com.vantar.util.string.StringUtil;
 import com.vantar.web.WebUi;
@@ -32,7 +33,11 @@ public abstract class CommonImport {
             }
         }
 
-        CommonModel.afterDataChange(dto);
+        try {
+            CommonModel.afterDataChange(dto);
+        } catch (VantarException e) {
+            log.error(" ! {}", dto, e);
+        }
 
         ui.write();
     }

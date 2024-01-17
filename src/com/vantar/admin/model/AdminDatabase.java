@@ -265,7 +265,7 @@ public class AdminDatabase {
             CommonModelSql.importDataAdmin(
                 data,
                 dto,
-                info.present,
+                dto.getPresentationPropertyNames(),
                 deleteAll,
                 ui
             );
@@ -304,18 +304,22 @@ public class AdminDatabase {
 
         ui.beginBox(Locale.getString(VantarKey.ADMIN_DATABASE_INDEX_CREATE, "MONGO...")).write();
 
-        try {
-            for (DtoDictionary.Info info : DtoDictionary.getAll(DtoDictionary.Dbms.MONGO)) {
-                Dto dto = info.getDtoInstance();
-                if (deleteIfExists) {
+        for (DtoDictionary.Info info : DtoDictionary.getAll(DtoDictionary.Dbms.MONGO)) {
+            Dto dto = info.getDtoInstance();
+            if (deleteIfExists) {
+                try {
                     Mongo.Index.remove(dto);
+                    ui.addMessage("Index deleted: " + dto.getClass().getSimpleName()).write();
+                } catch (DatabaseException e) {
+                    ui.addErrorMessage(e).write();
                 }
-                Mongo.Index.create(dto);
-                ui.addMessage("Index created: " + dto.getClass().getSimpleName());
             }
-            ui.addMessage(Locale.getString(VantarKey.ADMIN_FINISHED));
-        } catch (DatabaseException e) {
-            ui.addErrorMessage(e);
+            try {
+                Mongo.Index.create(dto);
+                ui.addMessage("Index created: " + dto.getClass().getSimpleName()).write();
+            } catch (DatabaseException e) {
+                ui.addErrorMessage(e).write();
+            }
         }
 
         ui.containerEnd().write();
@@ -387,7 +391,7 @@ public class AdminDatabase {
 
                 int i = 0;
                 while (count > 0 && i++ < DB_DELETE_TRIES) {
-                    CommonModelMongo.purge(dto);
+                    ModelMongo.purge(dto);
                     count = MongoQuery.count(dto.getStorage());
                 }
                 msg = Locale.getString(count == 0 ? VantarKey.DELETE_SUCCESS : VantarKey.DELETE_FAIL);
@@ -459,7 +463,7 @@ public class AdminDatabase {
             ImportMongo.importDataAdmin(
                 data,
                 dto,
-                info.present,
+                dto.getPresentationPropertyNames(),
                 deleteAll,
                 ui
             );
@@ -607,7 +611,7 @@ public class AdminDatabase {
             CommonModelElastic.importDataAdmin(
                 data,
                 dto,
-                info.present,
+                dto.getPresentationPropertyNames(),
                 deleteAll,
                 ui
             );

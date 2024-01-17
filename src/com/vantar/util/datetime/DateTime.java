@@ -446,6 +446,16 @@ public class DateTime {
         return dateTime.timestamp != null && timestamp <= dateTime.timestamp;
     }
 
+    public boolean isBetween(DateTime dateTimeA, DateTime dateTimeB) {
+        return dateTimeA.timestamp != null && timestamp > dateTimeA.timestamp
+            && dateTimeB.timestamp != null && timestamp < dateTimeB.timestamp;
+    }
+
+    public boolean isBetweenOrEqual(DateTime dateTimeA, DateTime dateTimeB) {
+        return dateTimeA.timestamp != null && timestamp >= dateTimeA.timestamp
+            && dateTimeB.timestamp != null && timestamp <= dateTimeB.timestamp;
+    }
+
     public boolean hasSecondsElapsed(long elapse) {
         return (Math.abs(Instant.now().toEpochMilli() - this.timestamp) >= (elapse * 1000));
     }

@@ -1,7 +1,7 @@
 package com.vantar.web;
 
 import com.vantar.admin.model.*;
-import com.vantar.business.CommonModelMongo;
+import com.vantar.business.ModelMongo;
 import com.vantar.common.VantarParam;
 import com.vantar.database.datatype.Location;
 import com.vantar.database.dto.*;
@@ -119,7 +119,7 @@ public class WebUi {
     }
 
     public WebUi addEmptyLine(int count) {
-        for (int i = 0 ; i < count ; ++i) {
+        for (int i = 0; i < count; ++i) {
             html.append("<br/>");
         }
         return this;
@@ -394,7 +394,8 @@ public class WebUi {
     }
 
     public WebUi addLogPage(String clazz, Long id) {
-        html.append("<div id='log-rows'></div><input id='pageLog' value='1' style='display:none'/><div><button id='more' onclick=\"loadRows('" + clazz + "', " + id + ")\">more</button></div>");
+        html.append("<div id='log-rows'></div><input id='pageLog' value='1' style='display:none'/><div><button id='more'"
+            +" onclick=\"loadRows('").append(clazz).append("', ").append(id).append(")\">more</button></div>");
 
         html.append("<script>"
             + "function loadRows(clazz, id) { var p = parseInt($('#pageLog').val(), 10); $('#pageLog').val(p+1); "
@@ -419,6 +420,7 @@ public class WebUi {
             .append("<p class='url'>").append(userLog.url).append("</p>")
             .append("<p class='request-type'>").append(userLog.requestType).append("</p>")
             .append("<p class='thread-id'>").append("thread: ").append(userLog.threadId).append("</p>")
+            .append("<p class='time'>").append(userLog.time.formatter().getDateTime()).append("</p>")
             .append("<p class='time'>").append(userLog.time.formatter().getDateTimePersianAsString()).append("</p>");
         if (user != null) {
             html.append("<p class='user'>(").append(user.getId()).append(") ")
@@ -872,7 +874,7 @@ public class WebUi {
         return containerEnd();
     }
 
-    public WebUi addDeleteForm(List<Dto> dtos, List<String> fields) {
+    public WebUi addDeleteForm(List<Dto> dtos) {
         beginFormPost();
         addErrorMessage(Locale.getString(VantarKey.ADMIN_DELETE)).addEmptyLine();
 
@@ -888,7 +890,7 @@ public class WebUi {
         for (Dto dto : dtos) {
             html.append("<div class='row delete-item'><input name='ids' type='checkbox' value='")
                 .append(dto.getId()).append("'/> ");
-            for (String name : fields) {
+            for (String name : dto.getPresentationPropertyNames()) {
                 Object value = dto.getPropertyValue(name);
                 html.append(value).append(" - ");
             }
@@ -924,16 +926,18 @@ public class WebUi {
     }
 
     /**
-     * Tags: not exists: include, none: exclude, insert/update: include for action
+     * VantarAdminTags: not exists: include, none: exclude, insert/update: include for action
      */
     private WebUi addDtoForm(Dto dto, String action, String... include) {
         html.append("<form method='post' id='dto-form' autocomplete='off' ><input name='f' value='1' type='hidden'/>\n");
         addSubmit(Locale.getString(VantarKey.ADMIN_DO));
 
+        if ("update".equals(action)) {
+            addInput("id", "id", dto.getId());
+        }
+
         for (String name : include) {
-            Tags tags = dto.getField(name).getAnnotation(Tags.class);
-            if (tags != null
-                && (!CollectionUtil.contains(tags.value(), action) || CollectionUtil.contains(tags.value(), "none"))) {
+            if ("id".equals(name)) {
                 continue;
             }
 
@@ -964,7 +968,7 @@ public class WebUi {
                     Class<? extends Dto> depClass = depends.value();
                     if (dto.getClass().isAnnotationPresent(Mongo.class)) {
                         try {
-                            List<Dto> dtos = CommonModelMongo.getAll(DtoDictionary.getInstance(depClass));
+                            List<Dto> dtos = ModelMongo.getAll(DtoDictionary.getInstance(depClass));
                             if (dtos.size() <= 1000) {
                                 Map<String, String> map = new HashMap<>();
                                 for (Dto depDto : dtos) {
@@ -1077,7 +1081,7 @@ public class WebUi {
                 }
 
                 String iType;
-                if (name.contains("password") || (tags != null && CollectionUtil.contains(tags.value(), "password"))) {
+                if (name.contains("password")) {
                     iType = "password";
                     value = "";
                 } else {
@@ -1137,7 +1141,9 @@ public class WebUi {
 
     public WebUi addDtoListWithHeader(PageData data, DtoDictionary.Info info, String... fields) {
         Dto dto = info.getDtoInstance();
-        String className = dto.getClass().getSimpleName();
+
+        Class<?> upperClass = dto.getClass().getDeclaringClass();
+        String className = upperClass == null ? dto.getClass().getSimpleName() : upperClass.getSimpleName();
 
         html.append("<div id='actions'>")
             .append(" <a href='").append(getCompleteLink("/admin/data/insert?dto=" + className))
@@ -1400,17 +1406,14 @@ public class WebUi {
                     html.append("<th id='total' colspan='").append(isLogServiceUp ? 3 : 2).append("'>")
                         .append(data.total).append("</th>");
                 }
+                html.append("<th class='list-head-id'>id</th>");
                 for (String name : fields) {
+                    if ("id".equals(name)) {
+                        continue;
+                    }
                     Class<?> type = dto.getPropertyType(name);
                     if ((!name.equals("name") && !name.equals("title")) &&
                         (CollectionUtil.isCollectionOrMap(type) || ClassUtil.isInstantiable(type, Dto.class))) {
-                        continue;
-                    }
-
-                    Tags actions = dto.getField(name).getAnnotation(Tags.class);
-                    if (actions != null
-                        && (!CollectionUtil.contains(actions.value(), "list")
-                        || CollectionUtil.contains(actions.value(), "none"))) {
                         continue;
                     }
 
@@ -1427,7 +1430,9 @@ public class WebUi {
                     x += "&" + VantarParam.LANG + "=" + lang;
                 }
 
-                String className = dto.getClass().getSimpleName();
+                Class<?> upperClass = dto.getClass().getDeclaringClass();
+                String className = upperClass == null ? dto.getClass().getSimpleName() : upperClass.getSimpleName();
+
                 html
                     .append("<td class='option delete-option'><input class='delete-check' name='delete-check' value='")
                     .append(dto.getId()).append("' type='checkbox'/></td>")
@@ -1438,21 +1443,22 @@ public class WebUi {
 
                 if (isLogServiceUp) {
                     html.append("<td class='option'><div class='option'><a href='" + "/admin/data/log?" + VantarParam.DTO + "=")
-                        .append(dto.getClass().getName()).append("&id=").append(dto.getId()).append(x).append("'>")
+                        .append(dto.getClass().getSimpleName()).append("&id=").append(dto.getId()).append(x).append("'>")
                         .append(Locale.getString(VantarKey.ADMIN_ACTION_LOG)).append("</a></div></td>");
                 }
             }
+
+            html.append("<td><div onclick='cellClick(this)'>");
+            html.append(dto.getId()).append("<input type='hidden' value='").append(dto.getId()).append("'/>").append("</div></td>");
+
             for (String name : fields) {
+                if ("id".equals(name)) {
+                    continue;
+                }
                 Class<?> type = dto.getPropertyType(name);
 
                 if ((!name.equals("name") && !name.equals("title")) &&
                     (CollectionUtil.isCollectionOrMap(type) || ClassUtil.isInstantiable(type, Dto.class))) {
-                    continue;
-                }
-
-                Tags actions = dto.getField(name).getAnnotation(Tags.class);
-                if (actions != null
-                    && (!CollectionUtil.contains(actions.value(), "list") || CollectionUtil.contains(actions.value(), "none"))) {
                     continue;
                 }
 

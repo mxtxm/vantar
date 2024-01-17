@@ -90,7 +90,7 @@ public class Locale {
     }
 
     public static String getString(LangKey key, Object... messageParams) {
-        return getString(threadLangs.get(Thread.currentThread().getId()), key, messageParams);
+        return getString(threadLangs == null ? null : threadLangs.get(Thread.currentThread().getId()), key, messageParams);
     }
 
     public static String getString(String lang, LangKey key, Object... messageParams) {

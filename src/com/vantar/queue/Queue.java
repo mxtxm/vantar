@@ -42,7 +42,7 @@ public class Queue {
     }
 
     public static boolean delete(String queueName) {
-        for (int i = MAX_TRIES ; i > 0 ; --i) {
+        for (int i = MAX_TRIES; i > 0; --i) {
             Channel channel = connection.getChannel(queueName);
             if (channel == null) {
                 continue;
@@ -69,7 +69,7 @@ public class Queue {
     }
 
     public static boolean empty(String queueName) {
-        for (int i = MAX_TRIES ; i > 0 ; --i) {
+        for (int i = MAX_TRIES; i > 0; --i) {
             Channel channel = connection.getChannel(queueName);
             if (channel == null) {
                 continue;
@@ -109,7 +109,7 @@ public class Queue {
             log.error(" !! invalid packet '{}'", queueName);
             return;
         }
-        for (int i = MAX_TRIES ; i > 0 ; --i) {
+        for (int i = MAX_TRIES; i > 0; --i) {
             Channel channel = connection.getChannel(queueName);
             if (channel == null) {
                 continue;
@@ -130,7 +130,7 @@ public class Queue {
      */
     public static List<Packet> takeAllItems(String queueName) {
         List<Packet> messages = new ArrayList<>();
-        for (int i = MAX_TRIES ; i > 0 ; --i) {
+        for (int i = MAX_TRIES; i > 0; --i) {
             Channel channel = connection.getChannel(queueName);
             if (channel == null) {
                 continue;
@@ -187,7 +187,7 @@ public class Queue {
      * on demand Listener/threaded/blocking take
      */
     public static void takeUntilEmpty(String queueName, TakeCallback take, ReachedEmptyCallback reachedEmptyCallback) {
-        for (int i = MAX_TRIES ; i > 0 ; --i) {
+        for (int i = MAX_TRIES; i > 0; --i) {
             Channel channel = connection.getChannel(queueName);
             if (channel == null) {
                 continue;
@@ -225,7 +225,7 @@ public class Queue {
         return take(queueName, take, DEFAULT_TAKER_ID);
     }
     public static String take(String queueName, TakeCallback take, int takerId) {
-        for (int i = MAX_TRIES ; i > 0 ; --i) {
+        for (int i = MAX_TRIES; i > 0; --i) {
             Channel channel = connection.getChannel(queueName);
             if (channel == null) {
                 continue;
@@ -283,7 +283,7 @@ public class Queue {
         emmit(exchangeName, 1, packet);
     }
     public static void emmit(String exchangeName, int workerId, Packet packet) {
-        for (int i = MAX_TRIES ; i > 0 ; --i) {
+        for (int i = MAX_TRIES; i > 0; --i) {
             Channel channel = connection.getChannel(exchangeName);
             if (channel == null) {
                 continue;
@@ -307,7 +307,7 @@ public class Queue {
         return receive(exchangeName, take, DEFAULT_TAKER_ID);
     }
     public static String receive(String exchangeName, TakeCallback take, int takerId) {
-        for (int i = MAX_TRIES ; i > 0 ; --i) {
+        for (int i = MAX_TRIES; i > 0; --i) {
             Channel channel = connection.getChannel(exchangeName);
             if (channel == null) {
                 continue;

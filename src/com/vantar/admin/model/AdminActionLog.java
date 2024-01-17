@@ -85,7 +85,7 @@ public class AdminActionLog {
 
         WebUi ui = new WebUi(params);
         try {
-            CommonModelMongo.forEach(q, dto -> {
+            ModelMongo.forEach(q, dto -> {
                 UserLog.View log = (UserLog.View) dto;
                 ui.addLogRows(
                     log,
@@ -104,7 +104,7 @@ public class AdminActionLog {
 
     public static String getObject(Params params) {
         try {
-            String object = CommonModelMongo.getById(params, new UserLog()).object;
+            String object = ModelMongo.getById(params, new UserLog()).object;
             if (object == null) {
                 return "";
             } else if (Json.isJsonShallow(object)) {
@@ -128,7 +128,7 @@ public class AdminActionLog {
         q.sort("id:desc");
         List<UserLog> requests;
         try {
-            requests = CommonModelMongo.getData(q);
+            requests = ModelMongo.getData(q);
         } catch (NoContentException e) {
             ui.addErrorMessage(Locale.getString(VantarKey.NO_CONTENT));
             ui.finish();
@@ -148,7 +148,7 @@ public class AdminActionLog {
         q.sort("id:desc");
         Map<String, UserLog> responses = new HashMap<>(200, 1);
         try {
-            for (Dto dto : CommonModelMongo.getData(q)) {
+            for (Dto dto : ModelMongo.getData(q)) {
                 UserLog uLog = (UserLog) dto;
                 responses.put(uLog.threadId + "-" + uLog.url, uLog);
             }
@@ -187,7 +187,7 @@ public class AdminActionLog {
         q.sort("id:desc");
         List<UserLog> requests;
         try {
-            requests = CommonModelMongo.getData(q);
+            requests = ModelMongo.getData(q);
         } catch (NoContentException e) {
             ui.addErrorMessage(Locale.getString(VantarKey.NO_CONTENT));
             ui.finish();

@@ -175,7 +175,7 @@ public class WebServiceDocumentCreator {
         String[] lines = StringUtil.split(content, '\n');
 
         int m = lines.length - 1;
-        for (; m > 0 ; --m) {
+        for (; m > 0; --m) {
             String line = lines[m];
             if (line.equals(tag)) {
                 break;
@@ -183,7 +183,7 @@ public class WebServiceDocumentCreator {
         }
 
 
-        for (int i = m ; i < lines.length ; ++i){
+        for (int i = m; i < lines.length; ++i){
             String line = lines[i];
             if (line.startsWith(tag)) {
                 reachedTag = true;

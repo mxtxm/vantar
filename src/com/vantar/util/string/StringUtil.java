@@ -1552,6 +1552,21 @@ public class StringUtil {
         }
     }
 
+    public static boolean isBool(String string) {
+        if (isEmpty(string)) {
+            return false;
+        }
+        if (string.equals("1") || string.equalsIgnoreCase("true") || string.equalsIgnoreCase("yes")
+            || string.equalsIgnoreCase("بله") || string.equalsIgnoreCase("بلی") || string.equalsIgnoreCase("on")) {
+            return true;
+        }
+        if (string.equals("0") || string.equalsIgnoreCase("false") || string.equalsIgnoreCase("no")
+            || string.equalsIgnoreCase("نه") || string.equalsIgnoreCase("خیر") || string.equalsIgnoreCase("off")) {
+            return true;
+        }
+        return false;
+    }
+
     /**
      * Get a part of string that is between two strings
      * @param string base
@@ -1599,7 +1614,7 @@ public class StringUtil {
 
         int lenA = sA.length();
         int lenB = sB.length();
-        for (int i = 0, l = Math.min(lenA, lenB) ; i < l ; ++i) {
+        for (int i = 0, l = Math.min(lenA, lenB); i < l; ++i) {
             if (sA.charAt(i) < sB.charAt(i)) {
                 return -1;
             } else if (sA.charAt(i) > sB.charAt(i)) {
@@ -1642,7 +1657,7 @@ public class StringUtil {
         int lenB = sB.length();
         sA = sA.toLowerCase();
         sB = sB.toLowerCase();
-        for (int i = 0, l = Math.min(lenA, lenB) ; i < l ; ++i) {
+        for (int i = 0, l = Math.min(lenA, lenB); i < l; ++i) {
             if (sA.charAt(i) < sB.charAt(i)) {
                 return -1;
             } else if (sA.charAt(i) > sB.charAt(i)) {

@@ -25,11 +25,15 @@ public class Services {
     public static Map<String, Integer> serviceCount;
     public static final Map<String, ServiceInfo> upServices = new LinkedHashMap<>(20, 1);
     public static ServiceMessaging messaging;
+    private static Set<Class<?>> dependencies;
 
     private static Event event;
 
 
     public static boolean isUp(Class<?> name) {
+        if (dependencies != null && dependencies.contains(name)) {
+            return true;
+        }
         return isUp(name.getSimpleName());
     }
 
@@ -74,7 +78,7 @@ public class Services {
     }
 
     private static void startServices(boolean doEvents) {
-        Set<Class<?>> dependencies = new HashSet<>();
+        dependencies = new HashSet<>(5, 1);
         String values = Settings.getValue("service.dependencies");
         if (values != null) {
             for (String className : StringUtil.splitTrim(values, VantarParam.SEPARATOR_COMMON)) {

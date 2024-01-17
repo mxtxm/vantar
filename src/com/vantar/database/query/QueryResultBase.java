@@ -2,6 +2,7 @@ package com.vantar.database.query;
 
 import com.vantar.database.dto.Dto;
 import com.vantar.exception.*;
+import com.vantar.locale.*;
 import com.vantar.locale.Locale;
 import com.vantar.util.object.ObjectUtil;
 import org.slf4j.*;
@@ -97,13 +98,15 @@ abstract public class QueryResultBase {
         }
     }
 
-    public void forEach(EventForeach event) throws DatabaseException {
+    public void forEach(EventForeach event) throws VantarException {
         try {
             while (next()) {
                 event.afterSetData(dto);
                 dto = dto.getClass().getConstructor().newInstance();
            }
-        } catch (NoSuchMethodException | IllegalAccessException | InstantiationException | InvocationTargetException | VantarException e) {
+        } catch (DatabaseException e) {
+            throw new ServerException(VantarKey.FETCH_FAIL);
+        } catch (NoSuchMethodException | IllegalAccessException | InstantiationException | InvocationTargetException e) {
             log.error("! data > dto({})", dto, e);
         } finally {
             close();

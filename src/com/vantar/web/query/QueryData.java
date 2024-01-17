@@ -38,12 +38,15 @@ public class QueryData {
     public Condition conditionGroup;
     public List<JoinDef> joins;
     public List<GroupDef> group;
+    private Boolean updateMany;
 
     private Dto dtObject;
     private final QueryBuilder q = new QueryBuilder();
 
 
     public QueryBuilder getQueryBuilder(Dto dtObjectX) {
+        q.setUpdateMany(BoolUtil.isTrue(updateMany));
+
         if (dtObjectX == null) {
             dtObject = DtoDictionary.getInstance(dto);
             if (dtObject == null) {

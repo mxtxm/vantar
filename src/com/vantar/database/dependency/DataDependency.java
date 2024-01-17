@@ -1,6 +1,6 @@
 package com.vantar.database.dependency;
 
-import com.vantar.business.CommonModelMongo;
+import com.vantar.business.ModelMongo;
 import com.vantar.database.dto.*;
 import com.vantar.database.query.QueryBuilder;
 import com.vantar.exception.*;
@@ -23,12 +23,20 @@ public class DataDependency {
     private List<Dependants> dependencies;
     private int recursiveCount;
 
+    private final int limit;
+    private int recordCount;
+
     private Class<?> dtoClass1;
     private Class<?> dtoClass2;
     private Class<?> dtoClass3;
 
 
     public DataDependency(Dto dto) {
+        this(dto, 0);
+    }
+
+    public DataDependency(Dto dto, int limit) {
+        this.limit = limit;
         id = dto.getId();
         dtoClass = dto.getClass();
         if (dtoClass.isAnnotationPresent(Mongo.class)) {
@@ -36,8 +44,31 @@ public class DataDependency {
         }
     }
 
+    public static String toString(List<Dependants> items) {
+        if (items.isEmpty()) {
+            return null;
+        }
+
+        StringBuilder sb = new StringBuilder();
+        for (Dependants dep : items) {
+//            sb.append(dep.className).append(" (");
+//            for (Map.Entry<Long, String> record : dep.records.entrySet()) {
+//                sb.append(dep.target).append(" -> [").append(record.getKey())
+//                    .append(dep.className).append(" -> [").append(record.getKey())
+//
+//                    .append(" - ").append(record.getValue()).append("] ");
+//            }
+//            sb.append(")\n");
+            sb.append(dep.toString()).append("\n");
+        }
+        if (sb.length() > 1) {
+            sb.setLength(sb.length() - 1);
+        }
+        return sb.toString();
+    }
+
     public List<Dependants> getDependencies() {
-        dependencies = new ArrayList<>();
+        dependencies = new ArrayList<>(limit == 0 ? 100 : limit);
         if (id == null || dbms == null) {
             return dependencies;
         }
@@ -54,6 +85,9 @@ public class DataDependency {
                 Depends depends = field.getAnnotation(Depends.class);
                 if (depends != null && depends.value().equals(dtoClass)) {
                     putAnnotatedDependencies(field, "");
+                    if (limit != 0 && recordCount >= limit) {
+                        return dependencies;
+                    }
                     continue;
                 }
 
@@ -68,6 +102,9 @@ public class DataDependency {
                 dtoClass2 = null;
                 dtoClass3 = null;
                 putNotAnnotatedDependencies(field, "");
+                if (limit != 0 && recordCount >= limit) {
+                    return dependencies;
+                }
             }
         }
 
@@ -229,6 +266,9 @@ public class DataDependency {
 
     private Dependants getDependantData(String fieldName, boolean in) {
         QueryBuilder q = new QueryBuilder(dependantDto);
+        if (limit > 0) {
+            q.limit(limit);
+        }
         if (in) {
             q.condition().in(fieldName, id);
         } else {
@@ -236,8 +276,9 @@ public class DataDependency {
         }
         if (dbms.equals(DtoDictionary.Dbms.MONGO)) {
             try {
-                List<Dto> dtos = CommonModelMongo.getData(q);
-                return new Dependants(dependantDto.getClass().getName(), dtos);
+                List<Dto> dtos = ModelMongo.getData(q);
+                recordCount += dtos.size();
+                return new Dependants(dtoClass.getSimpleName() + "(" + id + ")", dependantDto.getClass().getName(), dtos);
             } catch (NoContentException ignore) {
 
             } catch (VantarException e) {
@@ -250,27 +291,33 @@ public class DataDependency {
 
     public static class Dependants {
 
-        public String name;
-        public List<Dto> dtos;
+        public String target;
+        public String className;
+        public Map<Long, String> records;
 
-        public Dependants(String name, List<Dto> dtos) {
-            this.name = name;
-            this.dtos = dtos;
+        public Dependants(String target, String className, List<Dto> dtos) {
+            this.target = target;
+            this.className = className;
+            records = new HashMap<>(dtos.size(), 1);
+            for (Dto dto : dtos) {
+                records.put(dto.getId(), dto.getPresentationValue(" - "));
+            }
         }
 
+        @Override
         public String toString() {
             StringBuilder sb = new StringBuilder();
-            for (Dto dto : dtos) {
-                sb.append(dto.getId()).append("+ ");
+            for (Long id : records.keySet()) {
+                sb.append(id).append("+ ");
             }
             if (sb.length() > 1) {
                 sb.setLength(sb.length() - 2);
             }
-            return name + '(' + sb.toString() + ')';
+            return target + " -> " + className + '(' + sb.toString() + ')';
         }
 
         public static boolean isEmpty(Dependants dependants) {
-            return dependants == null || ObjectUtil.isEmpty(dependants.dtos);
+            return dependants == null || ObjectUtil.isEmpty(dependants.records);
         }
     }
 }

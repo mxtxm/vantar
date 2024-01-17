@@ -413,6 +413,12 @@ public abstract class DtoBase implements Dto {
             }
         }
         for (Field field : getClass().getFields()) {
+            if (field.getName().equals("code")) {
+                propertyNames.add("code");
+                return propertyNames;
+            }
+        }
+        for (Field field : getClass().getFields()) {
             if (field.getName().equals("value")) {
                 propertyNames.add("value");
                 return propertyNames;

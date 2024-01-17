@@ -1,6 +1,6 @@
 package com.vantar.service.dbarchive;
 
-import com.vantar.business.CommonModelMongo;
+import com.vantar.business.ModelMongo;
 import com.vantar.common.Settings;
 import com.vantar.database.dto.*;
 import com.vantar.database.nosql.mongo.*;
@@ -119,7 +119,7 @@ public class ServiceDbArchive implements Services.Service {
             return;
         }
         try {
-            if (maxRecords * 2 >= CommonModelMongo.count(className)) {
+            if (maxRecords * 2 >= ModelMongo.count(className)) {
                 return;
             }
         } catch (VantarException ignore) {

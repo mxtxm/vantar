@@ -25,6 +25,10 @@ public class LogEvent {
     private static final String FATAL = "FATAL";
 
 
+    public static Logger log(Class<?> c) {
+        return LoggerFactory.getLogger(c);
+    }
+
     // > > > BEAT
 
     public static void beat(Class<?> service) {

@@ -194,10 +194,10 @@ public class Admin {
 
             ui  .addEmptyLine()
                 .addHeading(3, Locale.getString(VantarKey.ADMIN_RUNNING_SERVICES))
-                .addKeyValue("Mongo ", MongoConnection.isUp() ? "on" : "off")
-                .addKeyValue("ElasticSearch ", ElasticConnection.isUp() ? "on" : "off")
-                .addKeyValue("Sql ", SqlConnection.isUp() ? "on" : "off")
-                .addKeyValue("RabbitMQ ", Queue.isUp() ? "on" : "off");
+                .addKeyValue("Mongo ", Services.isUp(MongoConnection.class) ? "on" : "off")
+                .addKeyValue("ElasticSearch ", Services.isUp(ElasticConnection.class) ? "on" : "off")
+                .addKeyValue("Sql ", Services.isUp(SqlConnection.class) ? "on" : "off")
+                .addKeyValue("RabbitMQ ", Services.isUp(Queue.class) ? "on" : "off");
 
             synchronized (Services.upServices) {
                 ui  .addEmptyLine()
