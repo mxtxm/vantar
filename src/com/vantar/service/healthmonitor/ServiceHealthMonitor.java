@@ -1,11 +1,14 @@
 package com.vantar.service.healthmonitor;
 
 import com.sun.management.OperatingSystemMXBean;
-import com.vantar.common.Settings;
+import com.vantar.database.nosql.elasticsearch.ElasticConnection;
+import com.vantar.database.nosql.mongo.MongoConnection;
+import com.vantar.database.sql.SqlConnection;
+import com.vantar.queue.Queue;
 import com.vantar.service.Services;
+import com.vantar.service.log.ServiceLog;
 import com.vantar.util.number.NumberUtil;
 import com.vantar.util.object.ObjectUtil;
-import org.slf4j.*;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.nio.file.*;
@@ -15,64 +18,55 @@ import java.util.concurrent.*;
 
 public class ServiceHealthMonitor implements Services.Service {
 
-    private static final Logger log = LoggerFactory.getLogger(ServiceHealthMonitor.class);
-
+    private volatile boolean serviceUp = false;
     private ScheduledExecutorService schedule;
     private Event event;
 
+    // warn only if repeated monitoring fails
     private int warnMemoryCount;
     private int warnProcessorCount;
 
-    public Boolean onEndSetNull;
+    // > > > service params injected from config
     public Integer intervalMin;
     public Long warnFreeDiskBytes;
     public Long warnFreeMemoryBytes;
     public Long warnProcessorMaxPercent;
+    // warn only if repeated monitoring fails
     public Integer warnMemoryThreshold;
-    public Integer warnCpuThreshold;
+    public Integer warnProcessorThreshold;
+    // < < <
 
+    // > > > service methods
 
+    @Override
     public void start() {
+        serviceUp = true;
         schedule = Executors.newSingleThreadScheduledExecutor();
         schedule.scheduleWithFixedDelay(this::monitor, intervalMin, intervalMin, TimeUnit.MINUTES);
     }
 
-    private void monitor() {
-        for (DiskStatus diskStatus : getDiskStatus()) {
-            if (!diskStatus.ok) {
-                event.warnDiskFreeSpace("DISK SPACE LOW WARNING: " + diskStatus.name + " free-space " + diskStatus.free);
-                log.warn(" ! DISK SPACE LOW {}", diskStatus);
-            }
-        }
-
-        MemoryStatus memoryStatus = getMemoryStatus();
-        if (!memoryStatus.ok) {
-            ++warnMemoryCount;
-        }
-        if (warnMemoryCount >= warnMemoryThreshold) {
-            warnMemoryCount = 0;
-            event.warnMemoryLow("MEMORY LOW WARNING: " + memoryStatus.used + " / " + memoryStatus.total);
-            log.warn(" ! MEMORY LOW {}", memoryStatus);
-        }
-
-        ProcessorStatus processorStatus = getProcessorStatus();
-        if (!processorStatus.ok) {
-            ++warnProcessorMaxPercent;
-        }
-        if (warnProcessorCount >= warnProcessorMaxPercent) {
-            warnProcessorCount = 0;
-            event.warnMemoryLow("PROCESSOR HIGH LOAD WARNING: jvm=" + processorStatus.jvmLoadPercent
-                + " system=" + processorStatus.systemLoadPercent);
-            log.warn(" ! PROCESSOR HIGH LOAD {}", processorStatus);
-        }
-    }
-
+    @Override
     public void stop() {
         schedule.shutdown();
+        serviceUp = false;
     }
 
-    public boolean onEndSetNull() {
-        return onEndSetNull;
+    @Override
+    public boolean isUp() {
+        return serviceUp;
+    }
+
+    @Override
+    public boolean isOk() {
+        return serviceUp
+            && schedule != null
+            && !schedule.isShutdown()
+            && !schedule.isTerminated();
+    }
+
+    @Override
+    public List<String> getLogs() {
+        return null;
     }
 
     public ServiceHealthMonitor setEvent(Event event) {
@@ -80,11 +74,82 @@ public class ServiceHealthMonitor implements Services.Service {
         return this;
     }
 
-    public boolean isOk() {
-        return true;
+    // service methods < < <
+
+    private void monitor() {
+
+        // > > > disk
+        for (DiskStatus s : getDiskStatus()) {
+            if (!s.ok) {
+                String msg = "DISK SPACE LOW WARNING: disk=" + s.name + " "
+                    + NumberUtil.getReadableByteSize(s.free) + " / " + NumberUtil.getReadableByteSize(s.total);
+                event.warnDiskFreeSpace(msg);
+                ServiceLog.error(ServiceHealthMonitor.class, msg);
+            }
+        }
+
+        // > > > memory
+        MemoryStatus memoryStatus = getMemoryStatus();
+        if (!memoryStatus.ok) {
+            ++warnMemoryCount;
+        }
+        if (warnMemoryCount >= warnMemoryThreshold) {
+            warnMemoryCount = 0;
+            String msg = "MEMORY LOW WARNING: " + NumberUtil.getReadableByteSize(memoryStatus.used)
+                + " / " + NumberUtil.getReadableByteSize(memoryStatus.total);
+            event.warnMemoryLow(msg);
+            ServiceLog.error(ServiceHealthMonitor.class, msg);
+        }
+
+        // > > > processor
+        ProcessorStatus processorStatus = getProcessorStatus();
+        if (!processorStatus.ok) {
+            ++warnProcessorMaxPercent;
+        }
+        if (warnProcessorCount >= warnProcessorThreshold) {
+            warnProcessorCount = 0;
+            String msg = "PROCESSOR HIGH LOAD WARNING: jvm=" + processorStatus.jvmLoadPercent
+                + " system=" + processorStatus.systemLoadPercent;
+            event.warnProcessorBusy(msg);
+            ServiceLog.error(ServiceHealthMonitor.class, msg);
+        }
+
+        // > > > services
+        if (Services.isDependencyEnabled(MongoConnection.class) && !Services.isUp(MongoConnection.class)) {
+            String msg = "SERVICE OFF: Mongo";
+            event.warnServiceFail(msg);
+            ServiceLog.error(ServiceHealthMonitor.class, msg);
+        }
+        if (Services.isDependencyEnabled(ElasticConnection.class) && !Services.isUp(ElasticConnection.class)) {
+            String msg = "SERVICE OFF: Elastic";
+            event.warnServiceFail(msg);
+            ServiceLog.error(ServiceHealthMonitor.class, msg);
+        }
+        if (Services.isDependencyEnabled(SqlConnection.class) && !Services.isUp(SqlConnection.class)) {
+            String msg = "SERVICE OFF: SQL";
+            event.warnServiceFail(msg);
+            ServiceLog.error(ServiceHealthMonitor.class, msg);
+        }
+        if (Services.isDependencyEnabled(Queue.class) && !Services.isUp(Queue.class)) {
+            String msg = "SERVICE OFF: Queue";
+            event.warnServiceFail(msg);
+            ServiceLog.error(ServiceHealthMonitor.class, msg);
+        }
+
+        for (Services.Service service : Services.getServices()) {
+            if (!service.isUp()) {
+                String msg = "SERVICE OFF: " + service;
+                event.warnServiceFail(msg);
+                ServiceLog.error(ServiceHealthMonitor.class, msg);
+            } else if (!service.isOk()) {
+                String msg = "SERVICE FAIL: " + service;
+                event.warnServiceFail(msg);
+                ServiceLog.error(ServiceHealthMonitor.class, msg);
+            }
+        }
     }
 
-    public static List<DiskStatus> getDiskStatus() {
+    public List<DiskStatus> getDiskStatus() {
         List<DiskStatus> statuses = new ArrayList<>(5);
         for (Path root : FileSystems.getDefault().getRootDirectories()) {
             DiskStatus status = new DiskStatus();
@@ -94,8 +159,7 @@ public class ServiceHealthMonitor implements Services.Service {
                 status.free = store.getUsableSpace();
                 status.total = store.getTotalSpace();
                 status.used = status.total - status.free;
-                Long threshold = Settings.getValue("service.health.monitor.warn.free.disk.bytes", Long.class);
-                status.ok = threshold == null || status.free > threshold;
+                status.ok = warnFreeDiskBytes == null || status.free > warnFreeDiskBytes;
                 statuses.add(status);
             } catch (IOException ignore) {
 
@@ -104,14 +168,13 @@ public class ServiceHealthMonitor implements Services.Service {
         return statuses;
     }
 
-    public static MemoryStatus getMemoryStatus() {
+    public MemoryStatus getMemoryStatus() {
         MemoryStatus status = new MemoryStatus();
         status.max = Runtime.getRuntime().maxMemory();
         status.total = Runtime.getRuntime().totalMemory();
         status.free = Runtime.getRuntime().freeMemory();
         status.used = status.total - status.free;
-        Long threshold = Settings.getValue("service.health.monitor.warn.free.memory.bytes", Long.class);
-        status.ok = threshold == null || status.free > threshold;
+        status.ok = warnFreeMemoryBytes == null || status.free > warnFreeMemoryBytes;
         OperatingSystemMXBean os = ManagementFactory.getPlatformMXBean(OperatingSystemMXBean.class);
         status.physicalTotal = os.getTotalPhysicalMemorySize();
         status.physicalFree = os.getFreePhysicalMemorySize();
@@ -120,13 +183,12 @@ public class ServiceHealthMonitor implements Services.Service {
         return status;
     }
 
-    public static ProcessorStatus getProcessorStatus() {
+    public ProcessorStatus getProcessorStatus() {
         ProcessorStatus status = new ProcessorStatus();
         OperatingSystemMXBean os = ManagementFactory.getPlatformMXBean(OperatingSystemMXBean.class);
         status.jvmLoadPercent = NumberUtil.round(os.getProcessCpuLoad() * 100D, 1);
         status.systemLoadPercent = NumberUtil.round(os.getSystemCpuLoad() * 100D, 1);
-        Long threshold = Settings.getValue("service.health.monitor.warn.processor.max.percent", Long.class);
-        status.ok = threshold == null || status.jvmLoadPercent < threshold;
+        status.ok = warnProcessorMaxPercent == null || status.jvmLoadPercent < warnProcessorMaxPercent;
         return status;
     }
 
@@ -179,6 +241,7 @@ public class ServiceHealthMonitor implements Services.Service {
 
         void warnDiskFreeSpace(String msg);
         void warnMemoryLow(String msg);
-        void warnCpuFreeSpace(String msg);
+        void warnProcessorBusy(String msg);
+        void warnServiceFail(String msg);
     }
 }

@@ -1,5 +1,6 @@
 package com.vantar.admin.model;
 
+import com.vantar.admin.model.index.Admin;
 import com.vantar.exception.*;
 import com.vantar.locale.*;
 import com.vantar.service.Services;
@@ -13,7 +14,7 @@ public class AdminAuth {
 
     public static boolean isRoot(WebUi ui) throws FinishException {
         try {
-            return Services.get(ServiceAuth.class).isRoot(ui.params);
+            return Services.getService(ServiceAuth.class).isRoot(ui.params);
         } catch (ServiceException | AuthException e) {
             ui.addErrorMessage(e).finish();
             throw new FinishException();
@@ -25,7 +26,7 @@ public class AdminAuth {
 
         ServiceAuth auth;
         try {
-            auth = Services.get(ServiceAuth.class);
+            auth = Services.getService(ServiceAuth.class);
         } catch (ServiceException e) {
             ui.addErrorMessage(e).finish();
             return;
@@ -37,15 +38,15 @@ public class AdminAuth {
         }
 
         ui  .beginBox(Locale.getString(VantarKey.ADMIN_RESET_SIGNIN_FAILS))
-            .addLink(Locale.getString(VantarKey.ADMIN_RESET_SIGNIN_FAILS), "/admin/users/signin/fails/reset")
-            .containerEnd()
+            .addHref(Locale.getString(VantarKey.ADMIN_RESET_SIGNIN_FAILS), "/admin/users/signin/fails/reset")
+            .blockEnd()
             .beginBox(Locale.getString(VantarKey.ADMIN_DELETE_TOKEN))
             .addText(Locale.getString(VantarKey.ADMIN_DELETE_TOKEN_DESCRIPTION))
             .beginFormPost()
             .addInput(Locale.getString(VantarKey.ADMIN_AUTH_TOKEN), "tk")
             .addSubmit(Locale.getString(VantarKey.ADMIN_DELETE_DO))
-            .containerEnd()
-            .containerEnd();
+            .blockEnd()
+            .blockEnd();
 
         ui.beginBox(Locale.getString(VantarKey.ADMIN_ONLINE_USERS));
         ui.addText("Token expire time: " + auth.tokenExpireMin + "mins");
@@ -53,30 +54,31 @@ public class AdminAuth {
         auth.getOnlineUsers().forEach((code, info) -> {
             long idle = -info.lastInteraction.secondsFromNow() / 60;
             long remaining = (auth.tokenExpireMin) - idle;
-            ui.addKeyValueExtendable(
+            ui.addKeyValue(
                 info.user.getUsername() + " (" + info.user.getId() + ")\n",
-                code
-                    + "  --  " +  info.lastInteraction.toString() + " --> "
-                    + " (idle=" + idle + "mins, remaining=" + remaining + "mins)",
+                code + "  --  " + info.lastInteraction.toString()
+                    + " --> (idle=" + idle + "mins, remaining=" + remaining + "mins)",
+                null,
+                true,
                 "<label>" + Json.d.toJsonPretty(info) + "</label>"
             );
         });
 
-        ui.containerEnd();
+        ui.blockEnd();
 
         ui.beginBox(Locale.getString(VantarKey.ADMIN_SIGNUP_TOKEN_TEMP));
         auth.getSignupVerifyTokens().forEach((code, info) -> ui.addKeyValue(
             info.user.getUsername() + " (" + info.user.getId() + ")\n" + getRoleDescription(info.user),
             info.user.getToken() + "  --  " + info.lastInteraction.toString()
         ));
-        ui.containerEnd();
+        ui.blockEnd();
 
         ui.beginBox(Locale.getString(VantarKey.ADMIN_SIGNIN_TOKEN_TEMP));
         auth.getOneTimeTokens().forEach((code, info) -> ui.addKeyValue(
             info.user.getUsername() + " (" + info.user.getId() + ")\n" + getRoleDescription(info.user),
             info.user.getToken() + "  --  " + info.lastInteraction.toString()
         ));
-        ui.containerEnd();
+        ui.blockEnd();
 
         ui.beginBox(Locale.getString(VantarKey.ADMIN_RECOVER_TOKEN_TEMP));
         auth.getVerifyTokens().forEach((code, info) -> ui.addKeyValue(
@@ -94,7 +96,7 @@ public class AdminAuth {
         if (user.getRoles() == null) {
             return "";
         }
-        StringBuilder sb = new StringBuilder();
+        StringBuilder sb = new StringBuilder(1000);
         for (CommonUserRole role : user.getRoles()) {
             sb.append(role.getName()).append(role.isRoot() ? " *root*" : "").append(", ");
         }

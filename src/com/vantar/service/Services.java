@@ -1,79 +1,60 @@
 package com.vantar.service;
 
-import com.vantar.exception.*;
-import com.vantar.service.log.LogEvent;
 import com.vantar.common.*;
 import com.vantar.database.nosql.elasticsearch.ElasticConnection;
 import com.vantar.database.nosql.mongo.MongoConnection;
 import com.vantar.database.sql.SqlConnection;
+import com.vantar.exception.ServiceException;
 import com.vantar.queue.Queue;
+import com.vantar.service.log.Beat;
 import com.vantar.service.messaging.ServiceMessaging;
 import com.vantar.service.patch.Patcher;
-import com.vantar.util.datetime.DateTime;
 import com.vantar.util.object.*;
 import com.vantar.util.string.StringUtil;
 import org.slf4j.*;
-import java.lang.reflect.Field;
 import java.util.*;
 
 
 public class Services {
 
     public static final Logger log = LoggerFactory.getLogger(Services.class);
-
     public static final String ID = UUID.randomUUID().toString();
-    public static Map<String, Integer> serviceCount;
-    public static final Map<String, ServiceInfo> upServices = new LinkedHashMap<>(20, 1);
-    public static ServiceMessaging messaging;
-    private static Set<Class<?>> dependencies;
 
     private static Event event;
+    public static ServiceMessaging messaging;
 
+    private static Set<Class<?>> dependencies;
+    private static Map<Class<?>, Service> upServicesMe;
+    // <serverID, List<service>>
+    private static Map<String, List<String>> upServicesOther;
 
-    public static boolean isUp(Class<?> name) {
-        if (dependencies != null && dependencies.contains(name)) {
-            return true;
-        }
-        return isUp(name.getSimpleName());
-    }
-
-    public static boolean isUp(String name) {
-        ServiceInfo service = upServices.get(name);
-        if (service ==  null) {
-            return false;
-        }
-        return service.isRunningOnThisServer;
-    }
-
-    public static Service get(String serviceClass) throws ServiceException {
-        ServiceInfo service = upServices.get(serviceClass);
-        if (service == null) {
-            throw new ServiceException(serviceClass);
-        }
-        return service.instance;
-    }
-
-    @SuppressWarnings("unchecked")
-    public static <T extends Service> T get(Class<T> serviceClass) throws ServiceException {
-        ServiceInfo service = upServices.get(serviceClass.getSimpleName());
-        if (service == null) {
-            throw new ServiceException(serviceClass);
-        }
-        return (T) service.instance;
-    }
 
     public static void setEvents(Event e) {
         event = e;
     }
 
     /**
-     * Do not run startup event
+     * NONE server startup -> do not run events
      */
-    public static synchronized void startServicesOnly() {
+    public static synchronized void startServices() {
         startServices(false);
     }
 
-    public static synchronized void start() {
+    public static List<String> getEnabledServices() {
+        List<String> services = new ArrayList<>(14);
+        for (String key : Settings.getKeys()) {
+            if (key.startsWith("service.enabled")) {
+                key = StringUtil.replace(key, "service.enabled", "service");
+                services.add(StringUtil.toStudlyCase(key));
+            }
+        }
+        return services;
+    }
+
+    /**
+     * Server startup -> start services run events
+     */
+    public static synchronized void startServer() {
         startServices(true);
     }
 
@@ -85,60 +66,43 @@ public class Services {
                 try {
                     dependencies.add(Class.forName(className));
                 } catch (ClassNotFoundException e) {
-                    log.error(" !! dependency('{}') not supported", className);
+                    log.error(" !! dependency('{}') not found", className);
                 }
             }
         }
 
         Map<Integer, Service> orderedServices = new TreeMap<>();
-        List<Service> notOrderedServices = new ArrayList<>();
-
-        Set<String> usedKey = new HashSet<>();
+        Set<String> setParams = new HashSet<>(100, 1);
         for (String key : Settings.getKeys()) {
-            if (key.startsWith("service.enabled")) {
-                Integer priority = Settings.getValue(key, Integer.class);
-                if (priority == null) {
-                    Boolean enabled = Settings.getValue(key, Boolean.class);
-                    if (enabled == null || !enabled) {
-                        continue;
-                    }
-                }
+            if (!key.startsWith("service.enabled")) {
+                continue;
+            }
+            Integer priority = Settings.getValue(key, Integer.class);
+            if (priority == null) {
+                log.error(" !! invalid priority > service({})", key);
+                continue;
+            }
 
-                key = StringUtil.replace(key, "service.enabled", "service");
+            key = StringUtil.replace(key, "service.enabled", "service");
+            String packageName = StringUtil.trim(Settings.getValue(key + ".package"), '.');
+            String className = StringUtil.toStudlyCase(key);
+            Service service = ClassUtil.getInstance(packageName + '.' + className);
+            if (service == null) {
+                log.error(" !! failed to create service instance({}.{})", packageName, className);
+                continue;
+            }
 
-                String packageName = StringUtil.trim(Settings.getValue(key + ".package"), '.');
-                String className = StringUtil.toStudlyCase(key);
-                Service service = ClassUtil.getInstance(packageName + '.' + className);
-                if (service == null) {
-                    log.error(" !! failed to create service instance '{}.{}'", packageName, className);
+            key += '.';
+            for (String keyParam : Settings.getKeys()) {
+                if (!keyParam.startsWith(key) || setParams.contains(keyParam) || keyParam.endsWith(".package")) {
                     continue;
                 }
-
-                key += '.';
-                for (String keyB : Settings.getKeys()) {
-                    if (usedKey.contains(keyB)) {
-                        continue;
-                    }
-
-                    if (keyB.startsWith(key)) {
-                        if (!StringUtil.contains(keyB, ".package")) {
-                            String propertyName = StringUtil.toCamelCase(StringUtil.remove(keyB, key));
-                            setFieldValue(service, propertyName, Settings.getValue(keyB));
-                        }
-                        usedKey.add(keyB);
-                    }
-                }
-
-                if (priority == null) {
-                    notOrderedServices.add(service);
-                } else {
-                    orderedServices.put(priority, service);
-                }
-
-                if (service instanceof Dependency) {
-                    dependencies.addAll(Arrays.asList(((Dependency) service).getDependencies()));
-                }
+                String propertyName = StringUtil.toCamelCase(StringUtil.remove(keyParam, key));
+                ObjectUtil.setPropertyValueIgnoreNull(service, propertyName, Settings.getValue(keyParam));
+                setParams.add(keyParam);
             }
+
+            orderedServices.put(priority, service);
         }
 
         if (doEvents && event != null) {
@@ -148,14 +112,11 @@ public class Services {
         messaging = new ServiceMessaging();
         messaging.start();
 
-
+        upServicesMe = new LinkedHashMap<>(orderedServices.size(), 1);
         for (Service service : orderedServices.values()) {
             if (service != null) {
                 startService(service);
             }
-        }
-        for (Service service : notOrderedServices) {
-            startService(service);
         }
 
         if (doEvents && event != null) {
@@ -165,213 +126,128 @@ public class Services {
         Patcher.run();
     }
 
-    private static void setFieldValue(Object object, String name, String value) {
-        try {
-            Field field = object.getClass().getField(name);
-
-            if (value == null) {
-                field.set(object, null);
-                return;
-            }
-
-            Class<?> type = field.getType();
-
-            if (type.equals(String.class)) {
-                field.set(object, value);
-            } else if (type.equals(Integer.class)) {
-                field.set(object, StringUtil.toInteger(value));
-            } else if (type.equals(Long.class)) {
-                field.set(object, StringUtil.toLong(value));
-            } else if (type.equals(Double.class)) {
-                field.set(object, StringUtil.toDouble(value));
-            } else if (type.equals(Boolean.class)) {
-                field.set(object, StringUtil.toBoolean(value));
-            } else if (type.equals(Character.class)) {
-                field.set(object, StringUtil.toCharacter(value));
-            } else if (type.equals(DateTime.class)) {
-                field.set(object, new DateTime(value));
-            }
-        } catch (NoSuchFieldException | IllegalAccessException | IllegalArgumentException | DateTimeException e) {
-            log.error(" !! setFieldValue({}: {} < {})\n", object.getClass().getSimpleName(), name.trim(), value, e);
-        }
-    }
-
     private static void startService(Service service) {
         String className = service.getClass().getSimpleName();
         try {
             service.start();
-            LogEvent.beat(service.getClass(), "start");
-            setServiceStarted(className, null, service);
+            Beat.set(service.getClass(), "start");
+            upServicesMe.put(service.getClass(), service);
             messaging.broadcast(VantarParam.MESSAGE_SERVICE_STARTED, className);
-
-            log.info(" >> '{}' started", className);
+            log.info(" > '{}' started", className);
         } catch (Exception e) {
             log.error(" !! '{}' failed to start\n", className, e);
         }
     }
 
     /**
-     * 1- Call after starting a service
-     * 2- Call after getting a start service message from another server
+     * Get service start message from other servers
      */
-    public static synchronized void setServiceStarted(String tClass, String serverId, Service instance) {
-        // is on this server
-        if (serverId == null) {
-            ServiceInfo info = new ServiceInfo();
-            info.instanceCount = 1;
-            info.isEnabledOnThisServer = true;
-            info.isRunningOnThisServer = true;
-            info.instance = instance;
-            upServices.put(tClass, info);
-            return;
+    public static void onServiceStarted(String serverId, String service) {
+        if (upServicesOther == null) {
+            upServicesOther = new HashMap<>(10, 1);
         }
-
-        if (ID.equals(serverId)) {
-            return;
+        synchronized (upServicesOther) {
+            List<String> services = upServicesOther.computeIfAbsent(serverId, k -> new ArrayList<>(10));
+            services.add(service);
         }
-
-        ServiceInfo info = upServices.get(tClass);
-        if (tClass == null) {
-            info = new ServiceInfo();
-            info.instanceCount = 1;
-            info.isEnabledOnThisServer = false;
-            upServices.put(tClass, info);
-            return;
-        }
-        ++info.instanceCount;
     }
 
-    public static synchronized void stopServicesOnly() {
+    /**
+     * NONE shutdown -> do not run the shutdown events
+     */
+    public static synchronized void stopServices() {
         stopServices(false);
     }
 
+    /**
+     * Server shutdown -> run shutdown events
+     */
     public static synchronized void stop() {
         stopServices(true);
     }
 
     private static void stopServices(boolean doEvents) {
-        log.info("> stopping services");
-
         if (doEvents && event != null) {
             event.beforeStop();
         }
 
-        ListIterator<Map.Entry<String, ServiceInfo>> iterator =
-            new ArrayList<>(upServices.entrySet()).listIterator(upServices.size());
-
-        while (iterator.hasPrevious()) {
-            Map.Entry<String, ServiceInfo> entry = iterator.previous();
-            ServiceInfo info = entry.getValue();
-            if (info.instance != null) {
-                stopService(info.instance);
-            }
-        }
+        upServicesMe.entrySet().removeIf(entry -> {
+            stopService(entry.getValue());
+            return true;
+        });
 
         messaging.stop();
-        log.info(" >> '{}' stopped gracefully", ServiceMessaging.class.getSimpleName());
+        log.info(" > '{}' stopped gracefully", ServiceMessaging.class.getSimpleName());
 
         if (doEvents && event != null) {
             event.afterStop();
         }
-
-        log.info("< stopping services");
     }
 
     private static void stopService(Service service) {
         String className = service.getClass().getSimpleName();
         try {
             service.stop();
-            LogEvent.beat(service.getClass(), "stop");
-
-            setServiceStopped(className, null);
+            Beat.set(service.getClass(), "stop");
             messaging.broadcast(VantarParam.MESSAGE_SERVICE_STOPPED, className);
-
-            log.info(" >> '{}' stopped gracefully", className);
+            log.info(" > '{}' stopped gracefully", className);
         } catch (Exception e) {
             log.info(" !! '{}' failed to stopped gracefully\n", className, e);
         }
     }
 
     /**
-     * 1- Call after stopping a service
-     * 2- Call after getting a stop service message from another server
+     * Get service stop message from other servers
      */
-    public static synchronized void setServiceStopped(String tClass, String serverId) {
-        ServiceInfo info = upServices.get(tClass);
-        if (info == null) {
-            return;
+    public static synchronized void onServiceStopped(String serverId, String service) {
+        if (upServicesOther == null) {
+            upServicesOther = new HashMap<>(10, 1);
         }
-
-        // on this server
-        if (info.isEnabledOnThisServer && serverId == null) {
-            info.isRunningOnThisServer = false;
-            --info.instanceCount;
-        }
-        // on other service
-        if (!info.isEnabledOnThisServer && serverId != null) {
-            --info.instanceCount;
-        }
-
-        if (info.instance.onEndSetNull() && info.instanceCount <= 0) {
-            upServices.remove(tClass);
-            info.instance = null;
-        }
-    }
-
-    public static synchronized Set<String> getEnabledServices() {
-        Set<String> services = new HashSet<>(10, 1);
-
-        for (String key : Settings.getKeys()) {
-            if (key.startsWith("service.enabled")) {
-                Boolean enabled = Settings.getValue(key, Boolean.class);
-                if (enabled == null || !enabled) {
-                    continue;
+        synchronized (upServicesOther) {
+            List<String> services = upServicesOther.get(serverId);
+            if (services == null) {
+                upServicesOther.remove(serverId);
+            } else {
+                services.remove(service);
+                if (services.isEmpty()) {
+                    upServicesOther.remove(serverId);
                 }
-                services.add(StringUtil.toStudlyCase(key));
             }
         }
-
-        return services;
     }
 
-    /**
-     * number of services running on all servers
-     */
-    public static synchronized int getTotalCount() {
-        int count = 0;
-        for (ServiceInfo serviceInfo : upServices.values()) {
-            count += serviceInfo.instanceCount;
+    public static boolean isDependencyEnabled(Class<?> serviceClass) {
+        return dependencies != null && dependencies.contains(serviceClass);
+    }
+
+    public static boolean isUp(Class<?> serviceClass) {
+        if (dependencies != null && dependencies.contains(serviceClass)) {
+            return true;
         }
-        return count;
+        return upServicesMe != null && upServicesMe.containsKey(serviceClass);
     }
 
-    /**
-     * number of services running on this server
-     */
-    public static synchronized int getCount() {
-        int count = 0;
-        for (ServiceInfo serviceInfo : upServices.values()) {
-            if (serviceInfo.isEnabledOnThisServer) {
-                count += serviceInfo.instanceCount;
-            }
+    @SuppressWarnings("unchecked")
+    public static <T extends Service> T getService(Class<T> serviceClass) throws ServiceException {
+        Service service = upServicesMe.get(serviceClass);
+        if (service == null) {
+            throw new ServiceException(serviceClass);
         }
-        return count;
+        return (T) service;
     }
 
-    /**
-     * number of services enabled on this server
-     */
-    public static synchronized int getEnabled() {
-        return getEnabledServices().size();
+    @SuppressWarnings("unchecked")
+    public static <T extends Service> T get(Class<T> serviceClass) {
+        Service service = upServicesMe.get(serviceClass);
+        return service == null ? null : (T) service;
     }
 
-    public static synchronized void resetTotalServiceCount() {
-        serviceCount = new LinkedHashMap<>(20, 1);
-        serviceCount.put(ID, getEnabled());
+    public static Collection<Service> getServices() {
+        return upServicesMe == null ? null : upServicesMe.values();
     }
 
-    public static synchronized void setTotalServiceCount(int count, String serverId) {
-        serviceCount.put(serverId, count);
+    public static Map<String, List<String>> getServicesOnOtherServers() {
+        return upServicesOther;
     }
 
     /**
@@ -398,24 +274,9 @@ public class Services {
 
         void start();
         void stop();
+        boolean isUp();
         boolean isOk();
-        boolean onEndSetNull();
-    }
-
-
-    public interface Dependency {
-
-        Class<?>[] getDependencies();
-    }
-
-
-    public static class ServiceInfo {
-
-        public boolean isEnabledOnThisServer;
-        public boolean isRunningOnThisServer;
-        public Service instance;
-        public int instanceCount;
-
+        List<String> getLogs();
     }
 
 
@@ -426,5 +287,4 @@ public class Services {
         void afterStart();
         void afterStop();
     }
-
 }

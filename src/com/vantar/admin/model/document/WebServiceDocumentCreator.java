@@ -1,6 +1,6 @@
 package com.vantar.admin.model.document;
 
-import com.vantar.admin.model.*;
+import com.vantar.admin.model.index.Admin;
 import com.vantar.util.json.*;
 import com.vantar.util.object.*;
 import com.vantar.util.string.StringUtil;
@@ -16,8 +16,8 @@ public class WebServiceDocumentCreator {
         if (tag != null) {
             tag = "* " + tag;
         }
-        StringBuilder parsed = new StringBuilder();
-        StringBuilder block = new StringBuilder();
+        StringBuilder parsed = new StringBuilder(10000);
+        StringBuilder block = new StringBuilder(10000);
 
         String[] lines = StringUtil.split(content, '\n');
         for (int i = 0, j = 0, linesLength = lines.length; j < linesLength; j++) {
@@ -216,7 +216,7 @@ public class WebServiceDocumentCreator {
             }
             return exceptions;
         } catch (Exception e) {
-            Admin.log.warn("! could not get exceptions ({}, {})", className, methodName, e);
+            Admin.log.warn("! could not get exceptions ({}, {})", className, methodName);
             return new HashSet<>(1, 1);
         }
     }
@@ -242,7 +242,7 @@ public class WebServiceDocumentCreator {
 
             return content;
         } catch (Exception e) {
-            Admin.log.warn("! could not get exceptions ({}, {})", className, methodName, e);
+            Admin.log.warn("! could not get exceptions ({}, {})", className, methodName);
             return content;
         }
     }

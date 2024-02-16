@@ -6,7 +6,7 @@ import com.vantar.locale.*;
 import com.vantar.locale.Locale;
 import com.vantar.service.Services;
 import com.vantar.service.auth.ServiceAuth;
-import com.vantar.service.log.ServiceUserActionLog;
+import com.vantar.service.log.ServiceLog;
 import com.vantar.util.datetime.DateTime;
 import org.slf4j.*;
 import javax.servlet.http.*;
@@ -44,8 +44,7 @@ public abstract class RouteBase extends HttpServlet {
             method = this.getClass().getMethod(m, Params.class, HttpServletResponse.class);
 
             if (logRequest && !method.isAnnotationPresent(NoLog.class)) {
-                ServiceUserActionLog.addRequest(params);
-                log.debug(" > {}", request.getRequestURI());
+                ServiceLog.addRequest(params);
             }
 
             if (method.isAnnotationPresent(CallTimeLimit.class)) {
@@ -67,11 +66,11 @@ public abstract class RouteBase extends HttpServlet {
             }
 
             if (method.isAnnotationPresent(VerifyPermission.class)) {
-                Services.get(ServiceAuth.class).permitController(params, m);
+                Services.getService(ServiceAuth.class).permitController(params, m);
             } else if (method.isAnnotationPresent(Access.class)) {
-                Services.get(ServiceAuth.class).permitAccess(params, method.getAnnotation(Access.class).value());
+                Services.getService(ServiceAuth.class).permitAccess(params, method.getAnnotation(Access.class).value());
             } else if (method.isAnnotationPresent(Feature.class)) {
-                Services.get(ServiceAuth.class).permitFeature(params, method.getAnnotation(Feature.class).value());
+                Services.getService(ServiceAuth.class).permitFeature(params, method.getAnnotation(Feature.class).value());
             }
 
             if (method.isAnnotationPresent(BackgroundTask.class)) {

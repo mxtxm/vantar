@@ -48,7 +48,7 @@ public class Persian {
             if (StringUtil.isEmpty(string)) {
                 return "";
             }
-            StringBuilder sb = new StringBuilder();
+            StringBuilder sb = new StringBuilder(20);
             char[] charArr = string.toCharArray();
             for (char c : charArr) {
                 switch (c) {
@@ -98,7 +98,7 @@ public class Persian {
             if (StringUtil.isEmpty(string)) {
                 return "";
             }
-            StringBuilder sb = new StringBuilder();
+            StringBuilder sb = new StringBuilder(20);
             char[] charArr = string.toCharArray();
             for (char c : charArr) {
                 switch (c) {
@@ -165,4 +165,34 @@ public class Persian {
             }
         );
     }
+
+    public static String numberToMonth(int m) {
+        if (m == 1) {
+            return " فروردین ";
+        } else if (m == 2) {
+            return " اردیبهشت ";
+        } else if (m == 3) {
+            return " خرداد ";
+        } else if (m == 4) {
+            return " تیر ";
+        } else if (m == 5) {
+            return " مرداد ";
+        } else if (m == 6) {
+            return " شهریور ";
+        } else if (m == 7) {
+            return " مهر ";
+        } else if (m == 8) {
+            return " آبان ";
+        } else if (m == 9) {
+            return " آذز ";
+        } else if (m == 10) {
+            return " دی ";
+        } else if (m == 11) {
+            return " بهمن ";
+        } else if (m == 12) {
+            return " اسفند ";
+        }
+        return "-";
+    }
+
 }

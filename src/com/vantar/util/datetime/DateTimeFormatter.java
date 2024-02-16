@@ -1,6 +1,7 @@
 package com.vantar.util.datetime;
 
 import com.vantar.locale.VantarKey;
+import com.vantar.service.log.ServiceLog;
 import com.vantar.util.string.*;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -231,10 +232,15 @@ public class DateTimeFormatter {
     public String getDatePersianStyled() {
         pattern = "d MMM yyyy";
         DateTimeFormatter date = PersianDateUtil.toPersian(year, month, day);
-        return
-            Persian.Number.toPersian(Integer.toString(date.day)) + " " +
-            DateTimeNormalizer.MONTH_NAMES_FA[date.month] + " " +
-            Persian.Number.toPersian(Integer.toString(date.year));
+        try {
+            return
+                Persian.Number.toPersian(Integer.toString(date.day)) + " " +
+                    DateTimeNormalizer.MONTH_NAMES_FA[date.month] + " " +
+                    Persian.Number.toPersian(Integer.toString(date.year));
+        } catch (Exception e) {
+            ServiceLog.log.error(">>>>> {} {} {}", year, month, day, e);
+            return "-";
+        }
     }
 
     public String getDateTimeStyled() {
@@ -383,6 +389,10 @@ public class DateTimeFormatter {
         long minutes = (seconds / 60) % 60;
         long hours = (seconds / (60 * 60)) % 24;
         long days = seconds / (24 * 60 * 60);
+
+        if (fragmentSeconds == 0 && minutes == 0 && hours == 0 && days == 0) {
+            return "less than a second";
+        }
 
         StringBuilder time = new StringBuilder();
         if (days != 0) {

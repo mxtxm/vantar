@@ -8,12 +8,12 @@ import com.vantar.database.nosql.mongo.Mongo;
 import com.vantar.database.query.QueryBuilder;
 import com.vantar.exception.*;
 import com.vantar.service.Services;
+import com.vantar.service.log.ServiceLog;
 import com.vantar.util.datetime.*;
 import com.vantar.util.file.FileUtil;
 import com.vantar.util.json.Json;
 import com.vantar.util.string.StringUtil;
 import org.bson.Document;
-import org.slf4j.*;
 import java.util.*;
 import java.util.concurrent.*;
 
@@ -23,20 +23,25 @@ import java.util.concurrent.*;
 public class ServiceDbArchive implements Services.Service {
 
     private static final int BULK_ACTION_RECORD_COUNT = 1000;
-    private static final Logger log = LoggerFactory.getLogger(ServiceDbArchive.class);
     private static final int MAX_ARCHIVED_DTO_COUNT = 5;
-    private static String FILE_PATH;
+
+    private volatile boolean serviceUp = false;
+    private volatile boolean lastSuccess = true;
+    private List<String> logs;
 
     private ScheduledExecutorService schedule;
+    private static Map<Class<?>, String> classToStorage;
+    private static String FILE_PATH;
 
-    public Boolean onEndSetNull;
+    // > > > service params injected from config
     public String archivePath;
     public Integer startHour;
     public Integer intervalHour;
+    // < < <
 
-    private static Map<Class<?>, String> classToStorage;
+    // > > > service methods
 
-
+    @Override
     public void start() {
         schedule = Executors.newSingleThreadScheduledExecutor();
 
@@ -55,16 +60,55 @@ public class ServiceDbArchive implements Services.Service {
         }
 
         schedule.scheduleAtFixedRate(this::scan, startDateTime.diffMinutes(now), intervalHour * 60, TimeUnit.MINUTES);
-        log.info(
-            "    >> db archive scan: runs at {} ({}minutes) > repeats every {}hours",
+        ServiceLog.log.info(
+            "  -> db archive scan: runs at {} ({}minutes) > repeats every {}hours",
             startDateTime.formatter().getDateTime(),
             startDateTime.diffMinutes(now),
             intervalHour
         );
+        serviceUp = true;
     }
 
+    @Override
+    public void stop() {
+        schedule.shutdown();
+        serviceUp = false;
+    }
+
+    @Override
+    public boolean isUp() {
+        return serviceUp;
+    }
+
+    @Override
+    public boolean isOk() {
+        return serviceUp
+            && lastSuccess
+            && schedule != null
+            && !schedule.isShutdown()
+            && !schedule.isTerminated();
+    }
+
+    @Override
+    public List<String> getLogs() {
+        return logs;
+    }
+
+    private void setLog(String msg) {
+        if (logs == null) {
+            logs = new ArrayList<>(5);
+        }
+        logs.add(msg);
+    }
+
+    public static void setPath() {
+        FILE_PATH = Settings.getValue("service.backup.path") + "dbarchive.json";
+    }
+
+    // service methods < < <
+
     private void scan() {
-        log.info(" >> start db-archive");
+        ServiceLog.log.info("  --> start db-archive");
 
         Map<String, ArchiveInfo> archives = getArchives();
 
@@ -97,19 +141,21 @@ public class ServiceDbArchive implements Services.Service {
         }
 
         FileUtil.write(FILE_PATH, Json.d.toJson(archives));
-        log.info(" << end db-archive");
+        ServiceLog.log.info("  <-- end db-archive");
     }
 
     private void archiveByDate(ArchiveInfo archiveInfo, String className, DateTime now) {
         String newClassName = className + archiveInfo.collections.size();
-        log.info("    --> creating archive {} -> {}", className, newClassName);
+        ServiceLog.log.info("  --> creating archive {} > {}", className, newClassName);
         try {
             Mongo.renameCollection(className, newClassName);
             archiveInfo.lastCreateDateTime = now;
             archiveInfo.collections.put(newClassName, now.formatter().getDateHm());
-            log.info("    <-- creating archive");
+            ServiceLog.log.info("  <-- creating archive");
         } catch (DatabaseException e) {
-            log.error(" ! archive {} -> {}", className, newClassName, e);
+            ServiceLog.log.error(" ! archive {} > {}", className, newClassName, e);
+            lastSuccess = true;
+            setLog(e.getMessage());
         }
     }
 
@@ -127,7 +173,7 @@ public class ServiceDbArchive implements Services.Service {
         }
 
         String newClassName = className + archiveInfo.collections.size();
-        log.info("    --> creating archive {} -> {}", className, newClassName);
+        ServiceLog.log.info("  --> creating archive {} > {}", className, newClassName);
 
         List<Document> documents = new ArrayList<>(BULK_ACTION_RECORD_COUNT);
         int i = 1;
@@ -146,29 +192,15 @@ public class ServiceDbArchive implements Services.Service {
 
             archiveInfo.lastCreateDateTime = now;
             archiveInfo.collections.put(newClassName, now.formatter().getDateHm());
-            log.info("    <-- creating archive");
+            ServiceLog.log.info("  <-- creating archive");
 
             archiveByRecordCount(dto, archiveInfo, className, now, archivePolicy);
 
         } catch (DatabaseException e) {
-            log.error(" ! archive {} -> {}", className, newClassName, e);
+            ServiceLog.log.error(" ! archive {} > {}", className, newClassName, e);
+            lastSuccess = true;
+            setLog(e.getMessage());
         }
-    }
-
-    public void stop() {
-        schedule.shutdown();
-    }
-
-    public boolean onEndSetNull() {
-        return onEndSetNull;
-    }
-
-    public boolean isOk() {
-        return true;
-    }
-
-    public static void setPath() {
-        FILE_PATH = Settings.getValue("service.backup.path") + "dbarchive.json";
     }
 
     public static Map<String, ArchiveInfo> getArchives() {
@@ -188,7 +220,7 @@ public class ServiceDbArchive implements Services.Service {
         ArchiveInfo info = archives.get(dtoClass.getSimpleName());
         if (!dtoClass.getSimpleName().equals(collectionName)
             && (info == null || !info.collections.containsKey(collectionName))) {
-            log.error("! invalid collection {} -> {}", dtoClass.getSimpleName(), collectionName);
+            ServiceLog.log.error(" ! invalid collection {} > {}", dtoClass.getSimpleName(), collectionName);
             return;
         }
         info.activeCollection = collectionName;

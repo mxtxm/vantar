@@ -2,7 +2,7 @@ package com.vantar.web;
 
 import com.vantar.exception.*;
 import com.vantar.locale.*;
-import com.vantar.service.log.ServiceUserActionLog;
+import com.vantar.service.log.ServiceLog;
 import javax.servlet.http.*;
 import java.io.IOException;
 
@@ -27,7 +27,7 @@ public abstract class RouteAllToOneMethod extends RouteBase {
             Params.setThreadParams(params);
 
             if (logRequest) {
-                ServiceUserActionLog.addRequest(params);
+                ServiceLog.addRequest(params);
                 log.debug(" > {}", request.getRequestURI());
             }
 

@@ -104,9 +104,12 @@ public class DefaultStringsFa {
         tokens.put(VantarKey.ADMIN_SHORTCUTS, "لینک های میانبر");
 
         tokens.put(VantarKey.ADMIN_SYSTEM_ADMIN, "مدیریت سیستم");
-        tokens.put(VantarKey.ADMIN_RUNNING_SERVICES, "سرویس های روشن");
-        tokens.put(VantarKey.ADMIN_RUNNING_SERVICES_COUNT, " سرویس (تعداد روشن)");
-        tokens.put(VantarKey.ADMIN_RUNNING_SERVICES_ON_THIS_SERVER, "بر روی این سرور");
+
+        tokens.put(VantarKey.ADMIN_RUNNING_SERVICES_ME, "سرویس های روی این سرور");
+        tokens.put(VantarKey.ADMIN_RUNNING_SERVICES_OTHER, "سرویس های روی سرورهای دیگر");
+        tokens.put(VantarKey.ADMIN_RUNNING_SERVICES_LOGS, "لاگهای سرویس ها");
+        tokens.put(VantarKey.ADMIN_RUNNING_SERVICES_DEPENDENCIES, "سرویس های پایه");
+
 
         tokens.put(VantarKey.ADMIN_BACKUP, "پشتیبانی داده ها");
         tokens.put(VantarKey.ADMIN_BACKUP_CREATE, "ساخت کپی پشتیبان");
@@ -277,8 +280,8 @@ public class DefaultStringsFa {
         tokens.put(VantarKey.SHOW_DELETED, "نمایش پاک شده ها");
         tokens.put(VantarKey.SHOW_ALL, "نمایش همه");
 
-        tokens.put(VantarKey.LOGICAL_DELETED, "حذف نرم (رکورد تنها نشانه زده شود)");
-        tokens.put(VantarKey.LOGICAL_DELETED_UNDO, "برگرداندن");
+        //tokens.put(VantarKey.LOGICAL_DELETED, "حذف نرم (رکورد تنها نشانه زده شود)");
+        //tokens.put(VantarKey.LOGICAL_DELETED_UNDO, "برگرداندن");
         tokens.put(VantarKey.ADMIN_ACTION_LOG, "لاگ");
 
         tokens.put(VantarKey.ADMIN_PAGING, "صفحه بندی");
@@ -304,6 +307,9 @@ public class DefaultStringsFa {
         tokens.put(VantarKey.ADMIN_FAIL_MSG, "");
         tokens.put(VantarKey.ADMIN_SUCCESS, "");
         tokens.put(VantarKey.ADMIN_SUCCESS_MSG, "");
+
+        tokens.put(VantarKey.ADMIN_WEBSERVICE_INDEX_TITLE, "ایندکس وب سرویس ها");
+
     }
 
     public static String getString(LangKey key) {

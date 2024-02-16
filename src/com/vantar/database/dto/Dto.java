@@ -85,11 +85,12 @@ public interface Dto {
     List<ValidationError> set(Params params, Action action, String prefix, String suffix);
     List<ValidationError> validate(Action action);
 
-    void setDeleteLogical(boolean deleteLogical);
-    boolean getDeleteLogicalState();
-    boolean isDeleteLogicalEnabled();
-    void setDeletedQueryPolicy(QueryDeleted policy);
-    QueryDeleted getDeletedQueryPolicy();
+    //void setDeleteLogical(boolean deleteLogical);
+    //boolean getDeleteLogicalState();
+    //boolean isDeleteLogicalEnabled();
+    //void setDeletedQueryPolicy(QueryDeleted policy);
+    //QueryDeleted getDeletedQueryPolicy();
+    void setColPrefix(String colPrefix);
 
     Dto.Action getAction(Dto.Action defaultAction);
     String[] getIndexes();

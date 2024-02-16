@@ -1,7 +1,6 @@
 package com.vantar.util.os;
 
 import com.jcraft.jsch.*;
-import com.vantar.admin.model.Admin;
 import java.io.*;
 import java.util.*;
 

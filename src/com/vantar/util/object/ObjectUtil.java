@@ -1,5 +1,6 @@
 package com.vantar.util.object;
 
+import com.vantar.common.Settings;
 import com.vantar.database.datatype.Location;
 import com.vantar.database.dto.*;
 import com.vantar.exception.DateTimeException;
@@ -245,7 +246,15 @@ public class ObjectUtil {
      * @param value value to be set to the property
      * @return true if value set successfully
      */
+    public static boolean setPropertyValueIgnoreNull(Object object, String propertyName, Object value) {
+        return setPropertyValueX(object, propertyName, value, false);
+    }
+
     public static boolean setPropertyValue(Object object, String propertyName, Object value) {
+        return setPropertyValueX(object, propertyName, value, true);
+    }
+
+    private static boolean setPropertyValueX(Object object, String propertyName, Object value, boolean setNull) {
         if (object == null) {
             return false;
         }
@@ -253,30 +262,33 @@ public class ObjectUtil {
         try {
             field = object.getClass().getField(propertyName);
         } catch (NoSuchFieldException e) {
+            log.error(" !! {}: {}={}\n", object.getClass().getSimpleName(), propertyName, value, e);
             return false;
         }
 
         try {
             if (value == null) {
-                field.set(object, null);
+                if (setNull) {
+                    field.set(object, null);
+                }
                 return true;
             }
 
             Class<?> type = field.getType();
 
             if (ClassUtil.isInstantiable(type, List.class)) {
-                field.set(object, convert(object, List.class, ClassUtil.getGenericTypes(field)));
+                field.set(object, convert(value, List.class, ClassUtil.getGenericTypes(field)));
             } else if (type.equals(Set.class)) {
-                field.set(object, convert(object, Set.class, ClassUtil.getGenericTypes(field)));
+                field.set(object, convert(value, Set.class, ClassUtil.getGenericTypes(field)));
             } else if (type.equals(Map.class)) {
-                field.set(object, convert(object, Map.class, ClassUtil.getGenericTypes(field)));
+                field.set(object, convert(value, Map.class, ClassUtil.getGenericTypes(field)));
             } else {
-                field.set(object, convert(object, type));
+                field.set(object, convert(value, type));
             }
 
             return true;
         } catch (IllegalAccessException | IllegalArgumentException e) {
-            log.error(" !! set({} < {})\n", propertyName.trim(), value, e);
+            log.error(" !! {}: {}={}\n", object.getClass().getSimpleName(), propertyName, value, e);
         }
         return false;
     }

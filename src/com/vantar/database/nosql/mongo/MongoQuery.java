@@ -8,7 +8,6 @@ import com.vantar.database.query.*;
 import com.vantar.exception.*;
 import com.vantar.util.object.*;
 import org.bson.Document;
-import org.elasticsearch.client.security.user.User;
 import java.util.*;
 
 
@@ -170,7 +169,8 @@ public class MongoQuery {
      * if dto.id is set, it will be taken into account thus (id, property) must be unique
      */
     public static boolean isUnique(Dto dto, String... properties) throws DatabaseException {
-        Document condition = new Document(Mongo.LOGICAL_DELETE_FIELD, new Document("$ne", Mongo.LOGICAL_DELETE_VALUE));
+        //Document condition = new Document(Mongo.LOGICAL_DELETE_FIELD, new Document("$ne", Mongo.LOGICAL_DELETE_VALUE));
+        Document condition = new Document();
         for (String property : properties) {
             property = property.trim();
             if (property.equals(Mongo.ID)) {
@@ -210,7 +210,7 @@ public class MongoQuery {
         return Mongo.exists(
             DtoBase.getStorage(dto.getClass()),
                 new Document(property.equals(VantarParam.ID) ? Mongo.ID : property, dto.getPropertyValue(property))
-                    .append(Mongo.LOGICAL_DELETE_FIELD, new Document("$ne", Mongo.LOGICAL_DELETE_VALUE))
+              //      .append(Mongo.LOGICAL_DELETE_FIELD, new Document("$ne", Mongo.LOGICAL_DELETE_VALUE))
             );
     }
 
@@ -282,26 +282,26 @@ public class MongoQuery {
 
     public static QueryResult getAllData(Dto dto, String... sort) throws DatabaseException {
         try {
-            if (dto.isDeleteLogicalEnabled()) {
-                Document condition;
-                switch (dto.getDeletedQueryPolicy()) {
-                    case SHOW_NOT_DELETED:
-                        condition = new Document(Mongo.LOGICAL_DELETE_FIELD, new Document("$ne", Mongo.LOGICAL_DELETE_VALUE));
-                        break;
-                    case SHOW_DELETED:
-                        condition = new Document(Mongo.LOGICAL_DELETE_FIELD, Mongo.LOGICAL_DELETE_VALUE);
-                        break;
-                    default:
-                        condition = null;
-                }
-                Document sortDoc = MongoMapping.sort(sort);
-                return new MongoQueryResult(
-                    condition == null ?
-                        MongoConnection.getDatabase().getCollection(dto.getStorage()).find().sort(sortDoc) :
-                        MongoConnection.getDatabase().getCollection(dto.getStorage()).find(condition).sort(sortDoc),
-                    dto
-                );
-            }
+//            if (dto.isDeleteLogicalEnabled()) {
+//                Document condition;
+//                switch (dto.getDeletedQueryPolicy()) {
+//                    case SHOW_NOT_DELETED:
+//                        condition = new Document(Mongo.LOGICAL_DELETE_FIELD, new Document("$ne", Mongo.LOGICAL_DELETE_VALUE));
+//                        break;
+//                    case SHOW_DELETED:
+//                        condition = new Document(Mongo.LOGICAL_DELETE_FIELD, Mongo.LOGICAL_DELETE_VALUE);
+//                        break;
+//                    default:
+//                        condition = null;
+//                }
+//                Document sortDoc = MongoMapping.sort(sort);
+//                return new MongoQueryResult(
+//                    condition == null ?
+//                        MongoConnection.getDatabase().getCollection(dto.getStorage()).find().sort(sortDoc) :
+//                        MongoConnection.getDatabase().getCollection(dto.getStorage()).find(condition).sort(sortDoc),
+//                    dto
+//                );
+//            }
 
             return new MongoQueryResult(
                 MongoConnection.getDatabase().getCollection(dto.getStorage()).find().sort(MongoMapping.sort(sort)),

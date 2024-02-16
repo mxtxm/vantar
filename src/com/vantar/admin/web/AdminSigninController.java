@@ -1,6 +1,6 @@
 package com.vantar.admin.web;
 
-import com.vantar.admin.model.Admin;
+import com.vantar.admin.model.index.Admin;
 import com.vantar.common.VantarParam;
 import com.vantar.exception.*;
 import com.vantar.locale.*;
@@ -19,7 +19,7 @@ public class AdminSigninController extends RouteToMethod {
 
     public void signin(Params params, HttpServletResponse response) throws ServerException {
         WebUi ui = new WebUi(params, response);
-        ui  .addPageTitle(Locale.getString(VantarKey.ADMIN_SIGN_IN))
+        ui  .addHeading(1, Locale.getString(VantarKey.ADMIN_SIGN_IN))
             .addEmptyLine()
             .addEmptyLine()
             .addEmptyLine()
@@ -32,7 +32,7 @@ public class AdminSigninController extends RouteToMethod {
                 .addInput(Locale.getString(VantarKey.USERNAME), VantarParam.USER_NAME)
                 .addPassword(Locale.getString(VantarKey.PASSWORD), VantarParam.PASSWORD)
                 .addSubmit(Locale.getString(VantarKey.SIGN_IN))
-                .containerEnd();
+                .blockEnd();
 
         } else {
             ServiceAuth auth = Services.get(ServiceAuth.class);
@@ -57,7 +57,7 @@ public class AdminSigninController extends RouteToMethod {
 
     public void signout(Params params, HttpServletResponse response) {
         try {
-            Services.get(ServiceAuth.class).signout(params);
+            Services.getService(ServiceAuth.class).signout(params);
         } catch (ServiceException ignore) {
 
         }

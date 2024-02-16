@@ -6,7 +6,7 @@ import com.vantar.exception.ServiceException;
 import com.vantar.queue.*;
 import com.vantar.service.Services;
 import com.vantar.service.cache.ServiceDtoCache;
-import com.vantar.service.log.LogEvent;
+import com.vantar.service.log.*;
 import com.vantar.util.object.ObjectUtil;
 import com.vantar.util.string.StringUtil;
 import org.slf4j.*;
@@ -15,7 +15,6 @@ import org.slf4j.*;
 public class ServiceMessaging {
 
     private static final Logger log = LoggerFactory.getLogger(ServiceMessaging.class);
-    public static final String QUEUE_NAME_MESSAGE = "message";
 
     private volatile boolean serviceOn = false;
     private String workerTag;
@@ -27,7 +26,7 @@ public class ServiceMessaging {
             return;
         }
         serviceOn = true;
-        LogEvent.beat(this.getClass(), "start");
+        Beat.set(this.getClass(), "start");
         receive();
     }
 
@@ -36,7 +35,7 @@ public class ServiceMessaging {
             return;
         }
         serviceOn = false;
-        LogEvent.beat(this.getClass(), "stop");
+        Beat.set(this.getClass(), "stop");
         Queue.cancelTake(workerTag);
     }
 
@@ -48,10 +47,9 @@ public class ServiceMessaging {
         if (!Services.isUp(Queue.class)) {
             return;
         }
-
-        LogEvent.beat(ServiceMessaging.class, "broadcast");
-        Queue.emmit(QUEUE_NAME_MESSAGE, new Packet(new Message(message), type));
-        log.debug(" > broadcasted({}, {})", type, message);
+        Beat.set(ServiceMessaging.class, "broadcast");
+        Queue.emmit(VantarParam.QUEUE_NAME_MESSAGE_BROADCAST, new Packet(new Message(message), type));
+        log.debug(" > broadcast({}, {})", type, message);
     }
 
     private void receive() {
@@ -63,7 +61,7 @@ public class ServiceMessaging {
 
             @Override
             public boolean getItem(Packet packet, int takerId) {
-                LogEvent.beat(ServiceMessaging.class, "receive");
+                Beat.set(ServiceMessaging.class, "receive");
                 if (!serviceOn) {
                     return false;
                 }
@@ -75,9 +73,9 @@ public class ServiceMessaging {
                     case VantarParam.MESSAGE_SERVICES_START:
                         if (!Services.ID.equals(message.serverId)) {
                             if (message.getBoolean()) {
-                                Services.start();
+                                Services.startServer();
                             } else {
-                                Services.startServicesOnly();
+                                Services.startServices();
                             }
                         }
                         break;
@@ -87,30 +85,34 @@ public class ServiceMessaging {
                             if (message.getBoolean()) {
                                 Services.stop();
                             } else {
-                                Services.stopServicesOnly();
+                                Services.stopServices();
                             }
                         }
                         break;
 
                     case VantarParam.MESSAGE_SERVICE_STARTED:
-                        try {
-                            Services.setServiceStarted(message.getString(), message.serverId, null);
-                        } catch (Exception e) {
-                            log.error(" !! MESSAGE_SERVICE_STARTED ({})\n", message, e);
+                        if (!Services.ID.equals(message.serverId)) {
+                            try {
+                                Services.onServiceStarted(message.serverId, message.getString());
+                            } catch (Exception e) {
+                                log.error(" !! MESSAGE_SERVICE_STARTED ({})\n", message, e);
+                            }
                         }
                         break;
 
                     case VantarParam.MESSAGE_SERVICE_STOPPED:
-                        try {
-                            Services.setServiceStopped(message.getString(), message.serverId);
-                        } catch (Exception e) {
-                            log.error(" !! MESSAGE_SERVICE_STOPPED ({})\n", message, e);
+                        if (!Services.ID.equals(message.serverId)) {
+                            try {
+                                Services.onServiceStopped(message.serverId, message.getString());
+                            } catch (Exception e) {
+                                log.error(" !! MESSAGE_SERVICE_STOPPED ({})\n", message, e);
+                            }
                         }
                         break;
 
-                    case VantarParam.MESSAGE_SERVICE_ENABLED_COUNT:
-                        Services.setTotalServiceCount(message.getInteger(), message.serverId);
-                        break;
+//                    case VantarParam.MESSAGE_SERVICE_ENABLED_COUNT:
+//                        Services.setTotalServiceCount(message.getInteger(), message.serverId);
+//                        break;
 
                     case VantarParam.MESSAGE_SETTINGS_UPDATED:
                         if (!Services.ID.equals(message.serverId)) {
@@ -127,7 +129,7 @@ public class ServiceMessaging {
                     case VantarParam.MESSAGE_DATABASE_UPDATED:
                         if (!Services.ID.equals(message.serverId)) {
                             try {
-                                Services.get(ServiceDtoCache.class).update(message.getString());
+                                Services.getService(ServiceDtoCache.class).update(message.getString());
                             } catch (ServiceException e) {
                                 log.error(" !! failed to update cache\n", e);
                             }
@@ -153,7 +155,7 @@ public class ServiceMessaging {
             }
         };
 
-        workerTag = Queue.receive(QUEUE_NAME_MESSAGE, takeCallback);
+        workerTag = Queue.receive(VantarParam.QUEUE_NAME_MESSAGE_BROADCAST, takeCallback);
     }
 
     public void setEvent(Event event) {

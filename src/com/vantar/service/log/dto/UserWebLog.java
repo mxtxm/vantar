@@ -13,6 +13,7 @@ public class UserWebLog extends DtoBase {
     public Long id;
 
     public Long userId;
+    public String userName;
     public Long threadId;
     public String action;
     public Integer status;
@@ -31,6 +32,7 @@ public class UserWebLog extends DtoBase {
     public String className;
     public String classNameSimple;
     public String params;
+    public Map<String, Object> paramsX;
 
     public Map<String, Object> extraData;
 
@@ -41,6 +43,7 @@ public class UserWebLog extends DtoBase {
         public Long id;
 
         public Long userId;
+        public String userName;
         public Long threadId;
         public String action;
         public Integer status;

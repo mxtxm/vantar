@@ -10,29 +10,29 @@ import com.vantar.util.object.*;
 import com.vantar.util.string.StringUtil;
 import com.vantar.web.*;
 import org.apache.commons.codec.digest.DigestUtils;
-import org.slf4j.*;
 import java.util.*;
 import java.util.concurrent.*;
 
 
 public class ServiceAuth extends Permit implements Services.Service {
 
-    protected static final int MAX_VERIFY_TOKENS = 20;
-    protected static final int DEFAULT_VERIFY_TOKEN_LENGTH = 5;
-    protected static final boolean DEFAULT_VERIFY_TOKEN_NUMBER_ONLY = true;
-    protected static final int MAX_SIGNED_USERS = 500;
-    protected static final int MAX_SIGNIN_FAIL = 3;
-
     public static final String SIGNIN_MODE_SINGLE_KICK_OUT_OLD = "K";
     public static final String SIGNIN_MODE_SINGLE = "S";
     public static final String SIGNIN_MODE_MULTI = "M";
 
-    protected static String startupAuthToken;
-
-    private static final Logger log = LoggerFactory.getLogger(ServiceAuth.class);
+    protected static final int MAX_VERIFY_TOKENS = 20;
+    protected static final int MAX_SIGNED_USERS = 500;
+    protected static final int MAX_SIGNIN_FAIL = 3;
+    protected static final int DEFAULT_VERIFY_TOKEN_LENGTH = 5;
+    protected static final boolean DEFAULT_VERIFY_TOKEN_NUMBER_ONLY = true;
     private static final String AUTH_BACKUP_FILENAME = "auth.backup";
-    private static Class<? extends CommonUser> userClass;
 
+    private volatile boolean serviceUp = false;
+    private volatile boolean lastSuccess = true;
+    private List<String> logs;
+
+    protected static String startupAuthToken;
+    private static Class<? extends CommonUser> userClass;
     private ScheduledExecutorService schedule;
     private Event event;
     private final Map<String, TokenData> signupVerifyTokens = new ConcurrentHashMap<>(MAX_VERIFY_TOKENS);
@@ -40,7 +40,7 @@ public class ServiceAuth extends Permit implements Services.Service {
     private final Map<String, TokenData> verifyTokens = new ConcurrentHashMap<>(MAX_VERIFY_TOKENS);
     private Map<Long, Integer> signinFail = new ConcurrentHashMap<>(MAX_VERIFY_TOKENS);
 
-    public Boolean onEndSetNull;
+    // > > > service params injected from config
     /* parent class: public Integer tokenExpireMin; */
     public Integer tokenCheckIntervalMin;
     public String backupPath;
@@ -50,13 +50,18 @@ public class ServiceAuth extends Permit implements Services.Service {
     public Boolean signInVerifyTokenNumberOnly = DEFAULT_VERIFY_TOKEN_NUMBER_ONLY;
     public String signinMode = SIGNIN_MODE_SINGLE_KICK_OUT_OLD;
     public Integer maxSigninFail = MAX_SIGNIN_FAIL;
+    // < < <
 
+    // > > > service methods
 
+    @Override
     public void start() {
         schedule = Executors.newSingleThreadScheduledExecutor();
         schedule.scheduleWithFixedDelay(this::validateTokens, tokenCheckIntervalMin, tokenCheckIntervalMin, TimeUnit.MINUTES);
+        serviceUp = true;
     }
 
+    @Override
     public void stop() {
         if (backupPath != null) {
             Jackson json = Json.getWithProtected();
@@ -67,9 +72,41 @@ public class ServiceAuth extends Permit implements Services.Service {
                     json.toJson(oneTimeTokens) + VantarParam.SEPARATOR_BLOCK_COMPLEX +
                     json.toJson(verifyTokens)
             );
-            log.info(" >> auth-data backed-up");
+            Services.log.info("  -> auth-data backed-up");
         }
         schedule.shutdown();
+        serviceUp = true;
+    }
+
+    @Override
+    public boolean isUp() {
+        return serviceUp;
+    }
+
+    @Override
+    public boolean isOk() {
+        return serviceUp
+            && lastSuccess
+            && schedule != null
+            && !schedule.isShutdown()
+            && !schedule.isTerminated();
+    }
+
+    @Override
+    public List<String> getLogs() {
+        return logs;
+    }
+
+    private void setLog(String msg) {
+        if (logs == null) {
+            logs = new ArrayList<>(5);
+        }
+        logs.add(msg);
+    }
+
+    public ServiceAuth setEvent(Event event) {
+        this.event = event;
+        return this;
     }
 
     public static void setUserClass(Class<? extends CommonUser> uc) {
@@ -79,6 +116,9 @@ public class ServiceAuth extends Permit implements Services.Service {
     public static Class<? extends CommonUser> getUserClass() {
         return userClass;
     }
+
+    // service methods < < <
+
 
     /**
      * when users cache or db is updated > update users here
@@ -106,13 +146,13 @@ public class ServiceAuth extends Permit implements Services.Service {
 
         String contents = FileUtil.getFileContent(backupPath + AUTH_BACKUP_FILENAME);
         if (StringUtil.isEmpty(contents)) {
-            log.warn(" ! auth-data NOT restored (no backup)");
+            Services.log.warn(" ! auth-data NOT restored (no backup)");
             return this;
         }
 
         String[] parts = StringUtil.splitTrim(contents, VantarParam.SEPARATOR_BLOCK_COMPLEX);
         if (parts.length != 4) {
-            log.warn(" ! auth-users NOT restored corrupted data)");
+            Services.log.warn(" ! auth-users NOT restored corrupted data)");
             return this;
         }
 
@@ -143,17 +183,8 @@ public class ServiceAuth extends Permit implements Services.Service {
                 verifyTokens.putAll(x);
             }
         }
-        log.info(" >> auth-data restored");
+        Services.log.info("  -> auth-data restored");
         return this;
-    }
-
-    public ServiceAuth setEvent(Event event) {
-        this.event = event;
-        return this;
-    }
-
-    public boolean onEndSetNull() {
-        return onEndSetNull;
     }
 
     // > > > signup
@@ -205,6 +236,7 @@ public class ServiceAuth extends Permit implements Services.Service {
             throw new AuthException(VantarKey.USER_PASSWORD_EMPTY);
         }
 
+        lastSuccess = true;
         TokenData tokenData = oneTimeTokens.get(password);
         if (tokenData != null) {
             tokenData = new TokenData(tokenData.user);
@@ -221,7 +253,9 @@ public class ServiceAuth extends Permit implements Services.Service {
         } catch (NoContentException e) {
             throw new AuthException(VantarKey.USER_NOT_EXISTS, "?");
         } catch (Exception e) {
-            log.warn(" ! failed to get signinBundle\n", e);
+            Services.log.warn(" ! failed to get signinBundle\n", e);
+            lastSuccess = false;
+            setLog(e.getMessage());
             throw new ServerException(VantarKey.FETCH_FAIL);
         }
 
@@ -238,7 +272,7 @@ public class ServiceAuth extends Permit implements Services.Service {
         }
 
         if (signinBundle.commonUserPassword == null) {
-            log.error(" ! commonUserPassword is null > \n{}", signinBundle);
+            Services.log.error(" ! commonUserPassword is null > \n{}", signinBundle);
             addFail(signinBundle.commonUser.getId());
             throw new AuthException(VantarKey.WRONG_PASSWORD, signinBundle.commonUser.getUsername());
         }
@@ -347,7 +381,9 @@ public class ServiceAuth extends Permit implements Services.Service {
                     }
                 }
             } catch (Exception e) {
-                log.error(" !! token={} online={}\n", tNew, onlineUsers, e);
+                Services.log.error(" !! token={} online={}\n", tNew, onlineUsers, e);
+                lastSuccess = false;
+                setLog(e.getMessage());
             }
         } else if (SIGNIN_MODE_SINGLE_KICK_OUT_OLD.equals(signinMode)) {
             try {
@@ -361,7 +397,9 @@ public class ServiceAuth extends Permit implements Services.Service {
                     onlineUsers.remove(tokenToDelete);
                 }
             } catch (Exception e) {
-                log.error(" !! token={} online={}\n", tNew, onlineUsers, e);
+                Services.log.error(" !! token={} online={}\n", tNew, onlineUsers, e);
+                lastSuccess = false;
+                setLog(e.getMessage());
             }
         } else if (SIGNIN_MODE_MULTI.equals(signinMode)) {
             // do nothing
@@ -376,7 +414,9 @@ public class ServiceAuth extends Permit implements Services.Service {
                     if (t instanceof AuthException) {
                         throw (AuthException) t;
                     }
-                    log.error(" !! token={} online={}\n", tNew, onlineUsers, t);
+                    Services.log.error(" !! token={} online={}\n", tNew, onlineUsers, t);
+                    lastSuccess = false;
+                    setLog(t.getMessage());
                 }
             }
             for (String tokenToDelete : tokensToDelete) {
@@ -419,12 +459,16 @@ public class ServiceAuth extends Permit implements Services.Service {
         });
     }
 
-    public static CommonUser getCurrentSignedInUser(Params params) throws ServiceException {
-        return Services.get(ServiceAuth.class).getCurrentUser(params);
+    public static CommonUser getCurrentSignedInUser(Params params) {
+        ServiceAuth auth = Services.get(ServiceAuth.class);
+        return auth == null ? null : auth.getCurrentUser(params);
     }
 
-    public static void assumeSignedIn(Params params) throws ServiceException {
-        Services.get(ServiceAuth.class).getCurrentUser(params);
+    public static void assumeSignedIn(Params params) {
+        ServiceAuth auth = Services.get(ServiceAuth.class);
+        if (auth != null) {
+            auth.getCurrentUser(params);
+        }
     }
 
     public void isSignedIn(Params params) throws AuthException {
@@ -475,14 +519,10 @@ public class ServiceAuth extends Permit implements Services.Service {
         signinFail.remove(userId);
     }
 
-    public boolean isOk() {
-        return true;
-    }
-
 
     public interface Event {
 
-        SigninBundle getUserPassword(String username) throws NoContentException, DatabaseException;
+        SigninBundle getUserPassword(String username) throws VantarException;
     }
 
 

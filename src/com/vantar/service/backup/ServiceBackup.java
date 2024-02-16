@@ -6,33 +6,37 @@ import com.vantar.database.nosql.mongo.MongoBackup;
 import com.vantar.database.sql.SqlBackup;
 import com.vantar.exception.DateTimeException;
 import com.vantar.service.Services;
-import com.vantar.service.log.LogEvent;
+import com.vantar.service.log.*;
 import com.vantar.util.collection.FixedArrayList;
 import com.vantar.util.datetime.*;
 import com.vantar.util.file.*;
 import com.vantar.util.string.StringUtil;
-import org.slf4j.*;
 import java.util.*;
 import java.util.concurrent.*;
 
 
 public class ServiceBackup implements Services.Service {
 
-    private static final Logger log = LoggerFactory.getLogger(ServiceBackup.class);
+    private volatile boolean serviceUp = false;
+    private volatile boolean lastSuccess = true;
+
     private ScheduledExecutorService schedule;
-    private final List<String> logs = new FixedArrayList<>(100);
     private DateTime lastRun;
     private DateTime startDateTime;
+    private List<String> logs;
 
-    public Boolean onEndSetNull;
+    // > > > service params injected from config
     public String dbms;
     public Integer startHour;
     public Integer intervalHour;
     public Integer deleteOldFilesAfterDays;
     public String path;
     public String exclude;
+    // < < <
 
+    // > > > service methods
 
+    @Override
     public void start() {
         schedule = Executors.newSingleThreadScheduledExecutor();
 
@@ -48,14 +52,16 @@ public class ServiceBackup implements Services.Service {
         }
 
         schedule.scheduleAtFixedRate(this::create, startDateTime.diffMinutes(now), intervalHour * 60, TimeUnit.MINUTES);
-        log.info(
-            "    >> backup: runs at {} ({}minutes) > repeats every {}hours",
+        ServiceLog.log.info(
+            "  -> backup: runs at {} ({}minutes) > repeats every {}hours",
             startDateTime.formatter().getDateTime(),
             startDateTime.diffMinutes(now),
             intervalHour
         );
+        serviceUp = true;
     }
 
+    @Override
     public void stop() {
         schedule.shutdown();
         try {
@@ -63,40 +69,66 @@ public class ServiceBackup implements Services.Service {
         } catch (InterruptedException ignore) {
 
         }
+        serviceUp = false;
     }
 
-    public boolean onEndSetNull() {
-        return onEndSetNull;
+    @Override
+    public boolean isUp() {
+        return serviceUp;
     }
+
+    @Override
+    public boolean isOk() {
+        return serviceUp
+            && lastSuccess
+            && schedule != null
+            && !schedule.isShutdown()
+            && !schedule.isTerminated();
+    }
+
+    @Override
+    public List<String> getLogs() {
+        return logs;
+    }
+
+    private void setLogs(String msg) {
+        if (logs == null) {
+            logs = new FixedArrayList<>(100);
+        }
+        logs.add(msg);
+    }
+
+    // service methods < < <
 
     private void create() {
-        log.info(" >> start creating database backup");
+        ServiceLog.log.info("  --> start creating database backup");
+        lastSuccess = true;
         startDateTime = null;
         lastRun = new DateTime();
         dbms = dbms.toUpperCase();
         String tail = "-" + (lastRun.formatter().getDateTimeSimple()) + ".dump";
-        logs.add("begin: " + lastRun.formatter().getDateTime());
+        setLogs("begin: " + lastRun.formatter().getDateTime());
 
         Set<String> excludeDtos = StringUtil.splitToSet(exclude, ',');
 
         try {
             if (StringUtil.contains(dbms, DtoDictionary.Dbms.MONGO.toString())) {
-                LogEvent.beat(this.getClass(), "Mongo backed-up start...");
+                Beat.set(this.getClass(), "Mongo backed-up start...");
                 MongoBackup.dump(path + "mongo" + tail, null, excludeDtos, null);
-                LogEvent.beat(this.getClass(), "Mongo backed-up");
-                logs.add("success: " + lastRun.formatter().getDateTime() + " mongo");
+                Beat.set(this.getClass(), "Mongo backed-up");
+                setLogs("success: " + lastRun.formatter().getDateTime() + " mongo");
             }
             if (StringUtil.contains(dbms, DtoDictionary.Dbms.SQL.toString())) {
-                LogEvent.beat(this.getClass(), "SQL backed-up start...");
+                Beat.set(this.getClass(), "SQL backed-up start...");
                 SqlBackup.dump(path + "sql" + tail, null, null);
-                LogEvent.beat(this.getClass(), "SQL backed-up");
-                logs.add("success: " + lastRun.formatter().getDateTime() + " sql");
+                Beat.set(this.getClass(), "SQL backed-up");
+                setLogs("success: " + lastRun.formatter().getDateTime() + " sql");
             }
             if (StringUtil.contains(dbms, DtoDictionary.Dbms.ELASTIC.toString())) {
-                LogEvent.beat(this.getClass(), "Elastic backed-up start...");
+                Beat.set(this.getClass(), "Elastic backed-up start...");
                 ElasticBackup.dump(path + "elastic" + tail, null, null);
-                LogEvent.beat(this.getClass(), "Elastic backed-up");
-                logs.add("success: " + lastRun.formatter().getDateTime() + " elastic");
+                Beat.set(this.getClass(), "Elastic backed-up");
+                setLogs("success: " + lastRun.formatter().getDateTime() + " elastic");
             }
 
             if (deleteOldFilesAfterDays != null) {
@@ -113,28 +145,25 @@ public class ServiceBackup implements Services.Service {
                         DateTime fileDate = new DateTime(parts[0] + '-' + parts[1] + '-' + parts[2]);
                         if (fileDate.isBefore(thresholdDate)) {
                             FileUtil.removeFile(file.getAbsolutePath());
-                            logs.add("removed: " + file.getAbsolutePath());
-                            log.info(" > removed old backup {}", file.getAbsolutePath());
+                            setLogs("removed: " + file.getAbsolutePath());
+                            ServiceLog.log.info("    > removed old backup {}", file.getAbsolutePath());
                         }
                     } catch (Exception ignore) {
 
                     }
                 });
 
-                log.info(" << end creating database backup");
+                ServiceLog.log.info("  <-- end creating database backup");
             }
         } catch (Exception e) {
-            logs.add("FAILED: " + lastRun.formatter().getDateTime());
-            log.error(" ! creating backup failed", e);
+            ServiceLog.log.error(" ! creating backup failed", e);
+            lastSuccess = false;
+            setLogs("FAILED: " + lastRun.formatter().getDateTime());
         }
     }
 
     public String getPath() {
         return path;
-    }
-
-    public List<String> getLogs() {
-        return logs;
     }
 
     public String getLastRun() {
@@ -145,9 +174,5 @@ public class ServiceBackup implements Services.Service {
         return startDateTime == null ?
             lastRun.addHours(intervalHour).formatter().getDateTime() :
             startDateTime.formatter().getDateTime();
-    }
-
-    public boolean isOk() {
-        return true;
     }
 }

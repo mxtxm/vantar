@@ -450,7 +450,7 @@ public class CommonModelSql extends CommonModel {
 
             if (deleteAll) {
                 repo.purgeData(dto.getStorage());
-                ui.addPre(Locale.getString(VantarKey.DELETE_SUCCESS)).write();
+                ui.addBlock("pre", Locale.getString(VantarKey.DELETE_SUCCESS)).write();
             }
 
             AtomicInteger failed = new AtomicInteger();
@@ -475,7 +475,7 @@ public class CommonModelSql extends CommonModel {
             //importDataX(imp, data, dto, presentField, ui);
             connection.commit();
 
-            ui.addPre(
+            ui.addBlock("pre",
                 Locale.getString(VantarKey.BUSINESS_WRITTEN_COUNT, success) + "\n" +
                 Locale.getString(VantarKey.BUSINESS_ERROR_COUNT, failed) + "\n" +
                 Locale.getString(VantarKey.BUSINESS_DUPLICATE_COUNT, duplicate)
@@ -486,6 +486,6 @@ public class CommonModelSql extends CommonModel {
             log.error("! batch import failed", e);
         }
 
-        ui.containerEnd().containerEnd().write();
+        ui.blockEnd().blockEnd().write();
     }
 }

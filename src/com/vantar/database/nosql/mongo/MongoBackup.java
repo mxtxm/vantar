@@ -1,12 +1,13 @@
 package com.vantar.database.nosql.mongo;
 
 import com.mongodb.client.*;
-import com.vantar.admin.model.*;
+import com.vantar.admin.model.database.AdminDatabase;
+import com.vantar.admin.model.index.Admin;
 import com.vantar.database.dto.*;
 import com.vantar.database.query.QueryBuilder;
 import com.vantar.exception.*;
 import com.vantar.service.Services;
-import com.vantar.service.log.ServiceUserActionLog;
+import com.vantar.service.log.ServiceLog;
 import com.vantar.util.datetime.DateTimeRange;
 import com.vantar.util.file.FileUtil;
 import com.vantar.util.string.StringUtil;
@@ -38,7 +39,7 @@ public class MongoBackup {
         }
 
         if (ui != null) {
-            ui.addHeading("Mongo " + database.getName() + " > " + dumpPath).write();
+            ui.addHeading(2, "Mongo " + database.getName() + " > " + dumpPath).write();
         }
 
         long r = 0;
@@ -99,7 +100,7 @@ public class MongoBackup {
             zip.closeEntry();
 
             if (ui != null) {
-                ui.addPre(
+                ui.addBlock("pre",
                     "finished in: " + ((System.currentTimeMillis() - startTime) / 1000) + "s" +
                     "\n" + r + " records" + "\n" + FileUtil.getSizeReadable(dumpPath)
                 );
@@ -127,7 +128,7 @@ public class MongoBackup {
         }
 
         if (ui != null) {
-            ui.addHeading("Mongo " + database.getName() + " > " + dumpPath).write();
+            ui.addHeading(2, "Mongo " + database.getName() + " > " + dumpPath).write();
         }
 
         int r = 0;
@@ -143,7 +144,7 @@ public class MongoBackup {
             zip.closeEntry();
 
             if (ui != null) {
-                ui.addPre(
+                ui.addBlock("pre",
                     "finished in: " + ((System.currentTimeMillis() - startTime) / 1000) + "s" +
                         "\n" + r + " records" + "\n" + FileUtil.getSizeReadable(dumpPath)
                 );
@@ -175,16 +176,16 @@ public class MongoBackup {
             return;
         }
 
-        ServiceUserActionLog logService;
+        ServiceLog logService;
         try {
-            logService = Services.get(ServiceUserActionLog.class);
+            logService = Services.getService(ServiceLog.class);
             logService.pause();
         } catch (ServiceException e) {
             logService = null;
         }
 
         if (ui != null) {
-            ui.addHeading("Mongo " + zipPath + " > " + database.getName()).write();
+            ui.addHeading(2, "Mongo " + zipPath + " > " + database.getName()).write();
         }
 
         long startTime = System.currentTimeMillis();
@@ -266,12 +267,12 @@ public class MongoBackup {
 
         if (ui != null) {
             Admin.log.info("<--- finished RESTORING database");
-            ui .addPre(
+            ui .addBlock("pre",
                     "finished in: " + ((System.currentTimeMillis() - startTime) / 1000) + "s" +
                     "\n" + r + " records" +
                     "\n" + FileUtil.getSizeReadable(zipPath)
                 )
-                .containerEnd()
+                .blockEnd()
                 .write();
 
             try {

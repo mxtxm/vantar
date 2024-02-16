@@ -360,7 +360,7 @@ public class StringUtil {
         }
         string = StringUtil.trim(string, '/', '_', '.', '_', '/');
 
-        StringBuilder stringBuilder = new StringBuilder();
+        StringBuilder stringBuilder = new StringBuilder(20);
         char value;
 
         if (string.contains("_")) {
@@ -450,7 +450,7 @@ public class StringUtil {
     public static String getRandomStringOnlyNumbers(int length) {
         char[] chars = "0123456789".toCharArray();
         Random rnd = new Random();
-        StringBuilder sb = new StringBuilder();
+        StringBuilder sb = new StringBuilder(length);
         for (int i = 0; i < length; i++) {
             sb.append(chars[rnd.nextInt(chars.length)]);
         }
@@ -781,7 +781,7 @@ public class StringUtil {
      */
     public static List<String> splitToList(String string, char separator) {
         String[] a = split(string, separator);
-        return a == null ? null : Arrays.asList(a);
+        return a == null ? null : new ArrayList<>(Arrays.asList(a));
     }
 
     /**
@@ -793,7 +793,7 @@ public class StringUtil {
      */
     public static List<String> splitToListTrim(String string, char separator) {
         String[] a = splitTrim(string, separator);
-        return a == null ? null : Arrays.asList(a);
+        return a == null ? null : new ArrayList<>(Arrays.asList(a));
     }
 
     /**

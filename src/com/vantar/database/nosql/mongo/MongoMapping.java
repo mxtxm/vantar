@@ -193,7 +193,7 @@ public class MongoMapping {
             mongoQuery.skip = q.getSkip();
         }
         if (!q.conditionIsEmpty()) {
-            Document matches = getMongoMatches(q.getCondition(), q.getDto(), false);
+            Document matches = getMongoMatches(q.getCondition(), q.getDto());
             if (matches != null) {
                 mongoQuery.matches = matches;
             }
@@ -266,38 +266,40 @@ public class MongoMapping {
         }
     }
 
-    public static Document getMongoMatches(QueryCondition qCondition, Dto dto, boolean logicalDeletedAdded) {
-        if (!dto.isDeleteLogicalEnabled() && (qCondition == null || qCondition.q.size() == 0)) {
+    public static Document getMongoMatches(QueryCondition qCondition, Dto dto/*, boolean logicalDeletedAdded*/) {
+        //if (!dto.isDeleteLogicalEnabled() && (qCondition == null || qCondition.q.size() == 0)) {
+        if (qCondition == null || qCondition.q.size() == 0) {
             return null;
         }
 
-        QueryCondition condition;
-        if (!logicalDeletedAdded && dto.isDeleteLogicalEnabled() && dto.getDeletedQueryPolicy() != Dto.QueryDeleted.SHOW_ALL) {
-            if (qCondition == null) {
-                condition = new QueryCondition(dto.getStorage());
-            } else if (qCondition.operator.equals(AND)) {
-                condition = qCondition;
-            } else {
-                condition = new QueryCondition(dto.getStorage());
-                condition.addCondition(qCondition);
-            }
+//        QueryCondition condition;
+//        if (!logicalDeletedAdded && dto.isDeleteLogicalEnabled() && dto.getDeletedQueryPolicy() != Dto.QueryDeleted.SHOW_ALL) {
+//            if (qCondition == null) {
+//                condition = new QueryCondition(dto.getStorage());
+//            } else if (qCondition.operator.equals(AND)) {
+//                condition = qCondition;
+//            } else {
+//                condition = new QueryCondition(dto.getStorage());
+//                condition.addCondition(qCondition);
+//            }
 
-            switch (dto.getDeletedQueryPolicy()) {
-                case SHOW_NOT_DELETED:
-                    condition.notEqual(Mongo.LOGICAL_DELETE_FIELD, Mongo.LOGICAL_DELETE_VALUE);
-                    break;
-                case SHOW_DELETED:
-                    condition.equal(Mongo.LOGICAL_DELETE_FIELD, Mongo.LOGICAL_DELETE_VALUE);
-                    break;
-            }
-        } else {
-            condition = qCondition;
-        }
+//            switch (dto.getDeletedQueryPolicy()) {
+//                case SHOW_NOT_DELETED:
+//                    condition.notEqual(Mongo.LOGICAL_DELETE_FIELD, Mongo.LOGICAL_DELETE_VALUE);
+//                    break;
+//                case SHOW_DELETED:
+//                    condition.equal(Mongo.LOGICAL_DELETE_FIELD, Mongo.LOGICAL_DELETE_VALUE);
+//                    break;
+//            }
+//        } else {
+//            condition = qCondition;
+//        }
+        QueryCondition condition = qCondition;
 
         List<Bson> matches = new ArrayList<>(10);
         for (QueryMatchItem item : condition.q) {
             if (item.type == QUERY) {
-                matches.add(getMongoMatches(item.queryValue, dto, true));
+                matches.add(getMongoMatches(item.queryValue, dto));
                 continue;
             }
 
@@ -483,7 +485,7 @@ public class MongoMapping {
                     break;
 
                 case IN_LIST: {
-                    Document innerMatch = getMongoMatches(item.queryValue, dto, true);
+                    Document innerMatch = getMongoMatches(item.queryValue, dto);
                     if (innerMatch == null || innerMatch.isEmpty()) {
                         continue;
                     }
@@ -506,7 +508,7 @@ public class MongoMapping {
                         fieldNameInner = Mongo.ID;
                     }
 
-                    Document innerMatch = getMongoMatches(item.queryValue, item.dto, true);
+                    Document innerMatch = getMongoMatches(item.queryValue, item.dto);
                     if (innerMatch == null || innerMatch.isEmpty()) {
                         continue;
                     }

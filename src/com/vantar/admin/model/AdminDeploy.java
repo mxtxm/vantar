@@ -1,5 +1,6 @@
 package com.vantar.admin.model;
 
+import com.vantar.admin.model.index.Admin;
 import com.vantar.common.Settings;
 import com.vantar.exception.*;
 import com.vantar.locale.*;
@@ -51,15 +52,15 @@ public class AdminDeploy {
         if (filepath != null) {
             try {
                 if (password == null) {
-                    ui.addPre(Command.run("service tomcat9 stop"));
-                    ui.addPre(Command.run("rm -r /var/lib/tomcat9/webapps/*"));
-                    ui.addPre(Command.run("cp " + filepath + " /var/lib/tomcat9/webapps/ROOT.war"));
-                    ui.addPre(Command.run("service tomcat9 start"));
+                    ui.addBlock("pre", Command.run("service tomcat9 stop"));
+                    ui.addBlock("pre", Command.run("rm -r /var/lib/tomcat9/webapps/*"));
+                    ui.addBlock("pre", Command.run("cp " + filepath + " /var/lib/tomcat9/webapps/ROOT.war"));
+                    ui.addBlock("pre", Command.run("service tomcat9 start"));
                 } else {
-                    ui.addPre(Command.run("service tomcat9 stop", password));
-                    ui.addPre(Command.run("rm -r /var/lib/tomcat9/webapps/*", password));
-                    ui.addPre(Command.run("cp " + filepath + " /var/lib/tomcat9/webapps/ROOT.war", password));
-                    ui.addPre(Command.run("service tomcat9 start", password));
+                    ui.addBlock("pre", Command.run("service tomcat9 stop", password));
+                    ui.addBlock("pre", Command.run("rm -r /var/lib/tomcat9/webapps/*", password));
+                    ui.addBlock("pre", Command.run("cp " + filepath + " /var/lib/tomcat9/webapps/ROOT.war", password));
+                    ui.addBlock("pre", Command.run("service tomcat9 start", password));
                 }
             } catch (Exception e) {
                 ui.addErrorMessage(e);
@@ -72,13 +73,16 @@ public class AdminDeploy {
             String[] parts = StringUtil.split(path, '/');
             String filename = parts[parts.length - 1];
 
-            ui.addBoxWithNoEscape(
-                ui.getLink(
+            ui.addBlockNoEscape(
+                "div",
+                ui.getHref(
                     filename + " (" + FileUtil.getSizeMb(path) + "Mb)",
                     "/admin/deploy?" + "file" + "=" + filename + "&password=" + password,
                     false,
-                    false
-                )
+                    false,
+                    ""
+                ),
+                "box-content"
             ).write();
         }
 
@@ -94,9 +98,9 @@ public class AdminDeploy {
         if (command != null) {
             try {
                 if (password == null) {
-                    ui.addPre(Command.run(command));
+                    ui.addBlock("pre", Command.run(command));
                 } else {
-                    ui.addPre(Command.run(command, password));
+                    ui.addBlock("pre", Command.run(command, password));
                 }
             } catch (Exception e) {
                 ui.addErrorMessage(e);

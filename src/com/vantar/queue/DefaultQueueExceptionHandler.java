@@ -2,56 +2,56 @@ package com.vantar.queue;
 
 import com.rabbitmq.client.*;
 import com.vantar.service.Services;
-import com.vantar.service.log.LogEvent;
+import com.vantar.service.log.ServiceLog;
 
 
 public class DefaultQueueExceptionHandler implements QueueExceptionHandler {
 
     public void handleReturnListenerException(Channel channel, Throwable e) {
-        LogEvent.fatal(QueueExceptionHandlerBase.class, "handleReturnListenerException", channel, e);
+        ServiceLog.fatal(QueueExceptionHandlerBase.class, "handleReturnListenerException", channel, e);
         Services.stop();
-        Services.start();
+        Services.startServer();
     }
 
     public void handleChannelRecoveryException(Channel channel, Throwable e) {
-        LogEvent.fatal(QueueExceptionHandlerBase.class, "handleChannelRecoveryException", channel, e);
+        ServiceLog.log.error("! queue channel={}", channel, e);
         Services.stop();
-        Services.start();
+        Services.startServer();
     }
 
     public void handleConfirmListenerException(Channel channel, Throwable e) {
-        LogEvent.fatal(QueueExceptionHandlerBase.class, "handleConfirmListenerException", channel, e);
+        ServiceLog.log.error("! queue channel={}", channel, e);
         Services.stop();
-        Services.start();
+        Services.startServer();
     }
 
     public void handleConnectionRecoveryException(Connection conn, Throwable e) {
-        LogEvent.fatal(QueueExceptionHandlerBase.class, "handleConnectionRecoveryException", conn, e);
+        ServiceLog.log.error("! queue connection={}", conn, e);
         Services.stop();
-        Services.start();
+        Services.startServer();
     }
 
     public void handleConsumerException(Channel channel, Throwable e, Consumer consumer, String consumerTag, String methodName) {
-        LogEvent.fatal(QueueExceptionHandlerBase.class, "handleConsumerException", consumerTag, methodName, channel, e);
+        ServiceLog.log.error("! queue consumerTag={} methodName={} channel={}", consumerTag, methodName, channel, e);
         Services.stop();
-        Services.start();
+        Services.startServer();
     }
 
     public void handleTopologyRecoveryException(Connection conn, Channel channel, TopologyRecoveryException e) {
-        LogEvent.fatal(QueueExceptionHandlerBase.class, "handleTopologyRecoveryException", conn, channel, e);
+        ServiceLog.log.error("! queue connection={} channel={}", conn, conn, e);
         Services.stop();
-        Services.start();
+        Services.startServer();
     }
 
     public void handleUnexpectedConnectionDriverException(Connection conn, Throwable e) {
-        LogEvent.fatal(QueueExceptionHandlerBase.class, "handleUnexpectedConnectionDriverException", conn, e);
+        ServiceLog.log.error("! queue connection={}", conn, e);
         Services.stop();
-        Services.start();
+        Services.startServer();
     }
 
     public static void queueFail(Class<?> clazz, String queueName, int workerId) {
-        LogEvent.fatal(clazz, "queue(" + queueName + ", "  + workerId + ") failed - restarting all services...");
+        ServiceLog.log.error("! queue({}, {}, failed) ---> restarting all services...", queueName, workerId);
         Services.stop();
-        Services.start();
+        Services.startServer();
     }
 }

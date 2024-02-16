@@ -1,5 +1,6 @@
-package com.vantar.admin.model;
+package com.vantar.admin.model.queue;
 
+import com.vantar.admin.model.index.Admin;
 import com.vantar.common.*;
 import com.vantar.exception.FinishException;
 import com.vantar.locale.*;
@@ -27,9 +28,9 @@ public class AdminQueue {
 
         if (!params.isChecked("f")) {
             ui  .beginFormPost()
-                .addInput(Locale.getString(VantarKey.ADMIN_DELAY), "delay", Integer.toString(DELAY), "ltr")
-                .addInput(Locale.getString(VantarKey.ADMIN_TRIES), "tries", Integer.toString(DB_DELETE_TRIES), "ltr")
-                .addInput(Locale.getString(VantarKey.ADMIN_QUEUE_DELETE_EXCLUDE), "exclude", "", "ltr")
+                .addInput(Locale.getString(VantarKey.ADMIN_DELAY), "delay", Integer.toString(DELAY), null, "ltr")
+                .addInput(Locale.getString(VantarKey.ADMIN_TRIES), "tries", Integer.toString(DB_DELETE_TRIES), null, "ltr")
+                .addInput(Locale.getString(VantarKey.ADMIN_QUEUE_DELETE_EXCLUDE), "exclude", null, null, "ltr")
                 .addSubmit(Locale.getString(VantarKey.ADMIN_DELETE))
                 .finish();
             return;
@@ -47,9 +48,9 @@ public class AdminQueue {
 
         if (!params.isChecked("f")) {
             ui  .beginFormPost()
-                .addInput(Locale.getString(VantarKey.ADMIN_DELAY), "delay", Integer.toString(DELAY), "ltr")
-                .addInput(Locale.getString(VantarKey.ADMIN_TRIES), "tries", Integer.toString(DB_DELETE_TRIES), "ltr")
-                .addHeading(Locale.getString(VantarKey.ADMIN_QUEUE_DELETE_INCLUDE));
+                .addInput(Locale.getString(VantarKey.ADMIN_DELAY), "delay", Integer.toString(DELAY), null, "ltr")
+                .addInput(Locale.getString(VantarKey.ADMIN_TRIES), "tries", Integer.toString(DB_DELETE_TRIES), null, "ltr")
+                .addHeading(2, Locale.getString(VantarKey.ADMIN_QUEUE_DELETE_INCLUDE));
 
             for (String queueName : Queue.connection.getQueues()) {
                 ui.addCheckbox(queueName, queueName);
@@ -80,7 +81,7 @@ public class AdminQueue {
         String[] queues = Queue.connection.getQueues();
         if (queues == null) {
             ui.addMessage(Locale.getString(VantarKey.ADMIN_NO_QUEUE));
-            ui.containerEnd().containerEnd().write();
+            ui.blockEnd().blockEnd().write();
             return;
         }
 
@@ -103,7 +104,7 @@ public class AdminQueue {
             ui.addKeyValue(queueName, msg + " : " + total + " > " + count).write();
         }
 
-        ui.containerEnd().containerEnd().write();
+        ui.blockEnd().blockEnd().write();
     }
 
     public static void purgeSelective(WebUi ui, int delay, int maxTries, Set<String> include) {
@@ -126,7 +127,7 @@ public class AdminQueue {
             ui.addKeyValue(queueName, msg + " : " + total + " > " + count).write();
         }
 
-        ui.containerEnd().containerEnd().write();
+        ui.blockEnd().blockEnd().write();
     }
 
     public static void status(Params params, HttpServletResponse response) throws FinishException {
@@ -149,6 +150,6 @@ public class AdminQueue {
                 ui.addKeyValue(queueName, Queue.count(queueName) + " items");
             }
         }
-        ui.containerEnd().write();
+        ui.blockEnd().write();
     }
 }

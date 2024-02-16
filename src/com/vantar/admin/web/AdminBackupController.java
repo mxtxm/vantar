@@ -1,6 +1,6 @@
 package com.vantar.admin.web;
 
-import com.vantar.admin.model.AdminBackup;
+import com.vantar.admin.model.database.AdminBackup;
 import com.vantar.database.dto.DtoDictionary;
 import com.vantar.exception.*;
 import com.vantar.service.Services;
@@ -87,7 +87,7 @@ public class AdminBackupController extends RouteToMethod {
         String filename = params.getString("file");
         ServiceBackup backup;
         try {
-            backup = Services.get(ServiceBackup.class);
+            backup = Services.getService(ServiceBackup.class);
         } catch (ServiceException e) {
             return;
         }

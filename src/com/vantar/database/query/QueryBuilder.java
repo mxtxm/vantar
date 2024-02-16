@@ -110,9 +110,9 @@ public class QueryBuilder {
     }
 
     public boolean conditionIsEmpty() {
-        if (dto.isDeleteLogicalEnabled()) {
-            return false;
-        }
+//        if (dto.isDeleteLogicalEnabled()) {
+//            return false;
+//        }
         return condition == null;
     }
 
@@ -428,8 +428,10 @@ public class QueryBuilder {
                 condition.equal(name, (Boolean) value);
             } else if (value instanceof Map) {
                 condition.containsAll(name, (Map<String, ?>) value);
-            } else if (value instanceof Collection<?>) {
+            } else if (value instanceof List<?>) {
                 condition.containsAll(name, (List<?>) value);
+            } else if (value instanceof Set<?>) {
+                condition.containsAll(name, (Set<?>) value);
             } else if (value != null) {
                 condition.equal(name, value.toString());
             }

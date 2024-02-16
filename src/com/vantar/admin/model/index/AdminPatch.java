@@ -1,4 +1,4 @@
-package com.vantar.admin.model;
+package com.vantar.admin.model.index;
 
 import com.vantar.business.ModelMongo;
 import com.vantar.common.Settings;
@@ -28,7 +28,7 @@ public class AdminPatch {
             List<PatchHistory> patches = ModelMongo.getAll(new PatchHistory());
             for (PatchHistory patch : patches) {
                 ui  .beginBox(patch.patchClass)
-                    .addLinkNewPage(
+                    .addHrefNewPage(
                         Locale.getString(VantarKey.ADMIN_SCHEDULE_RUN),
                         "patch/run?c=" + patch.patchClass
                     )
@@ -41,7 +41,7 @@ public class AdminPatch {
                     if (ObjectUtil.isNotEmpty(patch.success)) {
                         ui.addKeyValue(Locale.getString(VantarKey.ADMIN_SUCCESS_MSG), patch.success);
                     }
-                    ui.containerEnd();
+                    ui.blockEnd();
             }
         } catch (VantarException ignore) {
 
@@ -49,11 +49,11 @@ public class AdminPatch {
 
         for (Class<?> cls : ClassUtil.getClasses(packageName, PatchManual.class)) {
             ui  .beginBox(cls.getName())
-                .addLinkNewPage(
+                .addHrefNewPage(
                     Locale.getString(VantarKey.ADMIN_SCHEDULE_RUN),
                     "patch/run?c=" + cls.getName()
                 )
-                .containerEnd();
+                .blockEnd();
         }
 
         ui.finish();

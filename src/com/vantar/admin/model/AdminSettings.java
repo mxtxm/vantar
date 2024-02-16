@@ -1,5 +1,6 @@
 package com.vantar.admin.model;
 
+import com.vantar.admin.model.index.Admin;
 import com.vantar.common.*;
 import com.vantar.exception.FinishException;
 import com.vantar.locale.Locale;
@@ -28,11 +29,11 @@ public class AdminSettings {
 
         ui.beginBox("config.properties");
         printProperties(ui, Settings.config);
-        ui.containerEnd();
+        ui.blockEnd();
 
         ui.beginBox("tune.properties");
         printProperties(ui, Settings.tune);
-        ui.containerEnd();
+        ui.blockEnd();
 
         ui.finish();
     }
@@ -78,7 +79,7 @@ public class AdminSettings {
         }
         ui  .addEmptyLine()
             .addHeading(3, filename)
-            .containerEnd()
+            .blockEnd()
             .addEmptyLine()
             .addEmptyLine();
 
@@ -120,7 +121,7 @@ public class AdminSettings {
             if (value.contains("\n")) {
                 ui.addTextArea(item, item, value, "ltr");
             } else {
-                ui.addInput(item, item, value, "ltr");
+                ui.addInput(item, item, value, null, null, "ltr");
             }
         }
 

@@ -1,43 +1,103 @@
 package com.vantar.service.scheduler;
 
-import com.vantar.service.log.LogEvent;
+import com.vantar.service.log.*;
 import com.vantar.common.VantarParam;
 import com.vantar.service.Services;
 import com.vantar.util.collection.*;
 import com.vantar.util.datetime.*;
 import com.vantar.util.string.StringUtil;
-import org.slf4j.*;
 import java.lang.reflect.*;
+import java.util.*;
 import java.util.concurrent.*;
 
 
 public class ServiceScheduler implements Services.Service {
 
-    private static final Logger log = LoggerFactory.getLogger(ServiceScheduler.class);
+    private volatile boolean serviceUp = false;
+    private volatile boolean lastSuccess = true;
+    private List<String> logs;
+
     private ScheduledExecutorService[] schedules;
 
-    public Boolean onEndSetNull;
-
+    // > > > service params injected from config
     // ClassName.Method,hh:mm;              once at hh:mm
     // ClassName.Method,x(s/m/h);           x seconds/minutes/hours
     // ClassName.Method,hh:mm,repeat;       every hh:mm
     // ClassName.Method,hh:mm,x(s/m/h);     starting from hh:mm, every x seconds/minutes/hours
     // ClassName.Method,x(s/m/h),y(s/m/h);  starting after x seconds/minutes/hours, repeat each x seconds/minutes/hours
     public String schedule;
+    // < < <
 
+    // > > > service methods
 
+    @Override
     public void start() {
+        serviceUp = true;
         String[] parts = StringUtil.splitTrim(schedule, VantarParam.SEPARATOR_BLOCK);
         schedules = new ScheduledExecutorService[parts.length];
+        try {
+            setTasks(parts);
+        } catch (Exception e) {
+            lastSuccess = false;
+            setLog(e.getMessage());
+        }
+    }
 
+    @Override
+    public void stop() {
+        for (ScheduledExecutorService s : schedules) {
+            s.shutdown();
+            try {
+                s.awaitTermination(10, TimeUnit.SECONDS);
+            } catch (InterruptedException ignore) {
+
+            }
+        }
+        serviceUp = false;
+    }
+
+    @Override
+    public boolean isUp() {
+        return serviceUp;
+    }
+
+    @Override
+    public boolean isOk() {
+        if (!serviceUp || !lastSuccess) {
+            return false;
+        }
+        for (ScheduledExecutorService s : schedules) {
+            if (s.isShutdown() || s.isTerminated()) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    @Override
+    public List<String> getLogs() {
+        return logs;
+    }
+
+    private void setLog(String msg) {
+        if (logs == null) {
+            logs = new ArrayList<>(5);
+        }
+        logs.add(msg);
+    }
+
+    // service methods < < <
+
+    private void setTasks(String[] parts) {
         int i = 0;
         for (String item : parts) {
             String[] classNameOptions = StringUtil.splitTrim(item, VantarParam.SEPARATOR_COMMON);
             ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
 
-            LogEvent.beat(this.getClass(), "set:" + classNameOptions[0]);
+            Beat.set(this.getClass(), "set:" + classNameOptions[0]);
 
             if (classNameOptions.length == 2) {
+
                 // ClassName.Method,hh:mm;              once at hh:mm
                 if (StringUtil.contains(classNameOptions[1], ':')) {
                     executor.schedule(
@@ -60,7 +120,7 @@ public class ServiceScheduler implements Services.Service {
                         startAt,
                         TimeUnit.SECONDS
                     );
-                    log.info("    >> scheduled ({}, startat={}) ", classNameOptions[0], startAt);
+                    ServiceLog.log.info("  -> scheduled({}, s={}) ", classNameOptions[0], startAt);
                 }
 
             // ClassName.Method,hh:mm,repeat;       every hh:mm
@@ -107,7 +167,7 @@ public class ServiceScheduler implements Services.Service {
                     repeatAt,
                     TimeUnit.SECONDS
                 );
-                log.info("    >> scheduled ({}, startat={} repeatat={}) ", classNameOptions[0], startAt, repeatAt);
+                ServiceLog.log.info("  -> scheduled({}, s={} r={}) ", classNameOptions[0], startAt, repeatAt);
             }
 
             schedules[i++] = executor;
@@ -137,23 +197,8 @@ public class ServiceScheduler implements Services.Service {
             next.addMinutes(m - mn);
             next.addSeconds(s - sn);
         }
-        log.info("    >> scheduled ({}, now={}, start={}, repeat every day)", className, now, next);
+        ServiceLog.log.info("  -> scheduled({}, n={}, s={}, r=daily)", className, now, next);
         return now.diffSeconds(next);
-    }
-
-    public void stop() {
-        for (ScheduledExecutorService s : schedules) {
-            s.shutdown();
-            try {
-                s.awaitTermination(10, TimeUnit.SECONDS);
-            } catch (InterruptedException ignore) {
-
-            }
-        }
-    }
-
-    public boolean onEndSetNull() {
-        return onEndSetNull;
     }
 
     private Runnable getRunnable(String classNameMethodName) {
@@ -163,9 +208,11 @@ public class ServiceScheduler implements Services.Service {
                 Class<?> tClass = Class.forName(ExtraUtils.join(cm, '.', cm.length-1));
                 Method method = tClass.getMethod(cm[cm.length-1]);
                 method.invoke(null);
-                LogEvent.beat(this.getClass(), "run:" + classNameMethodName);
+                Beat.set(this.getClass(), "run:" + classNameMethodName);
             } catch (Exception e) {
-                log.error(" !! runnable failed ({})\n", classNameMethodName, e);
+                Beat.set(this.getClass(), "fail:" + classNameMethodName);
+                ServiceLog.error(ServiceScheduler.class, "runnable failed ({})\n", classNameMethodName, e);
+                setLog(classNameMethodName + ": " + e.getMessage());
             }
         };
     }
@@ -209,10 +256,6 @@ public class ServiceScheduler implements Services.Service {
         }
 
         return cms;
-    }
-
-    public boolean isOk() {
-        return true;
     }
 
 

@@ -18,6 +18,17 @@
 
     <dependencies>
 
+        <!-- xlsx -->
+        <dependency>
+            <groupId>org.dhatim</groupId>
+            <artifactId>fastexcel</artifactId>
+            <version>0.15.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.dhatim</groupId>
+            <artifactId>fastexcel-reader</artifactId>
+            <version>0.15.1</version>
+        </dependency>
 
         <!-- experiment ssh -->
         <dependency>

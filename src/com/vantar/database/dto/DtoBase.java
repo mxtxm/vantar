@@ -25,17 +25,18 @@ public abstract class DtoBase implements Dto {
 
     private transient static final Logger log = LoggerFactory.getLogger(DtoBase.class);
     private transient static final long INIT_SEQUENCE_VALUE = 1L;
-    private transient static final boolean DEFAULT_DELETE_LOGICAL = false;
+    //private transient static final boolean DEFAULT_DELETE_LOGICAL = false;
 
     private transient boolean setCreateTime;
     private transient boolean setUpdateTime;
     private transient Set<String> excludeProperties;
     private transient Set<String> nullProperties;
     private transient String bLang;
-    private transient boolean deleteLogical = DEFAULT_DELETE_LOGICAL;
-    private transient QueryDeleted deletedQueryPolicy = QueryDeleted.SHOW_NOT_DELETED;
+    //private transient boolean deleteLogical = DEFAULT_DELETE_LOGICAL;
+    //private transient QueryDeleted deletedQueryPolicy = QueryDeleted.SHOW_NOT_DELETED;
     private transient Action bAction;
     private transient boolean clearIdOnInsert = true;
+    private transient String colPrefix;
 
 
     public void setClearIdOnInsert(boolean clearIdOnInsert) {
@@ -50,25 +51,25 @@ public abstract class DtoBase implements Dto {
         return bAction == null ? defaultAction : bAction;
     }
 
-    public boolean isDeleteLogicalEnabled() {
-        return this.getClass().isAnnotationPresent(DeleteLogical.class);
-    }
-
-    public void setDeleteLogical(boolean deleteLogical) {
-        this.deleteLogical = deleteLogical;
-    }
-
-    public boolean getDeleteLogicalState() {
-        return deleteLogical && this.getClass().isAnnotationPresent(DeleteLogical.class);
-    }
-
-    public void setDeletedQueryPolicy(QueryDeleted policy) {
-        deletedQueryPolicy = policy;
-    }
-
-    public QueryDeleted getDeletedQueryPolicy() {
-        return deletedQueryPolicy;
-    }
+//    public boolean isDeleteLogicalEnabled() {
+//        return this.getClass().isAnnotationPresent(DeleteLogical.class);
+//    }
+//
+//    public void setDeleteLogical(boolean deleteLogical) {
+//        this.deleteLogical = deleteLogical;
+//    }
+//
+//    public boolean getDeleteLogicalState() {
+//        return deleteLogical && this.getClass().isAnnotationPresent(DeleteLogical.class);
+//    }
+//
+//    public void setDeletedQueryPolicy(QueryDeleted policy) {
+//        deletedQueryPolicy = policy;
+//    }
+//
+//    public QueryDeleted getDeletedQueryPolicy() {
+//        return deletedQueryPolicy;
+//    }
 
 
     /**
@@ -155,6 +156,9 @@ public abstract class DtoBase implements Dto {
             this.nullProperties = new HashSet<>(nullProperties.length * 2, 1);
         }
         this.nullProperties.addAll(Arrays.asList(nullProperties));
+        for (String p : nullProperties) {
+            setPropertyValue(p, null);
+        }
     }
 
     public void setNullProperties(String... nullProperties) {
@@ -163,6 +167,9 @@ public abstract class DtoBase implements Dto {
         } else {
             this.nullProperties = new HashSet<>(nullProperties.length * 2, 1);
             this.nullProperties.addAll(Arrays.asList(nullProperties));
+            for (String p : nullProperties) {
+                setPropertyValue(p, null);
+            }
         }
     }
 
@@ -216,8 +223,8 @@ public abstract class DtoBase implements Dto {
         setUpdateTime = false;
         excludeProperties = null;
         nullProperties = null;
-        deleteLogical = true;
-        deletedQueryPolicy = QueryDeleted.SHOW_NOT_DELETED;
+        //deleteLogical = true;
+        //deletedQueryPolicy = QueryDeleted.SHOW_NOT_DELETED;
         try {
             for (Field field : getClass().getFields()) {
                 if (isDataField(field)) {
@@ -853,6 +860,7 @@ public abstract class DtoBase implements Dto {
      */
     @SuppressWarnings({"unchecked"})
     public List<ValidationError> set(Map<String, Object> map, Action action, String prefix, String suffix) {
+log.error(">>>>>>{} {} {}", map, action);
         if (map == null) {
             return validate(action);
         }
@@ -1160,7 +1168,7 @@ public abstract class DtoBase implements Dto {
     }
 
     private void validateField(Field field, Object paramValue, Action action, List<ValidationError> errors) {
-        String name = field.getName();
+        String name = colPrefix == null ? field.getName() : (colPrefix + field.getName());
 
         if ((action.equals(Action.UPDATE_ALL_COLS) || action.equals(Action.UPDATE_FEW_COLS)
             || action.equals(Action.DELETE) || action.equals(Action.UN_DELETE)) && name.equals(ID)) {
@@ -1193,9 +1201,12 @@ public abstract class DtoBase implements Dto {
             if (ObjectUtil.isNotEmpty(paramValue) && isNull(name)) {
                 errors.add(new ValidationError(name, VantarKey.DATA_TYPE));
             } else if (
-                (action.equals(Action.INSERT) || action.equals(Action.UPDATE_ALL_COLS)
+                (
+                    action.equals(Action.INSERT)
+                    || action.equals(Action.UPDATE_ALL_COLS)
                     || action.equals(Action.UPDATE_ALL_COLS_NO_ID)
-                    || ((action.equals(Action.UPDATE_FEW_COLS) || action.equals(Action.UPDATE_FEW_COLS_NO_ID)) && isNull(name)))
+                    || ((action.equals(Action.UPDATE_FEW_COLS) || action.equals(Action.UPDATE_FEW_COLS_NO_ID)) && isNull(name))
+                )
                 && field.isAnnotationPresent(Required.class)
                 && !field.isAnnotationPresent(Default.class)) {
 
@@ -1233,6 +1244,43 @@ public abstract class DtoBase implements Dto {
                 errors.add(new ValidationError(name, VantarKey.STRING_LENGTH_EXCEED));
             }
         }
+
+        if (value instanceof Dto) {
+            ((Dto) value).setColPrefix(name + ".");
+            List<ValidationError> errorsX = ((Dto) value).validate(action);
+            if (ObjectUtil.isNotEmpty(errorsX)) {
+                errors.addAll(errorsX);
+            }
+            ((Dto) value).setColPrefix(null);
+        }
+
+        if (value instanceof List) {
+            if (!ClassUtil.implementsInterface(getPropertyGenericTypes(field)[0], Dto.class)) {
+                return;
+            }
+            for (Dto dtoX : (List<? extends Dto>) value) {
+                dtoX.setColPrefix(name + ".");
+                List<ValidationError> errorsX = dtoX.validate(action);
+                if (ObjectUtil.isNotEmpty(errorsX)) {
+                    errors.addAll(errorsX);
+                }
+                dtoX.setColPrefix(null);
+            }
+        }
+
+        if (value instanceof Map) {
+            if (!ClassUtil.implementsInterface(getPropertyGenericTypes(field)[1], Dto.class)) {
+                return;
+            }
+            for (Dto dtoX : ((Map<?, ? extends Dto>) value).values()) {
+                dtoX.setColPrefix(name + ".");
+                List<ValidationError> errorsX = dtoX.validate(action);
+                if (ObjectUtil.isNotEmpty(errorsX)) {
+                    errors.addAll(errorsX);
+                }
+                dtoX.setColPrefix(null);
+            }
+        }
     }
 
     public static boolean isDataField(Field field) {
@@ -1246,6 +1294,10 @@ public abstract class DtoBase implements Dto {
             return false;
         }
         return Modifier.isFinal(m) || Modifier.isStatic(m) || field.isAnnotationPresent(NoStore.class);
+    }
+
+    public void setColPrefix(String colPrefix) {
+        this.colPrefix = colPrefix;
     }
 
     @Override

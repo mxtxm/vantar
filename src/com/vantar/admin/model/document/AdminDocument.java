@@ -1,6 +1,6 @@
-package com.vantar.admin.model;
+package com.vantar.admin.model.document;
 
-import com.vantar.admin.model.document.*;
+import com.vantar.admin.model.index.Admin;
 import com.vantar.common.Settings;
 import com.vantar.exception.FinishException;
 import com.vantar.locale.Locale;
@@ -18,10 +18,11 @@ import java.util.*;
 public class AdminDocument {
 
     public static void index(Params params, HttpServletResponse response) throws FinishException {
-        WebUi ui = Admin.getUi(Locale.getString(VantarKey.ADMIN_MENU_DOCUMENTS), params, response, false);
+        WebUi ui = Admin.getUi(VantarKey.ADMIN_MENU_DOCUMENTS, params, response, false);
+
+        ui.addHrefBlock(VantarKey.ADMIN_WEBSERVICE_INDEX_TITLE, "/admin/document/webservices/xlsx");
 
         String lang = params.getLang();
-
 
         Set<String> tags = getTags();
         if (!tags.isEmpty()) {
@@ -33,7 +34,7 @@ public class AdminDocument {
                 links[++i] = tag;
                 links[++i] = "?lang=" + lang + "&tag=" + tag;
             }
-            ui.addLinks(links);
+            ui.addHrefs(links);
         }
 
         String search = params.getString("search");
@@ -41,7 +42,7 @@ public class AdminDocument {
             .addInput("Search", "search", search)
             .addHidden("lang", lang)
             .addSubmit()
-            .containerEnd();
+            .blockEnd();
 
         String tag = params.getString("tag");
         boolean isTag = StringUtil.isNotEmpty(tag);
@@ -64,7 +65,7 @@ public class AdminDocument {
                     continue;
                 }
 
-                ui.addBlockLink(
+                ui.addHrefBlock(
                     file,
                     "/admin/document/show?"
                         + (isTag ? "tag=" + StringUtil.remove(search, '*').trim() + "&" : "")
@@ -80,11 +81,11 @@ public class AdminDocument {
 
         if (dir.equals("document")) {
             ui.beginTree("dto objects");
-            ui.addBlockLink("objects.md", "/admin/document/show/dtos");
-            ui.containerEnd();
+            ui.addHrefBlock("objects.md", "/admin/document/show/dtos");
+            ui.blockEnd();
         }
 
-        ui.containerEnd();
+        ui.blockEnd();
     }
 
     private static boolean containsSearch(String documentPath, String search) {

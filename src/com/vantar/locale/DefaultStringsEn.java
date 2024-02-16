@@ -106,9 +106,12 @@ public class DefaultStringsEn {
         tokens.put(VantarKey.ADMIN_SHORTCUTS, "Shortcut links");
 
         tokens.put(VantarKey.ADMIN_SYSTEM_ADMIN, "System administration");
-        tokens.put(VantarKey.ADMIN_RUNNING_SERVICES, "Started services");
-        tokens.put(VantarKey.ADMIN_RUNNING_SERVICES_COUNT, " Service (count)");
-        tokens.put(VantarKey.ADMIN_RUNNING_SERVICES_ON_THIS_SERVER, "On this server");
+
+        tokens.put(VantarKey.ADMIN_RUNNING_SERVICES_ME, "Services on this server");
+        tokens.put(VantarKey.ADMIN_RUNNING_SERVICES_OTHER, "Services on other servers");
+        tokens.put(VantarKey.ADMIN_RUNNING_SERVICES_LOGS, "Service logs");
+        tokens.put(VantarKey.ADMIN_RUNNING_SERVICES_DEPENDENCIES, "Service dependencies");
+
 
         tokens.put(VantarKey.ADMIN_BACKUP, "Data backup");
         tokens.put(VantarKey.ADMIN_BACKUP_CREATE, "Create backup");
@@ -276,8 +279,8 @@ public class DefaultStringsEn {
         tokens.put(VantarKey.SHOW_DELETED, "Show deleted");
         tokens.put(VantarKey.SHOW_ALL, "Show all");
 
-        tokens.put(VantarKey.LOGICAL_DELETED, "Soft delete (mark record as deleted)");
-        tokens.put(VantarKey.LOGICAL_DELETED_UNDO, "Undelete");
+        //tokens.put(VantarKey.LOGICAL_DELETED, "Soft delete (mark record as deleted)");
+        //tokens.put(VantarKey.LOGICAL_DELETED_UNDO, "Undelete");
         tokens.put(VantarKey.ADMIN_ACTION_LOG, "Log");
 
         tokens.put(VantarKey.ADMIN_PAGING, "paging");
@@ -303,6 +306,8 @@ public class DefaultStringsEn {
         tokens.put(VantarKey.ADMIN_FAIL_MSG, "fail message");
         tokens.put(VantarKey.ADMIN_SUCCESS, "success count");
         tokens.put(VantarKey.ADMIN_SUCCESS_MSG, "success message");
+
+        tokens.put(VantarKey.ADMIN_WEBSERVICE_INDEX_TITLE, "Webservice index");
     }
 
     public static String getString(LangKey key) {

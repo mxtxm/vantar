@@ -188,7 +188,7 @@ public class Permit {
     /**
      * Throws AuthException when not permitted
      */
-    public void permitController(Params params, String methodName) throws AuthException, ServiceException {
+    public void permitController(Params params, String methodName) throws AuthException {
         if (controllerPermissionTable == null) {
             controllerPermissionTable = new ConcurrentHashMap<>(MAX_CONTROLLER_SIZE);
             for (Permission p : Services.get(ServiceDtoCache.class).getList(Permission.class)) {
@@ -340,7 +340,7 @@ public class Permit {
         return tokenData.user;
     }
 
-    public boolean isRoot(Params params) throws ServiceException, AuthException {
+    public boolean isRoot(Params params) throws AuthException {
         CommonUserRole role = validateToken(params, onlineUsers).user.getRole();
         if (role != null) {
             return role.isRoot();

@@ -27,7 +27,7 @@ public class Permission extends DtoBase {
     @Override
     public void afterFetchData() {
         try {
-            Services.get(ServiceAuth.class).flushControllerCache();
+            Services.getService(ServiceAuth.class).flushControllerCache();
         } catch (ServiceException ignore) {
 
         }

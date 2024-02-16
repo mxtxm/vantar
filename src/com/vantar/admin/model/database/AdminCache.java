@@ -1,5 +1,6 @@
-package com.vantar.admin.model;
+package com.vantar.admin.model.database;
 
+import com.vantar.admin.model.index.Admin;
 import com.vantar.database.dto.Dto;
 import com.vantar.exception.*;
 import com.vantar.locale.Locale;
@@ -22,7 +23,7 @@ public class AdminCache {
 
         ServiceDtoCache serviceDtoCache;
         try {
-            serviceDtoCache = Services.get(ServiceDtoCache.class);
+            serviceDtoCache = Services.getService(ServiceDtoCache.class);
         } catch (ServiceException e) {
             ui.addErrorMessage(e).finish();
             return;
@@ -34,30 +35,35 @@ public class AdminCache {
             return;
         }
 
-        ServiceHealthMonitor.MemoryStatus mStatus = ServiceHealthMonitor.getMemoryStatus();
-        if (!mStatus.ok) {
-            ui.addErrorMessage("WARNING! LOW MEMORY");
+        try {
+            ServiceHealthMonitor monitor = Services.getService(ServiceHealthMonitor.class);
+            ServiceHealthMonitor.MemoryStatus mStatus = monitor.getMemoryStatus();
+            if (!mStatus.ok) {
+                ui.addErrorMessage("WARNING! LOW MEMORY");
+            }
+            ui  .addKeyValue("Designated memory", NumberUtil.getReadableByteSize(mStatus.max))
+                .addKeyValue("Allocated memory", NumberUtil.getReadableByteSize(mStatus.total))
+                .addKeyValue("Free memory", NumberUtil.getReadableByteSize(mStatus.free))
+                .addKeyValue("Used memory", NumberUtil.getReadableByteSize(mStatus.used))
+                .addKeyValue(
+                    "Physical memory",
+                    NumberUtil.getReadableByteSize(mStatus.physicalFree)
+                        + " / " + NumberUtil.getReadableByteSize(mStatus.physicalTotal)
+                )
+                .addKeyValue(
+                    "Swap memory",
+                    NumberUtil.getReadableByteSize(mStatus.swapFree)
+                        + " / " + NumberUtil.getReadableByteSize(mStatus.swapTotal)
+                );
+        } catch (ServiceException ignore) {
+
         }
-        ui  .addKeyValue("Designated memory", NumberUtil.getReadableByteSize(mStatus.max))
-            .addKeyValue("Allocated memory", NumberUtil.getReadableByteSize(mStatus.total))
-            .addKeyValue("Free memory", NumberUtil.getReadableByteSize(mStatus.free))
-            .addKeyValue("Used memory", NumberUtil.getReadableByteSize(mStatus.used))
-            .addKeyValue(
-                "Physical memory",
-                NumberUtil.getReadableByteSize(mStatus.physicalFree)
-                    + " / " + NumberUtil.getReadableByteSize(mStatus.physicalTotal)
-            )
-            .addKeyValue(
-                "Swap memory",
-                NumberUtil.getReadableByteSize(mStatus.swapFree)
-                    + " / " + NumberUtil.getReadableByteSize(mStatus.swapTotal)
-            );
 
         long sum = 0L;
         for (Class<?> c : classes) {
             Map<Long, ? extends Dto> values = serviceDtoCache.getMap((Class<? extends Dto>) c);
             sum += ObjectUtil.sizeOf(values);
-            ui.addBlockLink(c.getName() + " (" + ObjectUtil.sizeOfReadable(values) + ")", "/admin/cache/view?c=" + c.getName());
+            ui.addHrefBlock(c.getName() + " (" + ObjectUtil.sizeOfReadable(values) + ")", "/admin/cache/view?c=" + c.getName());
         }
 
         ui.addEmptyLine().addEmptyLine().addMessage((sum / 1024) + "KB");
@@ -78,7 +84,7 @@ public class AdminCache {
         Object object = ClassUtil.getInstance(className);
         ServiceDtoCache serviceDtoCache;
         try {
-            serviceDtoCache = Services.get(ServiceDtoCache.class);
+            serviceDtoCache = Services.getService(ServiceDtoCache.class);
         } catch (ServiceException e) {
             ui.addErrorMessage(e).finish();
             return;
@@ -94,11 +100,11 @@ public class AdminCache {
             return;
         }
 
-        ui.addEmptyLine().addPre(ObjectUtil.sizeOfReadable(values)).addEmptyLine();
+        ui.addEmptyLine().addBlock("pre", ObjectUtil.sizeOfReadable(values)).addEmptyLine();
 
         for (Map.Entry<Long, ? extends Dto> entry : values.entrySet()) {
             Dto dto = entry.getValue();
-            ui.addPre(dto.toString()).write();
+            ui.addBlock("pre", dto.toString()).write();
         }
 
         ui.finish();

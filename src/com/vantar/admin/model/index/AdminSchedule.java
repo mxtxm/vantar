@@ -1,9 +1,9 @@
-package com.vantar.admin.model;
+package com.vantar.admin.model.index;
 
 import com.vantar.exception.*;
 import com.vantar.locale.*;
 import com.vantar.service.Services;
-import com.vantar.service.log.LogEvent;
+import com.vantar.service.log.*;
 import com.vantar.service.scheduler.ServiceScheduler;
 import com.vantar.util.collection.*;
 import com.vantar.util.datetime.*;
@@ -20,7 +20,7 @@ public class AdminSchedule {
 
         ServiceScheduler service;
         try {
-            service = Services.get(ServiceScheduler.class);
+            service = Services.getService(ServiceScheduler.class);
         } catch (ServiceException e) {
             ui.addErrorMessage(e).write();
             return;
@@ -43,7 +43,7 @@ public class AdminSchedule {
                 startAtComment.append("(after service startup)");
             }
 
-            StringBuilder repeatAtComment = new StringBuilder();
+            StringBuilder repeatAtComment = new StringBuilder(20);
             repeatAtComment.append(info.repeatAt).append(" ");
             if (info.repeat) {
                 c = StringUtil.countMatches(info.repeatAt, ':');
@@ -56,10 +56,10 @@ public class AdminSchedule {
                 }
             }
 
-            DateTime time = LogEvent.getBeat(ServiceScheduler.class, "run:" + info.getName());
+            DateTime time = Beat.getBeat(ServiceScheduler.class, "run:" + info.getName());
 
             ui  .beginBox(info.getName())
-                .addLinkNewPage(
+                .addHrefNewPage(
                     Locale.getString(VantarKey.ADMIN_SCHEDULE_RUN),
                     "schedule/run?cm=" + info.getName()
                 )
@@ -71,7 +71,7 @@ public class AdminSchedule {
                         + DateTimeFormatter.secondsToDateTime(Math.abs(time.secondsFromNow())) + ")"
                 );
 
-            ui.containerEnd();
+            ui.blockEnd();
         }
 
         ui.finish();
@@ -94,7 +94,7 @@ public class AdminSchedule {
             Method method = tClass.getMethod(cm[cm.length-1]);
             method.invoke(null);
 
-            LogEvent.beat(ServiceScheduler.class, "run:" + classNameMethodName);
+            Beat.set(ServiceScheduler.class, "run:" + classNameMethodName);
             ui.addMessage(Locale.getString(VantarKey.ADMIN_SCHEDULE_RUN_SUCCESS));
         } catch (ClassNotFoundException | NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
             ui.addErrorMessage(Locale.getString(VantarKey.ADMIN_SCHEDULE_RUN_FAIL));

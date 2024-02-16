@@ -1,7 +1,7 @@
 package com.vantar.web;
 
 import com.vantar.common.*;
-import com.vantar.service.log.ServiceUserActionLog;
+import com.vantar.service.log.ServiceLog;
 import com.vantar.util.collection.CollectionUtil;
 import com.vantar.util.json.*;
 import org.slf4j.*;
@@ -64,7 +64,7 @@ public class Response {
             return;
         }
         if (logResponse) {
-            ServiceUserActionLog.addResponse("redirect:" + url, response);
+            ServiceLog.addResponse("redirect:" + url, response);
         }
     }
 
@@ -104,7 +104,7 @@ public class Response {
         }
 
         if (logResponse) {
-            ServiceUserActionLog.addResponse("download: " + filepath + " > " + filename, response);
+            ServiceLog.addResponse("download: " + filepath + " > " + filename, response);
         }
     }
 
@@ -117,7 +117,7 @@ public class Response {
             return;
         }
         if (logResponse) {
-            ServiceUserActionLog.addResponse(data, response);
+            ServiceLog.addResponse(data, response);
         }
     }
 
@@ -131,7 +131,7 @@ public class Response {
             return;
         }
         if (logResponse) {
-            ServiceUserActionLog.addResponse(data, response);
+            ServiceLog.addResponse(data, response);
         }
     }
 
@@ -145,7 +145,7 @@ public class Response {
             return;
         }
         if (logResponse) {
-            ServiceUserActionLog.addResponse(data, response);
+            ServiceLog.addResponse(data, response);
         }
     }
 
@@ -170,7 +170,7 @@ public class Response {
             return;
         }
         if (logResponse) {
-            ServiceUserActionLog.addResponse(data, response);
+            ServiceLog.addResponse(data, response);
         }
     }
 
@@ -183,7 +183,7 @@ public class Response {
             return;
         }
         if (logResponse) {
-            ServiceUserActionLog.addResponse("HTML", response);
+            ServiceLog.addResponse("HTML", response);
         }
     }
 
@@ -212,7 +212,7 @@ public class Response {
             return;
         }
         if (logResponse) {
-            ServiceUserActionLog.addResponse(status + ": " + msg, response);
+            ServiceLog.addResponse(status + ": " + msg, response);
         }
     }
 
@@ -292,7 +292,7 @@ public class Response {
             return;
         }
         if (logResponse) {
-            ServiceUserActionLog.addResponse("template: " + template, response);
+            ServiceLog.addResponse("template: " + template, response);
         }
     }
 

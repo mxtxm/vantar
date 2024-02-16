@@ -9,7 +9,7 @@ import com.vantar.locale.VantarKey;
 import com.vantar.service.Services;
 import com.vantar.service.auth.CommonUserPassword;
 import com.vantar.service.cache.ServiceDtoCache;
-import com.vantar.service.log.ServiceUserActionLog;
+import com.vantar.service.log.ServiceLog;
 import com.vantar.util.number.NumberUtil;
 import com.vantar.util.object.*;
 import com.vantar.util.string.StringUtil;
@@ -40,8 +40,8 @@ public abstract class CommonModel {
                 throw new InputException(VantarKey.NO_CONTENT);
             }
         }
-        if (logEvent && action != null && Services.isUp(ServiceUserActionLog.class)) {
-            ServiceUserActionLog.add(action, dto);
+        if (logEvent && action != null && Services.isUp(ServiceLog.class)) {
+            ServiceLog.addAction(action, dto);
         }
     }
 
@@ -53,7 +53,7 @@ public abstract class CommonModel {
             }
             ServiceDtoCache service;
             try {
-                service = Services.get(ServiceDtoCache.class);
+                service = Services.getService(ServiceDtoCache.class);
                 service.update(dtoName);
             } catch (ServiceException ignore) {
 

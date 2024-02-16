@@ -198,6 +198,19 @@ public class Params {
         return "{}";
     }
 
+    public Map<String, Object> toMap() {
+        switch (type) {
+            case MAP:
+                return map;
+            case FORM_DATA:
+            case MULTI_PART:
+                return getRequestParams();
+            case JSON:
+                return Json.d.mapFromJson(getJson(), String.class, Object.class);
+        }
+        return null;
+    }
+
     public boolean contains(String key) {
         String v = request == null ? null : request.getParameter(key);
         if (v != null) {
@@ -478,6 +491,20 @@ public class Params {
         }
     }
 
+    public DateTime getDateTime(String key, DateTime defaultValue) {
+        typeMisMatch = false;
+        String value = getParameter(key);
+        if (value == null || value.isEmpty()) {
+            return defaultValue;
+        }
+        try {
+            return new DateTime(value);
+        } catch (DateTimeException e) {
+            typeMisMatch = true;
+            return null;
+        }
+    }
+
     public DateTime getDateTime(String key, String defaultValue) {
         typeMisMatch = false;
         String value = getParameter(key);
@@ -721,7 +748,7 @@ public class Params {
         }
 
 
-        StringBuilder buffer = new StringBuilder();
+        StringBuilder buffer = new StringBuilder(1000);
         String line;
         try (BufferedReader reader = request.getReader()) {
             while ((line = reader.readLine()) != null) {
@@ -750,6 +777,17 @@ public class Params {
         return Json.d.listFromJson(getJson(), typeClass);
     }
 
+    public <T> List<T> getJsonListRequired(Class<T> typeClass) throws InputException {
+        if (request == null) {
+            throw new InputException(VantarKey.REQUIRED, "-");
+        }
+        List<T> v = Json.d.listFromJson(getJson(), typeClass);
+        if (v == null) {
+            throw new InputException(VantarKey.REQUIRED, "-");
+        }
+        return v;
+    }
+
     public <K, V> Map<K,V> getJsonMap(Class<K> typeClassKey, Class<V> typeClassValue) {
         if (request == null) {
             return null;
@@ -757,8 +795,27 @@ public class Params {
         return Json.d.mapFromJson(getJson(), typeClassKey, typeClassValue);
     }
 
+    public <K, V> Map<K,V> getJsonMapRequired(Class<K> typeClassKey, Class<V> typeClassValue) throws InputException {
+        if (request == null) {
+            throw new InputException(VantarKey.REQUIRED, "-");
+        }
+        Map<K, V> v = Json.d.mapFromJson(getJson(), typeClassKey, typeClassValue);
+        if (v == null) {
+            throw new InputException(VantarKey.REQUIRED, "-");
+        }
+        return v;
+    }
+
     public <T> T extractFromJson(String key, Class<T> type) {
         return Json.d.extract(getJson(), key, type);
+    }
+
+    public <T> T extractFromJsonRequired(String key, Class<T> type) throws InputException {
+        T v = Json.d.extract(getJson(), key, type);
+        if (v == null) {
+            throw new InputException(VantarKey.REQUIRED, key);
+        }
+        return v;
     }
 
     @SuppressWarnings("unchecked")
@@ -1148,12 +1205,7 @@ public class Params {
     }
 
     public CommonUser getCurrentUser() throws AuthException {
-        CommonUser user;
-        try {
-            user = ServiceAuth.getCurrentSignedInUser(this);
-        } catch (ServiceException e) {
-            throw new AuthException(VantarKey.ADMIN_SERVICE_IS_OFF, "Authentication");
-        }
+        CommonUser user = ServiceAuth.getCurrentSignedInUser(this);
         if (user == null) {
             throw new AuthException(VantarKey.EXPIRED_AUTH_TOKEN);
         }
@@ -1161,10 +1213,6 @@ public class Params {
     }
 
     public CommonUser getCurrentUserIfExists() {
-        try {
-            return ServiceAuth.getCurrentSignedInUser(this);
-        } catch (ServiceException e) {
-            return null;
-        }
+        return ServiceAuth.getCurrentSignedInUser(this);
     }
 }

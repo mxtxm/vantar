@@ -1,6 +1,7 @@
-package com.vantar.admin.model;
+package com.vantar.admin.model.database;
 
 import com.vantar.admin.Dto.QueryDictionary;
+import com.vantar.admin.model.index.Admin;
 import com.vantar.business.*;
 import com.vantar.common.VantarParam;
 import com.vantar.database.common.ValidationError;
@@ -22,7 +23,7 @@ public class AdminQuery {
     public static void index(Params params, HttpServletResponse response) throws FinishException {
         WebUi ui = Admin.getUi(Locale.getString(VantarKey.ADMIN_MENU_QUERY_TITLE), params, response, true);
 
-        ui.addBlockLink(Locale.getString(VantarKey.ADMIN_QUERY_NEW), "/admin/query/write").addEmptyLine().addEmptyLine().addEmptyLine();
+        ui.addHrefBlock(Locale.getString(VantarKey.ADMIN_QUERY_NEW), "/admin/query/write").addEmptyLine().addEmptyLine().addEmptyLine();
 
         QueryBuilder q = new QueryBuilder(new QueryDictionary());
         q.sort("group:asc");
@@ -33,11 +34,11 @@ public class AdminQuery {
                 if (group == null || !group.equals(item.group)) {
                     group = item.group;
                     if (group == null) {
-                        ui.containerEnd();
+                        ui.blockEnd();
                     }
                     ui.beginBox(group);
                 }
-                ui.addBlockLink(item.title, "/admin/query/get?" + VantarParam.ID + "=" + item.id);
+                ui.addHrefBlock(item.title, "/admin/query/get?" + VantarParam.ID + "=" + item.id);
             }
         } catch (NoContentException e) {
             ui.addMessage(Locale.getString(VantarKey.NO_CONTENT));
@@ -68,7 +69,7 @@ public class AdminQuery {
 
             ui  .addSubmit()
                 .addEmptyLine(2)
-                .addBlockLinkNewPage(Locale.getString(VantarKey.ADMIN_HELP), "/admin/document/show?document=document--webservice--search.md")
+                .addHrefBlockNewPage(Locale.getString(VantarKey.ADMIN_HELP), "/admin/document/show?document=document--webservice--search.md")
                 .finish();
 
             return;
@@ -103,7 +104,7 @@ public class AdminQuery {
             ui  .beginFormPost()
                 .addHeading(3, item.group + " - " + item.title)
                 .addTextArea("", "", "bpp" + item.q)
-                .addCheckbox(Locale.getString(VantarKey.ADMIN_CONFIRM), WebUi.PARAM_CONFIRM);
+                .addCheckbox(VantarKey.ADMIN_CONFIRM, WebUi.PARAM_CONFIRM);
 
             if (item.id != null) {
                 ui.addHidden(VantarParam.ID, item.id.toString());
@@ -134,7 +135,7 @@ public class AdminQuery {
         }
 
         ui  .beginBox(item.group + " - " + item.title)
-            .addLinks(
+            .addHrefs(
                 Locale.getString(VantarKey.ADMIN_IX), "/admin/query/index",
                 Locale.getString(VantarKey.ADMIN_NEW), "/admin/query/write",
                 Locale.getString(VantarKey.ADMIN_UPDATE), "/admin/query/write?" + VantarParam.ID + "=" + item.id,
@@ -144,8 +145,8 @@ public class AdminQuery {
             .addTextArea("Query JSON", "q", params.getString("q", item.q), "small")
             .addSubmit()
             .addEmptyLine(2)
-            .addBlockLinkNewPage(Locale.getString(VantarKey.ADMIN_HELP), "/admin/document/show?document=document--webservice--search.md")
-            .containerEnd().containerEnd().write();
+            .addHrefBlockNewPage(Locale.getString(VantarKey.ADMIN_HELP), "/admin/document/show?document=document--webservice--search.md")
+            .blockEnd().blockEnd().write();
 
         if (params.isChecked("f")) {
             QueryBuilder q = params.getQueryBuilder("q");

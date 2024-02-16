@@ -1,5 +1,6 @@
-package com.vantar.admin.model;
+package com.vantar.admin.model.database;
 
+import com.vantar.admin.model.index.Admin;
 import com.vantar.business.*;
 import com.vantar.business.importexport.ImportMongo;
 import com.vantar.common.*;
@@ -32,8 +33,8 @@ public class AdminDatabase {
 
         if (params.isChecked("f") || !params.isChecked(WebUi.PARAM_CONFIRM)) {
             ui  .beginFormPost()
-                .addCheckbox(Locale.getString(VantarKey.ADMIN_DATABASE_SYNCH_CONFIRM), WebUi.PARAM_CONFIRM)
-                .addSubmit(Locale.getString(VantarKey.ADMIN_DATABASE_SYNCH))
+                .addCheckbox(VantarKey.ADMIN_DATABASE_SYNCH_CONFIRM, WebUi.PARAM_CONFIRM)
+                .addSubmit(VantarKey.ADMIN_DATABASE_SYNCH)
                 .finish();
             return;
         }
@@ -53,12 +54,12 @@ public class AdminDatabase {
         try {
             synch.cleanup();
             synch.createFiles();
-            ui.addPre(synch.build()).addMessage(Locale.getString(VantarKey.ADMIN_FINISHED));
+            ui.addBlock("pre", synch.build()).addMessage(Locale.getString(VantarKey.ADMIN_FINISHED));
         } catch (DatabaseException e) {
             ui.addErrorMessage(e);
         }
 
-        ui.containerEnd().write();
+        ui.blockEnd().write();
     }
 
     public static void createSqlIndex(Params params, HttpServletResponse response) throws FinishException {
@@ -68,12 +69,12 @@ public class AdminDatabase {
 
         WebUi ui = Admin.getUi(Locale.getString(VantarKey.ADMIN_DATABASE_INDEX_CREATE, "SQL"), params, response, true);
 
-        ui.addBlockLink(Locale.getString(VantarKey.ADMIN_DATABASE_INDEX_VIEW), "/admin/database/sql/indexes").addEmptyLine(2);
+        ui.addHrefBlock(Locale.getString(VantarKey.ADMIN_DATABASE_INDEX_VIEW), "/admin/database/sql/indexes").addEmptyLine(2);
 
         if (!params.isChecked("f")) {
             ui  .beginFormPost()
-                .addCheckbox(Locale.getString(VantarKey.ADMIN_DATABASE_INDEX_REMOVE), "deleteindex")
-                .addSubmit(Locale.getString(VantarKey.ADMIN_DATABASE_INDEX_CREATE_START))
+                .addCheckbox(VantarKey.ADMIN_DATABASE_INDEX_REMOVE, "deleteindex")
+                .addSubmit(VantarKey.ADMIN_DATABASE_INDEX_CREATE_START)
                 .finish();
 
             return;
@@ -100,7 +101,7 @@ public class AdminDatabase {
             ui.addErrorMessage(e);
         }
 
-        ui.containerEnd().write();
+        ui.blockEnd().write();
     }
 
     public static void listSqlIndexes(Params params, HttpServletResponse response) throws FinishException {
@@ -110,7 +111,7 @@ public class AdminDatabase {
 
         WebUi ui = Admin.getUi(Locale.getString(VantarKey.ADMIN_INDEX_TITLE, "SQL"), params, response, true);
 
-        ui.addBlockLink(
+        ui.addHrefBlock(
                 Locale.getString(VantarKey.ADMIN_DATABASE_INDEX_CREATE, "SQL..."),
                 "/admin/database/sql/index/create"
             )
@@ -122,8 +123,8 @@ public class AdminDatabase {
 
             for (DtoDictionary.Info info : DtoDictionary.getAll(DtoDictionary.Dbms.SQL)) {
                 ui  .beginBox(info.getDtoClassName())
-                    .addPre(CollectionUtil.join(repo.getIndexes(info.getDtoInstance()), '\n'))
-                    .containerEnd()
+                    .addBlock("pre", CollectionUtil.join(repo.getIndexes(info.getDtoInstance()), '\n'))
+                    .blockEnd()
                     .write();
             }
         } catch (DatabaseException e) {
@@ -142,9 +143,9 @@ public class AdminDatabase {
 
         if (!params.isChecked("f")) {
             ui  .beginFormPost()
-                .addInput(Locale.getString(VantarKey.ADMIN_DELAY), "delay", Integer.toString(DELAY), "ltr")
-                .addInput(Locale.getString(VantarKey.ADMIN_DELETE_EXCLUDE), "exclude", "", "ltr")
-                .addCheckbox(Locale.getString(VantarKey.ADMIN_DELETE_INCLUDE), "remove", false)
+                .addInput(VantarKey.ADMIN_DELAY, "delay", Integer.toString(DELAY), null, "ltr")
+                .addInput(VantarKey.ADMIN_DELETE_EXCLUDE, "exclude", null, "ltr")
+                .addCheckbox(VantarKey.ADMIN_DELETE_INCLUDE, "remove", false)
                 .addSubmit(Locale.getString(VantarKey.ADMIN_DELETE))
                 .finish();
             return;
@@ -217,10 +218,10 @@ public class AdminDatabase {
             connection.commit();
 
         } catch (DatabaseException e) {
-            ui.addKeyValueFail("SQL FAILED, transaction rolled back", ObjectUtil.throwableToString(e));
+            ui.addKeyValue("SQL FAILED, transaction rolled back", ObjectUtil.throwableToString(e), "error");
         }
 
-        ui.containerEnd().containerEnd().write();
+        ui.blockEnd().blockEnd().write();
     }
 
     public static void importSql(Params params, HttpServletResponse response) throws FinishException {
@@ -232,10 +233,10 @@ public class AdminDatabase {
 
         if (!params.isChecked("f")) {
             ui  .beginFormPost()
-                .addInput(Locale.getString(VantarKey.ADMIN_DELAY), "delay", Integer.toString(DELAY), "ltr")
-                .addInput(Locale.getString(VantarKey.ADMIN_IMPORT_EXCLUDE), "exclude", "", "ltr")
-                .addCheckbox(Locale.getString(VantarKey.ADMIN_DATABASE_DELETE_ALL), "remove", true)
-                .addSubmit(Locale.getString(VantarKey.ADMIN_IMPORT))
+                .addInput(VantarKey.ADMIN_DELAY, "delay", Integer.toString(DELAY), null, "ltr")
+                .addInput(VantarKey.ADMIN_IMPORT_EXCLUDE, "exclude", null, null, "ltr")
+                .addCheckbox(VantarKey.ADMIN_DATABASE_DELETE_ALL, "remove", true)
+                .addSubmit(VantarKey.ADMIN_IMPORT)
                 .finish();
             return;
         }
@@ -271,7 +272,7 @@ public class AdminDatabase {
             );
         }
 
-        ui.containerEnd().containerEnd().write();
+        ui.blockEnd().blockEnd().write();
     }
 
     // > > > MONGO
@@ -283,12 +284,12 @@ public class AdminDatabase {
 
         WebUi ui = Admin.getUi(Locale.getString(VantarKey.ADMIN_DATABASE_INDEX_CREATE, "MONGO"), params, response, true);
 
-        ui.addBlockLink(Locale.getString(VantarKey.ADMIN_DATABASE_INDEX_VIEW), "/admin/database/mongo/indexes").addEmptyLine(2).addEmptyLine();
+        ui.addHrefBlock(Locale.getString(VantarKey.ADMIN_DATABASE_INDEX_VIEW), "/admin/database/mongo/indexes").addEmptyLine(2).addEmptyLine();
 
         if (!params.isChecked("f")) {
             ui  .beginFormPost()
-                .addCheckbox(Locale.getString(VantarKey.ADMIN_DATABASE_INDEX_REMOVE), "deleteindex")
-                .addSubmit(Locale.getString(VantarKey.ADMIN_DATABASE_INDEX_CREATE_START))
+                .addCheckbox(VantarKey.ADMIN_DATABASE_INDEX_REMOVE, "deleteindex")
+                .addSubmit(VantarKey.ADMIN_DATABASE_INDEX_CREATE_START)
                 .finish();
             return;
         }
@@ -322,7 +323,7 @@ public class AdminDatabase {
             }
         }
 
-        ui.containerEnd().write();
+        ui.blockEnd().write();
     }
 
     public static void listMongoIndexes(Params params, HttpServletResponse response) throws FinishException {
@@ -332,15 +333,15 @@ public class AdminDatabase {
 
         WebUi ui = Admin.getUi(Locale.getString(VantarKey.ADMIN_INDEX_TITLE, "MONGO"), params, response, true);
 
-        ui.addBlockLink(Locale.getString(VantarKey.ADMIN_DATABASE_INDEX_CREATE, "MONGO..."),
+        ui.addHrefBlock(Locale.getString(VantarKey.ADMIN_DATABASE_INDEX_CREATE, "MONGO..."),
             "/admin/database/mongo/index/create").addEmptyLine().addEmptyLine().write();
 
         try {
             for (DtoDictionary.Info info : DtoDictionary.getAll(DtoDictionary.Dbms.MONGO)) {
                 List<String> indexes = Mongo.Index.getIndexes(info.getDtoInstance());
                 ui  .beginBox(info.getDtoClassName())
-                    .addPre(CollectionUtil.join(indexes, '\n'))
-                    .containerEnd()
+                    .addBlock("pre", CollectionUtil.join(indexes, '\n'))
+                    .blockEnd()
                     .write();
             }
         } catch (DatabaseException e) {
@@ -359,9 +360,9 @@ public class AdminDatabase {
 
         if (!params.isChecked("f")) {
             ui  .beginFormPost()
-                .addInput(Locale.getString(VantarKey.ADMIN_DELAY), "delay", Integer.toString(DELAY), "ltr")
-                .addInput(Locale.getString(VantarKey.ADMIN_DELETE_EXCLUDE), "exclude", "", "ltr")
-                .addSubmit(Locale.getString(VantarKey.ADMIN_DELETE))
+                .addInput(VantarKey.ADMIN_DELAY, "delay", Integer.toString(DELAY), null, "ltr")
+                .addInput(VantarKey.ADMIN_IMPORT_EXCLUDE, "exclude", null, null, "ltr")
+                .addSubmit(VantarKey.ADMIN_DELETE)
                 .finish();
             return;
         }
@@ -402,7 +403,7 @@ public class AdminDatabase {
             ui.addKeyValue(info.getDtoClassName(), msg + " : " + total + " > " + count).write();
         }
 
-        ui.containerEnd().containerEnd().write();
+        ui.blockEnd().blockEnd().write();
     }
 
     public static void listMongoSequences(Params params, HttpServletResponse response) throws FinishException {
@@ -430,10 +431,10 @@ public class AdminDatabase {
 
         if (!params.isChecked("f")) {
             ui  .beginFormPost()
-                .addInput(Locale.getString(VantarKey.ADMIN_DELAY), "delay", Integer.toString(DELAY), "ltr")
-                .addInput(Locale.getString(VantarKey.ADMIN_IMPORT_EXCLUDE), "exclude", "", "ltr")
-                .addCheckbox(Locale.getString(VantarKey.ADMIN_DATABASE_DELETE_ALL), "remove", true)
-                .addSubmit(Locale.getString(VantarKey.ADMIN_IMPORT))
+                .addInput(VantarKey.ADMIN_DELAY, "delay", Integer.toString(DELAY), null, "ltr")
+                .addInput(VantarKey.ADMIN_IMPORT_EXCLUDE, "exclude", null, null, "ltr")
+                .addCheckbox(VantarKey.ADMIN_DATABASE_DELETE_ALL, "remove", true)
+                .addSubmit(VantarKey.ADMIN_IMPORT)
                 .finish();
             return;
         }
@@ -469,7 +470,7 @@ public class AdminDatabase {
             );
         }
 
-        ui.containerEnd().containerEnd().write();
+        ui.blockEnd().blockEnd().write();
     }
 
     // > > > ELASTIC
@@ -483,8 +484,8 @@ public class AdminDatabase {
 
         if (!params.isChecked("f") || !params.isChecked(WebUi.PARAM_CONFIRM)) {
             ui  .beginFormPost()
-                .addCheckbox(Locale.getString(VantarKey.ADMIN_DATABASE_SYNCH_CONFIRM), WebUi.PARAM_CONFIRM)
-                .addSubmit(Locale.getString(VantarKey.ADMIN_DATABASE_SYNCH))
+                .addCheckbox(VantarKey.ADMIN_DATABASE_SYNCH_CONFIRM, WebUi.PARAM_CONFIRM)
+                .addSubmit(VantarKey.ADMIN_DATABASE_SYNCH)
                 .finish();
             return;
         }
@@ -507,7 +508,7 @@ public class AdminDatabase {
             ui.addErrorMessage(e);
         }
 
-        ui.containerEnd().write();
+        ui.blockEnd().write();
     }
 
     public static void purgeElastic(Params params, HttpServletResponse response) throws FinishException {
@@ -519,10 +520,10 @@ public class AdminDatabase {
 
         if (!params.isChecked("f")) {
             ui  .beginFormPost()
-                .addInput(Locale.getString(VantarKey.ADMIN_DELAY), "delay", Integer.toString(DELAY), "ltr")
-                .addInput(Locale.getString(VantarKey.ADMIN_DELETE_EXCLUDE), "exclude", "", "ltr")
-                .addCheckbox(Locale.getString(VantarKey.ADMIN_DELETE_INCLUDE), "remove", false)
-                .addSubmit(Locale.getString(VantarKey.ADMIN_DELETE))
+                .addInput(VantarKey.ADMIN_DELAY, "delay", Integer.toString(DELAY), null, "ltr")
+                .addInput(VantarKey.ADMIN_IMPORT_EXCLUDE, "exclude", null, null, "ltr")
+                .addCheckbox(VantarKey.ADMIN_DELETE_INCLUDE, "remove", false)
+                .addSubmit(VantarKey.ADMIN_DELETE)
                 .finish();
             return;
         }
@@ -566,7 +567,7 @@ public class AdminDatabase {
             ui.addKeyValue(info.getDtoClassName(), msg + " : " + total + " > " + count).write();
         }
 
-        ui.containerEnd().containerEnd().write();
+        ui.blockEnd().blockEnd().write();
     }
 
     public static void importElastic(Params params, HttpServletResponse response) throws FinishException {
@@ -578,10 +579,10 @@ public class AdminDatabase {
 
         if (!params.isChecked("f")) {
             ui  .beginFormPost()
-                .addInput(Locale.getString(VantarKey.ADMIN_DELAY), "delay", Integer.toString(DELAY), "ltr")
-                .addInput(Locale.getString(VantarKey.ADMIN_IMPORT_EXCLUDE), "exclude", "", "ltr")
-                .addCheckbox(Locale.getString(VantarKey.ADMIN_DATABASE_DELETE_ALL), "remove", true)
-                .addSubmit(Locale.getString(VantarKey.ADMIN_IMPORT))
+                .addInput(VantarKey.ADMIN_DELAY, "delay", Integer.toString(DELAY), null, "ltr")
+                .addInput(VantarKey.ADMIN_IMPORT_EXCLUDE, "exclude", null, null, "ltr")
+                .addCheckbox(VantarKey.ADMIN_DATABASE_DELETE_ALL, "remove", true)
+                .addSubmit(VantarKey.ADMIN_IMPORT)
                 .finish();
             return;
         }
@@ -617,7 +618,7 @@ public class AdminDatabase {
             );
         }
 
-        ui.containerEnd().containerEnd().write();
+        ui.blockEnd().blockEnd().write();
     }
 
     @SuppressWarnings("unchecked")
@@ -634,18 +635,18 @@ public class AdminDatabase {
             try {
                 ElasticIndexes.getMapping(dto).forEach((k, v) -> {
                     if (v instanceof Map) {
-                        ui  .beginPre()
+                        ui  .beginBlock("pre")
                             .addText(k + ":\n");
                         ((Map) v).forEach((m, n) -> ui.addText("    " + m + ": " + n + "\n"));
-                        ui.containerEnd();
+                        ui.blockEnd();
                     } else {
-                        ui.addPre(k + ": " + v);
+                        ui.addBlock("pre", k + ": " + v);
                     }
                 });
             } catch (DatabaseException e) {
                 ui.addErrorMessage(e);
             }
-            ui.containerEnd().write();
+            ui.blockEnd().write();
         }
 
         ui.finish();
@@ -660,28 +661,30 @@ public class AdminDatabase {
 
         String target = params.getString("target", "");
         String destination = params.getString("destination", "");
-        boolean shrink = params.isChecked("shrink");
-        boolean refresh = params.isChecked("refresh");
+        boolean shrinkChecked = params.isChecked("shrink");
+        boolean refreshChecked = params.isChecked("refresh");
 
         ui  .addMessage(Locale.getString(VantarKey.ADMIN_ELASTIC_SETTINGS_MSG1))
             .addEmptyLine()
             .beginFormPost()
             .addSelect(
-                Locale.getString(VantarKey.ADMIN_ELASTIC_SETTINGS_CLASS_NAME),
+                VantarKey.ADMIN_ELASTIC_SETTINGS_CLASS_NAME,
                 "target",
                 DtoDictionary.getNames(DtoDictionary.Dbms.ELASTIC),
+                false,
                 target
             )
             .addInput(
                 Locale.getString(VantarKey.ADMIN_ELASTIC_SETTINGS_DESTINATION),
                 "destination",
                 destination,
+                null,
                 "ltr"
             )
-            .addCheckbox("Shrink", "shrink", shrink)
-            .addCheckbox("Refresh", "refresh", refresh)
+            .addCheckbox("Shrink", "shrink", shrinkChecked)
+            .addCheckbox("Refresh", "refresh", refreshChecked)
             .addSubmit("Clone")
-            .containerEnd()
+            .blockEnd()
             .write();
 
         if (params.isChecked("f")) {
@@ -704,7 +707,7 @@ public class AdminDatabase {
                 }
             }
 
-            if (shrink) {
+            if (shrinkChecked) {
                 try {
                     ElasticIndexes.shrink(info.getDtoInstance());
                     ui.addMessage(Locale.getString(VantarKey.ADMIN_ELASTIC_SETTINGS_ERR3));
@@ -713,7 +716,7 @@ public class AdminDatabase {
                 }
             }
 
-            if (refresh) {
+            if (refreshChecked) {
                 try {
                     ElasticIndexes.refresh(info.getDtoInstance());
                     ui.addMessage(Locale.getString(VantarKey.ADMIN_ELASTIC_SETTINGS_ERR4));

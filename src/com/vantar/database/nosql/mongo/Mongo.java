@@ -22,8 +22,8 @@ public class Mongo {
 
     protected static final Logger log = LoggerFactory.getLogger(Mongo.class);
     public static final String ID = "_id";
-    public final static String LOGICAL_DELETE_FIELD = "is_deleted";
-    public final static Object LOGICAL_DELETE_VALUE = "Y";
+    //public final static String LOGICAL_DELETE_FIELD = "is_deleted";
+    //public final static Object LOGICAL_DELETE_VALUE = "Y";
 
 
     public static synchronized void renameCollection(String from, String to) throws DatabaseException {
@@ -574,10 +574,10 @@ public class Mongo {
     public static long delete(QueryBuilder q) throws DatabaseException {
         Dto dto = q.getDto();
         String storage = dto.getStorage();
-        if (dto.getDeleteLogicalState()) {
-            update(storage, new MongoQuery(q).matches, new Document(LOGICAL_DELETE_FIELD, LOGICAL_DELETE_VALUE));
-            return 1L;
-        }
+//        if (dto.getDeleteLogicalState()) {
+//            update(storage, new MongoQuery(q).matches, new Document(LOGICAL_DELETE_FIELD, LOGICAL_DELETE_VALUE));
+//            return 1L;
+//        }
         if (!dto.beforeDelete()) {
             throw new DatabaseException(VantarKey.EVENT_REJECT);
         }
@@ -596,11 +596,11 @@ public class Mongo {
             throw new DatabaseException(VantarKey.EVENT_REJECT);
         }
 
-        if (condition.getDeleteLogicalState()) {
-            update(condition.getStorage(), conditionDocument, new Document(LOGICAL_DELETE_FIELD, LOGICAL_DELETE_VALUE));
-            condition.afterDelete();
-            return 1L;
-        }
+//        if (condition.getDeleteLogicalState()) {
+//            update(condition.getStorage(), conditionDocument, new Document(LOGICAL_DELETE_FIELD, LOGICAL_DELETE_VALUE));
+//            condition.afterDelete();
+//            return 1L;
+//        }
 
         try {
             long idd = MongoConnection.getDatabase()
@@ -851,7 +851,7 @@ log.error(">>>>>>{}  {}", condition, v);
     public static void increaseValue(QueryBuilder q, String fieldName, long value) throws DatabaseException {
         try {
             MongoConnection.getDatabase().getCollection(q.getDto().getStorage()).updateOne(
-                MongoMapping.getMongoMatches(q.condition(), q.getDto(), true),
+                MongoMapping.getMongoMatches(q.condition(), q.getDto()),
                 new Document("$inc", new Document(fieldName, value))
             );
         } catch (Exception e) {
@@ -877,7 +877,7 @@ log.error(">>>>>>{}  {}", condition, v);
 
         try {
             MongoConnection.getDatabase().getCollection(q.getDto().getStorage()).updateOne(
-                MongoMapping.getMongoMatches(q.condition(), q.getDto(), true),
+                MongoMapping.getMongoMatches(q.condition(), q.getDto()),
                 new Document("$inc", docs)
             );
         } catch (Exception e) {

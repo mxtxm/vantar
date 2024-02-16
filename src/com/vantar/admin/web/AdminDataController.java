@@ -1,6 +1,8 @@
 package com.vantar.admin.web;
 
-import com.vantar.admin.model.*;
+import com.vantar.admin.model.database.AdminData;
+import com.vantar.admin.model.heath.AdminActionLog;
+import com.vantar.admin.model.index.AdminIndexData;
 import com.vantar.database.dto.DtoDictionary;
 import com.vantar.exception.*;
 import com.vantar.web.*;
@@ -23,8 +25,8 @@ import javax.servlet.http.HttpServletResponse;
     "/admin/data/log/rows",
     "/admin/data/log/object",
 
-    "/admin/data/sql/status",
     "/admin/data/mongo/status",
+    "/admin/data/sql/status",
     "/admin/data/elastic/status",
 
     "/admin/data/archive/switch",
@@ -38,7 +40,7 @@ import javax.servlet.http.HttpServletResponse;
 public class AdminDataController extends RouteToMethod {
 
     public void data(Params params, HttpServletResponse response) throws FinishException {
-        AdminData.index(params, response);
+        AdminIndexData.index(params, response);
     }
 
     public void dataFields(Params params, HttpServletResponse response) throws FinishException {

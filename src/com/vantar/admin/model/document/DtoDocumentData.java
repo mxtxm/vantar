@@ -1,6 +1,6 @@
 package com.vantar.admin.model.document;
 
-import com.vantar.admin.model.Admin;
+import com.vantar.admin.model.index.Admin;
 import com.vantar.common.*;
 import com.vantar.database.datatype.Location;
 import com.vantar.database.dto.*;
@@ -40,7 +40,7 @@ public class DtoDocumentData {
             if (c == null || c.getEnumConstants() == null) {
                 return "!!!DOCUMENT CREATION ERROR!!!";
             }
-            StringBuilder sb = new StringBuilder();
+            StringBuilder sb = new StringBuilder(1000);
             sb.append("    JSON\n    {\n");
             for (Object item : c.getEnumConstants()) {
                 sb.append("        \"").append(item).append("\",\n");
@@ -106,7 +106,7 @@ public class DtoDocumentData {
             includeFields = new HashSet<>(10, 1);
         }
 
-        StringBuilder sb = new StringBuilder();
+        StringBuilder sb = new StringBuilder(1000);
         if (dto != null) {
             Dto obj = ClassUtil.getInstance(dto);
             if (obj == null) {
@@ -278,7 +278,7 @@ public class DtoDocumentData {
     }
 
     private String getAsJsonExampleList(Field f, Class<?> dto) {
-        StringBuilder json = new StringBuilder();
+        StringBuilder json = new StringBuilder(1000);
         json.append('[');
         Class<?>[] g = ClassUtil.getGenericTypes(f);
         if (g.length == 1) {
@@ -319,7 +319,7 @@ public class DtoDocumentData {
     }
 
     private String getAsJsonExampleMap(Field f) {
-        StringBuilder json = new StringBuilder();
+        StringBuilder json = new StringBuilder(1000);
         json.append('{');
         Class<?>[] g = ClassUtil.getGenericTypes(f);
         if (g.length == 2) {
@@ -385,7 +385,7 @@ public class DtoDocumentData {
             includeFields = new HashSet<>(10, 1);
         }
 
-        StringBuilder json = new StringBuilder();
+        StringBuilder json = new StringBuilder(100000);
         json.append("{");
 
         for (Field f : getProperties(gType, exclude, ignoreNoStore)) {

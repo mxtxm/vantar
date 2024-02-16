@@ -34,7 +34,7 @@ public class ElasticBackup {
         ZipOutputStream zos = new ZipOutputStream(bos);
 
         if (ui != null) {
-            ui.addHeading("ElasticSearch > " + dumpPath).write();
+            ui.addHeading(2, "ElasticSearch > " + dumpPath).write();
         }
 
         long startTime = System.currentTimeMillis();
@@ -98,7 +98,7 @@ public class ElasticBackup {
             }
             zos.closeEntry();
             if (ui != null) {
-                ui.addPre(
+                ui.addBlock("pre",
                     "finished in: " + ((System.currentTimeMillis() - startTime) / 1000) + "s" +
                         "\n" + r + " records" +
                         "\n" + FileUtil.getSizeReadable(dumpPath)
@@ -119,7 +119,7 @@ public class ElasticBackup {
         }
 
         if (ui != null) {
-            ui.containerEnd().write();
+            ui.blockEnd().write();
         }
     }
 
@@ -132,7 +132,7 @@ public class ElasticBackup {
             return;
         }
 
-        ui.addHeading(zipPath + " > ElasticSearch").write();
+        ui.addHeading(2, zipPath + " > ElasticSearch").write();
 
         long startTime = System.currentTimeMillis();
         long r = 0;
@@ -180,12 +180,12 @@ public class ElasticBackup {
             }
         }
 
-        ui  .addPre(
+        ui  .addBlock("pre",
                 "finished in: " + ((System.currentTimeMillis() - startTime) / 1000) + "s" +
                 "\n" + r + " records" +
                 "\n" + FileUtil.getSizeReadable(zipPath)
             )
-            .containerEnd()
+            .blockEnd()
             .write();
     }
 }

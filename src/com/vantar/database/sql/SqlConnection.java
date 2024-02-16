@@ -35,6 +35,9 @@ public class SqlConnection implements AutoCloseable {
     }
 
     public static void start(SqlConfig config) {
+        if (config == null) {
+            return;
+        }
         SqlConnection.config = config;
         if (config.getDbDriverClass().contains("post")) {
             dbms = SqlDbms.POSTGRESQL;

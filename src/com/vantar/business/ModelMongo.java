@@ -8,10 +8,11 @@ import com.vantar.database.nosql.mongo.Mongo;
 import com.vantar.database.nosql.mongo.*;
 import com.vantar.database.query.*;
 import com.vantar.exception.*;
-import com.vantar.locale.VantarKey;
+import com.vantar.locale.*;
 import com.vantar.service.Services;
 import com.vantar.service.cache.ServiceDtoCache;
-import com.vantar.service.log.ServiceUserActionLog;
+import com.vantar.service.log.ServiceLog;
+import com.vantar.service.log.dto.UserLog;
 import com.vantar.util.number.NumberUtil;
 import com.vantar.util.object.*;
 import com.vantar.util.string.StringUtil;
@@ -643,55 +644,70 @@ public class ModelMongo extends CommonModel {
         return ResponseMessage.success(VantarKey.DELETE_SUCCESS, ids.size());
     }
 
-    public static <T extends Dto> ResponseMessage unDeleteBatch(Params params, Class<T> tClass) throws VantarException {
-        return unDeleteBatch(params, tClass, null);
-    }
-    public static <T extends Dto> ResponseMessage unDeleteBatch(Params params, Class<T> tClass, WriteEvent event)
-        throws VantarException {
+//    public static <T extends Dto> ResponseMessage unDeleteBatch(Params params, Class<T> tClass) throws VantarException {
+//        return unDeleteBatch(params, tClass, null);
+//    }
+//    public static <T extends Dto> ResponseMessage unDeleteBatch(Params params, Class<T> tClass, WriteEvent event)
+//        throws VantarException {
+//
+//        List<Long> ids = params.getLongList("ids");
+//        if (ids == null || ids.isEmpty()) {
+//            ids = params.getJsonList(Long.class);
+//        }
+//        if (ids == null || ids.isEmpty()) {
+//            throw new InputException(VantarKey.INVALID_JSON_DATA);
+//        }
+//
+//        T dto = ClassUtil.getInstance(tClass);
+//        if (dto == null) {
+//            throw new InputException(VantarKey.INVALID_JSON_DATA);
+//        }
+//
+//        try {
+//            for (Long id : ids) {
+//                if (event != null) {
+//                    try {
+//                        event.beforeSet(dto);
+//                    } catch (NoContentException e) {
+//                        throw new InputException(VantarKey.NO_CONTENT);
+//                    }
+//                }
+//
+//                dto.setId(id);
+//
+//                if (event != null) {
+//                    try {
+//                        event.beforeWrite(dto);
+//                    } catch (NoContentException e) {
+//                        throw new InputException(VantarKey.NO_CONTENT);
+//                    }
+//                }
+//
+//                Mongo.unset(dto.getStorage(), dto.getId(), Mongo.LOGICAL_DELETE_FIELD);
+//
+//                afterDataChange(dto, event, true, Dto.Action.UN_DELETE);
+//            }
+//        } catch (DatabaseException e) {
+//            log.error(" !! {} : {}\n", dto.getClass().getSimpleName(), dto, e);
+//            throw new ServerException(VantarKey.UPDATE_FAIL);
+//        }
+//
+//        return ResponseMessage.success(VantarKey.UPDATE_MANY_SUCCESS, ids.size());
+//    }
 
-        List<Long> ids = params.getLongList("ids");
-        if (ids == null || ids.isEmpty()) {
-            ids = params.getJsonList(Long.class);
-        }
-        if (ids == null || ids.isEmpty()) {
-            throw new InputException(VantarKey.INVALID_JSON_DATA);
-        }
+    public static ResponseMessage retrieveFromLog(long id) throws VantarException {
+        UserLog userLog = new UserLog();
+        userLog.id = id;
+        userLog = getById(userLog);
 
-        T dto = ClassUtil.getInstance(tClass);
+        Dto dto = DtoDictionary.getInstance(userLog.classNameSimple);
         if (dto == null) {
-            throw new InputException(VantarKey.INVALID_JSON_DATA);
+            throw new InputException(VantarKey.INVALID_VALUE, "classNameSimple");
         }
 
-        try {
-            for (Long id : ids) {
-                if (event != null) {
-                    try {
-                        event.beforeSet(dto);
-                    } catch (NoContentException e) {
-                        throw new InputException(VantarKey.NO_CONTENT);
-                    }
-                }
-
-                dto.setId(id);
-
-                if (event != null) {
-                    try {
-                        event.beforeWrite(dto);
-                    } catch (NoContentException e) {
-                        throw new InputException(VantarKey.NO_CONTENT);
-                    }
-                }
-
-                Mongo.unset(dto.getStorage(), dto.getId(), Mongo.LOGICAL_DELETE_FIELD);
-
-                afterDataChange(dto, event, true, Dto.Action.UN_DELETE);
-            }
-        } catch (DatabaseException e) {
-            log.error(" !! {} : {}\n", dto.getClass().getSimpleName(), dto, e);
-            throw new ServerException(VantarKey.UPDATE_FAIL);
-        }
-
-        return ResponseMessage.success(VantarKey.UPDATE_MANY_SUCCESS, ids.size());
+        dto.set(userLog.object, Dto.Action.SET);
+        log.error(">>>>{}", dto);
+        return new ResponseMessage();
     }
 
     // < < < DELETE
@@ -706,8 +722,8 @@ public class ModelMongo extends CommonModel {
             Mongo.Sequence.remove(collection);
             Mongo.Index.remove(collection);
             afterDataChange(dto);
-            if (Services.isUp(ServiceUserActionLog.class)) {
-                ServiceUserActionLog.add(Dto.Action.PURGE, dto);
+            if (Services.isUp(ServiceLog.class)) {
+                ServiceLog.addAction(Dto.Action.PURGE, dto);
             }
             return ResponseMessage.success(VantarKey.DELETE_SUCCESS);
         } catch (DatabaseException e) {
@@ -757,12 +773,12 @@ public class ModelMongo extends CommonModel {
             q != null && q.isUpdateMany()
         );
 
-        if (logEvent && Services.isUp(ServiceUserActionLog.class)) {
+        if (logEvent && Services.isUp(ServiceLog.class)) {
             Map<String, Object> object = new HashMap<>(1, 1);
             object.put(fieldName, item);
-            ServiceUserActionLog.add(
+            ServiceLog.addAction(
                 Dto.Action.UPDATE_ADD_ITEM,
-                new ServiceUserActionLog.DtoLogAction(dto.getClass(), dto.getId(), object)
+                new ServiceLog.DtoLogAction(dto.getClass(), dto.getId(), object)
             );
         }
 
@@ -792,12 +808,12 @@ public class ModelMongo extends CommonModel {
             q != null && q.isUpdateMany()
         );
 
-        if (logEvent && Services.isUp(ServiceUserActionLog.class)) {
+        if (logEvent && Services.isUp(ServiceLog.class)) {
             Map<String, Object> object = new HashMap<>(1, 1);
             object.put(fieldName, item);
-            ServiceUserActionLog.add(
+            ServiceLog.addAction(
                 Dto.Action.UPDATE_REMOVE_ITEM,
-                new ServiceUserActionLog.DtoLogAction(dto.getClass(), dto.getId(), object)
+                new ServiceLog.DtoLogAction(dto.getClass(), dto.getId(), object)
             );
         }
 
@@ -828,12 +844,12 @@ public class ModelMongo extends CommonModel {
             q != null && q.isUpdateMany()
         );
 
-        if (logEvent && Services.isUp(ServiceUserActionLog.class)) {
+        if (logEvent && Services.isUp(ServiceLog.class)) {
             Map<String, Object> object = new HashMap<>(1, 1);
             object.put(fieldName + key, value);
-            ServiceUserActionLog.add(
+            ServiceLog.addAction(
                 Dto.Action.UPDATE_ADD_ITEM,
-                new ServiceUserActionLog.DtoLogAction(dto.getClass(), dto.getId(), object)
+                new ServiceLog.DtoLogAction(dto.getClass(), dto.getId(), object)
             );
         }
 
@@ -862,12 +878,12 @@ public class ModelMongo extends CommonModel {
             q != null && q.isUpdateMany()
         );
 
-        if (logEvent && Services.isUp(ServiceUserActionLog.class)) {
+        if (logEvent && Services.isUp(ServiceLog.class)) {
             Map<String, Object> object = new HashMap<>(1, 1);
             object.put(fieldName, key);
-            ServiceUserActionLog.add(
+            ServiceLog.addAction(
                 Dto.Action.UPDATE_REMOVE_ITEM,
-                new ServiceUserActionLog.DtoLogAction(dto.getClass(), dto.getId(), object)
+                new ServiceLog.DtoLogAction(dto.getClass(), dto.getId(), object)
             );
         }
 
@@ -1115,7 +1131,7 @@ public class ModelMongo extends CommonModel {
         }
         dto.setId(id);
         if (dto.hasAnnotation(Cache.class)) {
-            D d = (D) Services.get(ServiceDtoCache.class).getMap(dto.getClass()).get(id);
+            D d = (D) Services.getService(ServiceDtoCache.class).getMap(dto.getClass()).get(id);
             if (d == null) {
                 throw new NoContentException();
             }
@@ -1130,7 +1146,7 @@ public class ModelMongo extends CommonModel {
             throw new InputException(VantarKey.INVALID_ID, dto.getClass().getSimpleName() + ".id");
         }
         if (dto.hasAnnotation(Cache.class)) {
-            D d = (D) Services.get(ServiceDtoCache.class).getMap(dto.getClass()).get(id);
+            D d = (D) Services.getService(ServiceDtoCache.class).getMap(dto.getClass()).get(id);
             if (d == null) {
                 throw new NoContentException();
             }
@@ -1146,7 +1162,7 @@ public class ModelMongo extends CommonModel {
             throw new InputException(VantarKey.INVALID_ID, dto.getClass().getSimpleName() + ".id");
         }
         if (dto.hasAnnotation(Cache.class)) {
-            D d = (D) Services.get(ServiceDtoCache.class).getMap(dto.getClass()).get(dto.getId());
+            D d = (D) Services.getService(ServiceDtoCache.class).getMap(dto.getClass()).get(dto.getId());
             if (d == null) {
                 throw new NoContentException();
             }
@@ -1203,7 +1219,7 @@ public class ModelMongo extends CommonModel {
         throws VantarException {
 
         if (dto.hasAnnotation(Cache.class)) {
-            List<T> d = (List<T>) Services.get(ServiceDtoCache.class).getList(dto.getClass());
+            List<T> d = (List<T>) Services.getService(ServiceDtoCache.class).getList(dto.getClass());
             if (d == null) {
                 throw new NoContentException();
             }
@@ -1234,7 +1250,7 @@ public class ModelMongo extends CommonModel {
     public static <D extends Dto, L extends Dto> List<L> getAllFromCache(
         Params params, Class<D> dto, Class<L> localizedDtoClass) throws VantarException {
 
-        ServiceDtoCache cache = Services.get(ServiceDtoCache.class);
+        ServiceDtoCache cache = Services.getService(ServiceDtoCache.class);
 
         String lang = params.getLang();
         List<L> localized = new ArrayList<>();
@@ -1269,7 +1285,7 @@ public class ModelMongo extends CommonModel {
         String lang = params == null ? null : params.getLangNoDefault();
         if (dto.hasAnnotation(Cache.class)) {
             Map<String, String> result = new LinkedHashMap<>();
-            for (Dto d : Services.get(ServiceDtoCache.class).getList(dto.getClass())) {
+            for (Dto d : Services.getService(ServiceDtoCache.class).getList(dto.getClass())) {
                 Object k = d.getPropertyValue(keyProperty);
                 if (k == null) {
                     continue;
@@ -1496,4 +1512,11 @@ public class ModelMongo extends CommonModel {
         return errors;
     }
 
+    public static long getNextSequence(Dto dto) throws ServerException {
+        try {
+            return Mongo.Sequence.getNext(dto);
+        } catch (DatabaseException e) {
+            throw new ServerException(VantarKey.FETCH_FAIL);
+        }
+    }
 }

@@ -1,6 +1,6 @@
 package com.vantar.admin.model.document;
 
-import com.vantar.admin.model.*;
+import com.vantar.admin.model.index.Admin;
 import com.vantar.common.Settings;
 import com.vantar.database.dto.*;
 import com.vantar.util.file.*;
@@ -14,14 +14,14 @@ public class DtoDocumentCreator {
 
     @SuppressWarnings({"unchecked"})
     public static void create() {
-        StringBuilder document = new StringBuilder();
+        StringBuilder document = new StringBuilder(100000);
         document.append("# Dto objects #\n\n");
 
         List<DtoDictionary.Info> dtos = new ArrayList<>(DtoDictionary.getAll());
 
         for (DtoDictionary.Info info : dtos) {
             Dto dto = info.getDtoInstance();
-            StringBuilder enums = new StringBuilder();
+            StringBuilder enums = new StringBuilder(1000);
 
             if (info.dtoClass.isAnnotationPresent(NoStore.class)) {
                 document.append("\n<label id='").append(info.dtoClass.getSimpleName()).append("'></label>\n###### ")

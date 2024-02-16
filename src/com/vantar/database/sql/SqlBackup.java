@@ -18,7 +18,7 @@ public class SqlBackup {
 
     public static void dump(String dumpPath, DateTimeRange dateRange, WebUi ui) {
         if (ui != null) {
-            ui.addHeading("PostgreSQL " + Settings.sql().getDbDatabase() + " > " + dumpPath).write();
+            ui.addHeading(2, "PostgreSQL " + Settings.sql().getDbDatabase() + " > " + dumpPath).write();
         }
 
         String tempDir = DirUtil.makeTempDirectory();
@@ -81,19 +81,19 @@ public class SqlBackup {
             DirUtil.removeDirectory(tempDir);
 
             if (ui != null) {
-                ui.addPre(
+                ui.addBlock("pre",
                     "finished in: " + ((System.currentTimeMillis() - startTime) / 1000) + "s" +
                         "\n" + FileUtil.getSizeReadable(dumpPath)
                 );
             }
         }
         if (ui != null) {
-            ui.containerEnd().write();
+            ui.blockEnd().write();
         }
     }
 
     public static void restore(String zipPath, boolean deleteData, WebUi ui) {
-        ui.addHeading("PostgreSQL " + zipPath + " > " + Settings.sql().getDbDatabase()).write();
+        ui.addHeading(2, "PostgreSQL " + zipPath + " > " + Settings.sql().getDbDatabase()).write();
 
         String tmpDir = DirUtil.makeTempDirectory();
         FileUtil.unzip(zipPath, tmpDir);
@@ -125,11 +125,11 @@ public class SqlBackup {
                 }
             }
 
-            ui  .addPre(
+            ui  .addBlock("pre",
                 "finished in: " + ((System.currentTimeMillis() - startTime) / 1000) + "s" +
                     "\n" + FileUtil.getSizeReadable(zipPath)
                 )
-                .containerEnd()
+                .blockEnd()
                 .write();
         } finally {
             DirUtil.removeDirectory(tmpDir);

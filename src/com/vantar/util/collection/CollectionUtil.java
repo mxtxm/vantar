@@ -134,7 +134,7 @@ public class CollectionUtil {
         if (iterable == null) {
             return "";
         }
-        StringBuilder sb = new StringBuilder();
+        StringBuilder sb = new StringBuilder(iterable.size() * 20);
         for (Object item : iterable) {
             sb.append(item).append(glue);
         }
@@ -155,7 +155,7 @@ public class CollectionUtil {
         if (map == null || map.size() == 0) {
             return "";
         }
-        StringBuilder sb = new StringBuilder();
+        StringBuilder sb = new StringBuilder(map.size() * 20);
         for (Map.Entry<?, ?> entry : map.entrySet()) {
             sb.append(entry.getKey()).append(glueEntry).append(entry.getValue()).append(glueItem);
         }
@@ -177,7 +177,7 @@ public class CollectionUtil {
         if (map == null || map.size() == 0) {
             return "";
         }
-        StringBuilder sb = new StringBuilder();
+        StringBuilder sb = new StringBuilder(map.size() * 20);
         for (Map.Entry<?, ?> entry : map.entrySet()) {
             sb.append(entry.getKey()).append(glueEntry).append(entry.getValue()).append(glueItem);
         }
@@ -197,7 +197,7 @@ public class CollectionUtil {
         if (array == null || !array.getClass().isArray()) {
             return "";
         }
-        StringBuilder sb = new StringBuilder();
+        StringBuilder sb = new StringBuilder(200);
         for (int i = 0, length = Array.getLength(array); i < length; ++i) {
             sb.append(ObjectUtil.toString(Array.get(array, i))).append(glue);
         }
@@ -218,7 +218,7 @@ public class CollectionUtil {
         if (array == null || !array.getClass().isArray()) {
             return "";
         }
-        StringBuilder sb = new StringBuilder();
+        StringBuilder sb = new StringBuilder(200);
         for (int i = 0, length = Array.getLength(array); i < length; ++i) {
             sb.append(ObjectUtil.toString(Array.get(array, i))).append(glue);
         }

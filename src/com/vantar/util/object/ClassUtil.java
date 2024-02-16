@@ -433,11 +433,11 @@ public class ClassUtil {
         }
     }
 
-    public static void checkControllers(Logger log) {
+    public static void checkControllers(String module, Logger log) {
         log.info(" > checking controller classes...");
         int c = 0;
         int e = 0;
-        for (Class<?> controllerClass : ClassUtil.getClasses("com.proda.web.api")) {
+        for (Class<?> controllerClass : ClassUtil.getClasses(module)) {
             ++c;
             WebServlet webServlet = controllerClass.getAnnotation(WebServlet.class);
             if (webServlet == null) {

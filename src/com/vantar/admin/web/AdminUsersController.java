@@ -19,6 +19,6 @@ public class AdminUsersController extends RouteToMethod {
     }
 
     public void usersSigninFailsReset(Params params, HttpServletResponse response) throws ServiceException {
-        Services.get(ServiceAuth.class).resetSigninFails();
+        Services.getService(ServiceAuth.class).resetSigninFails();
     }
 }

@@ -1,5 +1,6 @@
-package com.vantar.admin.model;
+package com.vantar.admin.model.database;
 
+import com.vantar.admin.model.index.Admin;
 import com.vantar.database.common.ValidationError;
 import com.vantar.database.dto.*;
 import com.vantar.database.nosql.elasticsearch.ElasticBackup;
@@ -32,7 +33,7 @@ public class AdminBackup {
 
         ServiceBackup backup;
         try {
-            backup = Services.get(ServiceBackup.class);
+            backup = Services.getService(ServiceBackup.class);
         } catch (ServiceException e) {
             ui.addErrorMessage(e);
             ui.write();
@@ -58,7 +59,7 @@ public class AdminBackup {
                 .addInput(Locale.getString(VantarKey.ADMIN_DATE_TO), "datemax",
                     dateRange.dateMax == null ? "" : dateRange.dateMax.formatter().getDateTimePersian())
                 .addSubmit(Locale.getString(VantarKey.ADMIN_BACKUP_CREATE_START))
-                .addBlockLink("Query", "/admin/data/backup/mongo/q")
+                .addHrefBlock("Query", "/admin/data/backup/mongo/q")
                 .finish();
             return;
         }
@@ -83,7 +84,7 @@ public class AdminBackup {
 
         ServiceBackup backup;
         try {
-            backup = Services.get(ServiceBackup.class);
+            backup = Services.getService(ServiceBackup.class);
         } catch (ServiceException e) {
             ui.addErrorMessage(e);
             ui.write();
@@ -162,7 +163,7 @@ public class AdminBackup {
 
         ServiceBackup backup;
         try {
-            backup = Services.get(ServiceBackup.class);
+            backup = Services.getService(ServiceBackup.class);
         } catch (ServiceException e) {
             ui.addErrorMessage(e);
             ui.write();
@@ -181,12 +182,12 @@ public class AdminBackup {
                 files.add(path);
             }
 
-            ui  .addMessage(Locale.getString(VantarKey.ADMIN_RESTORE_MSG1))
-                .addMessage(Locale.getString(VantarKey.ADMIN_RESTORE_MSG2))
-                .addMessage(Locale.getString(VantarKey.ADMIN_RESTORE_MSG3))
+            ui  .addMessage(VantarKey.ADMIN_RESTORE_MSG1)
+                .addMessage(VantarKey.ADMIN_RESTORE_MSG2)
+                .addMessage(VantarKey.ADMIN_RESTORE_MSG3)
                 .beginFormPost()
-                .addSelect(Locale.getString(VantarKey.ADMIN_BACKUP_FILE_PATH), "dumpfile", files.toArray(new String[0]))
-                .addCheckbox(Locale.getString(VantarKey.ADMIN_RESTORE_DELETE_CURRENT_DATA), "deleteall", true)
+                .addSelect(VantarKey.ADMIN_BACKUP_FILE_PATH, "dumpfile", files.toArray(new String[0]))
+                .addCheckbox(VantarKey.ADMIN_RESTORE_DELETE_CURRENT_DATA, "deleteall", true)
                 .addCheckbox("camelCaseProperties", "camelcase", false)
                 .addSubmit(Locale.getString(VantarKey.ADMIN_BACKUP_RESTORE))
                 .finish();
@@ -209,7 +210,7 @@ public class AdminBackup {
 
         ServiceBackup backup;
         try {
-            backup = Services.get(ServiceBackup.class);
+            backup = Services.getService(ServiceBackup.class);
         } catch (ServiceException e) {
             ui.addErrorMessage(e);
             ui.write();
@@ -245,15 +246,17 @@ public class AdminBackup {
             String[] parts = StringUtil.split(path, '/');
             String filename = parts[parts.length - 1];
 
-            ui.addBoxWithNoEscape(
-                ui.getCheckbox("delete", path) +
-                ui.getLink("download", "/admin/data/backup/download?" + "file" + "=" + filename, false, false) +
-                filename + " (" + FileUtil.getSizeMb(path) + "Mb)"
+            ui.addBlockNoEscape(
+                "div",
+                ui.getCheckbox("delete", false, path)
+                    + ui.getHref("download", "/admin/data/backup/download?" + "file" + "=" + filename, false, false, "")
+                    + filename + " (" + FileUtil.getSizeMb(path) + "Mb)",
+                "box-content"
             ).write();
         }
 
         ui  .addEmptyLine(3)
-            .addCheckbox(Locale.getString(VantarKey.ADMIN_DELETE_DO), WebUi.PARAM_CONFIRM)
+            .addCheckbox(VantarKey.ADMIN_DELETE_DO, WebUi.PARAM_CONFIRM)
             .addSubmit(Locale.getString(VantarKey.ADMIN_DELETE))
             .finish();
     }
@@ -271,7 +274,7 @@ public class AdminBackup {
 
         ServiceBackup backup;
         try {
-            backup = Services.get(ServiceBackup.class);
+            backup = Services.getService(ServiceBackup.class);
         } catch (ServiceException e) {
             ui.addErrorMessage(e);
             ui.write();
@@ -297,9 +300,9 @@ public class AdminBackup {
         WebUi ui = Admin.getUi(Locale.getString(VantarKey.ADMIN_BACKUP), params, response, true);
 
         try {
-            ServiceBackup serviceBackup = Services.get(ServiceBackup.class);
+            ServiceBackup serviceBackup = Services.getService(ServiceBackup.class);
             for (String log : serviceBackup.getLogs()) {
-                ui.addPre(log);
+                ui.addBlock("pre", log);
             }
         } catch (ServiceException ignore) {
 

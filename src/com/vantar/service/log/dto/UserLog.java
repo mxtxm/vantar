@@ -4,37 +4,30 @@ import com.vantar.database.dto.*;
 import com.vantar.util.datetime.DateTime;
 import java.util.*;
 
-@Archive("500000R")
-@Elastic
 @Mongo
-@Index({"userId:1", "className:1", "classNameSimple:1", "objectId:1", "action:1", "time:1", "url:1",})
+@Elastic
+@Archive("500000R")
+@Index({"userId:1", "className:1", "classNameSimple:1", "objectId:1", "objectX:1", "extraData:1", "action:1", "time:1", "url:1",})
 public class UserLog extends DtoBase {
 
     public Long id;
 
     public Long userId;
+    public String userName;
     public Long threadId;
     public String action;
-    public Integer status;
-    public String requestType;
     public String url;
-    public String ip;
     @Timestamp
     @CreateTime
     public DateTime time;
 
     public String className;
     public String classNameSimple;
-
-    public List<String> uploadedFiles;
-    @StoreString
-    public Map<String, String> headers;
-
     public Long objectId;
+
     public String object;
-
+    public Map<String, Object> objectX;
     public Map<String, Object> extraData;
-
 
 
     public static class Mini extends DtoBase {
@@ -42,11 +35,10 @@ public class UserLog extends DtoBase {
         public Long id;
 
         public Long userId;
+        public String userName;
         public Long threadId;
         public String action;
-        public Integer status;
         public String url;
-        public String ip;
         public DateTime time;
 
         public String className;
@@ -60,22 +52,15 @@ public class UserLog extends DtoBase {
         public Long id;
 
         public Long userId;
+        public String userName;
         public Long threadId;
         public String action;
-        public Integer status;
-        public String requestType;
         public String url;
-        public String ip;
         @Timestamp
-        @CreateTime
         public DateTime time;
 
         public String className;
-
-        public List<String> uploadedFiles;
-        @StoreString
-        public Map<String, String> headers;
-
+        public String classNameSimple;
         public Long objectId;
 
         public Map<String, Object> extraData;

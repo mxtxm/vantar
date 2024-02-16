@@ -22,7 +22,7 @@ public class DateTimeException extends Exception {
 
     @Override
     public String getMessage() {
-        StringBuilder sb = new StringBuilder();
+        StringBuilder sb = new StringBuilder(20);
         sb.append('(').append(date == null ? "NULL" : date).append(')');
         if (errors != null) {
             for (VantarKey error : errors) {

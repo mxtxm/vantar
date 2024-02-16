@@ -49,7 +49,7 @@ public class Patcher extends DtoBase {
     public static PatchHistory execPatchManually(String className, WebUi ui) {
         PatchHistory history = new PatchHistory();
         try {
-            Services.log.info(" >> running {}", className);
+            Services.log.info("  --> running {}", className);
 
             Object object = ClassUtil.getInstance(className);
             if (!(object instanceof PatchInterface)) {
@@ -75,7 +75,7 @@ public class Patcher extends DtoBase {
             history.fail = result.fail;
             history.successCount = result.successCount;
             history.failCount = result.failCount;
-            Services.log.info(" << finished {} --> fail={} success={}", className, result.failCount, result.successCount);
+            Services.log.info("  <-- finished {} fail={} success={}", className, result.failCount, result.successCount);
             ModelMongo.insertNoLog(history);
         } catch (Throwable t) {
             Services.log.error(" ! Patcher {}", className, t);

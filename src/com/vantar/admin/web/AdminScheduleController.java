@@ -1,6 +1,6 @@
 package com.vantar.admin.web;
 
-import com.vantar.admin.model.AdminSchedule;
+import com.vantar.admin.model.index.AdminSchedule;
 import com.vantar.exception.FinishException;
 import com.vantar.web.*;
 import javax.servlet.annotation.WebServlet;

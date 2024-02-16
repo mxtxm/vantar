@@ -9,7 +9,7 @@ import com.vantar.database.sql.SqlConnection;
 import com.vantar.exception.*;
 import com.vantar.queue.Queue;
 import com.vantar.service.Services;
-import com.vantar.service.log.LogEvent;
+import com.vantar.service.log.Beat;
 import com.vantar.service.scheduler.ServiceScheduler;
 import com.vantar.util.datetime.*;
 import com.vantar.util.number.NumberUtil;
@@ -60,14 +60,14 @@ public class AdminSystemHealthController extends RouteToMethod {
 
         // other services
         Map<String, ServiceStatus> services = new HashMap<>(10, 1);
-        synchronized (Services.upServices) {
-            Services.upServices.forEach((service, info) -> {
-                if (!"ServiceScheduler".equals(service)) {
-                    services.put(service, new ServiceStatus(info));
-                }
-            });
-        }
-        LogEvent.getBeats().forEach((service, logs) -> {
+//        synchronized (Services.upServices) {
+//            Services.upServices.forEach((service, info) -> {
+//                if (!"ServiceScheduler".equals(service)) {
+//                    services.put(service, new ServiceStatus(info));
+//                }
+//            });
+//        }
+        Beat.getBeats().forEach((service, logs) -> {
             ServiceStatus serviceStatus = services.get(service.getSimpleName());
             if (serviceStatus == null || "ServiceScheduler".equals(service.getSimpleName())) {
                 return;
@@ -93,11 +93,11 @@ public class AdminSystemHealthController extends RouteToMethod {
 
         // schedules
         try {
-            ServiceScheduler sch = Services.get(ServiceScheduler.class);
+            ServiceScheduler sch = Services.getService(ServiceScheduler.class);
             if (Services.isUp(ServiceScheduler.class) && sch != null) {
                 List<ScheduleStatus> schStatuses = new ArrayList<>(10);
                 for (ServiceScheduler.ScheduleInfo info : sch.getToRuns()) {
-                    StringBuilder startAtComment = new StringBuilder();
+                    StringBuilder startAtComment = new StringBuilder(30);
                     startAtComment.append(info.startAt).append(" ");
                     int c = StringUtil.countMatches(info.startAt, ':');
                     if (c == 1) {
@@ -123,7 +123,7 @@ public class AdminSystemHealthController extends RouteToMethod {
 
                     ScheduleStatus scheduleStatus = new ScheduleStatus();
                     scheduleStatus.className = info.getName();
-                    scheduleStatus.lastRun = LogEvent.getBeat(ServiceScheduler.class, "run:" + info.getName());
+                    scheduleStatus.lastRun = Beat.getBeat(ServiceScheduler.class, "run:" + info.getName());
                     scheduleStatus.start = startAtComment.toString();
                     scheduleStatus.repeat = repeatAtComment.toString();
                     schStatuses.add(scheduleStatus);
@@ -146,10 +146,10 @@ public class AdminSystemHealthController extends RouteToMethod {
         public boolean isEnabledOnThisServer;
         public int instanceCount;
 
-        public ServiceStatus(Services.ServiceInfo serviceInfo) {
-            isEnabledOnThisServer = serviceInfo.isEnabledOnThisServer;
-            instanceCount = serviceInfo.instanceCount;
-        }
+//        public ServiceStatus(Services.ServiceInfo serviceInfo) {
+//            isEnabledOnThisServer = serviceInfo.isEnabledOnThisServer;
+//            instanceCount = serviceInfo.instanceCount;
+//        }
     }
 
 

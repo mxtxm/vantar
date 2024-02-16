@@ -414,7 +414,7 @@ public class MongoQueryResult extends QueryResultBase implements QueryResult, Au
     private boolean fetchFromCache(Document document, Dto dtoX, Field fieldX, Class<?> type) throws IllegalAccessException {
         ServiceDtoCache cache;
         try {
-            cache = Services.get(ServiceDtoCache.class);
+            cache = Services.getService(ServiceDtoCache.class);
         } catch (ServiceException e) {
             log.warn(" ! cache service is off");
             return false;

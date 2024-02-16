@@ -438,7 +438,7 @@ public class CommonModelElastic extends CommonModel {
                 log.error("! batch import failed", e);
                 return;
             }
-            ui.addPre(Locale.getString(VantarKey.DELETE_SUCCESS)).write();
+            ui.addBlock("pre", Locale.getString(VantarKey.DELETE_SUCCESS)).write();
         }
 
         ElasticWrite write = new ElasticWrite();
@@ -468,12 +468,12 @@ public class CommonModelElastic extends CommonModel {
         try {
             write.commit();
 
-            ui.addPre(
+            ui.addBlock("pre",
                 Locale.getString(VantarKey.BUSINESS_WRITTEN_COUNT, success) + "\n" +
                 Locale.getString(VantarKey.BUSINESS_ERROR_COUNT, failed) + "\n" +
                 Locale.getString(VantarKey.BUSINESS_DUPLICATE_COUNT, duplicate)
             );
-            ui.containerEnd().containerEnd().write();
+            ui.blockEnd().blockEnd().write();
 
         } catch (DatabaseException e) {
             ui.addErrorMessage(e);
