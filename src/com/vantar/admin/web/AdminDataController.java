@@ -15,7 +15,7 @@ import javax.servlet.http.HttpServletResponse;
     "/admin/data/fields",
     "/admin/data/list",
     "/admin/data/update",
-    "/admin/data/delete",
+    //"/admin/data/delete",
     "/admin/data/delete/many",
     "/admin/data/purge",
     "/admin/data/insert",
@@ -51,9 +51,9 @@ public class AdminDataController extends RouteToMethod {
         AdminData.list(params, response, DtoDictionary.get(params.getString("dto")));
     }
 
-    public void dataDelete(Params params, HttpServletResponse response) throws FinishException {
-        AdminData.delete(params, response, DtoDictionary.get(params.getString("dto")));
-    }
+//    public void dataDelete(Params params, HttpServletResponse response) throws FinishException {
+//        AdminData.delete(params, response, DtoDictionary.get(params.getString("dto")));
+//    }
 
     public void dataDeleteMany(Params params, HttpServletResponse response) throws FinishException {
         AdminData.deleteMany(params, response, DtoDictionary.get(params.getString("dto")));

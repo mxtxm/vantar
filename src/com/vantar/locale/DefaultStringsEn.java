@@ -22,8 +22,6 @@ public class DefaultStringsEn {
         tokens.put(VantarKey.USER_REPO_NOT_SET, "User repo event not set, authentication requires repo to access database");
         tokens.put(VantarKey.USER_ALREADY_SIGNED_IN, "User is already signed in");
 
-        tokens.put(VantarKey.ADMIN_REQUIRES_ROOT, "Unauthorized! This request requires 'root' access.");
-
         // datetime
         tokens.put(VantarKey.INVALID_DATETIME, "Invalid datetime: \"{0}\"");
         tokens.put(VantarKey.INVALID_DATE, "Invalid date: \"{0}\"");
@@ -94,15 +92,13 @@ public class DefaultStringsEn {
         tokens.put(VantarKey.ADMIN_MENU_PATCH, "Patches");
         tokens.put(VantarKey.ADMIN_MENU_QUERY, "Queries");
         tokens.put(VantarKey.ADMIN_MENU_DOCUMENTS, "Documents");
+        tokens.put(VantarKey.ADMIN_MENU_BUGGER, "Bug report");
         tokens.put(VantarKey.ADMIN_MENU_SIGN_OUT, "Sign out");
 
         tokens.put(VantarKey.ADMIN_USERS, "Users");
         tokens.put(VantarKey.ADMIN_SYSTEM_ERRORS, "System errors");
-        tokens.put(VantarKey.ADMIN_SERVICES_LAST_RUN, "Services last run");
+        tokens.put(VantarKey.ADMIN_SERVICES_BEAT, "Beat (messages)");
         tokens.put(VantarKey.ADMIN_SERVICES_STATUS, "Service status");
-        tokens.put(VantarKey.ADMIN_BACKUP_SQL, "SQL backup");
-        tokens.put(VantarKey.ADMIN_BACKUP_MONGO, "Mongo backup");
-        tokens.put(VantarKey.ADMIN_BACKUP_ELASTIC, "Elastic backup");
         tokens.put(VantarKey.ADMIN_SHORTCUTS, "Shortcut links");
 
         tokens.put(VantarKey.ADMIN_SYSTEM_ADMIN, "System administration");
@@ -122,8 +118,8 @@ public class DefaultStringsEn {
         tokens.put(VantarKey.ADMIN_DATABASE_STATUS, "status");
         tokens.put(VantarKey.ADMIN_DATABASE_STATUS_PARAM, "status \"{0}\"");
         tokens.put(VantarKey.ADMIN_DATABASE_CREATE_INDEX, "Create indexes");
-        tokens.put(VantarKey.ADMIN_DATABASE_DELETE_ALL, "Purge");
-        tokens.put(VantarKey.ADMIN_DATABASE_DELETE_OPTIONAL, "Delete selected data");
+        tokens.put(VantarKey.ADMIN_DELETE_ALL, "Purge");
+        tokens.put(VantarKey.ADMIN_DELETE_OPTIONAL, "Delete selected data");
         tokens.put(VantarKey.ADMIN_DATABASE_SYNCH, "Synch");
         tokens.put(VantarKey.ADMIN_DATABASE_INDEX_DEF, "Index definition");
         tokens.put(VantarKey.ADMIN_DATABASE_INDEX_SETTINGS, "Index settings");
@@ -151,8 +147,6 @@ public class DefaultStringsEn {
         tokens.put(VantarKey.ADMIN_RESTORE_MSG2, "* Restoring huge amount of data is time consuming");
         tokens.put(VantarKey.ADMIN_RESTORE_MSG3, "* Turn off services before data restoration");
         tokens.put(VantarKey.ADMIN_RESTORE_DELETE_CURRENT_DATA, "Delete all data");
-        tokens.put(VantarKey.ADMIN_DOWNLOAD, " Download backup file ");
-        tokens.put(VantarKey.ADMIN_REMOVE_BACKUP_FILE, " Delete backup files ");
         tokens.put(VantarKey.ADMIN_DELETE_DO, "Delete");
         tokens.put(VantarKey.ADMIN_DATA_FIELDS, "Fields");
         tokens.put(VantarKey.ADMIN_DATA_LIST, "List");
@@ -163,7 +157,6 @@ public class DefaultStringsEn {
         tokens.put(VantarKey.ADMIN_DELETE, "Delete");
         tokens.put(VantarKey.ADMIN_UPDATE, "Update");
         tokens.put(VantarKey.ADMIN_STATUS, "\"{0}\" status");
-        tokens.put(VantarKey.ADMIN_RECORD_COUNT, "\"{0}\" records");
         tokens.put(VantarKey.ADMIN_DATABASE_SYNCH_TITLE, "\"{0}\" synch");
         tokens.put(VantarKey.ADMIN_DATABASE_SYNCH_CONFIRM, "Start synch");
         tokens.put(VantarKey.ADMIN_DATABASE_SYNCH_RUNNING, "Synchronizing database with system objects...");
@@ -193,7 +186,6 @@ public class DefaultStringsEn {
         tokens.put(VantarKey.ADMIN_SERVICES, "Services");
         tokens.put(VantarKey.ADMIN_ONLINE_USERS, "Online users");
         tokens.put(VantarKey.ADMIN_DELETE_TOKEN, "Delete authentication token");
-        tokens.put(VantarKey.ADMIN_DELETE_TOKEN_DESCRIPTION, "Delete authentication token description");
         tokens.put(VantarKey.ADMIN_AUTH_TOKEN, "Authentication token");
         tokens.put(VantarKey.ADMIN_SIGNUP_TOKEN_TEMP, "Temp signup tokens");
         tokens.put(VantarKey.ADMIN_SIGNIN_TOKEN_TEMP, "Temp signin tokens");
@@ -205,7 +197,6 @@ public class DefaultStringsEn {
         tokens.put(VantarKey.ADMIN_MENU_QUERY_TITLE, "Queries");
         tokens.put(VantarKey.ADMIN_QUERY_NEW, "New query");
         tokens.put(VantarKey.ADMIN_QUERY_WRITE, "Create query");
-        tokens.put(VantarKey.ADMIN_GROUP, "Group");
         tokens.put(VantarKey.ADMIN_TITLE, "Title");
         tokens.put(VantarKey.ADMIN_HELP, "Help...");
         tokens.put(VantarKey.ADMIN_CONFIRM, "I'm sure");
@@ -220,8 +211,6 @@ public class DefaultStringsEn {
         tokens.put(VantarKey.ADMIN_QUEUE_DELETE_EXCLUDE, "Exclude queues");
         tokens.put(VantarKey.ADMIN_QUEUE_DELETE_INCLUDE, "Include queues");
         tokens.put(VantarKey.ADMIN_NO_QUEUE, "No queues");
-        tokens.put(VantarKey.ADMIN_RABBIT_IS_ON, "RabbitMQ is up");
-        tokens.put(VantarKey.ADMIN_RABBIT_IS_OFF, "RabbitMQ is or down or connection is broken");
         tokens.put(VantarKey.ADMIN_NO_ERROR, "There are not errors");
         tokens.put(VantarKey.ADMIN_ERRORS_DELETE, "Remove system errors");
         tokens.put(VantarKey.ADMIN_RECORDS, " :record ");
@@ -244,23 +233,23 @@ public class DefaultStringsEn {
         tokens.put(VantarKey.ADMIN_SYSYEM_CLASSES, "System classes");
         tokens.put(VantarKey.ADMIN_DATA_ENTRY, "Data entry");
         tokens.put(VantarKey.ADMIN_DELETE_ALL_CONFIRM, "Confirm delete all?");
-        tokens.put(VantarKey.ADMIN_BATCH_EDIT, "Batch update");
-        tokens.put(VantarKey.ADMIN_BATCH_DELETE, "Batch delete");
-        tokens.put(VantarKey.ADMIN_JSON_OPTION, "JSON/option");
+
         tokens.put(VantarKey.ADMIN_SORT, "Sort");
         tokens.put(VantarKey.ADMIN_SEARCH, "Search");
-        tokens.put(VantarKey.ADMIN_FROM, "From");
         tokens.put(VantarKey.ADMIN_ADMIN_PANEL, "Administrator dashboard");
         tokens.put(VantarKey.ADMIN_SUBMIT, "Submit");
         tokens.put(VantarKey.ADMIN_CACHE, "Cached data");
-        tokens.put(VantarKey.ADMIN_SERVICE_IS_OFF, "\"{0}\" is not enabled");
-        tokens.put(VantarKey.ADMIN_SIGN_IN, "Sign into Administrator dashboard");
-        tokens.put(VantarKey.ADMIN_DATA, "Data");
+
+        tokens.put(VantarKey.ADMIN_SERVICE_IS_OFF, "{0} is down");
+        tokens.put(VantarKey.ADMIN_SERVICE_IS_ON, "{0} is up");
+        tokens.put(VantarKey.ADMIN_SERVICE_IS_DISABLED, "{0} is not enabled");
+        tokens.put(VantarKey.ADMIN_SERVICE_IS_ENABLED, "{0} is enabled");
+
+        tokens.put(VantarKey.ADMIN_SIGN_IN, "Sign into Vantar Administrator dashboard");
 
         tokens.put(VantarKey.ADMIN_SCHEDULE_REPEAT_AT, "repeat at");
         tokens.put(VantarKey.ADMIN_SCHEDULE_START_AT, "start at");
         tokens.put(VantarKey.ADMIN_SCHEDULE_RUN, "run manually now");
-        tokens.put(VantarKey.ADMIN_SCHEDULE_RUN_FAIL, "run failed");
         tokens.put(VantarKey.ADMIN_SCHEDULE_RUN_SUCCESS, "run successfully");
 
         tokens.put(VantarKey.ADMIN_RUN_TIME, "run time");
@@ -275,12 +264,7 @@ public class DefaultStringsEn {
         tokens.put(VantarKey.BUSINESS_DUPLICATE_COUNT, "Duplicate record (\"{0}\")");
         tokens.put(VantarKey.BUSINESS_SERIAL_MAX,      "Last primary key (\"{0}\")");
 
-        tokens.put(VantarKey.SHOW_NOT_DELETED, "Show not deleted");
-        tokens.put(VantarKey.SHOW_DELETED, "Show deleted");
-        tokens.put(VantarKey.SHOW_ALL, "Show all");
 
-        //tokens.put(VantarKey.LOGICAL_DELETED, "Soft delete (mark record as deleted)");
-        //tokens.put(VantarKey.LOGICAL_DELETED_UNDO, "Undelete");
         tokens.put(VantarKey.ADMIN_ACTION_LOG, "Log");
 
         tokens.put(VantarKey.ADMIN_PAGING, "paging");
@@ -306,8 +290,12 @@ public class DefaultStringsEn {
         tokens.put(VantarKey.ADMIN_FAIL_MSG, "fail message");
         tokens.put(VantarKey.ADMIN_SUCCESS, "success count");
         tokens.put(VantarKey.ADMIN_SUCCESS_MSG, "success message");
+        tokens.put(VantarKey.ADMIN_REFRESH, "refresh");
 
         tokens.put(VantarKey.ADMIN_WEBSERVICE_INDEX_TITLE, "Webservice index");
+
+        tokens.put(VantarKey.ADMIN_WEBSERVICE, "Health report webservices");
+
     }
 
     public static String getString(LangKey key) {

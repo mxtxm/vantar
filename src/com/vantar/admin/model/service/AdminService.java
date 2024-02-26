@@ -44,7 +44,7 @@ public class AdminService {
 
 
     public static void stopServices(Params params, HttpServletResponse response) throws FinishException {
-        WebUi ui = Admin.getUi(Locale.getString(Locale.getString(VantarKey.ADMIN_SERVICE_STOP)), params, response, true);
+        WebUi ui = Admin.getUi(Locale.getString(VantarKey.ADMIN_SERVICE_STOP), params, response, true);
         if (!params.isChecked("f") || !params.isChecked(WebUi.PARAM_CONFIRM)) {
             ui  .beginFormPost()
                 .addInput(VantarKey.ADMIN_DELAY, "delay", Integer.toString(DEFAULT_DELAY_SECONDS), null, "ltr")
@@ -60,7 +60,7 @@ public class AdminService {
     }
 
     public static void factoryReset(Params params, HttpServletResponse response) throws FinishException {
-        WebUi ui = Admin.getUi(Locale.getString(VantarKey.ADMIN_FACTORY_RESET), params, response, true);
+        WebUi ui = Admin.getUi(VantarKey.ADMIN_FACTORY_RESET, params, response, true);
         if (!params.isChecked("f") || !params.isChecked(WebUi.PARAM_CONFIRM)) {
             ui  .beginFormPost()
                 .addInput(VantarKey.ADMIN_DELAY, "delay", Integer.toString(DEFAULT_DELAY_SECONDS), null, "ltr")
@@ -138,39 +138,27 @@ public class AdminService {
         WebUi ui = Admin.getUi("GC", params, response, true);
 
         if ("run".equals(params.getString("gc"))) {
-            try {
-                ServiceHealthMonitor monitor = Services.getService(ServiceHealthMonitor.class);
-                ServiceHealthMonitor.MemoryStatus mStatus = monitor.getMemoryStatus();
-                ui  .addEmptyLine()
-                    .addHeading(3, "Before GC")
-                    .addKeyValue("Designated memory", NumberUtil.getReadableByteSize(mStatus.max))
-                    .addKeyValue("Allocated memory", NumberUtil.getReadableByteSize(mStatus.total))
-                    .addKeyValue("Free memory", NumberUtil.getReadableByteSize(mStatus.free))
-                    .addKeyValue("Used memory", NumberUtil.getReadableByteSize(mStatus.used))
-                    .addKeyValue(
-                        "Physical memory",
-                        NumberUtil.getReadableByteSize(mStatus.physicalFree)
-                            + " / " + NumberUtil.getReadableByteSize(mStatus.physicalTotal)
-                    )
-                    .addKeyValue(
-                        "Swap memory",
-                        NumberUtil.getReadableByteSize(mStatus.swapFree)
-                            + " / " + NumberUtil.getReadableByteSize(mStatus.swapTotal)
-                    );
-                System.gc();
-            } catch (ServiceException ignore) {
-
-            }
+            plotMemoryStatus(ui);
+            ui.addEmptyLine().addHrefBlock("GarbageCollect", "?gc=run");
+            System.gc();
         } else {
-            ui  .addHeading(3, VantarKey.ADMIN_MEMORY);
+            ui.addHeading(2, VantarKey.ADMIN_MEMORY);
         }
 
+        ui.addEmptyLine(3).addHeading(2, "After GC");
+
+        plotMemoryStatus(ui);
+        ui.finish();
+    }
+
+    public static void plotMemoryStatus(WebUi ui) {
         try {
             ServiceHealthMonitor monitor = Services.getService(ServiceHealthMonitor.class);
             ServiceHealthMonitor.MemoryStatus mStatus = monitor.getMemoryStatus();
-            ui.addEmptyLine(3)
-                .addHeading(3, "After GC")
-                .addKeyValue("Designated memory", NumberUtil.getReadableByteSize(mStatus.max))
+            if (!mStatus.ok) {
+                ui.addErrorMessage("WARNING! LOW MEMORY");
+            }
+            ui  .addKeyValue("Designated memory", NumberUtil.getReadableByteSize(mStatus.max))
                 .addKeyValue("Allocated memory", NumberUtil.getReadableByteSize(mStatus.total))
                 .addKeyValue("Free memory", NumberUtil.getReadableByteSize(mStatus.free))
                 .addKeyValue("Used memory", NumberUtil.getReadableByteSize(mStatus.used))
@@ -183,87 +171,84 @@ public class AdminService {
                     "Swap memory",
                     NumberUtil.getReadableByteSize(mStatus.swapFree)
                         + " / " + NumberUtil.getReadableByteSize(mStatus.swapTotal)
-                )
-                .addEmptyLine()
-                .addHrefBlock("GarbageCollect", "?gc=run");
+                );
         } catch (ServiceException ignore) {
 
         }
-        ui.finish();
     }
 
     private static void startServices(WebUi ui, boolean runEvents, boolean allServers, int delay, int tries) {
-        ui  .beginBox(VantarKey.ADMIN_SERVICE_START)
-            .beginBlock("pre")
-            .write();
-
-        // on this server
-        if (runEvents) {
-            Services.startServer();
-        } else {
-            Services.startServices();
-        }
-
-        // on other servers
-        if (allServers) {
-            Services.messaging.broadcast(VantarParam.MESSAGE_SERVICES_START, Boolean.toString(runEvents));
-        }
-
-        ui.sleep(delay * 1000 * 2);
-        List<String> enabled = Services.getEnabledServices();
-        int expectedCount = enabled.size();
-        for (int i = 0; i < tries; ++i) {
-            ui.sleep(delay * 1000);
-
-            Collection<Services.Service> s = Services.getServices();
-            int startedCount = s == null ? 0 : s.size();
-
-            if (startedCount == expectedCount) {
-                ui.addTextLine(VantarKey.ADMIN_SERVICE_ALL_STARTED).write();
-                break;
-            } else {
-                ui.addTextLine(startedCount + " of " + expectedCount + " services started...").write();
-            }
-        }
-
-        ui.blockEnd().write();
+//        ui  .beginBox(VantarKey.ADMIN_SERVICE_START)
+//            .beginBlock("pre")
+//            .write();
+//
+//        // on this server
+//        if (runEvents) {
+//            Services.startServer();
+//        } else {
+//            Services.startServices();
+//        }
+//
+//        // on other servers
+//        if (allServers) {
+//            Services.messaging.broadcast(VantarParam.MESSAGE_SERVICES_START, Boolean.toString(runEvents));
+//        }
+//
+//        ui.sleep(delay * 1000 * 2);
+//        List<String> enabled = Services.getEnabledServices();
+//        int expectedCount = enabled.size();
+//        for (int i = 0; i < tries; ++i) {
+//            ui.sleep(delay * 1000);
+//
+//            Collection<Services.Service> s = Services.getServices();
+//            int startedCount = s == null ? 0 : s.size();
+//
+//            if (startedCount == expectedCount) {
+//                ui.addTextLine(VantarKey.ADMIN_SERVICE_ALL_STARTED).write();
+//                break;
+//            } else {
+//                ui.addTextLine(startedCount + " of " + expectedCount + " services started...").write();
+//            }
+//        }
+//
+//        ui.blockEnd().write();
     }
 
     private static void stopServices(WebUi ui, boolean runEvents, boolean allServers, int delay, int tries) {
-        ui  .beginBox(VantarKey.ADMIN_SERVICE_STOP)
-            .beginBlock("pre")
-            .write();
-
-        // on this server
-        if (runEvents) {
-            Services.stop();
-        } else {
-            Services.stopServices();
-        }
-
-        // on other servers
-        if (allServers) {
-            Services.messaging.broadcast(VantarParam.MESSAGE_SERVICES_STOP, Boolean.toString(runEvents));
-        }
-
-        ui.sleep(delay * 1000 * 2);
-        List<String> enabled = Services.getEnabledServices();
-        int total = enabled.size();
-        for (int i = 0; i < tries; ++i) {
-            ui.sleep(delay * 1000);
-
-            Collection<Services.Service> s = Services.getServices();
-            int startedCount = s == null ? 0 : s.size();
-
-            if (startedCount == total) {
-                ui.addTextLine(VantarKey.ADMIN_SERVICE_ALL_STOPPED).write();
-                break;
-            } else {
-                ui.addTextLine(startedCount + " of " + total + " services not stopped yet...").write();
-            }
-        }
-
-        ui.blockEnd().blockEnd().write();
+//        ui  .beginBox(VantarKey.ADMIN_SERVICE_STOP)
+//            .beginBlock("pre")
+//            .write();
+//
+//        // on this server
+//        if (runEvents) {
+//            Services.stop();
+//        } else {
+//            Services.stopServices();
+//        }
+//
+//        // on other servers
+//        if (allServers) {
+//            Services.messaging.broadcast(VantarParam.MESSAGE_SERVICES_STOP, Boolean.toString(runEvents));
+//        }
+//
+//        ui.sleep(delay * 1000 * 2);
+//        List<String> enabled = Services.getEnabledServices();
+//        int total = enabled.size();
+//        for (int i = 0; i < tries; ++i) {
+//            ui.sleep(delay * 1000);
+//
+//            Collection<Services.Service> s = Services.getServices();
+//            int startedCount = s == null ? 0 : s.size();
+//
+//            if (startedCount == total) {
+//                ui.addTextLine(VantarKey.ADMIN_SERVICE_ALL_STOPPED).write();
+//                break;
+//            } else {
+//                ui.addTextLine(startedCount + " of " + total + " services not stopped yet...").write();
+//            }
+//        }
+//
+//        ui.blockEnd().blockEnd().write();
     }
 
     private static void getSystemObjects(WebUi ui) {

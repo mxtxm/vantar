@@ -11,27 +11,27 @@ import javax.servlet.http.HttpServletResponse;
 public class AdminAdvanced {
 
     public static void index(Params params, HttpServletResponse response) throws FinishException {
-        WebUi ui = Admin.getUi(Locale.getString(VantarKey.ADMIN_MENU_ADVANCED), params, response, true);
+        WebUi ui = Admin.getUi(VantarKey.ADMIN_MENU_ADVANCED, params, response, true);
 
         // > > >
-        ui.beginBox(Locale.getString(VantarKey.ADMIN_BACKUP));
+        ui.beginBox(VantarKey.ADMIN_BACKUP);
         ui  .beginFloatBox("system-box", "MONGO")
-            .addHrefBlock(Locale.getString(VantarKey.ADMIN_BACKUP_CREATE), "/admin/data/backup/mongo")
-            .addHrefBlock(Locale.getString(VantarKey.ADMIN_BACKUP_RESTORE), "/admin/data/restore/mongo")
-            .addHrefBlock(Locale.getString(VantarKey.ADMIN_BACKUP_FILES), "/admin/data/backup/files/mongo")
-            .addHrefBlock(Locale.getString(VantarKey.ADMIN_BACKUP_UPLOAD), "/admin/data/backup/upload")
+            .addHrefBlock(VantarKey.ADMIN_BACKUP_CREATE, "/admin/data/backup/mongo")
+            .addHrefBlock(VantarKey.ADMIN_BACKUP_RESTORE, "/admin/data/restore/mongo")
+            .addHrefBlock(VantarKey.ADMIN_BACKUP_FILES, "/admin/data/backup/files/mongo")
+            .addHrefBlock(VantarKey.ADMIN_BACKUP_UPLOAD, "/admin/data/backup/upload")
             .blockEnd();
         ui  .beginFloatBox("system-box", "SQL")
-            .addHrefBlock(Locale.getString(VantarKey.ADMIN_BACKUP_CREATE), "/admin/data/backup/sql")
-            .addHrefBlock(Locale.getString(VantarKey.ADMIN_BACKUP_RESTORE), "/admin/data/restore/sql")
-            .addHrefBlock(Locale.getString(VantarKey.ADMIN_BACKUP_FILES), "/admin/data/backup/files/sql")
-            .addHrefBlock(Locale.getString(VantarKey.ADMIN_BACKUP_UPLOAD), "/admin/data/backup/upload")
+            .addHrefBlock(VantarKey.ADMIN_BACKUP_CREATE, "/admin/data/backup/sql")
+            .addHrefBlock(VantarKey.ADMIN_BACKUP_RESTORE, "/admin/data/restore/sql")
+            .addHrefBlock(VantarKey.ADMIN_BACKUP_FILES, "/admin/data/backup/files/sql")
+            .addHrefBlock(VantarKey.ADMIN_BACKUP_UPLOAD, "/admin/data/backup/upload")
             .blockEnd();
         ui  .beginFloatBox("system-box", "ELASTIC")
-            .addHrefBlock(Locale.getString(VantarKey.ADMIN_BACKUP_CREATE), "/admin/data/backup/elastic")
-            .addHrefBlock(Locale.getString(VantarKey.ADMIN_BACKUP_RESTORE), "/admin/data/restore/elastic")
-            .addHrefBlock(Locale.getString(VantarKey.ADMIN_BACKUP_FILES), "/admin/data/backup/files/elastic")
-            .addHrefBlock(Locale.getString(VantarKey.ADMIN_BACKUP_UPLOAD), "/admin/data/backup/upload")
+            .addHrefBlock(VantarKey.ADMIN_BACKUP_CREATE, "/admin/data/backup/elastic")
+            .addHrefBlock(VantarKey.ADMIN_BACKUP_RESTORE, "/admin/data/restore/elastic")
+            .addHrefBlock(VantarKey.ADMIN_BACKUP_FILES, "/admin/data/backup/files/elastic")
+            .addHrefBlock(VantarKey.ADMIN_BACKUP_UPLOAD, "/admin/data/backup/upload")
             .blockEnd();
         try {
             ServiceBackup serviceBackup = Services.getService(ServiceBackup.class);
@@ -48,54 +48,54 @@ public class AdminAdvanced {
         ui.blockEnd();
 
         // > > >
-        ui.beginBox(Locale.getString(VantarKey.ADMIN_DATABASE));
+        ui.beginBox(VantarKey.ADMIN_DATABASE);
         ui  .beginFloatBox("system-box", "MONGO")
-            .addHrefBlock(Locale.getString(VantarKey.ADMIN_DATABASE_STATUS), "/admin/data/mongo/status")
-            .addHrefBlock(Locale.getString(VantarKey.ADMIN_DATABASE_CREATE_INDEX), "/admin/database/mongo/index/create")
-            .addHrefBlock(Locale.getString(VantarKey.ADMIN_IMPORT), "/admin/database/mongo/import")
-            .addHrefBlock(Locale.getString(VantarKey.ADMIN_DATABASE_DELETE_ALL), "/admin/database/mongo/purge")
+            .addHrefBlock(VantarKey.ADMIN_DATABASE_STATUS, "/admin/data/mongo/status")
+            .addHrefBlock(VantarKey.ADMIN_DATABASE_CREATE_INDEX, "/admin/database/mongo/index/create")
+            .addHrefBlock(VantarKey.ADMIN_IMPORT, "/admin/database/mongo/import")
+            .addHrefBlock(VantarKey.ADMIN_DELETE_ALL, "/admin/database/mongo/purge")
             .blockEnd();
         ui  .beginFloatBox("system-box", "SQL")
-            .addHrefBlock(Locale.getString(VantarKey.ADMIN_DATABASE_STATUS), "/admin/data/sql/status")
-            .addHrefBlock(Locale.getString(VantarKey.ADMIN_DATABASE_CREATE_INDEX), "/admin/database/sql/index/create")
-            .addHrefBlock(Locale.getString(VantarKey.ADMIN_IMPORT), "/admin/database/sql/import")
-            .addHrefBlock(Locale.getString(VantarKey.ADMIN_DATABASE_DELETE_ALL), "/admin/database/sql/purge")
-            .addHrefBlock(Locale.getString(VantarKey.ADMIN_DATABASE_SYNCH), "/admin/database/sql/synch")
+            .addHrefBlock(VantarKey.ADMIN_DATABASE_STATUS, "/admin/data/sql/status")
+            .addHrefBlock(VantarKey.ADMIN_DATABASE_CREATE_INDEX, "/admin/database/sql/index/create")
+            .addHrefBlock(VantarKey.ADMIN_IMPORT, "/admin/database/sql/import")
+            .addHrefBlock(VantarKey.ADMIN_DELETE_ALL, "/admin/database/sql/purge")
+            .addHrefBlock(VantarKey.ADMIN_DATABASE_SYNCH, "/admin/database/sql/synch")
             .blockEnd();
         ui  .beginFloatBox("system-box", "ELASTIC")
-            .addHrefBlock(Locale.getString(VantarKey.ADMIN_DATABASE_STATUS), "/admin/data/elastic/status")
-            .addHrefBlock(Locale.getString(VantarKey.ADMIN_IMPORT), "/admin/database/elastic/import")
-            .addHrefBlock(Locale.getString(VantarKey.ADMIN_DATABASE_INDEX_DEF), "/admin/database/elastic/mapping/get")
-            .addHrefBlock(Locale.getString(VantarKey.ADMIN_DATABASE_INDEX_SETTINGS), "/admin/database/elastic/actions")
-            .addHrefBlock(Locale.getString(VantarKey.ADMIN_DATABASE_DELETE_ALL), "/admin/database/elastic/purge")
-            .addHrefBlock(Locale.getString(VantarKey.ADMIN_DATABASE_SYNCH), "/admin/database/elastic/synch")
+            .addHrefBlock(VantarKey.ADMIN_DATABASE_STATUS, "/admin/data/elastic/status")
+            .addHrefBlock(VantarKey.ADMIN_IMPORT, "/admin/database/elastic/import")
+            .addHrefBlock(VantarKey.ADMIN_DATABASE_INDEX_DEF, "/admin/database/elastic/mapping/get")
+            .addHrefBlock(VantarKey.ADMIN_DATABASE_INDEX_SETTINGS, "/admin/database/elastic/actions")
+            .addHrefBlock(VantarKey.ADMIN_DELETE_ALL, "/admin/database/elastic/purge")
+            .addHrefBlock(VantarKey.ADMIN_DATABASE_SYNCH, "/admin/database/elastic/synch")
             .blockEnd();
         ui.blockEnd();
 
         // > > >
-        ui.beginBox(Locale.getString(VantarKey.ADMIN_QUEUE));
+        ui.beginBox(VantarKey.ADMIN_QUEUE);
         ui  .beginFloatBox("system-box", "RabbitMQ")
-            .addHrefBlock(Locale.getString(VantarKey.ADMIN_DATABASE_STATUS), "/admin/queue/status")
-            .addHrefBlock(Locale.getString(VantarKey.ADMIN_DATABASE_DELETE_OPTIONAL), "/admin/queue/purge/selective")
-            .addHrefBlock(Locale.getString(VantarKey.ADMIN_DATABASE_DELETE_ALL), "/admin/queue/purge")
+            .addHrefBlock(VantarKey.ADMIN_DATABASE_STATUS, "/admin/queue/index")
+            .addHrefBlock(VantarKey.ADMIN_DELETE_OPTIONAL, "/admin/queue/purge/selective")
+            .addHrefBlock(VantarKey.ADMIN_DELETE_ALL, "/admin/queue/purge")
             .blockEnd();
         ui.blockEnd();
 
         // > > >
-        ui.beginBox(Locale.getString(VantarKey.ADMIN_SETTINGS));
-        ui  .beginFloatBox("system-box", Locale.getString(VantarKey.ADMIN_SETTINGS))
-            .addHrefBlock(Locale.getString(VantarKey.ADMIN_SETTINGS_RELOAD), "/admin/system/settings/reload")
-            .addHrefBlock(Locale.getString(VantarKey.ADMIN_SETTINGS_EDIT_CONFIG), "/admin/system/settings/edit/config")
-            .addHrefBlock(Locale.getString(VantarKey.ADMIN_SETTINGS_EDIT_TUNE), "/admin/system/settings/edit/tune")
+        ui.beginBox(VantarKey.ADMIN_SETTINGS);
+        ui  .beginFloatBox("system-box", VantarKey.ADMIN_SETTINGS)
+            .addHrefBlock(VantarKey.ADMIN_SETTINGS_RELOAD, "/admin/system/settings/reload")
+            .addHrefBlock(VantarKey.ADMIN_SETTINGS_EDIT_CONFIG, "/admin/system/settings/edit/config")
+            .addHrefBlock(VantarKey.ADMIN_SETTINGS_EDIT_TUNE, "/admin/system/settings/edit/tune")
             .blockEnd();
         ui.blockEnd();
 
         // > > >
-        ui.beginBox(Locale.getString(VantarKey.ADMIN_SYSTEM_AND_SERVICES));
-        ui  .beginFloatBox("system-box", Locale.getString(VantarKey.ADMIN_STARTUP))
-            .addHrefBlock(Locale.getString(VantarKey.ADMIN_SERVICE_STOP), "/admin/services/stop")
-            .addHrefBlock(Locale.getString(VantarKey.ADMIN_SERVICE_START), "/admin/services/start")
-            .addHrefBlock(Locale.getString(VantarKey.ADMIN_FACTORY_RESET), "/admin/factory/reset")
+        ui.beginBox(VantarKey.ADMIN_SYSTEM_AND_SERVICES);
+        ui  .beginFloatBox("system-box", VantarKey.ADMIN_STARTUP)
+            .addHrefBlock(VantarKey.ADMIN_SERVICE_STOP, "/admin/services/stop")
+            .addHrefBlock(VantarKey.ADMIN_SERVICE_START, "/admin/services/start")
+            .addHrefBlock(VantarKey.ADMIN_FACTORY_RESET, "/admin/factory/reset")
             .addHrefBlock("GC", "/admin/system/gc")
             .blockEnd();
         ui.blockEnd();

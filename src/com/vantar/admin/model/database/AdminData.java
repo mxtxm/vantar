@@ -18,6 +18,7 @@ import com.vantar.locale.*;
 import com.vantar.service.Services;
 import com.vantar.service.auth.CommonUser;
 import com.vantar.service.dbarchive.ServiceDbArchive;
+import com.vantar.service.log.ServiceLog;
 import com.vantar.util.datetime.DateTime;
 import com.vantar.util.file.FileUtil;
 import com.vantar.util.json.Json;
@@ -38,7 +39,7 @@ public class AdminData {
         if (dtoInfo == null) {
             return;
         }
-        WebUi ui = Admin.getUiDto(Locale.getString(VantarKey.ADMIN_DATA_FIELDS), params, response, dtoInfo);
+        WebUi ui = Admin.getUiDto(VantarKey.ADMIN_DATA_FIELDS, params, response, dtoInfo);
 
         ui.addHeading(2, dtoInfo.dtoClass.getName() + " (" + dtoInfo.title + ")");
 
@@ -51,12 +52,12 @@ public class AdminData {
             t.append(type.getSimpleName());
 
             if (type.equals(List.class) || type.equals(ArrayList.class) || type.equals(Set.class)) {
-                t.append("&lt;").append(dto.getPropertyGenericTypes(field.getName())[0].getSimpleName()).append("&gt;");
+                t.append("<").append(dto.getPropertyGenericTypes(field.getName())[0].getSimpleName()).append(">");
 
             } else if (type.equals(Map.class)) {
                 Class<?>[] genericTypes = dto.getPropertyGenericTypes(field.getName());
-                t.append("&lt;").append(genericTypes[0].getSimpleName()).append(", ")
-                    .append(genericTypes[1].getSimpleName()).append("&gt;");
+                t.append("<").append(genericTypes[0].getSimpleName()).append(", ")
+                    .append(genericTypes[1].getSimpleName()).append(">");
 
             } else if (type.isEnum()) {
                 t.append(" (enum)");
@@ -72,7 +73,7 @@ public class AdminData {
         if (dtoInfo == null) {
             return;
         }
-        WebUi ui = Admin.getUiDto(Locale.getString(VantarKey.ADMIN_DATA_LIST), params, response, dtoInfo);
+        WebUi ui = Admin.getUiDto(VantarKey.ADMIN_DATA_LIST, params, response, dtoInfo);
         Dto dto = dtoInfo.getDtoInstance();
 
         Event event = getEvent();
@@ -130,7 +131,7 @@ public class AdminData {
 
         } catch (DatabaseException e) {
             ui.addErrorMessage(ObjectUtil.throwableToString(e));
-            Admin.log.error("! {}", dto, e);
+            ServiceLog.log.error("! {}", dto, e);
         }
 
         ui.addDtoListWithHeader(data, dtoInfo, q.getDto().getProperties());
@@ -138,128 +139,128 @@ public class AdminData {
         ui.finish();
     }
 
-    @SuppressWarnings("unchecked")
-    public static void delete(Params params, HttpServletResponse response, DtoDictionary.Info dtoInfo) throws FinishException {
-        if (dtoInfo == null) {
-            return;
-        }
-        WebUi ui = Admin.getUiDto(Locale.getString(VantarKey.ADMIN_DELETE), params, response, dtoInfo);
-
-        Dto dto = dtoInfo.getDtoInstance();
-        //dto.setDeletedQueryPolicy(Dto.QueryDeleted.SHOW_ALL);
-        Event event = getEvent();
-        if (event != null) {
-            dto = event.dtoExchange(dto, "delete");
-        }
-
-        if (!params.isChecked("f")) {
-            //dto.setDeleteLogical(false);
-            QueryBuilder q = new QueryBuilder(dto);
-            q.condition().inNumber(VantarParam.ID, params.getLongList(VantarParam.ID));
-
-            if (dtoInfo.dbms.equals(DtoDictionary.Dbms.SQL)) {
-                if (SqlConnection.isUp()) {
-                    try (SqlConnection connection = new SqlConnection()) {
-                        CommonRepoSql repo = new CommonRepoSql(connection);
-                        ui.addDeleteForm(repo.getData(q));
-                    } catch (NoContentException x) {
-                        ui.addMessage(Locale.getString(VantarKey.NO_CONTENT));
-                    } catch (DatabaseException e) {
-                        ui.addErrorMessage(e);
-                        Admin.log.error("! {}", dto, e);
-                    }
-                } else {
-                    ui.addMessage(Locale.getString(VantarKey.ADMIN_SERVICE_IS_OFF, "SQL"));
-                }
-            } else if (dtoInfo.dbms.equals(DtoDictionary.Dbms.MONGO)) {
-                if (MongoConnection.isUp()) {
-                    try {
-                        ui.addDeleteForm(ModelMongo.getData(q));
-                    } catch (NoContentException x) {
-                        ui.addMessage(Locale.getString(VantarKey.NO_CONTENT));
-                    } catch (VantarException e) {
-                        ui.addErrorMessage(e);
-                        Admin.log.error("! {}", dto, e);
-                    }
-                } else {
-                    ui.addMessage(Locale.getString(VantarKey.ADMIN_SERVICE_IS_OFF, "Mongo"));
-                }
-            } else if (dtoInfo.dbms.equals(DtoDictionary.Dbms.ELASTIC)) {
-                if (ElasticConnection.isUp()) {
-                    try {
-                        ui.addDeleteForm(CommonRepoElastic.getData(q));
-                    } catch (NoContentException x) {
-                        ui.addMessage(Locale.getString(VantarKey.NO_CONTENT));
-                    } catch (DatabaseException e) {
-                        ui.addErrorMessage(e);
-                        Admin.log.error("! {}", dto, e);
-                    }
-                } else {
-                    ui.addMessage(Locale.getString(VantarKey.ADMIN_SERVICE_IS_OFF, "ElasticSearch"));
-                }
-            }
-
-            ui.finish();
-            return;
-        }
-
-        if (event != null) {
-            event.beforeDelete(dto);
-        }
-
-        try {
-            if (dtoInfo.dbms.equals(DtoDictionary.Dbms.SQL)) {
-                if (SqlConnection.isUp()) {
-                    ui.addMessage(CommonModelSql.deleteBatch(params, dto.getClass()).message);
-                } else {
-                    ui.addMessage(Locale.getString(VantarKey.ADMIN_SERVICE_IS_OFF, "SQL"));
-                }
-            } else if (dtoInfo.dbms.equals(DtoDictionary.Dbms.MONGO)) {
-                if (MongoConnection.isUp()) {
-//                    if (params.isChecked(VantarParam.LOGICAL_DELETED_UNDO)) {
-//                        ui.addMessage(ModelMongo.unDeleteBatch(params, dto.getClass()).message);
-//                    } else {
-                        //dto.setDeleteLogical(params.isChecked("delete-logic"));
-
-                        ResponseMessage resp = ModelMongo.deleteBatch(params, dto.getClass());
-                        ui.addMessage(resp.message);
-                        if (resp.value instanceof List) {
-                            List<DataDependency.Dependants> items = (List<DataDependency.Dependants>) resp.value;
-                            for (DataDependency.Dependants item : items) {
-                                ui.addHeading(2, item.className);
-                                for (Map.Entry<Long, String> record : item.records.entrySet()) {
-                                    ui.addBlock("pre", record.getKey() + " - " + record.getValue());
-                                }
-                            }
-
-                        }
-       //             }
-                } else {
-                    ui.addMessage(Locale.getString(VantarKey.ADMIN_SERVICE_IS_OFF, "Mongo"));
-                }
-            } else if (dtoInfo.dbms.equals(DtoDictionary.Dbms.ELASTIC)) {
-                if (ElasticConnection.isUp()) {
-                    ui.addMessage(CommonModelElastic.deleteBatch(params, dto.getClass()).message);
-                } else {
-                    ui.addMessage(Locale.getString(VantarKey.ADMIN_SERVICE_IS_OFF, "ElasticSearch"));
-                }
-            }
-
-            if (event != null) {
-                event.afterDelete(dto);
-            }
-
-        } catch (VantarException e) {
-            ui.addErrorMessage(e);
-            Admin.log.error("! {}", dto, e);
-        }
-
-        if (dtoInfo.broadcastMessage != null) {
-            Services.messaging.broadcast(dtoInfo.broadcastMessage);
-        }
-
-        ui.finish();
-    }
+//    @SuppressWarnings("unchecked")
+//    public static void delete(Params params, HttpServletResponse response, DtoDictionary.Info dtoInfo) throws FinishException {
+//        if (dtoInfo == null) {
+//            return;
+//        }
+//        WebUi ui = Admin.getUiDto(Locale.getString(VantarKey.ADMIN_DELETE), params, response, dtoInfo);
+//
+//        Dto dto = dtoInfo.getDtoInstance();
+//        //dto.setDeletedQueryPolicy(Dto.QueryDeleted.SHOW_ALL);
+//        Event event = getEvent();
+//        if (event != null) {
+//            dto = event.dtoExchange(dto, "delete");
+//        }
+//
+//        if (!params.isChecked("f")) {
+//            //dto.setDeleteLogical(false);
+//            QueryBuilder q = new QueryBuilder(dto);
+//            q.condition().inNumber(VantarParam.ID, params.getLongList(VantarParam.ID));
+//
+//            if (dtoInfo.dbms.equals(DtoDictionary.Dbms.SQL)) {
+//                if (SqlConnection.isUp()) {
+//                    try (SqlConnection connection = new SqlConnection()) {
+//                        CommonRepoSql repo = new CommonRepoSql(connection);
+//                        ui.addDeleteForm(repo.getData(q));
+//                    } catch (NoContentException x) {
+//                        ui.addMessage(Locale.getString(VantarKey.NO_CONTENT));
+//                    } catch (DatabaseException e) {
+//                        ui.addErrorMessage(e);
+//                        Admin.log.error("! {}", dto, e);
+//                    }
+//                } else {
+//                    ui.addMessage(Locale.getString(VantarKey.ADMIN_SERVICE_IS_OFF, "SQL"));
+//                }
+//            } else if (dtoInfo.dbms.equals(DtoDictionary.Dbms.MONGO)) {
+//                if (MongoConnection.isUp()) {
+//                    try {
+//                        ui.addDeleteForm(ModelMongo.getData(q));
+//                    } catch (NoContentException x) {
+//                        ui.addMessage(Locale.getString(VantarKey.NO_CONTENT));
+//                    } catch (VantarException e) {
+//                        ui.addErrorMessage(e);
+//                        Admin.log.error("! {}", dto, e);
+//                    }
+//                } else {
+//                    ui.addMessage(Locale.getString(VantarKey.ADMIN_SERVICE_IS_OFF, "Mongo"));
+//                }
+//            } else if (dtoInfo.dbms.equals(DtoDictionary.Dbms.ELASTIC)) {
+//                if (ElasticConnection.isUp()) {
+//                    try {
+//                        ui.addDeleteForm(CommonRepoElastic.getData(q));
+//                    } catch (NoContentException x) {
+//                        ui.addMessage(Locale.getString(VantarKey.NO_CONTENT));
+//                    } catch (DatabaseException e) {
+//                        ui.addErrorMessage(e);
+//                        Admin.log.error("! {}", dto, e);
+//                    }
+//                } else {
+//                    ui.addMessage(Locale.getString(VantarKey.ADMIN_SERVICE_IS_OFF, "ElasticSearch"));
+//                }
+//            }
+//
+//            ui.finish();
+//            return;
+//        }
+//
+//        if (event != null) {
+//            event.beforeDelete(dto);
+//        }
+//
+//        try {
+//            if (dtoInfo.dbms.equals(DtoDictionary.Dbms.SQL)) {
+//                if (SqlConnection.isUp()) {
+//                    ui.addMessage(CommonModelSql.deleteBatch(params, dto.getClass()).message);
+//                } else {
+//                    ui.addMessage(Locale.getString(VantarKey.ADMIN_SERVICE_IS_OFF, "SQL"));
+//                }
+//            } else if (dtoInfo.dbms.equals(DtoDictionary.Dbms.MONGO)) {
+//                if (MongoConnection.isUp()) {
+////                    if (params.isChecked(VantarParam.LOGICAL_DELETED_UNDO)) {
+////                        ui.addMessage(ModelMongo.unDeleteBatch(params, dto.getClass()).message);
+////                    } else {
+//                        //dto.setDeleteLogical(params.isChecked("delete-logic"));
+//
+//                        ResponseMessage resp = ModelMongo.deleteBatch(params, dto.getClass());
+//                        ui.addMessage(resp.message);
+//                        if (resp.value instanceof List) {
+//                            List<DataDependency.Dependants> items = (List<DataDependency.Dependants>) resp.value;
+//                            for (DataDependency.Dependants item : items) {
+//                                ui.addHeading(2, item.className);
+//                                for (Map.Entry<Long, String> record : item.records.entrySet()) {
+//                                    ui.addBlock("pre", record.getKey() + " - " + record.getValue());
+//                                }
+//                            }
+//
+//                        }
+//       //             }
+//                } else {
+//                    ui.addMessage(Locale.getString(VantarKey.ADMIN_SERVICE_IS_OFF, "Mongo"));
+//                }
+//            } else if (dtoInfo.dbms.equals(DtoDictionary.Dbms.ELASTIC)) {
+//                if (ElasticConnection.isUp()) {
+//                    ui.addMessage(CommonModelElastic.deleteBatch(params, dto.getClass()).message);
+//                } else {
+//                    ui.addMessage(Locale.getString(VantarKey.ADMIN_SERVICE_IS_OFF, "ElasticSearch"));
+//                }
+//            }
+//
+//            if (event != null) {
+//                event.afterDelete(dto);
+//            }
+//
+//        } catch (VantarException e) {
+//            ui.addErrorMessage(e);
+//            Admin.log.error("! {}", dto, e);
+//        }
+//
+//        if (dtoInfo.broadcastMessage != null) {
+//            Services.messaging.broadcast(dtoInfo.broadcastMessage);
+//        }
+//
+//        ui.finish();
+//    }
 
     @SuppressWarnings("unchecked")
     public static void deleteMany(Params params, HttpServletResponse response, DtoDictionary.Info dtoInfo) throws FinishException {
@@ -329,7 +330,7 @@ public class AdminData {
                 ui.addErrorMessage(e);
             } catch (VantarException e) {
                 ui.addErrorMessage(e);
-                Admin.log.error("! {}", dto, e);
+                ServiceLog.log.error("! {}", dto, e);
             }
 
             if (dtoInfo.broadcastMessage != null) {
@@ -344,12 +345,16 @@ public class AdminData {
         if (dtoInfo == null) {
             return;
         }
-        WebUi ui = Admin.getUiDto(Locale.getString(VantarKey.ADMIN_DATABASE_DELETE_ALL), params, response, dtoInfo);
+        WebUi ui = Admin.getUiDto(Locale.getString(VantarKey.ADMIN_DELETE_ALL), params, response, dtoInfo);
 
         Dto dto = dtoInfo.getDtoInstance();
 
         if (!params.isChecked("f") || !params.isChecked(WebUi.PARAM_CONFIRM)) {
-            ui.addPurgeForm();
+            ui  .beginFormPost()
+                .addErrorMessage(VantarKey.ADMIN_DELETE)
+                .addCheckbox(VantarKey.ADMIN_DELETE_ALL_CONFIRM, WebUi.PARAM_CONFIRM)
+                .addSubmit(VantarKey.ADMIN_DELETE)
+                .blockEnd();
         } else {
             try {
                 if (dtoInfo.dbms.equals(DtoDictionary.Dbms.SQL)) {
@@ -373,7 +378,7 @@ public class AdminData {
                 }
             } catch (VantarException e) {
                 ui.addErrorMessage(e);
-                Admin.log.error("! {}", dto, e);
+                ServiceLog.log.error("! {}", dto, e);
             }
 
             if (dtoInfo.broadcastMessage != null) {
@@ -408,7 +413,7 @@ public class AdminData {
                         );
                     } catch (DatabaseException e) {
                         ui.addErrorMessage(e);
-                        Admin.log.error("! {}", dto, e);
+                        ServiceLog.log.error("! {}", dto, e);
                     } catch (NoContentException e) {
                         ui.addMessage(Locale.getString(VantarKey.NO_CONTENT));
                     }
@@ -426,7 +431,7 @@ public class AdminData {
                         ui.addMessage(Locale.getString(VantarKey.NO_CONTENT));
                     } catch (VantarException e) {
                         ui.addErrorMessage(e);
-                        Admin.log.error("! {}", dto, e);
+                        ServiceLog.log.error("! {}", dto, e);
                     }
                 } else {
                     ui.addMessage(Locale.getString(VantarKey.ADMIN_SERVICE_IS_OFF, "Mongo"));
@@ -440,7 +445,7 @@ public class AdminData {
                         );
                     } catch (DatabaseException e) {
                         ui.addErrorMessage(e);
-                        Admin.log.error("! {}", dto, e);
+                        ServiceLog.log.error("! {}", dto, e);
                     } catch (NoContentException e) {
                         ui.addMessage(Locale.getString(VantarKey.NO_CONTENT));
                     }
@@ -506,7 +511,7 @@ public class AdminData {
 
         } catch (VantarException e) {
             ui.addErrorMessage(e);
-            Admin.log.error("! {}", dto, e);
+            ServiceLog.log.error("! {}", dto, e);
         }
 
         if (dtoInfo.broadcastMessage != null) {
@@ -590,7 +595,7 @@ public class AdminData {
 
         } catch (VantarException e) {
             ui.addErrorMessage(e);
-            Admin.log.error("! {}", dto, e);
+            ServiceLog.log.error("! {}", dto, e);
         }
 
         if (dtoInfo.broadcastMessage != null) {
@@ -641,7 +646,12 @@ public class AdminData {
         Dto dto = dtoIndex.getDtoInstance();
 
         if (!params.isChecked("f")) {
-            ui.addImportForm(dtoIndex.getImportData()).finish();
+            ui  .beginFormPost()
+                .addTextArea(VantarKey.ADMIN_MENU_DATA, "import", dtoIndex.getImportData(), "large ltr")
+                .addCheckbox(VantarKey.ADMIN_DELETE_ALL, "deleteall")
+                .addSubmit(VantarKey.ADMIN_DATA_ENTRY)
+                .blockEnd()
+                .finish();
             return;
         }
 
@@ -690,6 +700,50 @@ public class AdminData {
         ui.finish();
     }
 
+    public static Map<String, Map<String, Long>> getDatabaseRecordCount() {
+        Map<String, Map<String, Long>> databases = new HashMap<>(5, 1);
+
+        if (MongoConnection.isUp()) {
+            Map<String, Long> db = new HashMap<>(200, 1);
+            try {
+                for (DtoDictionary.Info info : DtoDictionary.getAll(DtoDictionary.Dbms.MONGO)) {
+                    db.put(info.dtoClass.getSimpleName(), MongoQuery.count(info.getDtoInstance().getStorage()));
+                }
+            } catch (Exception ignore) {
+
+            }
+            databases.put("Mongo", db);
+        }
+
+        if (SqlConnection.isUp()) {
+            Map<String, Long> db = new HashMap<>(200, 1);
+            try (SqlConnection connection = new SqlConnection()) {
+                CommonRepoSql repo = new CommonRepoSql(connection);
+                for (DtoDictionary.Info info : DtoDictionary.getAll(DtoDictionary.Dbms.SQL)) {
+                    db.put(info.dtoClass.getSimpleName(), repo.count(info.getDtoInstance().getStorage()));
+                }
+            } catch (Exception ignore) {
+
+            }
+            databases.put("SQL", db);
+        }
+
+        if (ElasticConnection.isUp()) {
+            Map<String, Long> db = new HashMap<>(200, 1);
+            try {
+                for (DtoDictionary.Info info : DtoDictionary.getAll(DtoDictionary.Dbms.ELASTIC)) {
+                    db.put(info.dtoClass.getSimpleName(), CommonRepoElastic.count(info.getDtoInstance().getStorage()));
+                }
+            } catch (Exception ignore) {
+
+            }
+            databases.put("Elastic", db);
+        }
+
+        return databases;
+    }
+
+
     public static void statusSql(Params params, HttpServletResponse response) throws FinishException {
         WebUi ui = Admin.getUi(Locale.getString(VantarKey.ADMIN_STATUS, "SQL"), params, response, true);
         statusSql(ui);
@@ -698,19 +752,24 @@ public class AdminData {
 
     public static void statusSql(WebUi ui) {
         if (!SqlConnection.isUp()) {
+            if (SqlConnection.isEnabled()) {
+                ui.addMessage(Locale.getString(VantarKey.ADMIN_SERVICE_IS_ENABLED, "SQL"));
+            } else {
+                ui.addMessage(Locale.getString(VantarKey.ADMIN_SERVICE_IS_DISABLED, "SQL"));
+            }
             ui.addMessage(Locale.getString(VantarKey.ADMIN_SERVICE_IS_OFF, "SQL"));
             return;
         }
-        ui.beginBox(Locale.getString(VantarKey.ADMIN_RECORD_COUNT, "SQL")).write();
+        ui.addMessage(Locale.getString(VantarKey.ADMIN_SERVICE_IS_ON, "SQL")).write();
 
         try (SqlConnection connection = new SqlConnection()) {
             CommonRepoSql repo = new CommonRepoSql(connection);
             for (DtoDictionary.Info info : DtoDictionary.getAll(DtoDictionary.Dbms.SQL)) {
-                ui.addKeyValue(info.dtoClass.getSimpleName(), repo.count(info.getDtoInstance().getStorage()) + " records");
+                ui.addKeyValue(info.dtoClass.getSimpleName(), repo.count(info.getDtoInstance().getStorage()) + " records").write();
             }
         } catch (DatabaseException e) {
             ui.addErrorMessage(e);
-            Admin.log.error("!", e);
+            ServiceLog.log.error("!", e);
         }
 
         ui.blockEnd().blockEnd().write();
@@ -724,25 +783,32 @@ public class AdminData {
 
     public static void statusMongo(WebUi ui) {
         if (!MongoConnection.isUp()) {
+            if (MongoConnection.isEnabled()) {
+                ui.addMessage(Locale.getString(VantarKey.ADMIN_SERVICE_IS_ENABLED, "Mongo"));
+            } else {
+                ui.addMessage(Locale.getString(VantarKey.ADMIN_SERVICE_IS_DISABLED, "Mongo"));
+            }
             ui.addMessage(Locale.getString(VantarKey.ADMIN_SERVICE_IS_OFF, "Mongo"));
             return;
         }
-        ui.beginBox(Locale.getString(VantarKey.ADMIN_RECORD_COUNT, "Mongo")).write();
+        ui.addMessage(Locale.getString(VantarKey.ADMIN_SERVICE_IS_ON, "Mongo")).write();
 
         try {
             for (DtoDictionary.Info info : DtoDictionary.getAll(DtoDictionary.Dbms.MONGO)) {
                 ui.addKeyValue(
                     info.dtoClass.getSimpleName(),
                     MongoQuery.count(info.getDtoInstance().getStorage()) + " records"
-                );
+                ).write();
             }
         } catch (DatabaseException e) {
             ui.addErrorMessage(e);
-            Admin.log.error("!", e);
+            ServiceLog.log.error("!", e);
         }
 
         ui.blockEnd().blockEnd().write();
     }
+
+
 
     public static void statusElastic(Params params, HttpServletResponse response) throws FinishException {
         WebUi ui = Admin.getUi(Locale.getString(VantarKey.ADMIN_STATUS, "Elastic"), params, response, true);
@@ -752,10 +818,15 @@ public class AdminData {
 
     public static void statusElastic(WebUi ui) {
         if (!ElasticConnection.isUp()) {
+            if (ElasticConnection.isEnabled()) {
+                ui.addMessage(Locale.getString(VantarKey.ADMIN_SERVICE_IS_ENABLED, "ElasticSearch"));
+            } else {
+                ui.addMessage(Locale.getString(VantarKey.ADMIN_SERVICE_IS_DISABLED, "ElasticSearch"));
+            }
             ui.addMessage(Locale.getString(VantarKey.ADMIN_SERVICE_IS_OFF, "ElasticSearch"));
             return;
         }
-        ui.beginBox(Locale.getString(VantarKey.ADMIN_RECORD_COUNT, "Elastic")).write();
+        ui.addMessage(Locale.getString(VantarKey.ADMIN_SERVICE_IS_ON, "ElasticSearch")).write();
 
         try {
             for (DtoDictionary.Info info : DtoDictionary.getAll(DtoDictionary.Dbms.ELASTIC)) {
@@ -766,7 +837,7 @@ public class AdminData {
             }
         } catch (DatabaseException e) {
             ui.addErrorMessage(e);
-            Admin.log.error("!", e);
+            ServiceLog.log.error("!", e);
         }
 
         ui.blockEnd().blockEnd().write();
@@ -818,7 +889,7 @@ public class AdminData {
             try {
                 return (Event) ClassUtil.callStaticMethod(adminApp + ".getAdminDataEvent");
             } catch (Throwable e) {
-                Admin.log.error("! AdminData '{}.getAdminDataEvent()'", adminApp, e);
+                ServiceLog.log.error("! AdminData '{}.getAdminDataEvent()'", adminApp, e);
             }
         }
         return null;

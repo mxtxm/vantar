@@ -1,6 +1,6 @@
 package com.vantar.admin.model.document;
 
-import com.vantar.admin.model.index.Admin;
+import com.vantar.service.log.ServiceLog;
 import com.vantar.util.json.*;
 import com.vantar.util.object.*;
 import com.vantar.util.string.StringUtil;
@@ -89,7 +89,7 @@ public class WebServiceDocumentCreator {
                     DtoDocumentData.class
                 );
                 if (dtoDocumentData == null) {
-                    Admin.log.error("! object=null {}", StringUtil.replace(StringUtil.replace(x, "}}", "}\n"), "{{", "{"));
+                    ServiceLog.log.error("! object=null {}", StringUtil.replace(StringUtil.replace(x, "}}", "}\n"), "{{", "{"));
                 } else {
                     if (dtoDocumentData.action != null && dtoDocumentData.action.equalsIgnoreCase("exception")) {
                         content = fixExceptions(content, x, dtoDocumentData);
@@ -216,7 +216,7 @@ public class WebServiceDocumentCreator {
             }
             return exceptions;
         } catch (Exception e) {
-            Admin.log.warn("! could not get exceptions ({}, {})", className, methodName);
+            ServiceLog.log.warn("! could not get exceptions ({}, {})", className, methodName);
             return new HashSet<>(1, 1);
         }
     }
@@ -242,7 +242,7 @@ public class WebServiceDocumentCreator {
 
             return content;
         } catch (Exception e) {
-            Admin.log.warn("! could not get exceptions ({}, {})", className, methodName);
+            ServiceLog.log.warn("! could not get exceptions ({}, {})", className, methodName);
             return content;
         }
     }

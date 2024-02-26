@@ -224,6 +224,23 @@ public class ModelMongo extends CommonModel {
                 throw new InputException(errors);
             }
 
+            if (action.equals(Dto.Action.UPDATE_FEW_COLS)) {
+                if (dto.hasAnnotation(UniqueGroup.class)
+                    || dto.hasAnnotation(RequiredGroupOr.class)
+                    || dto.hasAnnotation(RequiredGroupXor.class)) {
+                    if (dto.getId() != null) {
+                        Dto dtoX = ClassUtil.getInstance(dto.getClass());
+                        dtoX.setId(dto.getId());
+                        dtoX = getById(dtoX).getClone();
+                        dtoX.set(dto);
+                        errors = dtoX.validate(Dto.Action.UPDATE_FEW_COLS);
+                        if (ObjectUtil.isNotEmpty(errors)) {
+                            throw new InputException(errors);
+                        }
+                    }
+                }
+            }
+
             if (event != null) {
                 try {
                     event.beforeWrite(dto);

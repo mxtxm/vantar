@@ -2,7 +2,6 @@ package com.vantar.database.nosql.mongo;
 
 import com.mongodb.client.*;
 import com.vantar.admin.model.database.AdminDatabase;
-import com.vantar.admin.model.index.Admin;
 import com.vantar.database.dto.*;
 import com.vantar.database.query.QueryBuilder;
 import com.vantar.exception.*;
@@ -165,7 +164,7 @@ public class MongoBackup {
     }
 
     public static void restore(String zipPath, boolean deleteData, boolean toCamelCase, WebUi ui) {
-        Admin.log.info("---> RESTORING database");
+        ServiceLog.log.info("---> RESTORING database");
         MongoDatabase database;
         try {
             database = MongoConnection.getDatabase();
@@ -249,7 +248,7 @@ public class MongoBackup {
                         r += i - 1;
                     }
                 } catch (Exception e) {
-                    Admin.log.info("! {}\n{}\n", entry.getName(), line, e);
+                    ServiceLog.log.info("! {}\n{}\n", entry.getName(), line, e);
                     if (ui != null) {
                         ui.addErrorMessage(e);
                     }
@@ -266,7 +265,7 @@ public class MongoBackup {
         }
 
         if (ui != null) {
-            Admin.log.info("<--- finished RESTORING database");
+            ServiceLog.log.info("<--- finished RESTORING database");
             ui .addBlock("pre",
                     "finished in: " + ((System.currentTimeMillis() - startTime) / 1000) + "s" +
                     "\n" + r + " records" +
@@ -278,7 +277,7 @@ public class MongoBackup {
             try {
                 AdminDatabase.createMongoIndex(ui, true);
             } catch (Exception e) {
-                Admin.log.error("! restore failed to create database indexes.", e);
+                ServiceLog.log.error("! restore failed to create database indexes.", e);
                 ui.addErrorMessage("Failed to create indexes.");
             }
 

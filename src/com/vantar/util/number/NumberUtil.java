@@ -206,11 +206,11 @@ public class NumberUtil {
             return value + "B";
         }
         if (value < 1024 * 1024) {
-            return NumberUtil.round(value / 1024f, 1) + "KB";
+            return NumberUtil.round(value / 1024f, 1) + " KB";
         }
         if (value < 1024 * 1024 * 1024) {
-            return NumberUtil.round(value / 1048576f, 1) + "MB";
+            return NumberUtil.round(value / 1048576f, 1) + " MB";
         }
-        return NumberUtil.round(value / 1073741824f, 2) + "GB";
+        return NumberUtil.round(value / 1073741824f, 2) + " GB";
     }
 }

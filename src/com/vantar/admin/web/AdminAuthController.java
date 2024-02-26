@@ -1,11 +1,12 @@
 package com.vantar.admin.web;
 
-import com.vantar.admin.model.index.Admin;
-import com.vantar.common.VantarParam;
+import com.vantar.admin.model.*;
+import com.vantar.common.*;
 import com.vantar.exception.*;
 import com.vantar.locale.*;
 import com.vantar.service.Services;
 import com.vantar.service.auth.*;
+import com.vantar.service.log.ServiceLog;
 import com.vantar.web.*;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServletResponse;
@@ -14,17 +15,15 @@ import java.io.IOException;
 @WebServlet({
     "/admin/signin",
     "/admin/signout",
+    "/admin/users/online",
+    "/admin/users/signin/fails/reset",
 })
-public class AdminSigninController extends RouteToMethod {
+public class AdminAuthController extends RouteToMethod {
 
     public void signin(Params params, HttpServletResponse response) throws ServerException {
         WebUi ui = new WebUi(params, response);
-        ui  .addHeading(1, Locale.getString(VantarKey.ADMIN_SIGN_IN))
-            .addEmptyLine()
-            .addEmptyLine()
-            .addEmptyLine()
-            .addEmptyLine()
-            .addEmptyLine();
+        ui  .addHeading(1, Settings.config.getProperty("title") + " : " +  Locale.getString(VantarKey.ADMIN_SIGN_IN), "signin")
+            .addEmptyLine(5);
 
         if (params.getString("username") == null) {
             ui  .beginFormPost()
@@ -43,11 +42,11 @@ public class AdminSigninController extends RouteToMethod {
             try {
                 CommonUser user = auth.signin(params);
                 ui.setAuthToken(user.getToken());
-                Admin.log.info(" > admin dashboard signed in: {}'", user.getUsername());
+                ServiceLog.log.info(" > admin dashboard signed in: {}'", user.getUsername());
                 ui.redirect("/admin/index");
                 return;
             } catch (AuthException e) {
-                Admin.log.info(" ! admin dashboard rejected: {}", e.getMessage());
+                ServiceLog.log.info(" ! admin dashboard rejected: {}", e.getMessage());
                 ui.addErrorMessage(e);
             }
         }
@@ -66,5 +65,13 @@ public class AdminSigninController extends RouteToMethod {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public void usersOnline(Params params, HttpServletResponse response) throws FinishException {
+        AdminAuth.onlineUsers(params, response);
+    }
+
+    public void usersSigninFailsReset(Params params, HttpServletResponse response) throws ServiceException {
+        Services.getService(ServiceAuth.class).resetSigninFails();
     }
 }

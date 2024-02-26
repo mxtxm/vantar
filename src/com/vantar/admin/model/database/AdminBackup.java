@@ -12,6 +12,7 @@ import com.vantar.locale.Locale;
 import com.vantar.locale.*;
 import com.vantar.service.Services;
 import com.vantar.service.backup.ServiceBackup;
+import com.vantar.service.log.ServiceLog;
 import com.vantar.util.datetime.*;
 import com.vantar.util.file.*;
 import com.vantar.util.object.ObjectUtil;
@@ -29,7 +30,7 @@ public class AdminBackup {
 
     public static void backup(Params params, HttpServletResponse response, DtoDictionary.Dbms dbms) throws FinishException {
         WebUi ui = Admin.getUi(Locale.getString(VantarKey.ADMIN_BACKUP_CREATE), params, response, true);
-        ui.beginBox(dbms.toString());
+        ui.beginBox(dbms);
 
         ServiceBackup backup;
         try {
@@ -80,7 +81,7 @@ public class AdminBackup {
 
     public static void backupQuery(Params params, HttpServletResponse response, DtoDictionary.Dbms dbms) throws FinishException {
         WebUi ui = Admin.getUi(Locale.getString(VantarKey.ADMIN_BACKUP_CREATE), params, response, true);
-        ui.beginBox(dbms.toString());
+        ui.beginBox(dbms);
 
         ServiceBackup backup;
         try {
@@ -159,7 +160,7 @@ public class AdminBackup {
     public static void restore(Params params, HttpServletResponse response, DtoDictionary.Dbms dbms) throws FinishException {
         WebUi ui = Admin.getUi(Locale.getString(VantarKey.ADMIN_BACKUP_RESTORE), params, response, true);
 
-        ui.beginBox(dbms.toString());
+        ui.beginBox(dbms);
 
         ServiceBackup backup;
         try {
@@ -181,12 +182,11 @@ public class AdminBackup {
                 }
                 files.add(path);
             }
-
             ui  .addMessage(VantarKey.ADMIN_RESTORE_MSG1)
                 .addMessage(VantarKey.ADMIN_RESTORE_MSG2)
                 .addMessage(VantarKey.ADMIN_RESTORE_MSG3)
                 .beginFormPost()
-                .addSelect(VantarKey.ADMIN_BACKUP_FILE_PATH, "dumpfile", files.toArray(new String[0]))
+                .addSelect(VantarKey.ADMIN_BACKUP_FILE_PATH, "dumpfile", files)
                 .addCheckbox(VantarKey.ADMIN_RESTORE_DELETE_CURRENT_DATA, "deleteall", true)
                 .addCheckbox("camelCaseProperties", "camelcase", false)
                 .addSubmit(Locale.getString(VantarKey.ADMIN_BACKUP_RESTORE))
@@ -217,7 +217,7 @@ public class AdminBackup {
             return;
         }
 
-        ui.beginBox(dbms.toString() + Locale.getString(VantarKey.ADMIN_BACKUP_FILES));
+        ui.beginBox(dbms.toString() + VantarKey.ADMIN_BACKUP_FILES);
 
         List<String> paths = params.getStringList("delete");
         if (!ObjectUtil.isEmpty(paths) && params.isChecked(WebUi.PARAM_CONFIRM)) {

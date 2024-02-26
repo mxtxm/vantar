@@ -1,7 +1,6 @@
-package com.vantar.admin.web;
+package com.vantar.admin.modelw.schedule;
 
-import com.vantar.admin.model.index.AdminSchedule;
-import com.vantar.exception.FinishException;
+import com.vantar.exception.*;
 import com.vantar.web.*;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServletResponse;
@@ -10,13 +9,13 @@ import javax.servlet.http.HttpServletResponse;
     "/admin/schedule",
     "/admin/schedule/run",
 })
-public class AdminScheduleController extends RouteToMethod {
+public class Controller extends RouteToMethod {
 
     public void schedule(Params params, HttpServletResponse response) throws FinishException {
         AdminSchedule.index(params, response);
     }
 
-    public void scheduleRun(Params params, HttpServletResponse response) throws FinishException {
+    public void scheduleRun(Params params, HttpServletResponse response) throws FinishException, VantarException {
         AdminSchedule.run(params, response);
     }
 }

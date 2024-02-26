@@ -1,9 +1,9 @@
 package com.vantar.admin.model.document;
 
-import com.vantar.admin.model.index.Admin;
 import com.vantar.common.*;
 import com.vantar.database.datatype.Location;
 import com.vantar.database.dto.*;
+import com.vantar.service.log.ServiceLog;
 import com.vantar.util.collection.CollectionUtil;
 import com.vantar.util.datetime.*;
 import com.vantar.util.json.Json;
@@ -11,7 +11,6 @@ import com.vantar.util.object.*;
 import com.vantar.util.string.StringUtil;
 import java.lang.reflect.*;
 import java.util.*;
-
 
 @SuppressWarnings("unchecked")
 public class DtoDocumentData {
@@ -73,7 +72,7 @@ public class DtoDocumentData {
                     "<pre>" + Json.getWithNulls().toJsonPretty(getAsJsonExampleDto(ClassUtil.getClass(searchResult))) + "</pre>\n";
             } catch (Exception e) {
                 sample = "";
-                Admin.log.warn("! could not create search example for ({})", searchResult, e);
+                ServiceLog.log.warn("! could not create search example for ({})", searchResult, e);
             }
 
             return
@@ -110,7 +109,7 @@ public class DtoDocumentData {
         if (dto != null) {
             Dto obj = ClassUtil.getInstance(dto);
             if (obj == null) {
-                Admin.log.error("! can not create {}", dto);
+                ServiceLog.log.error("! can not create {}", dto);
                 return "!!!DOCUMENT CREATION ERROR!!!";
             }
 
@@ -269,7 +268,7 @@ public class DtoDocumentData {
             try {
                 sb.append("<pre>").append(Json.getWithNulls().toJsonPretty(getAsJsonExampleDto(obj.getClass()))).append("</pre>\n");
             } catch (Exception e) {
-                Admin.log.warn("! JSON error {}\n", getAsJsonExampleDto(obj.getClass()), e);
+                ServiceLog.log.warn("! JSON error {}\n", getAsJsonExampleDto(obj.getClass()), e);
                 sb.append("<pre><br/>").append(getAsJsonExampleDto(obj.getClass())).append("</pre>\n");
             }
         }

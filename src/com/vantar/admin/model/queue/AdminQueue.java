@@ -19,19 +19,50 @@ public class AdminQueue {
     private static final int DELAY = 1000;
 
 
-    public static void purge(Params params, HttpServletResponse response) throws FinishException {
+    public static void status(Params params, HttpServletResponse response) throws FinishException {
+        WebUi ui = Admin.getUi(VantarKey.ADMIN_QUEUE_STATUS, params, response, true);
         if (!Services.isUp(Queue.class)) {
+            if (Services.isDependencyEnabled(Queue.class)) {
+                ui.addMessage(Locale.getString(VantarKey.ADMIN_SERVICE_IS_ENABLED, "RabbitMQ"));
+            } else {
+                ui.addMessage(Locale.getString(VantarKey.ADMIN_SERVICE_IS_DISABLED, "RabbitMQ"));
+            }
+            ui.addMessage(Locale.getString(VantarKey.ADMIN_SERVICE_IS_OFF, "RabbitMQ"));
+            ui.finish();
+            return;
+        }
+        ui.addMessage(Locale.getString(VantarKey.ADMIN_SERVICE_IS_ON, "RabbitMQ")).write();
+
+        String[] queues = Queue.connection.getQueues();
+        if (queues == null) {
+            ui.addMessage(VantarKey.ADMIN_NO_QUEUE);
+        } else {
+            for (String q : queues) {
+                String queueName = StringUtil.split(q, VantarParam.SEPARATOR_COMMON)[0];
+                ui.addKeyValue(queueName, Queue.count(queueName) + " items");
+            }
+        }
+
+        ui  .addEmptyLine(3)
+            .addHrefBlock(VantarKey.ADMIN_DELETE_OPTIONAL, "/admin/queue/purge/selective")
+            .addHrefBlock(VantarKey.ADMIN_DELETE_ALL, "/admin/queue/purge");
+
+        ui.finish();
+    }
+
+    public static void purge(Params params, HttpServletResponse response) throws FinishException {
+        WebUi ui = Admin.getUi(VantarKey.ADMIN_DELETE_QUEUE, params, response, true);
+        if (!Services.isUp(Queue.class)) {
+            ui.addMessage(Locale.getString(VantarKey.ADMIN_SERVICE_IS_OFF, "RabbitMQ")).finish();
             return;
         }
 
-        WebUi ui = Admin.getUi(Locale.getString(VantarKey.ADMIN_DELETE_QUEUE), params, response, true);
-
         if (!params.isChecked("f")) {
             ui  .beginFormPost()
-                .addInput(Locale.getString(VantarKey.ADMIN_DELAY), "delay", Integer.toString(DELAY), null, "ltr")
-                .addInput(Locale.getString(VantarKey.ADMIN_TRIES), "tries", Integer.toString(DB_DELETE_TRIES), null, "ltr")
-                .addInput(Locale.getString(VantarKey.ADMIN_QUEUE_DELETE_EXCLUDE), "exclude", null, null, "ltr")
-                .addSubmit(Locale.getString(VantarKey.ADMIN_DELETE))
+                .addInput(VantarKey.ADMIN_DELAY, "delay", Integer.toString(DELAY), null, "ltr")
+                .addInput(VantarKey.ADMIN_TRIES, "tries", Integer.toString(DB_DELETE_TRIES), null, "ltr")
+                .addInput(VantarKey.ADMIN_QUEUE_DELETE_EXCLUDE, "exclude", null, null, "ltr")
+                .addSubmit(VantarKey.ADMIN_DELETE)
                 .finish();
             return;
         }
@@ -40,23 +71,23 @@ public class AdminQueue {
     }
 
     public static void purgeSelective(Params params, HttpServletResponse response) throws FinishException {
+        WebUi ui = Admin.getUi(VantarKey.ADMIN_DELETE_QUEUE, params, response, true);
         if (!Services.isUp(Queue.class)) {
+            ui.addMessage(Locale.getString(VantarKey.ADMIN_SERVICE_IS_OFF, "RabbitMQ")).finish();
             return;
         }
 
-        WebUi ui = Admin.getUi(Locale.getString(VantarKey.ADMIN_DELETE_QUEUE), params, response, true);
-
         if (!params.isChecked("f")) {
             ui  .beginFormPost()
-                .addInput(Locale.getString(VantarKey.ADMIN_DELAY), "delay", Integer.toString(DELAY), null, "ltr")
-                .addInput(Locale.getString(VantarKey.ADMIN_TRIES), "tries", Integer.toString(DB_DELETE_TRIES), null, "ltr")
-                .addHeading(2, Locale.getString(VantarKey.ADMIN_QUEUE_DELETE_INCLUDE));
+                .addInput(VantarKey.ADMIN_DELAY, "delay", Integer.toString(DELAY), null, "ltr")
+                .addInput(VantarKey.ADMIN_TRIES, "tries", Integer.toString(DB_DELETE_TRIES), null, "ltr")
+                .addHeading(2, VantarKey.ADMIN_QUEUE_DELETE_INCLUDE);
 
             for (String queueName : Queue.connection.getQueues()) {
                 ui.addCheckbox(queueName, queueName);
             }
 
-            ui  .addSubmit(Locale.getString(VantarKey.ADMIN_DELETE))
+            ui  .addSubmit(VantarKey.ADMIN_DELETE)
                 .finish();
             return;
         }
@@ -76,11 +107,11 @@ public class AdminQueue {
             return;
         }
 
-        ui.beginBox(Locale.getString(VantarKey.ADMIN_DELETE_QUEUE)).write();
+        ui.beginBox(VantarKey.ADMIN_DELETE_QUEUE).write();
 
         String[] queues = Queue.connection.getQueues();
         if (queues == null) {
-            ui.addMessage(Locale.getString(VantarKey.ADMIN_NO_QUEUE));
+            ui.addMessage(VantarKey.ADMIN_NO_QUEUE);
             ui.blockEnd().blockEnd().write();
             return;
         }
@@ -88,7 +119,7 @@ public class AdminQueue {
         for (String q : queues) {
             String queueName = StringUtil.split(q, VantarParam.SEPARATOR_COMMON)[0];
             if (exclude != null && exclude.contains(queueName)) {
-                ui.addKeyValue(queueName, Locale.getString(VantarKey.ADMIN_IGNORE)).write();
+                ui.addKeyValue(queueName, VantarKey.ADMIN_IGNORE).write();
                 continue;
             }
 
@@ -112,7 +143,7 @@ public class AdminQueue {
             return;
         }
 
-        ui.beginBox(Locale.getString(VantarKey.ADMIN_DELETE_QUEUE)).write();
+        ui.beginBox(VantarKey.ADMIN_DELETE_QUEUE).write();
 
         for (String queueName : include) {
             long count = Queue.count(queueName);
@@ -120,7 +151,8 @@ public class AdminQueue {
             int tryCount = 1;
             String msg = "";
             while (count > 0 && tryCount++ <= maxTries) {
-                msg = Queue.delete(queueName) ? Locale.getString(VantarKey.DELETE_SUCCESS) : Locale.getString(VantarKey.DELETE_FAIL);
+                msg = Queue.delete(queueName) ?
+                    Locale.getString(VantarKey.DELETE_SUCCESS) : Locale.getString(VantarKey.DELETE_FAIL);
                 ui.sleep(delay * 1000);
                 count = Queue.count(queueName);
             }
@@ -128,28 +160,5 @@ public class AdminQueue {
         }
 
         ui.blockEnd().blockEnd().write();
-    }
-
-    public static void status(Params params, HttpServletResponse response) throws FinishException {
-        WebUi ui = Admin.getUi(Locale.getString(VantarKey.ADMIN_QUEUE_STATUS), params, response, true);
-
-        if (Services.isUp(Queue.class)) {
-            ui.addMessage(Locale.getString(VantarKey.ADMIN_RABBIT_IS_ON));
-        } else {
-            ui.addErrorMessage(Locale.getString(VantarKey.ADMIN_RABBIT_IS_OFF));
-        }
-
-        ui.write();
-
-        String[] queues = Queue.connection.getQueues();
-        if (queues == null) {
-            ui.addMessage(Locale.getString(VantarKey.ADMIN_NO_QUEUE));
-        } else {
-            for (String q : queues) {
-                String queueName = StringUtil.split(q, VantarParam.SEPARATOR_COMMON)[0];
-                ui.addKeyValue(queueName, Queue.count(queueName) + " items");
-            }
-        }
-        ui.blockEnd().write();
     }
 }

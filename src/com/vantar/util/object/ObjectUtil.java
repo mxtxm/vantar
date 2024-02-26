@@ -1,6 +1,5 @@
 package com.vantar.util.object;
 
-import com.vantar.common.Settings;
 import com.vantar.database.datatype.Location;
 import com.vantar.database.dto.*;
 import com.vantar.exception.DateTimeException;

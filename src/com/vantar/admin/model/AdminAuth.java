@@ -22,7 +22,7 @@ public class AdminAuth {
     }
 
     public static void onlineUsers(Params params, HttpServletResponse response) throws FinishException {
-        WebUi ui = Admin.getUi(Locale.getString(VantarKey.ADMIN_ONLINE_USERS), params, response, true);
+        WebUi ui = Admin.getUi(VantarKey.ADMIN_ONLINE_USERS, params, response, true);
 
         ServiceAuth auth;
         try {
@@ -32,55 +32,58 @@ public class AdminAuth {
             return;
         }
 
-        String tk = params.getString("tk");
-        if (tk != null) {
-            auth.removeToken(tk);
+        String codeToDelete = params.getString("delete");
+        if (codeToDelete != null) {
+            auth.removeToken(codeToDelete);
         }
 
-        ui  .beginBox(Locale.getString(VantarKey.ADMIN_RESET_SIGNIN_FAILS))
-            .addHref(Locale.getString(VantarKey.ADMIN_RESET_SIGNIN_FAILS), "/admin/users/signin/fails/reset")
-            .blockEnd()
-            .beginBox(Locale.getString(VantarKey.ADMIN_DELETE_TOKEN))
-            .addText(Locale.getString(VantarKey.ADMIN_DELETE_TOKEN_DESCRIPTION))
-            .beginFormPost()
-            .addInput(Locale.getString(VantarKey.ADMIN_AUTH_TOKEN), "tk")
-            .addSubmit(Locale.getString(VantarKey.ADMIN_DELETE_DO))
-            .blockEnd()
+        ui  .beginBox(VantarKey.ADMIN_RESET_SIGNIN_FAILS)
+            .addHref(VantarKey.ADMIN_RESET_SIGNIN_FAILS, "/admin/users/signin/fails/reset")
             .blockEnd();
 
-        ui.beginBox(Locale.getString(VantarKey.ADMIN_ONLINE_USERS));
+        ui.beginBox(VantarKey.ADMIN_ONLINE_USERS);
         ui.addText("Token expire time: " + auth.tokenExpireMin + "mins");
-
         auth.getOnlineUsers().forEach((code, info) -> {
             long idle = -info.lastInteraction.secondsFromNow() / 60;
             long remaining = (auth.tokenExpireMin) - idle;
             ui.addKeyValue(
                 info.user.getUsername() + " (" + info.user.getId() + ")\n",
-                code + "  --  " + info.lastInteraction.toString()
-                    + " --> (idle=" + idle + "mins, remaining=" + remaining + "mins)",
+                ui.getLines(
+                    code,
+                    info.lastInteraction.toString(),
+                    "idle: " + idle + "mins",
+                    "remaining: " + remaining + "mins",
+                    ui.getHref(VantarKey.ADMIN_DELETE, "/admin/users/online?delete=" + code, false, false, null)
+                ),
                 null,
-                true,
-                "<label>" + Json.d.toJsonPretty(info) + "</label>"
+                false,
+                Json.d.toJsonPretty(info)
             );
         });
-
         ui.blockEnd();
 
-        ui.beginBox(Locale.getString(VantarKey.ADMIN_SIGNUP_TOKEN_TEMP));
+        ui  .beginBox(VantarKey.ADMIN_DELETE_TOKEN)
+            .beginFormPost()
+            .addInput(VantarKey.ADMIN_AUTH_TOKEN, "delete")
+            .addSubmit(VantarKey.ADMIN_DELETE_DO)
+            .blockEnd()
+            .blockEnd();
+
+        ui.beginBox(VantarKey.ADMIN_SIGNUP_TOKEN_TEMP);
         auth.getSignupVerifyTokens().forEach((code, info) -> ui.addKeyValue(
             info.user.getUsername() + " (" + info.user.getId() + ")\n" + getRoleDescription(info.user),
             info.user.getToken() + "  --  " + info.lastInteraction.toString()
         ));
         ui.blockEnd();
 
-        ui.beginBox(Locale.getString(VantarKey.ADMIN_SIGNIN_TOKEN_TEMP));
+        ui.beginBox(VantarKey.ADMIN_SIGNIN_TOKEN_TEMP);
         auth.getOneTimeTokens().forEach((code, info) -> ui.addKeyValue(
             info.user.getUsername() + " (" + info.user.getId() + ")\n" + getRoleDescription(info.user),
             info.user.getToken() + "  --  " + info.lastInteraction.toString()
         ));
         ui.blockEnd();
 
-        ui.beginBox(Locale.getString(VantarKey.ADMIN_RECOVER_TOKEN_TEMP));
+        ui.beginBox(VantarKey.ADMIN_RECOVER_TOKEN_TEMP);
         auth.getVerifyTokens().forEach((code, info) -> ui.addKeyValue(
             info.user.getUsername() + " (" + info.user.getId() + ")\n" + getRoleDescription(info.user),
             info.user.getToken() + "  --  " + info.lastInteraction.toString()

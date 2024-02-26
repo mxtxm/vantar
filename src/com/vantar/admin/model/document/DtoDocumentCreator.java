@@ -1,8 +1,8 @@
 package com.vantar.admin.model.document;
 
-import com.vantar.admin.model.index.Admin;
 import com.vantar.common.Settings;
 import com.vantar.database.dto.*;
+import com.vantar.service.log.ServiceLog;
 import com.vantar.util.file.*;
 import com.vantar.util.object.*;
 import com.vantar.util.string.StringUtil;
@@ -101,7 +101,7 @@ public class DtoDocumentCreator {
                     if (type.equals(List.class) || type.equals(ArrayList.class) || type.equals(Set.class)) {
                         Class<?>[] g = ClassUtil.getGenericTypes(field);
                         if (g == null || g.length != 1) {
-                            Admin.log.warn("! invalid generics ({}.{})", dto.getClass().getSimpleName(), field.getName());
+                            ServiceLog.log.warn("! invalid generics ({}.{})", dto.getClass().getSimpleName(), field.getName());
                             continue;
                         }
                         String[] parts = StringUtil.split(g[0].getTypeName(), '.');
@@ -113,7 +113,7 @@ public class DtoDocumentCreator {
                     } else if (type.equals(Map.class)) {
                         Class<?>[] g = ClassUtil.getGenericTypes(field);
                         if (g == null || g.length != 2) {
-                            Admin.log.warn("! invalid generics ({}.{})", dto.getClass().getSimpleName(), field.getName());
+                            ServiceLog.log.warn("! invalid generics ({}.{})", dto.getClass().getSimpleName(), field.getName());
                             continue;
                         }
                         String[] partsK = StringUtil.split(g[0].getTypeName(), '.');

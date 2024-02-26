@@ -3,8 +3,8 @@ package com.vantar.admin.model.document;
 import com.vantar.admin.model.index.Admin;
 import com.vantar.common.Settings;
 import com.vantar.exception.FinishException;
-import com.vantar.locale.Locale;
 import com.vantar.locale.*;
+import com.vantar.service.log.ServiceLog;
 import com.vantar.util.file.*;
 import com.vantar.util.string.StringUtil;
 import com.vantar.web.*;
@@ -152,13 +152,13 @@ public class AdminDocument {
     }
 
     public static void createAllDocuments() {
-        Admin.log.info(" >> creating documents");
+        ServiceLog.log.info(" >> creating documents");
         AdminDocument.createDtoDocument();
-        Admin.log.info(" created dto document <<");
+        ServiceLog.log.info(" created dto document <<");
 
         if (!FileUtil.exists(Settings.config.getProperty("documents.dir.release"))) {
-            Admin.log.info(" >> not released all documents");
-            Admin.log.info(" << finished creating documents");
+            ServiceLog.log.info(" >> not released all documents");
+            ServiceLog.log.info(" << finished creating documents");
             return;
         }
 
@@ -175,11 +175,11 @@ public class AdminDocument {
                 file -> FileUtil.write(file.getAbsolutePath(), AdminDocument.getParsedDocument(file.getAbsolutePath(), false))
             );
         } catch (Exception e) {
-            Admin.log.info(" !! failed to released all documents");
+            ServiceLog.log.info(" !! failed to released all documents");
             return;
         }
 
-        Admin.log.info(" >> released all documents");
-        Admin.log.info(" << finished creating documents");
+        ServiceLog.log.info(" >> released all documents");
+        ServiceLog.log.info(" << finished creating documents");
     }
 }

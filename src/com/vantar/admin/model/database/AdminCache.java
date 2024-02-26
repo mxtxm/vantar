@@ -1,85 +1,67 @@
 package com.vantar.admin.model.database;
 
 import com.vantar.admin.model.index.Admin;
+import com.vantar.admin.model.service.AdminService;
 import com.vantar.database.dto.Dto;
 import com.vantar.exception.*;
 import com.vantar.locale.Locale;
 import com.vantar.locale.*;
 import com.vantar.service.Services;
 import com.vantar.service.cache.ServiceDtoCache;
-import com.vantar.service.healthmonitor.ServiceHealthMonitor;
 import com.vantar.util.number.NumberUtil;
 import com.vantar.util.object.*;
 import com.vantar.web.*;
 import javax.servlet.http.HttpServletResponse;
 import java.util.*;
 
-
 @SuppressWarnings("unchecked")
 public class AdminCache {
 
     public static void index(Params params, HttpServletResponse response) throws FinishException {
-        WebUi ui = Admin.getUi(Locale.getString(Locale.getString(VantarKey.ADMIN_CACHE)), params, response, true);
+        WebUi ui = Admin.getUi(VantarKey.ADMIN_CACHE, params, response, true);
 
-        ServiceDtoCache serviceDtoCache;
+        ServiceDtoCache cache;
         try {
-            serviceDtoCache = Services.getService(ServiceDtoCache.class);
+            cache = Services.getService(ServiceDtoCache.class);
         } catch (ServiceException e) {
             ui.addErrorMessage(e).finish();
             return;
         }
 
-        Set<Class<?>> classes = serviceDtoCache.getCachedClasses();
+        Set<Class<?>> classes = cache.getCachedClasses();
         if (classes == null) {
-            ui.addErrorMessage(Locale.getString(VantarKey.NO_CONTENT)).finish();
+            ui.addErrorMessage(VantarKey.NO_CONTENT).finish();
             return;
         }
 
-        try {
-            ServiceHealthMonitor monitor = Services.getService(ServiceHealthMonitor.class);
-            ServiceHealthMonitor.MemoryStatus mStatus = monitor.getMemoryStatus();
-            if (!mStatus.ok) {
-                ui.addErrorMessage("WARNING! LOW MEMORY");
-            }
-            ui  .addKeyValue("Designated memory", NumberUtil.getReadableByteSize(mStatus.max))
-                .addKeyValue("Allocated memory", NumberUtil.getReadableByteSize(mStatus.total))
-                .addKeyValue("Free memory", NumberUtil.getReadableByteSize(mStatus.free))
-                .addKeyValue("Used memory", NumberUtil.getReadableByteSize(mStatus.used))
-                .addKeyValue(
-                    "Physical memory",
-                    NumberUtil.getReadableByteSize(mStatus.physicalFree)
-                        + " / " + NumberUtil.getReadableByteSize(mStatus.physicalTotal)
-                )
-                .addKeyValue(
-                    "Swap memory",
-                    NumberUtil.getReadableByteSize(mStatus.swapFree)
-                        + " / " + NumberUtil.getReadableByteSize(mStatus.swapTotal)
-                );
-        } catch (ServiceException ignore) {
-
-        }
+        ui.addHeading(2, VantarKey.ADMIN_CACHE);
 
         long sum = 0L;
         for (Class<?> c : classes) {
-            Map<Long, ? extends Dto> values = serviceDtoCache.getMap((Class<? extends Dto>) c);
+            Map<Long, ? extends Dto> values = cache.getMap((Class<? extends Dto>) c);
             sum += ObjectUtil.sizeOf(values);
-            ui.addHrefBlock(c.getName() + " (" + ObjectUtil.sizeOfReadable(values) + ")", "/admin/cache/view?c=" + c.getName());
+            ui.addKeyValue(
+                ui.getHref(c.getSimpleName(), "/admin/cache/view?c=" + c.getName(), true, false, null),
+                ui.getHref(VantarKey.ADMIN_REFRESH, "/admin/cache/refresh?c=" + c.getName(), true, false, null) + " "
+                    + ObjectUtil.sizeOfReadable(values),
+                null,
+                false
+            );
         }
+        ui.addKeyValue("", NumberUtil.getReadableByteSize(sum));
 
-        ui.addEmptyLine().addEmptyLine().addMessage((sum / 1024) + "KB");
+        ui.addHeading(2, VantarKey.ADMIN_MEMORY);
+        AdminService.plotMemoryStatus(ui);
+
         ui.finish();
     }
 
-    public static void view(Params params, HttpServletResponse response) throws FinishException {
-        WebUi ui = Admin.getUi(Locale.getString(Locale.getString(VantarKey.ADMIN_CACHE)), params, response, true);
+    public static void view(Params params, HttpServletResponse response) throws FinishException, InputException {
+        WebUi ui = Admin.getUi(VantarKey.ADMIN_CACHE, params, response, true);
 
-        String className = params.getString("c");
-        if (className == null) {
-            ui.addErrorMessage(Locale.getString(VantarKey.NO_CONTENT)).finish();
-            return;
-        }
+        String className = params.getStringRequired("c");
 
-        ui.addHeading(3, className);
+        ui.addHeading(2, className);
 
         Object object = ClassUtil.getInstance(className);
         ServiceDtoCache serviceDtoCache;
@@ -89,7 +71,7 @@ public class AdminCache {
             ui.addErrorMessage(e).finish();
             return;
         }
-        if (object == null || serviceDtoCache == null) {
+        if (object == null) {
             ui.addErrorMessage(Locale.getString(VantarKey.NO_CONTENT)).finish();
             return;
         }
@@ -110,8 +92,21 @@ public class AdminCache {
         ui.finish();
     }
 
-    public static void refresh(Params params, HttpServletResponse response) throws FinishException {
-        WebUi ui = Admin.getUi(Locale.getString(Locale.getString(VantarKey.ADMIN_CACHE)), params, response, true);
-        ui.finish();
+    public static void refresh(Params params, HttpServletResponse response) throws FinishException, InputException {
+        WebUi ui = Admin.getUi(VantarKey.ADMIN_CACHE, params, response, true);
+
+        String dtoClass = params.getStringRequired("c");
+
+        ServiceDtoCache cache;
+        try {
+            cache = Services.getService(ServiceDtoCache.class);
+        } catch (ServiceException e) {
+            ui.addErrorMessage(e).finish();
+            return;
+        }
+
+        cache.update(dtoClass);
+
+        ui.addMessage(VantarKey.UPDATE_SUCCESS).finish();
     }
 }

@@ -1,14 +1,13 @@
 package com.vantar.web;
 
 import com.vantar.common.VantarParam;
-import com.vantar.database.dto.*;
+import com.vantar.database.dto.DtoDictionary;
 import com.vantar.locale.Locale;
 import com.vantar.locale.*;
 import com.vantar.util.object.ObjectUtil;
 import com.vantar.util.string.*;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.lang.annotation.Annotation;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -18,8 +17,6 @@ abstract class WebUiBasics <T extends WebUiBasics<T>> {
     protected abstract T getThis();
 
     public static final String PARAM_CONFIRM = "confirm";
-    public static final String COLSPAN_SEPARATOR = ":::";
-    public static final String LINK_SEPARATOR = ">>>";
 
     public Params params;
     protected HttpServletResponse response;
@@ -52,7 +49,7 @@ abstract class WebUiBasics <T extends WebUiBasics<T>> {
 
         boolean isFirst = true;
         for (Map.Entry<String, String> entry : menu.entrySet()) {
-            html.append("    <li");
+            html.append("<li");
             if (isFirst && direction.equals("ltr")) {
                 html.append(" style='border: none!important'");
             }
@@ -62,7 +59,7 @@ abstract class WebUiBasics <T extends WebUiBasics<T>> {
         }
 
         if (text.length > 0) {
-            html.append("    <li class='signout'><a href='").append("/admin/signout").append("'>")
+            html.append("<li class='signout'><a href='").append("/admin/signout").append("'>")
                 .append(Locale.getString(VantarKey.ADMIN_MENU_SIGN_OUT)).append("</a></li>\n");
         }
 
@@ -76,14 +73,14 @@ abstract class WebUiBasics <T extends WebUiBasics<T>> {
         if (Locale.getLangs() != null) {
             for (String lang : Locale.getLangs()) {
                 this.lang = lang;
-                html.append("    <li class='menu-lang'><a href='").append(getLink(path)).append("'>").append(lang)
+                html.append("<li class='menu-lang'><a href='").append(getLink(path)).append("'>").append(lang)
                     .append("</a></li>\n");
             }
         }
         lang = l;
 
         for (String t: text) {
-            html.append("    <li class='menu-text'>").append(t).append("</li>\n");
+            html.append("<li class='menu-text'>").append(t).append("</li>\n");
         }
         html.append("</ul>\n");
         return getThis();
@@ -113,10 +110,10 @@ abstract class WebUiBasics <T extends WebUiBasics<T>> {
     }
 
     public T addErrorMessage(Object msg) {
-        html.append("<p class=\"error\">\n")
-            .append(escapeWithNtoBr(msg instanceof LangKey ? Locale.getString((LangKey) msg) : ObjectUtil.toString(msg)))
-            .append("</p>\n");
-        return getThis();
+        return addErrorMessage(
+            msg instanceof Throwable ? ((Throwable) msg).getMessage() : msg,
+            msg instanceof Throwable ? ObjectUtil.toString(msg) : null
+        );
     }
 
     public T addErrorMessage(Object msg, String comment) {
@@ -125,7 +122,6 @@ abstract class WebUiBasics <T extends WebUiBasics<T>> {
             .append(escapeWithNtoBr(msg instanceof LangKey ? Locale.getString((LangKey) msg) : ObjectUtil.toString(msg)))
             .append("</p>\n<pre id=\"").append(id).append("\" class=\"error\" style=\"display:none\">\n")
             .append(escapeWithNtoBr(comment)).append("</pre>\n");
-        setJs("/js/jquery.min.js");
         return getThis();
     }
 
@@ -157,13 +153,26 @@ abstract class WebUiBasics <T extends WebUiBasics<T>> {
         return getThis();
     }
 
+    public String getLines(Object... values) {
+        StringBuilder sb = new StringBuilder(500);
+        for (int i = 0, l = values.length; i < l; ++i) {
+            Object v = values[i];
+            sb.append("<p class=\"b-line b-line").append(i).append("\">").append(v).append("</p>");
+        }
+        return sb.toString();
+    }
+
     // TEXT AND SPACE AND LINE < < <
 
-    // > > > HEAD
+    // > > > HEAD title, class
 
-    public T addHeading(int h, Object text) {
-        html.append("<h").append(h).append(">")
-            .append(escapeWithNtoBr(text instanceof LangKey ? Locale.getString((LangKey) text) : text.toString()))
+    public T addHeading(int h, Object... options) {
+        html.append("<h").append(h);
+        if (options.length > 1 && options[1] != null) {
+            html.append(" class=\"").append(options[1]).append("\"");
+        }
+        html.append(">")
+            .append(escapeWithNtoBr(options[0] instanceof LangKey ? Locale.getString((LangKey) options[0]) : options[0].toString()))
             .append("</h").append(h).append(">\n");
         return getThis();
     }
@@ -193,13 +202,13 @@ abstract class WebUiBasics <T extends WebUiBasics<T>> {
         return addHref(text, url, true, true, "");
     }
 
-    public T addHrefs(String... values) {
+    public T addHrefs(Object... values) {
         html.append("<div class='actions'>\n");
         for (int i = 0, l = values.length; i < l; ++i) {
             if (i > 0 && i < l-1) {
                 html.append(" | ");
             }
-            addHref(values[i], values[++i], false, false, "");
+            addHref(values[i], values[++i].toString(), false, false, "");
         }
         html.append("</div>\n");
         return getThis();
@@ -267,10 +276,10 @@ abstract class WebUiBasics <T extends WebUiBasics<T>> {
      *  options : tag, class/id ---> if begins with "id-"
      */
     public T beginBlock(String... options) {
-        String tag = options.length > 0 ? options[0] : "div";
+        String tag = options.length > 0 && options[0] != null ? options[0] : "div";
         openTags.push("</" + tag + ">\n");
         html.append("<").append(tag);
-        if (options.length > 1) {
+        if (options.length > 1 && options[1] != null ) {
             html.append(" ").append(options[1].startsWith("id-") ? "id" : "class").append("=\"").append(options[1]).append("\"");
         }
         html.append(">\n");
@@ -281,7 +290,7 @@ abstract class WebUiBasics <T extends WebUiBasics<T>> {
      *  options : tag, text --> no escape if starts with "~~~", class/id ---> if begins with "id-"
      */
     public T addBlockNoEscape(String... options) {
-        if (options.length > 1) {
+        if (options.length > 1 && options[1] != null ) {
             options[1] = "~~~" + options[1];
         }
         return addBlock(options);
@@ -345,21 +354,21 @@ abstract class WebUiBasics <T extends WebUiBasics<T>> {
         openTags.push("</form>\n");
         html.append("<form ");
         if (multiPart) {
-            html.append("enctype='multipart/form-data' ");
+            html.append("enctype=\"multipart/form-data\" ");
         }
         if (action != null) {
             html.append("action='").append(action).append("' ");
         }
-        html.append("method='").append(method).append("'>\n    <input type='hidden' name='f' value='1'/>\n");
+        html.append("method=\"").append(method).append("\">\n<input type=\"hidden\" name=\"f\" value=\"1\"/>\n");
         String q = params.request.getQueryString();
         if (StringUtil.isNotEmpty(q)) {
             if (StringUtil.contains(q, VantarParam.AUTH_TOKEN + "=") && authToken != null) {
-                html.append("    <input type='hidden' name='" + VantarParam.AUTH_TOKEN + "' value='")
-                    .append(authToken).append("'/>\n");
+                html.append("<input type=\"hidden\" name=\"" + VantarParam.AUTH_TOKEN + "\" value=\"")
+                    .append(authToken).append("\"/>\n");
             }
             if (StringUtil.contains(q, VantarParam.LANG + "=") && lang != null){
-                html.append("    <input type='hidden' name='" + VantarParam.LANG + "' value='")
-                    .append(lang).append("'/>\n");
+                html.append("<input type=\"hidden\" name=\"" + VantarParam.LANG + "\" value=\"")
+                    .append(lang).append("\"/>\n");
             }
         }
         return getThis();
@@ -369,7 +378,7 @@ abstract class WebUiBasics <T extends WebUiBasics<T>> {
 
     // > > > INPUTS
 
-    public T addHidden(String id, String value) {
+    public T addHidden(String id, Object value) {
         html.append(getInput("hidden", id, value));
         return getThis();
     }
@@ -394,10 +403,10 @@ abstract class WebUiBasics <T extends WebUiBasics<T>> {
         sb  .append("<input type=\"").append(type).append("\" id=\"").append(id).append("\" name=\"").append(id).append("\"")
             .append(" autocomplete=\"off\"")
             .append(" style=\"direction:").append(options.length > 2 ? options[2] : alignValue).append("\"");
-        if (options.length > 0) {
-            sb.append(" value=\"").append(options[0]).append("\"");
+        if (options.length > 0 && options[0] != null) {
+            sb.append(" value=\"").append(escape(options[0].toString())).append("\"");
         }
-        if (options.length > 1) {
+        if (options.length > 1 && options[1] != null) {
             sb.append(" class=\"").append(options[1]).append("\"");
         }
         sb.append("/>\n");
@@ -409,24 +418,26 @@ abstract class WebUiBasics <T extends WebUiBasics<T>> {
     }
 
     /**
-     * options --> class,
+     * options --> class, id
      */
     public T addSubmit(Object label, String... options) {
-        return addWidgetRow(
-            "",
-            "",
-            "<button" + (options.length > 0 ? " class=\"" + options[0] + "\"" : "")
-                + " style=\"direction:" + alignValue + "\" type=\"submit\">"
-                + (label instanceof LangKey ? Locale.getString((LangKey) label) : label)
-                + "</button>\n"
-        );
+        return addWidgetRow("", "", getSubmit(label, options));
+    }
+
+    public String getSubmit(Object label, String... options) {
+        String value = label instanceof LangKey ? Locale.getString((LangKey) label) : label.toString();
+        return  "<button type=\"submit\" value=\"" + value + "\""
+            + (options.length > 1 && options[1] != null ? " name=\"" + options[1] + "\"" : "")
+            + (options.length > 0 && options[0] != null ? " class=\"" + options[0] + "\"" : "")
+            + " style=\"direction:" + alignValue + "\">" + value
+            + "</button>\n";
     }
 
     public T addButton(Object label, String id, String... options) {
         return addWidgetRow(
             "",
             "",
-            "<button" + (options.length > 0 ? " class=\"" + options[0] + "\"" : "")
+            "<button" + (options.length > 0 && options[0] != null ? " class=\"" + options[0] + "\"" : "")
                 + " style=\"direction:" + alignValue + "\" class= type=\"button\" id=\"" + id + "\">"
                 + (label instanceof LangKey ? Locale.getString((LangKey) label) : label)
                 + "</button>\n"
@@ -446,12 +457,12 @@ abstract class WebUiBasics <T extends WebUiBasics<T>> {
             .append(" autocomplete=\"off\"")
             .append(" style=\"direction:").append(options.length > 2 ? options[2] : alignValue).append("\"")
             .append(" class=\"vtx vtx-").append(id);
-        if (options.length > 1) {
+        if (options.length > 1 && options[1] != null) {
             sb.append(" ").append(options[1]);
         }
         sb.append("\">");
-        if (options.length > 0) {
-            sb.append(options[0] == null ? "" : escape(options[0].toString()));
+        if (options.length > 0 && options[0] != null) {
+            sb.append(escape(options[0].toString()));
         }
         sb.append("</textarea>\n");
         return sb.toString();
@@ -467,12 +478,13 @@ abstract class WebUiBasics <T extends WebUiBasics<T>> {
     public String getCheckbox(String id, Object... options) {
         StringBuilder sb = new StringBuilder(250);
         sb  .append("<input type=\"checkbox\" id=\"").append(id).append("\" name=\"").append(id).append("\"")
-            .append(" value=\"").append(options.length > 1 ? options[1] : "1").append("\"")
-            .append(" style=\"margin-top:5px;direction:").append(options.length > 3 ? options[3] : alignValue).append("\"");
-        if (options.length > 0 && (boolean) options[0]) {
+            .append(" value=\"").append(options.length > 1 && options[1] != null ? options[1] : "1").append("\"")
+            .append(" style=\"margin-top:5px;direction:")
+            .append(options.length > 3 && options[3] != null ? options[3] : alignValue).append("\"");
+        if (options.length > 0 && options[0] != null && (boolean) options[0]) {
             sb.append(" checked=\"checked\"");
         }
-        if (options.length > 2) {
+        if (options.length > 2 && options[2] != null) {
             sb.append(" class=\"").append(options[2]).append("\"");
         }
         sb.append("/>\n");
@@ -499,7 +511,7 @@ abstract class WebUiBasics <T extends WebUiBasics<T>> {
             if (isMulti) {
                 sb.append("multi-select");
             }
-            if (options.length > 2) {
+            if (options.length > 2 && options[2] != null) {
                 sb.append(" ").append(options[2]);
             }
             sb.append("\"");
@@ -514,11 +526,11 @@ abstract class WebUiBasics <T extends WebUiBasics<T>> {
                 sb.append("<option value=\"").append(item.getKey()).append("\"");
                 if (isMulti) {
                     for (Object v : (Collection<?>) value) {
-                        if (item.equals(v)) {
+                        if (item.getKey().equals(v)) {
                             sb.append(" selected=\"selected\"");
                         }
                     }
-                } else if (item.equals(value)) {
+                } else if (item.getKey().equals(value)) {
                     sb.append(" selected=\"selected\"");
                 }
                 sb.append(">").append(item.getValue()).append("</option>\n");
@@ -578,56 +590,84 @@ abstract class WebUiBasics <T extends WebUiBasics<T>> {
 
     // > > > BOX
 
-    public T beginBox() {
-        openTags.push("</div>\n");
-        html.append("<div class='solid-box clearfix'>\n");
-        return getThis();
-    }
-
-    public T beginBox(Object text) {
+    /**
+     * options ---> title, container-class, title-class, box-class
+     */
+    public T beginBox(Object... options) {
+        String title = options.length > 0 ?
+            (options[0] instanceof LangKey ? Locale.getString((LangKey) options[0]) : options[0].toString()) : null;
+        String containerClass = options.length > 1 && options[1] != null ? options[1].toString() : "solid-box-empty";
+        String titleClass = options.length > 2 && options[2] != null ? options[2].toString() : "box-title";
         openTags.push("</div>\n</div>\n");
-        html.append("<div class='solid-box-empty clearfix'>\n<h2 class='box-title'>")
-            .append(escapeWithNtoBr(text instanceof LangKey ? Locale.getString((LangKey) text) : text.toString()))
-            .append("</h2>\n<div class='solid-box-clear clearfix'>\n");
-        return getThis();
-    }
-
-    public T beginBox2(Object text) {
-        openTags.push("</div>\n</div>\n");
-        html.append("<div class='solid-box-empty clearfix'>\n <h4 class='box-title2'>")
-            .append(escapeWithNtoBr(text instanceof LangKey ? Locale.getString((LangKey) text) : text.toString()))
-            .append("</h4>\n<div class='solid-box-clear clearfix'>\n");
+        html.append("<div class=\"").append(containerClass).append(" clearfix\">\n");
+        if (title != null) {
+            html.append("<h2 class=\"").append(titleClass).append("\">\n").append(title).append("</h2>");
+        }
+        html.append("<div class=\"solid-box-clear ");
+        if (options.length > 3) {
+            html.append(options[3]).append(" ");
+        }
+        html.append("clearfix\">\n");
         return getThis();
     }
 
     public T beginTree(Object text) {
         openTags.push("</div>\n");
-        html.append("<div class='tree'>\n<h2 class='tree-title'>")
+        html.append("<div class=\"tree\">\n<h2 class=\"tree-title\">")
             .append(escapeWithNtoBr(text instanceof LangKey ? Locale.getString((LangKey) text) : text.toString()))
             .append("</h2>\n");
         return getThis();
     }
 
-    public T beginFloatBox(String tClass, String... title) {
+    /**
+     * TITLE0
+     * title1
+     * title2
+     * ------
+     * data
+     */
+    public T beginFloatBox(String clazz, Object... titles) {
         openTags.push("</div>\n</div>\n");
-        StringBuilder sb = new StringBuilder(escapeWithNtoBr(title[0]));
-        for (int i = 1; i < title.length; ++i) {
-            sb.append("    <p>").append(escapeWithNtoBr(title[i])).append("</p>\n");
+        html.append("<div class=\"float-box-empty clearfix ").append(boxFloat).append(" ").append(clazz).append("\">\n")
+            .append("<h2 class='box-title'>");
+        // title
+        for (int i = 0, l = titles.length; i < l; ++i) {
+            Object t = titles[i];
+            if (i > 0) {
+                html.append("<p>");
+            }
+            html.append(escapeWithNtoBr(t instanceof LangKey ? Locale.getString((LangKey) t) : t.toString()));
+            if (i > 0) {
+                html.append("</p>\n");
+            }
         }
-        html.append("<div class='float-box-empty clearfix ").append(boxFloat).append(" ").append(tClass)
-            .append("'>\n<h2 class='box-title'>").append(sb).append("</h2>\n<div class='solid-box-clear clearfix'>\n");
+        html.append("</h2>\n<div class=\"solid-box-clear clearfix\">\n");
         return getThis();
     }
 
-    public T beginFloatBoxLink(String link, String tag, String tClass, String... title) {
+    /**
+     * TITLE0(link)     tag
+     * title1
+     * title2
+     * --------------------
+     * data
+     */
+    public T beginFloatBoxLink(String clazz, String tag, String link, Object... titles) {
         openTags.push("</div>\n</div>\n");
-        StringBuilder t = new StringBuilder((tag == null ? "" : "<span class='tag'>" + tag + "</span> ") + escapeWithNtoBr(title[0]));
-        for (int i = 1; i < title.length; ++i) {
-            t.append("    <p>").append(escapeWithNtoBr(title[i])).append("</p>\n");
+        html.append("<a href=\"").append(getLink(link)).append("\" class=\"title-link\" target=\"_blank\">")
+            .append("<div class=\"link-box float-box-empty clearfix ").append(boxFloat).append(" ").append(clazz).append("\">\n")
+            .append("<h2 class=\"box-title\">");
+        if (tag != null) {
+            html.append("<span class=\"tag\">").append(tag).append("</span>");
         }
-        html.append("<a href='" + getLink(link) + "' target='_blank'><div class='link-box float-box-empty clearfix ")
-            .append(boxFloat).append(" ").append(tClass)
-            .append("'>\n<h2 class='box-title'>").append(t).append("</h2></a>\n    <div class='solid-box-clear clearfix'>\n");
+        // title
+        for (int i = 0, l = titles.length; i < l; ++i) {
+            Object t = titles[i];
+            html.append(i == 0 ? "<p class=\"title\">" : "<p class=\"comment\">");
+            html.append(escapeWithNtoBr(t instanceof LangKey ? Locale.getString((LangKey) t) : t.toString()));
+            html.append("</p>\n");
+        }
+        html.append("</h2></a>\n<div class=\"solid-box-clear clearfix\">\n");
        return getThis();
     }
 
@@ -641,12 +681,16 @@ abstract class WebUiBasics <T extends WebUiBasics<T>> {
     public T addKeyValue(Object key, Object value, Object... options) {
         boolean escape = options.length <= 1 || (boolean) options[1];
         key = StringUtil.replace(
-            key == null ? "" : (escape ? escape(key.toString()) : key.toString()),
+            key == null ? "" :
+                (key instanceof LangKey ? Locale.getString((LangKey) key) :
+                    (escape ? escape(key.toString()) : key.toString())),
             "\n",
             "<br/>"
         );
         value = StringUtil.replace(
-            value == null ? "NULL" : (escape ? escape(value.toString()) : value.toString()),
+            value == null ? "NULL" :
+                (value instanceof LangKey ? Locale.getString((LangKey) value) :
+                    (escape ? escape(value.toString()) : value.toString())),
             "\n",
             "<br/><br/>"
         );
@@ -667,7 +711,7 @@ abstract class WebUiBasics <T extends WebUiBasics<T>> {
             if (valuePre == null) {
                 html.append(">").append(value).append("</label>");
             } else  {
-                html.append(" onclick='$(this).find(\"pre\").toggle()'>").append(value).append("<br/>")
+                html.append(" onclick='$(this).find(\"pre\").toggle()'>").append(value)
                     .append("<pre style='display:none'>").append(valuePre).append("</pre></label>");
             }
             // container >
@@ -678,22 +722,6 @@ abstract class WebUiBasics <T extends WebUiBasics<T>> {
     // KEY VALUE < < <
 
     // > > > HTML
-
-    protected void setAdditive(Dto dto, String name, Class<? extends Annotation> annotation, String msg) {
-        if (dto.hasAnnotation(name, annotation)) {
-            if (additive == null) {
-                additive = new StringBuilder(100);
-            }
-            additive.append(msg);
-        }
-    }
-
-    protected void setAdditive(String msg) {
-        if (additive == null) {
-            additive = new StringBuilder(100);
-        }
-        additive.append(msg);
-    }
 
     public T setJs(String path) {
         if (js == null) {
@@ -740,6 +768,9 @@ abstract class WebUiBasics <T extends WebUiBasics<T>> {
         while (openTags.size() > 0) {
             html.append(openTags.pop());
         }
+        setJs("/js/jquery.min.js");
+        setJs("/js/vantar.js");
+        setJs("/js/webservice.js");
         if (js != null) {
             for (String j : js.stream().distinct().collect(Collectors.toList())) {
                 html.append("<script src=\"").append(j).append("\"></script>\n");

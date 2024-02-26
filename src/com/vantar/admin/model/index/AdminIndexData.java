@@ -4,6 +4,7 @@ import com.vantar.database.dto.DtoDictionary;
 import com.vantar.exception.FinishException;
 import com.vantar.locale.Locale;
 import com.vantar.locale.*;
+import com.vantar.service.log.ServiceLog;
 import com.vantar.web.*;
 import javax.servlet.http.HttpServletResponse;
 import java.util.*;
@@ -20,7 +21,7 @@ public class AdminIndexData {
             ui.beginBox(groupName);
             groupDtos.forEach((dtoName, info) -> {
                 if (info.dbms == null) {
-                    Admin.log.warn("! {} missing dbms", info.getDtoClassName());
+                    ServiceLog.log.warn("! {} missing dbms", info.getDtoClassName());
                     return;
                 }
 
@@ -31,9 +32,9 @@ public class AdminIndexData {
 
                 ui
                     .beginFloatBoxLink(
-                        "/admin/data/list?dto=" + dtoName,
-                        info.dbms.toString(),
                         "db-box",
+                        info.dbms.toString(),
+                        "/admin/data/list?dto=" + dtoName,
                         info.getDtoClassName(),
                         info.title
                     )
@@ -59,7 +60,7 @@ public class AdminIndexData {
                         "dto-action-link"
                     )
                     .addHref(
-                        Locale.getString(VantarKey.ADMIN_DATABASE_DELETE_ALL),
+                        Locale.getString(VantarKey.ADMIN_DELETE_ALL),
                         "/admin/data/purge?dto=" + dtoName,
                         true,
                         false,
@@ -74,36 +75,28 @@ public class AdminIndexData {
         ui.beginBox("NOSTORE");
         noStores.forEach(info ->
             ui.beginFloatBoxLink(
+                "db-box",
+                "no-db",
                 "/admin/data/fields?dto=" + info.getDtoClassName(),
-                null,
-                "db-box db-box-nostore",
                 info.getDtoClassName(),
                 info.title
             )
-                .addEmptyLine()
-                .addHref(
-                    Locale.getString(VantarKey.ADMIN_DATA_FIELDS),
-                    "/admin/data/fields?dto=" + info.getDtoClassName(),
-                    true,
-                    false,
-                    "dto-action-link"
-                )
-                .blockEnd()
+            .blockEnd()
         );
         ui.blockEnd();
 
         // > > >
-        ui.beginBox(Locale.getString(VantarKey.ADMIN_DATABASE_TITLE));
+        ui.beginBox(VantarKey.ADMIN_DATABASE_TITLE);
 
         ui.beginFloatBox("system-box", "MONGO")
         .addHrefBlock("Sequences", "/admin/database/mongo/sequences")
         .addHrefBlock("Indexed", "/admin/database/mongo/indexes")
-        .addHrefBlock(Locale.getString(VantarKey.ADMIN_DATABASE_STATUS), "/admin/data/mongo/status")
+        .addHrefBlock(VantarKey.ADMIN_DATABASE_STATUS, "/admin/data/mongo/status")
         .blockEnd();
 
         ui.beginFloatBox("system-box", "SQL")
         .addHrefBlock("Indexes", "/admin/database/sql/indexes")
-        .addHrefBlock(Locale.getString(VantarKey.ADMIN_DATABASE_STATUS), "/admin/data/sql/status")
+        .addHrefBlock(VantarKey.ADMIN_DATABASE_STATUS, "/admin/data/sql/status")
         .blockEnd();
 
         ui.finish();

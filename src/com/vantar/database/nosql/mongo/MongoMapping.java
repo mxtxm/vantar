@@ -16,7 +16,6 @@ import org.bson.*;
 import org.bson.conversions.Bson;
 import java.util.*;
 import java.util.regex.Pattern;
-import static com.vantar.database.query.QueryOperator.AND;
 import static com.vantar.database.query.QueryOperator.QUERY;
 
 @SuppressWarnings({"unchecked", "rawtypes"})

@@ -20,6 +20,7 @@ import com.vantar.util.json.Json;
 import com.vantar.util.object.*;
 import com.vantar.util.string.StringUtil;
 import javax.servlet.http.HttpServletResponse;
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.util.*;
 
@@ -56,108 +57,24 @@ public class WebUi extends WebUiBasics<WebUi> {
         return this;
     }
 
-
-
-
-
-
-
-
-
-
-
-
-    // > > > TOOLS
-
-    public WebUi addLogPage(String clazz, Long id) {
-        html.append("<div id='log-rows'></div><input id='pageLog' value='1' style='display:none'/><div><button id='more'"
-            +" onclick=\"loadRows('").append(clazz).append("', ").append(id).append(")\">more</button></div>");
-
-        html.append("<script>"
-            + "function loadRows(clazz, id) { var p = parseInt($('#pageLog').val(), 10); $('#pageLog').val(p+1); "
-            + " getString('/admin/data/log/rows', {dto:clazz,id:id,page:p}, '")
-            .append(authToken).append("', 'en', function(o) { if (o=='FINISHED') { $('#more').hide(); return;} $('#log-rows').append(o)}, ); } "
-
-            + "function setObject(id) { if ($('#log-object').hasClass('loaded')) {return;} "
-            + " $('#log-object').addClass('loaded'); getString('/admin/data/log/object', {id:id}, '")
-            .append(authToken).append("', 'en', function(o) {$('#log-object' + id).html(o)}, ); }</script>");
-
-        setJs("/js/jquery.min.js");
-        setJs("/js/vantar.js");
-        setJs("/js/webservice.js");
-        return this;
-    }
-
-    public void addLogRows(UserLog.View userLog, CommonUser user) {
-        html.append("<div class='log-row clearfix'>");
-
-        html.append("<div class='log-col-user'>")
-            .append("<p class='action'>").append(userLog.action).append("</p>")
-            .append("<p class='url'>").append(userLog.url).append("</p>")
-            .append("<p class='thread-id'>").append("thread: ").append(userLog.threadId).append("</p>")
-            .append("<p class='time'>").append(userLog.time.formatter().getDateTime()).append("</p>")
-            .append("<p class='time'>").append(userLog.time.formatter().getDateTimePersianAsString()).append("</p>");
-        if (user != null) {
-            html.append("<p class='user'>(").append(user.getId()).append(") ")
-                .append(user.getUsername()).append(" - ").append(user.getFullName()).append("</p>");
-        }
-        html.append("</div>");
-
-        html.append("<div class='log-col-data'><pre class='object'>");
-        if (userLog.className != null) {
-            html.append("<strong>").append(escape(userLog.className));
-            if (userLog.objectId != null) {
-                html.append(" (").append(userLog.objectId).append(")");
-            }
-            html.append("</strong>\n");
-        }
-        html.append("</pre><textarea id='log-object" + userLog.id + "' onclick='setObject(").append(userLog.id).append(")' class='object'>");
-        html.append("</textarea>");
-        html.append("</div></div>");
-    }
-
-
-    public WebUi addImportForm(String data) {
-        beginFormPost();
-        addTextArea(VantarKey.ADMIN_DATA, "import", escape(data), "large ltr");
-        addCheckbox(VantarKey.ADMIN_DATABASE_DELETE_ALL, "deleteall");
-        addSubmit(VantarKey.ADMIN_DATA_ENTRY);
-        return blockEnd();
-    }
-
-    public WebUi addPurgeForm() {
-        beginFormPost();
-        addErrorMessage(Locale.getString(VantarKey.ADMIN_DELETE));
-        addCheckbox(Locale.getString(VantarKey.ADMIN_DELETE_ALL_CONFIRM), PARAM_CONFIRM);
-        addSubmit(Locale.getString(VantarKey.ADMIN_DELETE));
-        return blockEnd();
-    }
+    // > > > DTO
 
     public WebUi addDeleteForm(List<Dto> dtos) {
         beginFormPost();
-        addErrorMessage(Locale.getString(VantarKey.ADMIN_DELETE)).addEmptyLine();
-
-//        boolean isLogical = dtos.size() > 0 && dtos.get(0).isDeleteLogicalEnabled();
-//        if (isLogical) {
-//            html.append("<div>");
-//            addCheckbox(Locale.getString(VantarKey.LOGICAL_DELETED), "delete-logic");
-//            html.append("<div>");
-//            addCheckbox(Locale.getString(VantarKey.LOGICAL_DELETED_UNDO), VantarParam.LOGICAL_DELETED_UNDO);
-//            html.append("</div><br/><br/>");
-//        }
-
+        addErrorMessage(VantarKey.ADMIN_DELETE);
+        addEmptyLine();
         for (Dto dto : dtos) {
-            html.append("<div class='row delete-item'><input name='ids' type='checkbox' value='")
-                .append(dto.getId()).append("'/> ");
+            html.append("<div class=\"row delete-item\"><input name=\"ids\" type=\"checkbox\" value=\"")
+                .append(dto.getId()).append("\"/>").append(dto.getId());
             for (String name : dto.getPresentationPropertyNames()) {
-                Object value = dto.getPropertyValue(name);
-                html.append(value).append(" - ");
+                if (!"id".equals(name)) {
+                    Object value = dto.getPropertyValue(name);
+                    html.append(" - ").append(value);
+                }
             }
-            html.setLength(html.length() - 3);
             html.append("</div>");
         }
-//        addSubmit(isLogical ? Locale.getString(VantarKey.ADMIN_DO) : Locale.getString(VantarKey.ADMIN_DELETE));
-        addSubmit(Locale.getString(VantarKey.ADMIN_DELETE));
+        addSubmit(VantarKey.ADMIN_DELETE);
         return blockEnd();
     }
 
@@ -173,8 +90,8 @@ public class WebUi extends WebUiBasics<WebUi> {
      * VantarAdminTags: not exists: include, none: exclude, insert/update: include for action
      */
     private WebUi addDtoForm(Dto dto, String action, String... include) {
-        html.append("<form method='post' id='dto-form' autocomplete='off' ><input name='f' value='1' type='hidden'/>\n");
-        addSubmit(Locale.getString(VantarKey.ADMIN_DO));
+        html.append("<form method=\"post\" id=\"dto-form\" autocomplete=\"off\" ><input name=\"f\" value=\"1\" type=\"hidden\"/>\n");
+        addSubmit(VantarKey.ADMIN_DO);
 
         if ("update".equals(action)) {
             addInput("id", "id", dto.getId());
@@ -187,13 +104,14 @@ public class WebUi extends WebUiBasics<WebUi> {
 
             setAdditive(dto, name, Required.class, "<pre class='required'>*</pre>");
             setAdditive(dto, name, Unique.class, "<pre class='unique'>unique</pre>");
-            setAdditive(dto, name, UniqueCi.class, "<pre class='unique'>unique</pre>");
+            setAdditive(dto, name, UniqueCi.class, "<pre class='unique'>unique-ci</pre>");
             Default a = dto.getAnnotation(name, Default.class);
             if (a != null) {
                 setAdditive(
                     dto,
-                    name, Default.class, "<pre class='default' title=\"default value\">"
-                        + dto.getAnnotation(name, Default.class).value() + "</pre>"
+                    name,
+                    Default.class,
+                    "<pre class='default' title=\"default value\">" + dto.getAnnotation(name, Default.class).value() + "</pre>"
                 );
             }
             setAdditive(dto, name, Localized.class, "<pre class='format'>{\"en\":\"\", \"fa\":\"\"}</pre>");
@@ -210,6 +128,7 @@ public class WebUi extends WebUiBasics<WebUi> {
                 Depends depends = field.getAnnotation(Depends.class);
                 if (depends != null) {
                     Class<? extends Dto> depClass = depends.value();
+
                     if (dto.getClass().isAnnotationPresent(Mongo.class)) {
                         try {
                             List<Dto> dtos = ModelMongo.getAll(DtoDictionary.getInstance(depClass));
@@ -344,43 +263,25 @@ public class WebUi extends WebUiBasics<WebUi> {
             addInput("password", "password", null, "password");
         }
 
-        addSubmit(Locale.getString(VantarKey.ADMIN_DO));
-        html.append("<input type='hidden' name='asjson' id='asjson'/>").append("</form>");
-        setJs("/js/jquery.min.js");
-        setJs("/js/vantar.js");
+        addSubmit(VantarKey.ADMIN_DO);
+        html.append("<input type=\"hidden\" name=\"asjson\" id=\"asjson\"/>").append("</form>");
         return this;
     }
 
-    public WebUi addDtoView(Dto dto) {
-        for (Map.Entry<String, Object> item : dto.getPropertyValues().entrySet()) {
-            String value;
-            if (item.getValue() == null) {
-                value = "NULL";
-            } else if (item.getValue() instanceof DateTime) {
-                value = lang != null && lang.equals("fa") ?
-                    ((DateTime) item.getValue()).formatter().getDateTimePersianStyled() :
-                    ((DateTime) item.getValue()).formatter().getDateTimeStyled();
-            } else {
-                value = ObjectUtil.toStringViewable(dto.getPropertyValue(item.getKey()));
+    private void setAdditive(Dto dto, String name, Class<? extends Annotation> annotation, String msg) {
+        if (dto.hasAnnotation(name, annotation)) {
+            if (additive == null) {
+                additive = new StringBuilder(100);
             }
-
-            if (value.toLowerCase().contains("jpg") || value.toLowerCase().contains("png")) {
-                StringBuilder images = new StringBuilder(250);
-                for (String v : StringUtil.splitTrim(value, '|')) {
-                    if (StringUtil.isNotEmpty(v)) {
-                        images
-                            .append("<img src='").append(v).append("' alt='").append(v)
-                            .append("' title='").append(v).append("'/> ");
-                    }
-                }
-                value = images.toString();
-            } else {
-                value = escapeWithNtoBr(value);
-            }
-
-            addKeyValue(item.getKey(), value);
+            additive.append(msg);
         }
-        return this;
+    }
+
+    private void setAdditive(String msg) {
+        if (additive == null) {
+            additive = new StringBuilder(100);
+        }
+        additive.append(msg);
     }
 
     public WebUi addDtoListWithHeader(PageData data, DtoDictionary.Info info, String... fields) {
@@ -398,12 +299,13 @@ public class WebUi extends WebUiBasics<WebUi> {
             .append("'>").append(Locale.getString(VantarKey.ADMIN_EXPORT)).append("</a>");
 
         if (data != null) {
-            html.append(" | <a href='").append(getLink("/admin/data/update?dto=" + className))
-                .append("'>").append(Locale.getString(VantarKey.ADMIN_BATCH_EDIT)).append("</a>")
-                .append(" | <a href='").append(getLink("/admin/data/delete?dto=" + className))
-                .append("'>").append(Locale.getString(VantarKey.ADMIN_BATCH_DELETE)).append("</a>")
+            html
+                //.append(" | <a href='").append(getLink("/admin/data/update?dto=" + className))
+                //.append("'>").append(Locale.getString(VantarKey.ADMIN_BATCH_EDIT)).append("</a>")
+                //.append(" | <a href='").append(getLink("/admin/data/delete?dto=" + className))
+                //.append("'>").append(Locale.getString(VantarKey.ADMIN_BATCH_DELETE)).append("</a>")
                 .append(" | <a href='").append(getLink("/admin/data/purge?dto=" + className))
-                .append("'>").append(Locale.getString(VantarKey.ADMIN_DATABASE_DELETE_ALL)).append("</a>");
+                .append("'>").append(Locale.getString(VantarKey.ADMIN_DELETE_ALL)).append("</a>");
         }
 
         html.append("</div>");
@@ -634,8 +536,6 @@ public class WebUi extends WebUiBasics<WebUi> {
         }
 
         html.append("</form>");
-        setJs("/js/jquery.min.js");
-        setJs("/js/vantar.js");
         return this;
     }
 
@@ -766,4 +666,53 @@ public class WebUi extends WebUiBasics<WebUi> {
         html.append("</select></div>");
         return this;
     }
+
+
+
+    // > > > LOG
+
+    public WebUi addLogPage(String clazz, Long id) {
+        html.append("<div id='log-rows'></div><input id='pageLog' value='1' style='display:none'/><div><button id='more'"
+            +" onclick=\"loadRows('").append(clazz).append("', ").append(id).append(")\">more</button></div>");
+
+        html.append("<script>"
+            + "function loadRows(clazz, id) { var p = parseInt($('#pageLog').val(), 10); $('#pageLog').val(p+1); "
+            + " getString('/admin/data/log/rows', {dto:clazz,id:id,page:p}, '")
+            .append(authToken).append("', 'en', function(o) { if (o=='FINISHED') { $('#more').hide(); return;} $('#log-rows').append(o)}, ); } "
+
+            + "function setObject(id) { if ($('#log-object').hasClass('loaded')) {return;} "
+            + " $('#log-object').addClass('loaded'); getString('/admin/data/log/object', {id:id}, '")
+            .append(authToken).append("', 'en', function(o) {$('#log-object' + id).html(o)}, ); }</script>");
+        return this;
+    }
+
+    public void addLogRows(UserLog.View userLog, CommonUser user) {
+        html.append("<div class='log-row clearfix'>");
+
+        html.append("<div class='log-col-user'>")
+            .append("<p class='action'>").append(userLog.action).append("</p>")
+            .append("<p class='url'>").append(userLog.url).append("</p>")
+            .append("<p class='thread-id'>").append("thread: ").append(userLog.threadId).append("</p>")
+            .append("<p class='time'>").append(userLog.time.formatter().getDateTime()).append("</p>")
+            .append("<p class='time'>").append(userLog.time.formatter().getDateTimePersianAsString()).append("</p>");
+        if (user != null) {
+            html.append("<p class='user'>(").append(user.getId()).append(") ")
+                .append(user.getUsername()).append(" - ").append(user.getFullName()).append("</p>");
+        }
+        html.append("</div>");
+
+        html.append("<div class='log-col-data'><pre class='object'>");
+        if (userLog.className != null) {
+            html.append("<strong>").append(escape(userLog.className));
+            if (userLog.objectId != null) {
+                html.append(" (").append(userLog.objectId).append(")");
+            }
+            html.append("</strong>\n");
+        }
+        html.append("</pre><textarea id='log-object" + userLog.id + "' onclick='setObject(").append(userLog.id).append(")' class='object'>");
+        html.append("</textarea>");
+        html.append("</div></div>");
+    }
+
+    // LOG < < <
 }

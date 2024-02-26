@@ -1,7 +1,7 @@
-package com.vantar.admin.web;
+package com.vantar.admin.web.data;
 
 import com.vantar.admin.model.database.AdminCache;
-import com.vantar.exception.FinishException;
+import com.vantar.exception.*;
 import com.vantar.web.*;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServletResponse;
@@ -9,6 +9,7 @@ import javax.servlet.http.HttpServletResponse;
 @WebServlet({
     "/admin/cache/index",
     "/admin/cache/view",
+    "/admin/cache/refresh",
 })
 public class AdminCacheController extends RouteToMethod {
 
@@ -16,7 +17,11 @@ public class AdminCacheController extends RouteToMethod {
         AdminCache.index(params, response);
     }
 
-    public void cacheView(Params params, HttpServletResponse response) throws FinishException {
+    public void cacheView(Params params, HttpServletResponse response) throws FinishException, InputException {
         AdminCache.view(params, response);
+    }
+
+    public void cacheRefresh(Params params, HttpServletResponse response) throws FinishException, InputException {
+        AdminCache.refresh(params, response);
     }
 }

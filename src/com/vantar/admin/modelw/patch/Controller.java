@@ -1,7 +1,6 @@
-package com.vantar.admin.web;
+package com.vantar.admin.modelw.patch;
 
-import com.vantar.admin.model.index.AdminPatch;
-import com.vantar.exception.FinishException;
+import com.vantar.exception.*;
 import com.vantar.web.*;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServletResponse;
@@ -10,13 +9,13 @@ import javax.servlet.http.HttpServletResponse;
     "/admin/patch",
     "/admin/patch/run",
 })
-public class AdminPatchController extends RouteToMethod {
+public class Controller extends RouteToMethod {
 
     public void patch(Params params, HttpServletResponse response) throws FinishException {
         AdminPatch.index(params, response);
     }
 
-    public void patchRun(Params params, HttpServletResponse response) throws FinishException {
+    public void patchRun(Params params, HttpServletResponse response) throws FinishException, VantarException {
         AdminPatch.run(params, response);
     }
 }

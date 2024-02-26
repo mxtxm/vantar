@@ -105,6 +105,7 @@ abstract public class QueryResultBase {
                 dto = dto.getClass().getConstructor().newInstance();
            }
         } catch (DatabaseException e) {
+            log.error("! data > dto({})", dto, e);
             throw new ServerException(VantarKey.FETCH_FAIL);
         } catch (NoSuchMethodException | IllegalAccessException | InstantiationException | InvocationTargetException e) {
             log.error("! data > dto({})", dto, e);

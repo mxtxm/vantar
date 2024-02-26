@@ -48,7 +48,7 @@ public class AdminDatabase {
             return;
         }
 
-        ui.beginBox(Locale.getString(VantarKey.ADMIN_DATABASE_SYNCH_RUNNING)).write();
+        ui.beginBox(VantarKey.ADMIN_DATABASE_SYNCH_RUNNING).write();
 
         SqlArtaSynch synch = new SqlArtaSynch(Settings.sql());
         try {
@@ -235,7 +235,7 @@ public class AdminDatabase {
             ui  .beginFormPost()
                 .addInput(VantarKey.ADMIN_DELAY, "delay", Integer.toString(DELAY), null, "ltr")
                 .addInput(VantarKey.ADMIN_IMPORT_EXCLUDE, "exclude", null, null, "ltr")
-                .addCheckbox(VantarKey.ADMIN_DATABASE_DELETE_ALL, "remove", true)
+                .addCheckbox(VantarKey.ADMIN_DELETE_ALL, "remove", true)
                 .addSubmit(VantarKey.ADMIN_IMPORT)
                 .finish();
             return;
@@ -433,7 +433,7 @@ public class AdminDatabase {
             ui  .beginFormPost()
                 .addInput(VantarKey.ADMIN_DELAY, "delay", Integer.toString(DELAY), null, "ltr")
                 .addInput(VantarKey.ADMIN_IMPORT_EXCLUDE, "exclude", null, null, "ltr")
-                .addCheckbox(VantarKey.ADMIN_DATABASE_DELETE_ALL, "remove", true)
+                .addCheckbox(VantarKey.ADMIN_DELETE_ALL, "remove", true)
                 .addSubmit(VantarKey.ADMIN_IMPORT)
                 .finish();
             return;
@@ -499,11 +499,11 @@ public class AdminDatabase {
             return;
         }
 
-        ui.beginBox(Locale.getString(VantarKey.ADMIN_DATABASE_SYNCH_RUNNING)).write();
+        ui.beginBox(VantarKey.ADMIN_DATABASE_SYNCH_RUNNING).write();
 
         try {
             ElasticIndexes.create();
-            ui.addMessage(Locale.getString(VantarKey.ADMIN_FINISHED));
+            ui.addMessage(VantarKey.ADMIN_FINISHED);
         } catch (DatabaseException e) {
             ui.addErrorMessage(e);
         }
@@ -581,7 +581,7 @@ public class AdminDatabase {
             ui  .beginFormPost()
                 .addInput(VantarKey.ADMIN_DELAY, "delay", Integer.toString(DELAY), null, "ltr")
                 .addInput(VantarKey.ADMIN_IMPORT_EXCLUDE, "exclude", null, null, "ltr")
-                .addCheckbox(VantarKey.ADMIN_DATABASE_DELETE_ALL, "remove", true)
+                .addCheckbox(VantarKey.ADMIN_DELETE_ALL, "remove", true)
                 .addSubmit(VantarKey.ADMIN_IMPORT)
                 .finish();
             return;

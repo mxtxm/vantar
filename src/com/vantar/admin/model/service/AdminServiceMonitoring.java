@@ -5,7 +5,6 @@ import com.vantar.database.nosql.elasticsearch.ElasticConnection;
 import com.vantar.database.nosql.mongo.MongoConnection;
 import com.vantar.database.sql.SqlConnection;
 import com.vantar.exception.FinishException;
-import com.vantar.locale.Locale;
 import com.vantar.locale.*;
 import com.vantar.queue.Queue;
 import com.vantar.service.Services;
@@ -18,32 +17,27 @@ import java.util.*;
 
 public class AdminServiceMonitoring {
 
-    public static void servicesStatus(Params params, HttpServletResponse response) throws FinishException {
-        WebUi ui = Admin.getUi(Locale.getString(VantarKey.ADMIN_SERVICES_STATUS), params, response, true);
+    public static void servicesIndex(Params params, HttpServletResponse response) throws FinishException {
+        WebUi ui = Admin.getUi(VantarKey.ADMIN_SERVICES_STATUS, params, response, true);
 
-        ui  .beginBox(Locale.getString(VantarKey.ADMIN_RUNNING_SERVICES_DEPENDENCIES))
-            .addEmptyLine();
-        AdminServiceMonitoring.plotDependencyServicesStatus(ui);
+        ui.beginBox(VantarKey.ADMIN_RUNNING_SERVICES_DEPENDENCIES);
+        plotDependencyServicesStatus(ui);
         ui.blockEnd();
 
-        ui  .beginBox(Locale.getString(VantarKey.ADMIN_RUNNING_SERVICES_ME))
-            .addEmptyLine();
-        AdminServiceMonitoring.plotServicesStatus(ui);
+        ui.beginBox(VantarKey.ADMIN_RUNNING_SERVICES_ME);
+        plotServicesStatus(ui);
         ui.blockEnd();
 
-        ui  .beginBox(Locale.getString(VantarKey.ADMIN_RUNNING_SERVICES_OTHER))
-            .addEmptyLine();
-        AdminServiceMonitoring.plotServicesOnOtherServersStatus(ui);
+        ui.beginBox(VantarKey.ADMIN_RUNNING_SERVICES_OTHER);
+        plotServicesOnOtherServersStatus(ui);
         ui.blockEnd();
 
-        ui  .beginBox(Locale.getString(VantarKey.ADMIN_RUNNING_SERVICES_LOGS))
-            .addEmptyLine();
-        AdminServiceMonitoring.plotServicesLogs(ui);
+        ui.beginBox(VantarKey.ADMIN_RUNNING_SERVICES_LOGS);
+        plotServicesLogs(ui);
         ui.blockEnd();
 
-        ui  .beginBox(Locale.getString(VantarKey.ADMIN_SERVICES_LAST_RUN))
-            .addEmptyLine();
-        AdminServiceMonitoring.plotServicesLastRun(ui);
+        ui.beginBox(VantarKey.ADMIN_SERVICES_BEAT, null, null, "solid-box-clear-inner");
+        plotServicesBeats(ui);
         ui.blockEnd();
 
         ui.finish();
@@ -93,7 +87,7 @@ public class AdminServiceMonitoring {
         for (Services.Service service : s) {
             List<String> logs = service.getLogs();
             if (logs != null) {
-                ui.addHeading(3, service.getClass().getSimpleName());
+                ui.addHeading(2, service.getClass().getSimpleName());
                 for (String log : logs) {
                     ui.addBlock("pre", log);
                 }
@@ -114,12 +108,14 @@ public class AdminServiceMonitoring {
         }
     }
 
-    public static void plotServicesLastRun(WebUi ui) {
+    public static void plotServicesBeats(WebUi ui) {
         Beat.getBeats().forEach((service, logs) -> {
-            ui.addHeading(3, service.getName());
+            ui.addHeading(3, service.getSimpleName());
             logs.forEach((comment, time) ->
-                ui.addKeyValue(comment, time.toString() + " ("
-                    + DateTimeFormatter.secondsToDateTime(Math.abs(time.secondsFromNow())) + ")")
+                ui.addKeyValue(
+                    time.toString() + " (" + DateTimeFormatter.secondsToDateTime(Math.abs(time.secondsFromNow())) + ")",
+                    comment
+                )
             );
         });
     }

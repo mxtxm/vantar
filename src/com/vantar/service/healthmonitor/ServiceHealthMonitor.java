@@ -6,7 +6,8 @@ import com.vantar.database.nosql.mongo.MongoConnection;
 import com.vantar.database.sql.SqlConnection;
 import com.vantar.queue.Queue;
 import com.vantar.service.Services;
-import com.vantar.service.log.ServiceLog;
+import com.vantar.service.log.*;
+import com.vantar.util.datetime.DateTimeFormatter;
 import com.vantar.util.number.NumberUtil;
 import com.vantar.util.object.ObjectUtil;
 import java.io.IOException;
@@ -21,6 +22,9 @@ public class ServiceHealthMonitor implements Services.Service {
     private volatile boolean serviceUp = false;
     private ScheduledExecutorService schedule;
     private Event event;
+
+    private List<String> lastMessages;
+    private boolean lastWasOk = true;
 
     // warn only if repeated monitoring fails
     private int warnMemoryCount;
@@ -77,6 +81,8 @@ public class ServiceHealthMonitor implements Services.Service {
     // service methods < < <
 
     private void monitor() {
+        lastWasOk = true;
+        lastMessages = new ArrayList<>(10);
 
         // > > > disk
         for (DiskStatus s : getDiskStatus()) {
@@ -85,6 +91,8 @@ public class ServiceHealthMonitor implements Services.Service {
                     + NumberUtil.getReadableByteSize(s.free) + " / " + NumberUtil.getReadableByteSize(s.total);
                 event.warnDiskFreeSpace(msg);
                 ServiceLog.error(ServiceHealthMonitor.class, msg);
+                lastWasOk = false;
+                lastMessages.add(msg);
             }
         }
 
@@ -99,6 +107,8 @@ public class ServiceHealthMonitor implements Services.Service {
                 + " / " + NumberUtil.getReadableByteSize(memoryStatus.total);
             event.warnMemoryLow(msg);
             ServiceLog.error(ServiceHealthMonitor.class, msg);
+            lastWasOk = false;
+            lastMessages.add(msg);
         }
 
         // > > > processor
@@ -112,6 +122,8 @@ public class ServiceHealthMonitor implements Services.Service {
                 + " system=" + processorStatus.systemLoadPercent;
             event.warnProcessorBusy(msg);
             ServiceLog.error(ServiceHealthMonitor.class, msg);
+            lastWasOk = false;
+            lastMessages.add(msg);
         }
 
         // > > > services
@@ -119,32 +131,44 @@ public class ServiceHealthMonitor implements Services.Service {
             String msg = "SERVICE OFF: Mongo";
             event.warnServiceFail(msg);
             ServiceLog.error(ServiceHealthMonitor.class, msg);
+            lastWasOk = false;
+            lastMessages.add(msg);
         }
         if (Services.isDependencyEnabled(ElasticConnection.class) && !Services.isUp(ElasticConnection.class)) {
             String msg = "SERVICE OFF: Elastic";
             event.warnServiceFail(msg);
             ServiceLog.error(ServiceHealthMonitor.class, msg);
+            lastWasOk = false;
+            lastMessages.add(msg);
         }
         if (Services.isDependencyEnabled(SqlConnection.class) && !Services.isUp(SqlConnection.class)) {
             String msg = "SERVICE OFF: SQL";
             event.warnServiceFail(msg);
             ServiceLog.error(ServiceHealthMonitor.class, msg);
+            lastWasOk = false;
+            lastMessages.add(msg);
         }
         if (Services.isDependencyEnabled(Queue.class) && !Services.isUp(Queue.class)) {
             String msg = "SERVICE OFF: Queue";
             event.warnServiceFail(msg);
             ServiceLog.error(ServiceHealthMonitor.class, msg);
+            lastWasOk = false;
+            lastMessages.add(msg);
         }
 
         for (Services.Service service : Services.getServices()) {
             if (!service.isUp()) {
-                String msg = "SERVICE OFF: " + service;
+                String msg = "SERVICE OFF: " + service.getClass().getSimpleName();
                 event.warnServiceFail(msg);
                 ServiceLog.error(ServiceHealthMonitor.class, msg);
+                lastWasOk = false;
+                lastMessages.add(msg);
             } else if (!service.isOk()) {
-                String msg = "SERVICE FAIL: " + service;
+                String msg = "SERVICE FAIL: " + service.getClass().getSimpleName();
                 event.warnServiceFail(msg);
                 ServiceLog.error(ServiceHealthMonitor.class, msg);
+                lastWasOk = false;
+                lastMessages.add(msg);
             }
         }
     }
@@ -190,6 +214,108 @@ public class ServiceHealthMonitor implements Services.Service {
         status.systemLoadPercent = NumberUtil.round(os.getSystemCpuLoad() * 100D, 1);
         status.ok = warnProcessorMaxPercent == null || status.jvmLoadPercent < warnProcessorMaxPercent;
         return status;
+    }
+
+    public boolean getOverallSystemHealth() {
+        return lastWasOk;
+    }
+
+    public List<String> getLastErrors() {
+        return lastMessages == null ? new ArrayList<>(1) : lastMessages;
+    }
+
+    public Map<String, Object> getSystemHealthReport() {
+        Map<String, Object> report = new HashMap<>(10, 1);
+
+        // memory
+        Map<String, Object> memory = new HashMap<>(8, 1);
+        MemoryStatus mStatus = getMemoryStatus();
+        memory.put("Status", mStatus.ok);
+        memory.put("Designated memory", NumberUtil.getReadableByteSize(mStatus.max));
+        memory.put("Allocated memory", NumberUtil.getReadableByteSize(mStatus.total));
+        memory.put("Free memory", NumberUtil.getReadableByteSize(mStatus.free));
+        memory.put("Used memory", NumberUtil.getReadableByteSize(mStatus.used));
+        memory.put(
+            "Physical memory",
+            NumberUtil.getReadableByteSize(mStatus.physicalFree) + " / " + NumberUtil.getReadableByteSize(mStatus.physicalTotal)
+        );
+        memory.put(
+            "Swap memory",
+            NumberUtil.getReadableByteSize(mStatus.swapFree) + " / " + NumberUtil.getReadableByteSize(mStatus.swapTotal)
+        );
+        report.put("Memory", memory);
+
+        // processor
+        Map<String, Object> processor = new HashMap<>(4, 1);
+        ProcessorStatus pStatus = getProcessorStatus();
+        processor.put("Status", pStatus.ok);
+        processor.put("JVM load percent", pStatus.jvmLoadPercent);
+        processor.put("System load percent", pStatus.systemLoadPercent);
+        report.put("Processor", processor);
+
+        // disk
+        Map<String, Map<String, Object>> disks = new HashMap<>(5, 1);
+        for (DiskStatus dStatus : getDiskStatus()) {
+            Map<String, Object> disk = new HashMap<>(5, 1);
+            disk.put("Status", dStatus.ok);
+            disk.put("Free", NumberUtil.getReadableByteSize(dStatus.free));
+            disk.put("Used", NumberUtil.getReadableByteSize(dStatus.used));
+            disk.put("Total", NumberUtil.getReadableByteSize(dStatus.total));
+            disks.put(dStatus.name, disk);
+        }
+        report.put("Disks", disks);
+
+        // services dependencies
+        Map<String, Map<String, Boolean>> serviceDependencies = new HashMap<>(5, 1);
+        // >
+        Map<String, Boolean> queue = new HashMap<>(2, 1);
+        queue.put("Enabled", Services.isDependencyEnabled(Queue.class));
+        queue.put("Up", Services.isUp(Queue.class));
+        serviceDependencies.put("Queue", queue);
+        // >
+        Map<String, Boolean> mongo = new HashMap<>(2, 1);
+        mongo.put("Enabled", Services.isDependencyEnabled(MongoConnection.class));
+        mongo.put("Up", Services.isUp(MongoConnection.class));
+        serviceDependencies.put("Mongo", mongo);
+        // >
+        Map<String, Boolean> sql = new HashMap<>(2, 1);
+        sql.put("Enabled", Services.isDependencyEnabled(SqlConnection.class));
+        sql.put("Up", Services.isUp(SqlConnection.class));
+        serviceDependencies.put("SQL", sql);
+        // >
+        Map<String, Boolean> elastic = new HashMap<>(2, 1);
+        elastic.put("Enabled", Services.isDependencyEnabled(ElasticConnection.class));
+        elastic.put("Up", Services.isUp(ElasticConnection.class));
+        serviceDependencies.put("Elastic search", elastic);
+        // >
+        report.put("Services dependencies", serviceDependencies);
+
+        // services
+        Map<String, Map<String, Object>> services = new HashMap<>(14, 1);
+        for (Services.Service service : Services.getServices()) {
+            Map<String, Object> s = new HashMap<>(2, 1);
+            s.put("Up", service.isOk());
+            s.put("Ok", service.isOk());
+            s.put("Logs", service.getLogs());
+            services.put(service.getClass().getSimpleName(), s);
+        }
+        report.put("Services", services);
+
+        // beats
+        Map<String, Map<String, String>> beats = new HashMap<>(14, 1);
+        Beat.getBeats().forEach((service, logs) -> {
+            Map<String, String> actions = new HashMap<>(10, 1);
+            logs.forEach((comment, time) ->
+                actions.put(
+                    comment,
+                    time.toString() + " (" + DateTimeFormatter.secondsToDateTime(Math.abs(time.secondsFromNow())) + ")"
+                )
+            );
+            beats.put(service.getSimpleName(), actions);
+        });
+        report.put("Last service action", beats);
+
+        return report;
     }
 
 

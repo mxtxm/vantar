@@ -428,7 +428,7 @@ public class CommonModelElastic extends CommonModel {
     // > > > admin tools
 
     public static void importDataAdmin(String data, Dto dto, List<String> presentField, boolean deleteAll, WebUi ui) {
-        ui.beginBox2(dto.getClass().getSimpleName()).write();
+        ui.beginBox(dto.getClass().getSimpleName(), null, "box-title2").write();
 
         if (deleteAll) {
             try {

@@ -21,7 +21,7 @@ public class ImportMongo extends CommonImport {
             ServiceLog.addAction(Dto.Action.IMPORT, dto);
         }
 
-        ui.beginBox2(dto.getClass().getSimpleName()).write();
+        ui.beginBox(dto.getClass().getSimpleName(), null, "box-title2").write();
 
         if (deleteAll) {
             String collection = dto.getStorage();
