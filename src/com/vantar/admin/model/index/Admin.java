@@ -1,7 +1,7 @@
 package com.vantar.admin.model.index;
 
 import com.vantar.admin.model.AdminAuth;
-import com.vantar.admin.model.service.*;
+import com.vantar.admin.modelw.service.*;
 import com.vantar.common.*;
 import com.vantar.database.dto.DtoDictionary;
 import com.vantar.exception.*;
@@ -27,7 +27,7 @@ public class Admin {
             return;
         }
 
-        WebUi ui = getUi(Locale.getString(VantarKey.ADMIN_SYSTEM_ADMIN), params, response, false);
+        WebUi ui = getUi(VantarKey.ADMIN_SYSTEM_ADMIN, params, response, false);
 
         Map<String, List<String>> shortcuts = new LinkedHashMap<>(14);
 
@@ -35,11 +35,11 @@ public class Admin {
         if (AdminAuth.isRoot(ui)) {
             List<String> defaultLinks = new ArrayList<>(20);
             defaultLinks.add("");
-            defaultLinks.add(Locale.getString(VantarKey.ADMIN_ONLINE_USERS) + ":/admin/users/online/admin/users/online");
+            defaultLinks.add(Locale.getString(VantarKey.ADMIN_ONLINE_USERS) + ":/admin/users/online");
             defaultLinks.add(Locale.getString(VantarKey.ADMIN_USERS) + ":/admin/data/list?dto=User");
             defaultLinks.add("");
             defaultLinks.add(Locale.getString(VantarKey.ADMIN_SYSTEM_ERRORS) + ":/admin/system/errors/index");
-            defaultLinks.add(Locale.getString(VantarKey.ADMIN_SERVICES_STATUS) + ":/admin/services/index");
+            defaultLinks.add(Locale.getString(VantarKey.ADMIN_SERVICES_STATUS) + ":/admin/service/index");
             shortcuts.put(Locale.getString(VantarKey.ADMIN_SHORTCUTS), defaultLinks);
         }
 
@@ -114,6 +114,31 @@ public class Admin {
         ui.addMessage("Vantar system administration: " + VantarParam.VERSION);
         ui.addMessage("Server ID: " + Services.ID);
         ui.finish();
+    }
+
+    public static WebUi getUiAllowIfAuthOff(Object title, Params params, HttpServletResponse response) throws FinishException {
+        WebUi ui = new WebUi(params, response);
+
+        try {
+            ServiceAuth service = Services.getService(ServiceAuth.class);
+            if (!service.isRoot(ui.params)) {
+                ui.addErrorMessage(VantarKey.ADMIN_AUTH_TOKEN).finish();
+                throw new FinishException();
+            }
+            ui.addMenu(getMenus(ui), getOnlineUserTitle(params));
+        } catch (AuthException e) {
+            ui.addErrorMessage(e).finish();
+            throw new FinishException();
+        } catch (ServiceException ignore) {
+
+        }
+
+        return ui.addHeading(
+                1,
+                Settings.config.getProperty("title") + " : "
+                    + (title instanceof LangKey ? Locale.getString((LangKey) title) : title.toString())
+            )
+            .beginBlock("main");
     }
 
     public static WebUi getUi(Object title, Params params, HttpServletResponse response, boolean requiresRoot)

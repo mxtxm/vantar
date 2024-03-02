@@ -1,17 +1,22 @@
-package com.vantar.admin.web.health;
+package com.vantar.admin.modelw.monitoring;
 
-import com.vantar.admin.model.heath.AdminSystemError;
 import com.vantar.exception.*;
 import com.vantar.web.*;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServletResponse;
 
 @WebServlet({
+    "/admin/monitoring",
+
     "/admin/system/errors/index",
     "/admin/system/errors/by/tag",
     "/admin/system/errors/delete",
 })
-public class AdminSystemErrorController extends RouteToMethod {
+public class Controller extends RouteToMethod {
+
+    public void monitoring(Params params, HttpServletResponse response) throws FinishException {
+        AdminMonitoring.index(params, response);
+    }
 
     public void systemErrorsIndex(Params params, HttpServletResponse response) throws FinishException {
         AdminSystemError.index(params, response);

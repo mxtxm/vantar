@@ -1,7 +1,7 @@
 package com.vantar.admin.web;
 
 import com.vantar.admin.model.database.AdminData;
-import com.vantar.admin.model.heath.AdminActionLog;
+import com.vantar.admin.model.database.AdminActionLog;
 import com.vantar.admin.model.index.AdminIndexData;
 import com.vantar.database.dto.DtoDictionary;
 import com.vantar.exception.*;

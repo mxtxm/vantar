@@ -533,6 +533,7 @@ abstract class WebUiBasics <T extends WebUiBasics<T>> {
                 } else if (item.getKey().equals(value)) {
                     sb.append(" selected=\"selected\"");
                 }
+                sb.append(" title=\"").append(item.getKey()).append("\" ");
                 sb.append(">").append(item.getValue()).append("</option>\n");
             }
         } else if (items instanceof Collection<?>) {

@@ -6,7 +6,7 @@ import com.vantar.database.nosql.mongo.MongoConnection;
 import com.vantar.database.sql.SqlConnection;
 import com.vantar.exception.ServiceException;
 import com.vantar.queue.Queue;
-import com.vantar.service.log.Beat;
+import com.vantar.service.log.*;
 import com.vantar.service.messaging.ServiceMessaging;
 import com.vantar.service.patch.Patcher;
 import com.vantar.util.object.*;
@@ -34,12 +34,8 @@ public class Services {
     }
 
     /**
-     * NONE server startup -> do not run events
+     * Class simple names
      */
-    public static synchronized void startServices() {
-        startServices(false);
-    }
-
     public static List<String> getEnabledServices() {
         List<String> services = new ArrayList<>(14);
         for (String key : Settings.getKeys()) {
@@ -51,6 +47,30 @@ public class Services {
         return services;
     }
 
+    public static List<Class<?>> getEnabledServiceClasses() {
+        List<Class<?>> services = new ArrayList<>(14);
+        for (String key : Settings.getKeys()) {
+            if (key.startsWith("service.enabled")) {
+                key = StringUtil.replace(key, "service.enabled", "service");
+                String packageName = StringUtil.trim(Settings.getValue(key + ".package"), '.');
+                String className = StringUtil.toStudlyCase(key);
+                try {
+                    services.add(Class.forName(packageName + "." + className));
+                } catch (ClassNotFoundException e) {
+                    ServiceLog.log.error(" ! invalid service {}", packageName + className);
+                }
+            }
+        }
+        return services;
+    }
+
+    /**
+     * NONE server startup -> do not run events
+     */
+    public static synchronized void startServices() {
+        startServices(false);
+    }
+
     /**
      * Server startup -> start services run events
      */
@@ -58,7 +78,7 @@ public class Services {
         startServices(true);
     }
 
-    private static void startServices(boolean doEvents) {
+    public static void startServices(boolean doEvents) {
         dependencies = new HashSet<>(5, 1);
         String values = Settings.getValue("service.dependencies");
         if (values != null) {
@@ -166,7 +186,7 @@ public class Services {
         stopServices(true);
     }
 
-    private static void stopServices(boolean doEvents) {
+    public static void stopServices(boolean doEvents) {
         if (doEvents && event != null) {
             event.beforeStop();
         }
@@ -234,6 +254,16 @@ public class Services {
             throw new ServiceException(serviceClass);
         }
         return (T) service;
+    }
+
+    @SuppressWarnings("unchecked")
+    public static <T extends Service> T getService(String serviceClassName) throws ServiceException {
+        try {
+            Class<?> c = Class.forName(serviceClassName);
+            return (T) upServicesMe.get(c);
+        } catch (Exception e) {
+            throw new ServiceException(serviceClassName);
+        }
     }
 
     @SuppressWarnings("unchecked")

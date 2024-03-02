@@ -33,7 +33,7 @@ public class DefaultStringsEn {
         tokens.put(VantarKey.MUST_BE_POST_MULTIPART, "wrong request method, must be POST (multipart/form-data encoded)");
         tokens.put(VantarKey.REQUIRED_OR, "\"{0}\": at least one is required");
         tokens.put(VantarKey.REQUIRED_XOR, "\"{0}\": one and only one is required");
-        tokens.put(VantarKey.DATA_TYPE, "\"{0}\": invalid data type");
+        tokens.put(VantarKey.INVALID_VALUE_TYPE, "\"{0}\": invalid data type");
         tokens.put(VantarKey.UNIQUE, "\"{0}\": must be unique");
         tokens.put(VantarKey.REFERENCE, "\"{0}\": reference ({1}) not exists");
         tokens.put(VantarKey.PARENT_CHILD, "\"{0}\": impossible parent and child");
@@ -116,7 +116,6 @@ public class DefaultStringsEn {
 
         tokens.put(VantarKey.ADMIN_DATABASE, "Database administrator");
         tokens.put(VantarKey.ADMIN_DATABASE_STATUS, "status");
-        tokens.put(VantarKey.ADMIN_DATABASE_STATUS_PARAM, "status \"{0}\"");
         tokens.put(VantarKey.ADMIN_DATABASE_CREATE_INDEX, "Create indexes");
         tokens.put(VantarKey.ADMIN_DELETE_ALL, "Purge");
         tokens.put(VantarKey.ADMIN_DELETE_OPTIONAL, "Delete selected data");
@@ -156,7 +155,6 @@ public class DefaultStringsEn {
         tokens.put(VantarKey.ADMIN_DATABASE_TITLE, "Database");
         tokens.put(VantarKey.ADMIN_DELETE, "Delete");
         tokens.put(VantarKey.ADMIN_UPDATE, "Update");
-        tokens.put(VantarKey.ADMIN_STATUS, "\"{0}\" status");
         tokens.put(VantarKey.ADMIN_DATABASE_SYNCH_TITLE, "\"{0}\" synch");
         tokens.put(VantarKey.ADMIN_DATABASE_SYNCH_CONFIRM, "Start synch");
         tokens.put(VantarKey.ADMIN_DATABASE_SYNCH_RUNNING, "Synchronizing database with system objects...");
@@ -222,14 +220,13 @@ public class DefaultStringsEn {
         tokens.put(VantarKey.ADMIN_SETTINGS_LOADED, "Settings loaded");
         tokens.put(VantarKey.ADMIN_SETTINGS_UPDATE_MSG_SENT, "Update settings message sent to other servers");
         tokens.put(VantarKey.ADMIN_SETTINGS_UPDATE_FAILED, "Settings failed to update");
-        tokens.put(VantarKey.ADMIN_SERVICE_INCLUDE_ALL_SERVICES, "Include all services");
-        tokens.put(VantarKey.ADMIN_SERVICE_INCLUDE_ALL_DB_SERVICES, "Include database and queue services/connections");
+        tokens.put(VantarKey.ADMIN_SERVICE_ALL_SERVERS, "On all servers");
+        tokens.put(VantarKey.ADMIN_SERVICE_ALL_DB_SERVICES, "Complete (db, queue, ...)");
         tokens.put(VantarKey.ADMIN_SERVICE_CLASSES_TO_RESERVE, "Objetcs to be preserved");
         tokens.put(VantarKey.ADMIN_SERVICE_START_SERVICES_AT_END, "Turn on services at the end");
         tokens.put(VantarKey.ADMIN_DO, "DO");
-        tokens.put(VantarKey.ADMIN_SERVICES_ARE_STOPPED, "Services are stopped");
-        tokens.put(VantarKey.ADMIN_SERVICE_ALL_STOPPED, "All services are stopped successfully");
-        tokens.put(VantarKey.ADMIN_SERVICE_ALL_STARTED, "All services are started successfully");
+        tokens.put(VantarKey.ADMIN_SERVICE_STOPPED, "Service(s) is(are) stopped");
+        tokens.put(VantarKey.ADMIN_SERVICE_STARTED, "Service(s) is(are) started");
         tokens.put(VantarKey.ADMIN_SYSYEM_CLASSES, "System classes");
         tokens.put(VantarKey.ADMIN_DATA_ENTRY, "Data entry");
         tokens.put(VantarKey.ADMIN_DELETE_ALL_CONFIRM, "Confirm delete all?");
@@ -295,6 +292,12 @@ public class DefaultStringsEn {
         tokens.put(VantarKey.ADMIN_WEBSERVICE_INDEX_TITLE, "Webservice index");
 
         tokens.put(VantarKey.ADMIN_WEBSERVICE, "Health report webservices");
+
+        tokens.put(VantarKey.ADMIN_ACTION, "Action");
+
+
+        tokens.put(VantarKey.ADMIN_SERVICE_ACTION, "Service start/stop/restart");
+        tokens.put(VantarKey.ADMIN_FAILED, "FAILED");
 
     }
 

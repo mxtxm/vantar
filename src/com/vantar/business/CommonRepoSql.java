@@ -20,30 +20,30 @@ public class CommonRepoSql extends SqlExecute {
 
     public long insert(Dto dto) throws DatabaseException, VantarException {
         long id = super.insert(dto);
-        CommonModel.afterDataChange(dto);
+        ModelCommon.afterDataChange(dto);
         return id;
     }
 
     public void insert(List<? extends Dto> dtos) throws DatabaseException, VantarException {
         super.insert(dtos);
         if (!dtos.isEmpty()) {
-            CommonModel.afterDataChange(dtos.get(0));
+            ModelCommon.afterDataChange(dtos.get(0));
         }
     }
 
     public void update(Dto dto) throws DatabaseException, VantarException {
         super.update(dto);
-        CommonModel.afterDataChange(dto);
+        ModelCommon.afterDataChange(dto);
     }
 
     public void update(QueryBuilder q) throws DatabaseException, VantarException {
         super.update(q);
-        CommonModel.afterDataChange(q.getDto());
+        ModelCommon.afterDataChange(q.getDto());
     }
 
     public void delete(Dto dto) throws DatabaseException, VantarException {
         super.delete(dto);
-        CommonModel.afterDataChange(dto);
+        ModelCommon.afterDataChange(dto);
     }
 
     public void createAllDtoIndexes(boolean deleteIfExists) throws DatabaseException {

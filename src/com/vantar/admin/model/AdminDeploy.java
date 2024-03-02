@@ -20,14 +20,14 @@ public class AdminDeploy {
         if (!params.isChecked("f")) {
             ui  .beginUploadForm()
                 .addFile("WAR", "file")
-                .addSubmit(Locale.getString(VantarKey.ADMIN_SUBMIT))
+                .addSubmit(VantarKey.ADMIN_SUBMIT)
                 .finish();
             return;
         }
 
         try (Params.Uploaded uploaded = params.upload("file")) {
             if (!uploaded.isUploaded() || uploaded.isIoError()) {
-                ui.addErrorMessage(Locale.getString(VantarKey.REQUIRED, "file")).finish();
+                ui.addErrorMessage(VantarKey.REQUIRED, "file").finish();
                 return;
             }
 
@@ -37,7 +37,7 @@ public class AdminDeploy {
                 DirUtil.giveAllPermissions(Settings.config.getProperty("deploy.path"));
                 ui.addMessage("done!");
             } else {
-                ui.addMessage(Locale.getString(VantarKey.UPLOAD_FAIL));
+                ui.addMessage(VantarKey.UPLOAD_FAIL);
             }
         }
 
@@ -112,7 +112,7 @@ public class AdminDeploy {
         ui  .beginFormPost()
             .addInput("password", "password")
             .addInput("command", "command")
-            .addSubmit(Locale.getString(VantarKey.ADMIN_SUBMIT))
+            .addSubmit(VantarKey.ADMIN_SUBMIT)
             .finish();
     }
 }

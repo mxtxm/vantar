@@ -22,8 +22,6 @@ public class Mongo {
 
     protected static final Logger log = LoggerFactory.getLogger(Mongo.class);
     public static final String ID = "_id";
-    //public final static String LOGICAL_DELETE_FIELD = "is_deleted";
-    //public final static Object LOGICAL_DELETE_VALUE = "Y";
 
 
     public static synchronized void renameCollection(String from, String to) throws DatabaseException {
@@ -37,6 +35,18 @@ public class Mongo {
             throw new DatabaseException(e);
         }
     }
+
+//    public static synchronized void cloneCollection(String from, String to) throws DatabaseException {
+//        List<Document> agg = new ArrayList<>();
+//        agg.add(new Document("$out", to));
+//        try {
+//            MongoConnection.getDatabase().getCollection(from).aggregate(agg);
+//            Sequence.setToMax(to);
+//        } catch (Exception e) {
+//            log.error("! clone collection", e);
+//            throw new DatabaseException(e);
+//        }
+//    }
 
     /**
      *  SEQUENCE > > >
@@ -761,7 +771,6 @@ public class Mongo {
             key,
             value instanceof Dto ? MongoMapping.getFieldValuesAsDocument((Dto) value, Dto.Action.UPDATE_FEW_COLS) : value
         );
-log.error(">>>>>>{}  {}", condition, v);
         try {
             if (updateMany) {
                 MongoConnection.getDatabase().getCollection(collectionName).updateMany(condition, new Document("$set", v));

@@ -14,7 +14,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 
-public class ImportMongo extends CommonImport {
+public class ImportMongo extends ImportCommon {
 
     public static void importDataAdmin(String data, Dto dto, List<String> presentField, boolean deleteAll, WebUi ui) {
         if (Services.isUp(ServiceLog.class)) {
@@ -49,7 +49,7 @@ public class ImportMongo extends CommonImport {
                 }
                 ModelMongo.insert(dto);
                 if (dto instanceof CommonUser) {
-                    CommonModel.insertPassword(
+                    ModelCommon.insertPassword(
                         dto,
                         (String) values.get("password")
                     );

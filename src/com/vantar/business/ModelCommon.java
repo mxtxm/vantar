@@ -18,9 +18,9 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 
-public abstract class CommonModel {
+public abstract class ModelCommon {
 
-    protected static final Logger log = LoggerFactory.getLogger(CommonModel.class);
+    protected static final Logger log = LoggerFactory.getLogger(ModelCommon.class);
 
     private static Set<String> disabledDtoClasses;
     private static final Map<String, Object> locks = new ConcurrentHashMap<>(500, 1);
@@ -112,7 +112,7 @@ public abstract class CommonModel {
                     } else {
                         ModelMongo.insert(userPassword);
                     }
-                } catch (DatabaseException | VantarException e) {
+                } catch (VantarException e) {
                     throw new ServerException(VantarKey.FETCH_FAIL);
                 }
                 break;
@@ -234,7 +234,7 @@ public abstract class CommonModel {
      * @param dtoClass dto class
      * @param m callback
      * @return optional value returned in the callback
-     * @throws Exception call back exceptions
+     * @throws VantarException call back exceptions
      */
     public static Object mutex(Class<? extends Dto> dtoClass, Mutex m) throws VantarException {
         MutexParams mp = new MutexParams();

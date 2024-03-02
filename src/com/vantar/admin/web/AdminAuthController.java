@@ -22,15 +22,15 @@ public class AdminAuthController extends RouteToMethod {
 
     public void signin(Params params, HttpServletResponse response) throws ServerException {
         WebUi ui = new WebUi(params, response);
-        ui  .addHeading(1, Settings.config.getProperty("title") + " : " +  Locale.getString(VantarKey.ADMIN_SIGN_IN), "signin")
+        ui  .addHeading(1, Settings.config.getProperty("title") + " : " +  VantarKey.ADMIN_SIGN_IN, "signin")
             .addEmptyLine(5);
 
         if (params.getString("username") == null) {
             ui  .beginFormPost()
                 .addEmptyLine()
-                .addInput(Locale.getString(VantarKey.USERNAME), VantarParam.USER_NAME)
-                .addPassword(Locale.getString(VantarKey.PASSWORD), VantarParam.PASSWORD)
-                .addSubmit(Locale.getString(VantarKey.SIGN_IN))
+                .addInput(VantarKey.USERNAME, VantarParam.USER_NAME)
+                .addPassword(VantarKey.PASSWORD, VantarParam.PASSWORD)
+                .addSubmit(VantarKey.SIGN_IN)
                 .blockEnd();
 
         } else {

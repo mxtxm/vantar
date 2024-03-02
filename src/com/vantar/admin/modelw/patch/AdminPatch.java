@@ -28,7 +28,7 @@ public class AdminPatch {
             List<PatchHistory> patches = ModelMongo.getAll(new PatchHistory());
             for (PatchHistory patch : patches) {
                 ui  .beginBox(patch.patchClass)
-                    .addHrefNewPage(VantarKey.ADMIN_SCHEDULE_RUN, "/patch/run?c=" + patch.patchClass)
+                    .addHrefNewPage(VantarKey.ADMIN_SCHEDULE_RUN, "/admin/patch/run?c=" + patch.patchClass)
                     .addKeyValue(VantarKey.ADMIN_RUN_TIME, patch.executedTime)
                     .addKeyValue(VantarKey.ADMIN_FAIL, patch.failCount);
                 if (ObjectUtil.isNotEmpty(patch.fail)) {
@@ -46,7 +46,7 @@ public class AdminPatch {
 
         for (Class<?> cls : ClassUtil.getClasses(packageName, PatchManual.class)) {
             ui  .beginBox(cls.getName())
-                .addHrefNewPage(VantarKey.ADMIN_SCHEDULE_RUN, "/patch/run?c=" + cls.getName())
+                .addHrefNewPage(VantarKey.ADMIN_SCHEDULE_RUN, "/admin/patch/run?c=" + cls.getName())
                 .blockEnd();
         }
 

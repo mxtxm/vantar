@@ -25,15 +25,12 @@ public abstract class DtoBase implements Dto {
 
     private transient static final Logger log = LoggerFactory.getLogger(DtoBase.class);
     private transient static final long INIT_SEQUENCE_VALUE = 1L;
-    //private transient static final boolean DEFAULT_DELETE_LOGICAL = false;
 
     private transient boolean setCreateTime;
     private transient boolean setUpdateTime;
     private transient Set<String> excludeProperties;
     private transient Set<String> nullProperties;
     private transient String bLang;
-    //private transient boolean deleteLogical = DEFAULT_DELETE_LOGICAL;
-    //private transient QueryDeleted deletedQueryPolicy = QueryDeleted.SHOW_NOT_DELETED;
     private transient Action bAction;
     private transient boolean clearIdOnInsert = true;
     private transient String colPrefix;
@@ -50,27 +47,6 @@ public abstract class DtoBase implements Dto {
     public Action getAction(Action defaultAction) {
         return bAction == null ? defaultAction : bAction;
     }
-
-//    public boolean isDeleteLogicalEnabled() {
-//        return this.getClass().isAnnotationPresent(DeleteLogical.class);
-//    }
-//
-//    public void setDeleteLogical(boolean deleteLogical) {
-//        this.deleteLogical = deleteLogical;
-//    }
-//
-//    public boolean getDeleteLogicalState() {
-//        return deleteLogical && this.getClass().isAnnotationPresent(DeleteLogical.class);
-//    }
-//
-//    public void setDeletedQueryPolicy(QueryDeleted policy) {
-//        deletedQueryPolicy = policy;
-//    }
-//
-//    public QueryDeleted getDeletedQueryPolicy() {
-//        return deletedQueryPolicy;
-//    }
-
 
     /**
      * if Archive      ---> get storage from ServiceDbArchive
@@ -223,8 +199,6 @@ public abstract class DtoBase implements Dto {
         setUpdateTime = false;
         excludeProperties = null;
         nullProperties = null;
-        //deleteLogical = true;
-        //deletedQueryPolicy = QueryDeleted.SHOW_NOT_DELETED;
         try {
             for (Field field : getClass().getFields()) {
                 if (isDataField(field)) {
@@ -702,11 +676,12 @@ public abstract class DtoBase implements Dto {
     }
 
     /**
-     * can do:
-     * 1. null values are ignored
-     * 2. nullProperties of both objects are used
-     * 3. excludeProperties of both objects are used
-     * 4. default action is "SET"
+     * 1. dto.null are ignored (Action != SET_STRICT)
+     * 2. dto.null are set (Action == SET_STRICT)
+     * 3. dto.nullProperties are added to current nullProperties
+     * 4. dto.excludeProperties and excludeProperties are ignored
+     * 5. if field type is dto and is not null, then set will be performed recursively
+     * 6. default action is "SET"
      */
     public List<ValidationError> set(Dto dto, String... locales) {
         return set(dto, Action.SET, locales);
@@ -718,6 +693,7 @@ public abstract class DtoBase implements Dto {
             return validate(action);
         }
 
+        List<ValidationError> errors = null;
         boolean areSameType = dto.getClass().equals(getClass());
         try {
             for (Field field : getClass().getFields()) {
@@ -746,7 +722,7 @@ public abstract class DtoBase implements Dto {
                     if (value instanceof Dto) {
                         Dto currentValue = (Dto) field.get(this);
                         if (currentValue != null) {
-                            currentValue.set((Dto) value);
+                            currentValue.set((Dto) value, action);
                             continue;
                         }
                     }
@@ -756,18 +732,28 @@ public abstract class DtoBase implements Dto {
 
                 Object value = dto.getPropertyValue(name);
                 if (value == null) {
+                    if (action.equals(Action.SET_STRICT)) {
+                        field.set(this, null);
+                    }
                     continue;
+                }
+
+                if (value instanceof Dto) {
+                    Dto currentValue = (Dto) field.get(this);
+                    if (currentValue != null) {
+                        currentValue.set((Dto) value, action);
+                        continue;
+                    }
                 }
 
                 if (field.isAnnotationPresent(DeLocalized.class)) {
                     if (!(value instanceof Map)) {
-                        log.error(" !! @invalid DeLocalized ({}.{}) is not localized as Map<String, String> but is >> ({})",
-                            dto.getClass(), field.getName(), value);
+                        log.error(" !! invalid @DeLocalized expected(Map<String, String>) actual({}.{} = {})",
+                            dto.getClass().getSimpleName(), name, value);
                         continue;
                     }
                     if (locales == null || locales.length == 0) {
-                        log.error(" !! invalid @DeLocalized (no locale) ({}.{} = {})",
-                            dto.getClass(), field.getName(), value);
+                        log.error(" !! invalid @DeLocalized (no locale) ({}.{} = {})", dto.getClass().getSimpleName(), name, value);
                         continue;
                     }
                     Map<String, String> localedValues = (Map<String, String>) value;
@@ -782,26 +768,27 @@ public abstract class DtoBase implements Dto {
                     }
                 }
 
-                if (value instanceof Dto) {
-                    Dto currentValue = (Dto) field.get(this);
-                    if (currentValue != null) {
-                        currentValue.set((Dto) value);
-                        continue;
+                if (field.getType() == value.getClass()) {
+                    field.set(this, value);
+                } else {
+                    if (errors == null) {
+                        errors = new ArrayList<>(10);
+                        errors.add(new ValidationError(name, VantarKey.INVALID_VALUE_TYPE));
                     }
+                    log.warn(" !! type mismatch ({}.{} = {})", getClass().getSimpleName(), name, value);
                 }
-                field.set(this, value);
             }
-        } catch (IllegalAccessException e) {
-            log.error(" !! ({}, {})\n", getClass().getName(), this, e);
+        } catch (Exception e) {
+            log.error(" !! ({}, {})\n", getClass().getSimpleName(), this, e);
         }
-        return validate(action);
+        if (errors == null) {
+            return validate(action);
+        }
+        errors.addAll(validate(action));
+        return errors;
     }
 
-    /**
-     * 1. "nullProperties": ["p1", "p2", ...] properties to be set to null
-     * 2. "excludeProperties": ["p1", "p2", ...] properties to be excluded from being set
-     * 3. "action": "Action" set action
-     */
+    @SuppressWarnings("unchecked")
     public List<ValidationError> set(String json, Action action) {
         if (StringUtil.isEmpty(json)) {
             return validate(action);
@@ -827,40 +814,38 @@ public abstract class DtoBase implements Dto {
             return set(dto, action);
         }
 
-        return set(Json.d.mapFromJson(json, String.class, Object.class), action);
+        Map<String, Object> map = Json.d.mapFromJson(json, String.class, Object.class);
+        if (map != null) {
+            setDtoSetConfigs(
+                (Set<String>) map.get(VantarParam.EXCLUDE_PROPERTIES),
+                (Set<String>) map.get(VantarParam.NULL_PROPERTIES),
+                (String) map.get(VantarParam.SET_ACTION),
+                action
+            );
+        }
+        return setX(map, action, null, null);
     }
 
-    /**
-     * 1. "nullProperties": ["p1", "p2", ...] properties to be set to null
-     * 2. "excludeProperties": ["p1", "p2", ...] properties to be excluded from being set
-     * 3. "action": "Action" set action
-     */
     public List<ValidationError> set(Params params, Action action) {
+        return set(params, action, null, null);
+    }
+
+    public List<ValidationError> set(Params params, Action action, String prefix, String suffix) {
         setDtoSetConfigs(
             params.getStringSet(VantarParam.EXCLUDE_PROPERTIES),
             params.getStringSet(VantarParam.NULL_PROPERTIES),
             params.getString(VantarParam.SET_ACTION),
             action
         );
-        return set(params.getAll(), action, null, null);
-    }
-
-    public List<ValidationError> set(Params params, Action action, String prefix, String suffix) {
-        return set(params.getAll(), action, prefix, suffix);
+        return setX(params.getAll(), action, prefix, suffix);
     }
 
     public List<ValidationError> set(Map<String, Object> map, Action action) {
         return set(map, action, null, null);
     }
 
-    /**
-     * 1. "nullProperties": ["p1", "p2", ...] properties to be set to null
-     * 2. "excludeProperties": ["p1", "p2", ...] properties to be excluded from being set
-     * 3. "action": "Action" set action
-     */
     @SuppressWarnings({"unchecked"})
     public List<ValidationError> set(Map<String, Object> map, Action action, String prefix, String suffix) {
-log.error(">>>>>>{} {} {}", map, action);
         if (map == null) {
             return validate(action);
         }
@@ -876,6 +861,7 @@ log.error(">>>>>>{} {} {}", map, action);
                 nulls = StringUtil.splitToSetTrim((String) o, ',');
             }
         }
+
         Set<String> excludes = null;
         o = map.get(VantarParam.EXCLUDE_PROPERTIES);
         if (o != null) {
@@ -887,7 +873,15 @@ log.error(">>>>>>{} {} {}", map, action);
                 excludes = StringUtil.splitToSetTrim((String) o, ',');
             }
         }
+
         setDtoSetConfigs(excludes, nulls, (String) map.get(VantarParam.SET_ACTION), action);
+        return setX(map, action, prefix, suffix);
+    }
+
+    private List<ValidationError> setX(Map<String, Object> map, Action action, String prefix, String suffix) {
+        if (map == null) {
+            return validate(action);
+        }
 
         Field[] f = getClass().getFields();
         List<ValidationError> errors = new ArrayList<>(f.length);
@@ -916,7 +910,8 @@ log.error(">>>>>>{} {} {}", map, action);
                     value = new Location(
                         NumberUtil.toNumber(map.get(key + "_latitude"), Double.class),
                         NumberUtil.toNumber(map.get(key + "_longitude"), Double.class),
-                        NumberUtil.toNumber(map.get(key + "_altitude"), Double.class)
+                        NumberUtil.toNumber(map.get(key + "_altitude"), Double.class),
+                        ObjectUtil.toString(map.get(key + "_countryCode"))
                     );
                 } else {
                     value = Location.toLocation(v);
@@ -999,7 +994,7 @@ log.error(">>>>>>{} {} {}", map, action);
                         try {
                             value = DateTime.toDateTime(value);
                         } catch (DateTimeException e) {
-                            errors.add(new ValidationError(name, VantarKey.DATA_TYPE));
+                            errors.add(new ValidationError(name, VantarKey.INVALID_VALUE_TYPE));
                             return;
                         }
                     }
@@ -1008,7 +1003,7 @@ log.error(">>>>>>{} {} {}", map, action);
                         try {
                             value = DateTimeRange.toDateTimeRange(value);
                         } catch (DateTimeException e) {
-                            errors.add(new ValidationError(name, VantarKey.DATA_TYPE));
+                            errors.add(new ValidationError(name, VantarKey.INVALID_VALUE_TYPE));
                             return;
                         }
                     }
@@ -1109,64 +1104,6 @@ log.error(">>>>>>{} {} {}", map, action);
         return errors;
     }
 
-    private void validateGroup(List<ValidationError> errors, Action action) {
-        if (!(action.equals(Action.GET) || action.equals(Action.DELETE) || action.equals(Action.UN_DELETE)
-            || action.equals(Action.PURGE))) {
-
-            if (getClass().isAnnotationPresent(RequiredGroupXor.class)) {
-                for (String requiredProps : getClass().getAnnotation(RequiredGroupXor.class).value()) {
-                    int notNullCount = 0;
-                    for (String prop : StringUtil.splitTrim(requiredProps, ',')) {
-                        Object v = getPropertyValue(prop.trim());
-                        if (v == null
-                            || (v instanceof String && ((String) v).isEmpty())
-                            ||(v instanceof Collection && ((Collection<?>) v).isEmpty())
-                            || (v instanceof Map && ((Map<?, ?>) v).isEmpty())) {
-
-                            continue;
-                        }
-
-                        ++notNullCount;
-                    }
-                    if (action.equals(Action.UPDATE_FEW_COLS) || action.equals(Action.UPDATE_FEW_COLS_NO_ID)) {
-                        if (notNullCount == 2) {
-                            errors.add(new ValidationError(requiredProps, VantarKey.REQUIRED_XOR));
-                        }
-                    } else if (notNullCount != 1) {
-                        errors.add(new ValidationError(requiredProps, VantarKey.REQUIRED_XOR));
-                    }
-                }
-            }
-
-            if (action.equals(Action.UPDATE_FEW_COLS) || action.equals(Action.UPDATE_FEW_COLS_NO_ID)) {
-                return;
-            }
-
-            if (getClass().isAnnotationPresent(RequiredGroupOr.class)) {
-                for (String requiredProps : getClass().getAnnotation(RequiredGroupOr.class).value()) {
-                    boolean ok = false;
-                    for (String prop : StringUtil.splitTrim(requiredProps, ',')) {
-                        Object v = getPropertyValue(prop.trim());
-                        if (v == null
-                            || (v instanceof String && ((String) v).isEmpty())
-                            ||(v instanceof Collection && ((Collection<?>) v).isEmpty())
-                            || (v instanceof Map && ((Map<?, ?>) v).isEmpty())) {
-
-                            continue;
-                        }
-
-                        ok = true;
-                        break;
-                    }
-                    if (!ok) {
-                        errors.add(new ValidationError(requiredProps, VantarKey.REQUIRED_OR));
-                    }
-                }
-            }
-        }
-
-    }
-
     private void validateField(Field field, Object paramValue, Action action, List<ValidationError> errors) {
         String name = colPrefix == null ? field.getName() : (colPrefix + field.getName());
 
@@ -1199,7 +1136,7 @@ log.error(">>>>>>{} {} {}", map, action);
 
         if (value == null) {
             if (ObjectUtil.isNotEmpty(paramValue) && isNull(name)) {
-                errors.add(new ValidationError(name, VantarKey.DATA_TYPE));
+                errors.add(new ValidationError(name, VantarKey.INVALID_VALUE_TYPE));
             } else if (
                 (
                     action.equals(Action.INSERT)
@@ -1281,6 +1218,64 @@ log.error(">>>>>>{} {} {}", map, action);
                 dtoX.setColPrefix(null);
             }
         }
+    }
+
+    private void validateGroup(List<ValidationError> errors, Action action) {
+        if (!(action.equals(Action.GET) || action.equals(Action.DELETE) || action.equals(Action.UN_DELETE)
+            || action.equals(Action.PURGE))) {
+
+            if (getClass().isAnnotationPresent(RequiredGroupXor.class)) {
+                for (String requiredProps : getClass().getAnnotation(RequiredGroupXor.class).value()) {
+                    int notNullCount = 0;
+                    for (String prop : StringUtil.splitTrim(requiredProps, ',')) {
+                        Object v = getPropertyValue(prop.trim());
+                        if (v == null
+                            || (v instanceof String && ((String) v).isEmpty())
+                            ||(v instanceof Collection && ((Collection<?>) v).isEmpty())
+                            || (v instanceof Map && ((Map<?, ?>) v).isEmpty())) {
+
+                            continue;
+                        }
+
+                        ++notNullCount;
+                    }
+                    if (action.equals(Action.UPDATE_FEW_COLS) || action.equals(Action.UPDATE_FEW_COLS_NO_ID)) {
+                        if (notNullCount == 2) {
+                            errors.add(new ValidationError(requiredProps, VantarKey.REQUIRED_XOR));
+                        }
+                    } else if (notNullCount != 1) {
+                        errors.add(new ValidationError(requiredProps, VantarKey.REQUIRED_XOR));
+                    }
+                }
+            }
+
+            if (action.equals(Action.UPDATE_FEW_COLS) || action.equals(Action.UPDATE_FEW_COLS_NO_ID)) {
+                return;
+            }
+
+            if (getClass().isAnnotationPresent(RequiredGroupOr.class)) {
+                for (String requiredProps : getClass().getAnnotation(RequiredGroupOr.class).value()) {
+                    boolean ok = false;
+                    for (String prop : StringUtil.splitTrim(requiredProps, ',')) {
+                        Object v = getPropertyValue(prop.trim());
+                        if (v == null
+                            || (v instanceof String && ((String) v).isEmpty())
+                            ||(v instanceof Collection && ((Collection<?>) v).isEmpty())
+                            || (v instanceof Map && ((Map<?, ?>) v).isEmpty())) {
+
+                            continue;
+                        }
+
+                        ok = true;
+                        break;
+                    }
+                    if (!ok) {
+                        errors.add(new ValidationError(requiredProps, VantarKey.REQUIRED_OR));
+                    }
+                }
+            }
+        }
+
     }
 
     public static boolean isDataField(Field field) {

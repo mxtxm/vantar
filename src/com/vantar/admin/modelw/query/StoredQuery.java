@@ -1,4 +1,4 @@
-package com.vantar.admin.Dto;
+package com.vantar.admin.modelw.query;
 
 import com.vantar.database.dto.*;
 

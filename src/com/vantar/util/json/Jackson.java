@@ -16,8 +16,6 @@ import com.vantar.util.string.StringUtil;
 import org.slf4j.*;
 import java.io.*;
 import java.util.*;
-import java.util.stream.*;
-
 
 /**
  * static: ignored
@@ -192,16 +190,6 @@ public class Jackson {
         }
     }
 
-    public <K, V> Map<K, V> mapFromJson(String json, Class<K> k, Class<V> v) {
-        try {
-            return mapper.readValue(json, mapper.getTypeFactory().constructMapType(Map.class, k, v));
-        } catch (Exception e) {
-            log.warn("! failed to get object ({} > Map<{},{}>)\n", json, k.getName(), v.getName(), e);
-            return null;
-        }
-    }
-
-
     public <V> List<V> listFromJson(String json, Class<V> v) {
         try {
             return mapper.readValue(json, mapper.getTypeFactory().constructCollectionType(List.class, v));
@@ -216,6 +204,15 @@ public class Jackson {
             return mapper.readValue(json, mapper.getTypeFactory().constructCollectionType(Set.class, v));
         } catch (Exception e) {
             log.warn("! failed to get object ({} > List<{}>)\n", json, v.getName(), e);
+            return null;
+        }
+    }
+
+    public <K, V> Map<K, V> mapFromJson(String json, Class<K> k, Class<V> v) {
+        try {
+            return mapper.readValue(json, mapper.getTypeFactory().constructMapType(Map.class, k, v));
+        } catch (Exception e) {
+            log.warn("! failed to get object ({} > Map<{},{}>)\n", json, k.getName(), v.getName(), e);
             return null;
         }
     }
@@ -372,7 +369,7 @@ public class Jackson {
             v = node.get("longitude");
             location.longitude = v == null ? null : v.asDouble();
             v = node.get("height");
-            location.height = v == null ? null : v.asDouble();
+            location.altitude = v == null ? null : v.asDouble();
             v = node.get("countryCode");
             location.countryCode = v == null ? null : v.asText();
             return location.isEmpty() || !location.isValid() ? null : location;
@@ -402,8 +399,8 @@ public class Jackson {
             if (location.longitude != null) {
                 generator.writeNumberField("longitude", location.longitude);
             }
-            if (location.height != null) {
-                generator.writeNumberField("height", location.height);
+            if (location.altitude != null) {
+                generator.writeNumberField("altitude", location.altitude);
             }
             if (location.countryCode != null) {
                 generator.writeStringField("countryCode", location.countryCode);

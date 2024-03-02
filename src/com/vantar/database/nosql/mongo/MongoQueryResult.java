@@ -32,6 +32,7 @@ public class MongoQueryResult extends QueryResultBase implements QueryResult, Au
 
 
     public MongoQueryResult(FindIterable<Document> cursor, Dto dto) {
+        cursor.noCursorTimeout(true);
         this.dto = dto;
         this.cursor = cursor;
         iterator = cursor.iterator();

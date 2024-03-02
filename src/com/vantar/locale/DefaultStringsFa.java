@@ -33,7 +33,7 @@ public class DefaultStringsFa {
         tokens.put(VantarKey.MUST_BE_POST_MULTIPART, "متد رکویست نادرست است باید POST multipart/form-data باشد");
         tokens.put(VantarKey.REQUIRED_XOR, "\"{0}\": وارد کردن تنها یکی از فیلدها اجباری است");
         tokens.put(VantarKey.REQUIRED_OR, "\"{0}\": وارد کردن یکی از فیلدها اجباری است");
-        tokens.put(VantarKey.DATA_TYPE, "\"{0}\": نوع داده نادرست است");
+        tokens.put(VantarKey.INVALID_VALUE_TYPE, "\"{0}\": نوع داده نادرست است");
         tokens.put(VantarKey.UNIQUE, "\"{0}\": باید در سیستم یکتا باشد، این مقدار هم اکنون در سیستم وارد شده است");
         tokens.put(VantarKey.REFERENCE, "\"{0}\": مبدا (\"{1}\") وجود ندارد");
         tokens.put(VantarKey.PARENT_CHILD, "\"{0}\": ارتباط فرزندی ناممکن است");
@@ -156,7 +156,6 @@ public class DefaultStringsFa {
 
         tokens.put(VantarKey.ADMIN_DATABASE, "مدیریت پایگاه داده");
         tokens.put(VantarKey.ADMIN_DATABASE_STATUS, "وضعیت");
-        tokens.put(VantarKey.ADMIN_DATABASE_STATUS_PARAM, "وضعیت \"{0}\"");
         tokens.put(VantarKey.ADMIN_DATABASE_CREATE_INDEX, "ساختن ایندکس ها");
         tokens.put(VantarKey.ADMIN_DELETE_ALL, "نابودی");
         tokens.put(VantarKey.ADMIN_DELETE_OPTIONAL, "پاک سازی انتخابی داده ها");
@@ -197,7 +196,6 @@ public class DefaultStringsFa {
         tokens.put(VantarKey.ADMIN_DATABASE_TITLE, "دیتابیس");
         tokens.put(VantarKey.ADMIN_DELETE, "پاک کردن");
         tokens.put(VantarKey.ADMIN_UPDATE, "بروز رسانی");
-        tokens.put(VantarKey.ADMIN_STATUS, "وضغیت \"{0}\"");
         tokens.put(VantarKey.ADMIN_DATABASE_SYNCH_TITLE, "همگام سازی پایگاه داده های \"{0}\"");
         tokens.put(VantarKey.ADMIN_DATABASE_SYNCH_CONFIRM, "همگام سازی آغاز شود");
         tokens.put(VantarKey.ADMIN_DATABASE_SYNCH_RUNNING, "همگام سازی پایگاه داده ها با آخرین نسخه کلاس های سیستم...");
@@ -263,14 +261,13 @@ public class DefaultStringsFa {
         tokens.put(VantarKey.ADMIN_SETTINGS_LOADED, "تنظیمات بارگذاری شدند");
         tokens.put(VantarKey.ADMIN_SETTINGS_UPDATE_MSG_SENT, "پیام ویرایش تنظیمات به سرویس های دیگر فرستاده شد");
         tokens.put(VantarKey.ADMIN_SETTINGS_UPDATE_FAILED, "تنظیمات بروز نشدند");
-        tokens.put(VantarKey.ADMIN_SERVICE_INCLUDE_ALL_SERVICES, "شامل تمامی سرورها");
-        tokens.put(VantarKey.ADMIN_SERVICE_INCLUDE_ALL_DB_SERVICES, "شامل سرویس های دیتابیس و صف");
+        tokens.put(VantarKey.ADMIN_SERVICE_ALL_SERVERS, "تمامی سرورها");
+        tokens.put(VantarKey.ADMIN_SERVICE_ALL_DB_SERVICES, "شامل سرویس های دیتابیس و صف");
         tokens.put(VantarKey.ADMIN_SERVICE_CLASSES_TO_RESERVE, "کلاس هایی که نگه داشته شوند");
         tokens.put(VantarKey.ADMIN_SERVICE_START_SERVICES_AT_END, "در پایان سرویس ها روشن شوند");
         tokens.put(VantarKey.ADMIN_DO, "انجام کار");
-        tokens.put(VantarKey.ADMIN_SERVICES_ARE_STOPPED, "سرویس ها خاموش هستند!");
-        tokens.put(VantarKey.ADMIN_SERVICE_ALL_STOPPED, "تمام سرویس ها به درستی خاموش شدند");//"all services are stopped successfully"
-        tokens.put(VantarKey.ADMIN_SERVICE_ALL_STARTED, "تمام سرویس ها به درستی روشن شدند");//"all services are started successfully"
+        tokens.put(VantarKey.ADMIN_SERVICE_STOPPED, "تمام سرویس ها به درستی خاموش شدند");//"all services are stopped successfully"
+        tokens.put(VantarKey.ADMIN_SERVICE_STARTED, "تمام سرویس ها به درستی روشن شدند");//"all services are started successfully"
         tokens.put(VantarKey.ADMIN_SYSYEM_CLASSES, "کلاس هاس سیستم");
         tokens.put(VantarKey.ADMIN_DATA_ENTRY, "ورود اطلاعات");
         tokens.put(VantarKey.ADMIN_DELETE_ALL_CONFIRM, "آیا تمام داده ها حذف شوند؟");
@@ -287,6 +284,7 @@ public class DefaultStringsFa {
         tokens.put(VantarKey.ADMIN_SCHEDULE_RUN_SUCCESS, "با موفقیت اجرا شد");
         tokens.put(VantarKey.ADMIN_REFRESH, "بارگذاری");
 
+        tokens.put(VantarKey.ADMIN_ACTION, "عملیات");
         tokens.put(VantarKey.ADMIN_RUN_TIME, "زمان اجرا");
 
 
@@ -294,6 +292,9 @@ public class DefaultStringsFa {
         tokens.put(VantarKey.ADMIN_SERVICE_IS_ON, "روشن است {0}");
         tokens.put(VantarKey.ADMIN_SERVICE_IS_DISABLED, "فعال نشده {0}");
         tokens.put(VantarKey.ADMIN_SERVICE_IS_ENABLED, "فعال شده {0}");
+
+        tokens.put(VantarKey.ADMIN_SERVICE_ACTION, "روشن خاموش کردن سرویس");
+        tokens.put(VantarKey.ADMIN_FAILED, "نشد");
 
     }
 

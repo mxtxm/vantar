@@ -85,9 +85,9 @@ public class MongoMapping {
             if (location.latitude == null || location.longitude == null) {
                 return null;
             }
-            return location.height == null ?
+            return location.altitude == null ?
                 new Point(new Position(location.latitude, location.longitude)) :
-                new Point(new Position(location.latitude, location.longitude, location.height));
+                new Point(new Position(location.latitude, location.longitude, location.altitude));
 
         } else if (info.type.equals(com.vantar.database.datatype.Polygon.class)) {
             com.vantar.database.datatype.Polygon polygon = (com.vantar.database.datatype.Polygon) info.value;
@@ -97,10 +97,10 @@ public class MongoMapping {
                     if (location.latitude == null || location.longitude == null) {
                         continue;
                     }
-                    if (location.height == null) {
+                    if (location.altitude == null) {
                         positions.add(new Position(location.latitude, location.longitude));
                     } else {
-                        positions.add(new Position(location.latitude, location.longitude, location.height));
+                        positions.add(new Position(location.latitude, location.longitude, location.altitude));
                     }
                 }
             }
@@ -293,10 +293,9 @@ public class MongoMapping {
 //        } else {
 //            condition = qCondition;
 //        }
-        QueryCondition condition = qCondition;
 
         List<Bson> matches = new ArrayList<>(10);
-        for (QueryMatchItem item : condition.q) {
+        for (QueryMatchItem item : qCondition.q) {
             if (item.type == QUERY) {
                 matches.add(getMongoMatches(item.queryValue, dto));
                 continue;
@@ -537,7 +536,7 @@ public class MongoMapping {
         }
 
         String op;
-        switch (condition.operator) {
+        switch (qCondition.operator) {
             case OR:
                 op = "$or";
                 break;

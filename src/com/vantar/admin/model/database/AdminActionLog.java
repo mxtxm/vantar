@@ -1,4 +1,4 @@
-package com.vantar.admin.model.heath;
+package com.vantar.admin.model.database;
 
 import com.vantar.admin.model.index.Admin;
 import com.vantar.business.ModelMongo;
@@ -17,7 +17,7 @@ import javax.servlet.http.HttpServletResponse;
 public class AdminActionLog {
 
     public static void loadLogPage(Params params, HttpServletResponse response) throws FinishException {
-        WebUi ui = Admin.getUi(Locale.getString(VantarKey.ADMIN_ACTION_LOG), params, response, true);
+        WebUi ui = Admin.getUi(VantarKey.ADMIN_ACTION_LOG, params, response, true);
 
         String clazz = params.getString("dto");
         Long id = params.getLong("id");

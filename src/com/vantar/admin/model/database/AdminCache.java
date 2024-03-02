@@ -1,7 +1,7 @@
 package com.vantar.admin.model.database;
 
 import com.vantar.admin.model.index.Admin;
-import com.vantar.admin.model.service.AdminService;
+import com.vantar.admin.modelw.service.AdminService;
 import com.vantar.database.dto.Dto;
 import com.vantar.exception.*;
 import com.vantar.locale.Locale;
@@ -72,13 +72,13 @@ public class AdminCache {
             return;
         }
         if (object == null) {
-            ui.addErrorMessage(Locale.getString(VantarKey.NO_CONTENT)).finish();
+            ui.addErrorMessage(VantarKey.NO_CONTENT).finish();
             return;
         }
 
         Map<Long, ? extends Dto> values = serviceDtoCache.getMap((Class<? extends Dto>) object.getClass());
         if (values == null) {
-            ui.addErrorMessage(Locale.getString(VantarKey.NO_CONTENT)).finish();
+            ui.addErrorMessage(VantarKey.NO_CONTENT).finish();
             return;
         }
 

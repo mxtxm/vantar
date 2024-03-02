@@ -3,7 +3,7 @@ package com.vantar.exception;
 import com.vantar.locale.*;
 
 
-public class DatabaseException extends Exception {
+public class DatabaseException extends VantarException {
 
     public DatabaseException(Throwable e) {
         super(e);

@@ -27,7 +27,7 @@ import java.util.*;
  * noLog   write methods: +events +validation +mutex -log
  * NoMutex write methods: +events +validation -mutex -log
  */
-public class ModelMongo extends CommonModel {
+public class ModelMongo extends ModelCommon {
 
 
     // INSERT > > >
@@ -101,7 +101,7 @@ public class ModelMongo extends CommonModel {
                 throw new ServerException(VantarKey.INSERT_FAIL);
             }
 
-            CommonModel.afterDataChange(dto, event, true, Dto.Action.INSERT);
+            ModelCommon.afterDataChange(dto, event, true, Dto.Action.INSERT);
 
             return ResponseMessage.success(VantarKey.INSERT_SUCCESS, dto.getId(), dto);
         });
@@ -178,7 +178,7 @@ public class ModelMongo extends CommonModel {
             throw new ServerException(VantarKey.INSERT_FAIL);
         }
 
-        CommonModel.afterDataChange(dto, event, logEvent, Dto.Action.INSERT);
+        ModelCommon.afterDataChange(dto, event, logEvent, Dto.Action.INSERT);
 
         return ResponseMessage.success(VantarKey.INSERT_SUCCESS, dto.getId(), dto);
     }
@@ -273,7 +273,7 @@ public class ModelMongo extends CommonModel {
                 throw new ServerException(VantarKey.UPDATE_FAIL);
             }
 
-            CommonModel.afterDataChange(dto, event, true, action);
+            ModelCommon.afterDataChange(dto, event, true, action);
 
             return ResponseMessage.success(VantarKey.UPDATE_SUCCESS, dto);
         });
@@ -447,9 +447,24 @@ public class ModelMongo extends CommonModel {
             throw new ServerException(VantarKey.UPDATE_FAIL);
         }
 
-        CommonModel.afterDataChange(dto, event, logEvent, action);
+        ModelCommon.afterDataChange(dto, event, logEvent, action);
 
         return ResponseMessage.success(VantarKey.UPDATE_SUCCESS, dto);
+    }
+
+    /**
+     * by id
+     * Options = fieldName1, value1, fieldName2, value2, ...
+     */
+    public static void updateSimple(Dto dto, Object... options) throws VantarException {
+        if (dto.getId() == null) {
+            return;
+        }
+        Document updates = new Document();
+        for (int i = 0, l = options.length; i < l; i+=2) {
+            updates.append((String) options[i], options[i+1]);
+        }
+        Mongo.update(dto.getStorage(), dto.getId(), updates);
     }
 
     // < < < UPDATE
@@ -483,7 +498,7 @@ public class ModelMongo extends CommonModel {
 
             try {
                 ResponseMessage r = ResponseMessage.success(VantarKey.DELETE_SUCCESS, Mongo.delete(dto));
-                CommonModel.afterDataChange(dto, event, true, Dto.Action.DELETE);
+                ModelCommon.afterDataChange(dto, event, true, Dto.Action.DELETE);
                 return r;
             } catch (DatabaseException e) {
                 log.error(" !! {} : {}\n", dto.getClass().getSimpleName(), dto, e);
@@ -563,7 +578,7 @@ public class ModelMongo extends CommonModel {
 
         try {
             ResponseMessage r = ResponseMessage.success(VantarKey.DELETE_SUCCESS, Mongo.delete(dto));
-            CommonModel.afterDataChange(dto, event, logEvent, Dto.Action.DELETE);
+            ModelCommon.afterDataChange(dto, event, logEvent, Dto.Action.DELETE);
             return r;
         } catch (DatabaseException e) {
             log.error(" !! {} : {}\n", dto.getClass().getSimpleName(), dto, e);

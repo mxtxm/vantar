@@ -1,6 +1,6 @@
 package com.vantar.business.importexport;
 
-import com.vantar.business.CommonModel;
+import com.vantar.business.ModelCommon;
 import com.vantar.database.common.ValidationError;
 import com.vantar.database.dto.Dto;
 import com.vantar.util.json.Json;
@@ -10,9 +10,9 @@ import org.slf4j.*;
 import java.util.*;
 
 
-public abstract class CommonImport {
+public abstract class ImportCommon {
 
-    public static final Logger log = LoggerFactory.getLogger(CommonImport.class);
+    public static final Logger log = LoggerFactory.getLogger(ImportCommon.class);
 
 
     protected static void importDataX(Import importCallback, String data, Dto dto, List<String> presentField, WebUi ui) {
@@ -33,7 +33,7 @@ public abstract class CommonImport {
                 }
             }
 
-            CommonModel.afterDataChange(dto);
+            ModelCommon.afterDataChange(dto);
 
         } catch (Exception e) {
             log.error(" ! {}", dto, e);

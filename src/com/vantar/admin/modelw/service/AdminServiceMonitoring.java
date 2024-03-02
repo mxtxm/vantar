@@ -1,4 +1,4 @@
-package com.vantar.admin.model.service;
+package com.vantar.admin.modelw.service;
 
 import com.vantar.admin.model.index.Admin;
 import com.vantar.database.nosql.elasticsearch.ElasticConnection;

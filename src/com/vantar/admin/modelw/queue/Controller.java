@@ -1,6 +1,5 @@
-package com.vantar.admin.web.queue;
+package com.vantar.admin.modelw.queue;
 
-import com.vantar.admin.model.queue.AdminQueue;
 import com.vantar.exception.FinishException;
 import com.vantar.web.*;
 import javax.servlet.annotation.WebServlet;
@@ -11,7 +10,7 @@ import javax.servlet.http.HttpServletResponse;
     "/admin/queue/purge",
     "/admin/queue/purge/selective",
 })
-public class AdminQueueController extends RouteToMethod {
+public class Controller extends RouteToMethod {
 
     public void queueIndex(Params params, HttpServletResponse response) throws FinishException {
         AdminQueue.status(params, response);

@@ -13,7 +13,7 @@ import java.util.*;
 public class AdminIndexData {
 
     public static void index(Params params, HttpServletResponse response) throws FinishException {
-        WebUi ui = Admin.getUi(Locale.getString(VantarKey.ADMIN_MENU_DATA), params, response, true);
+        WebUi ui = Admin.getUi(VantarKey.ADMIN_MENU_DATA, params, response, true);
 
         List<DtoDictionary.Info> noStores = new ArrayList<>(10);
 
@@ -39,28 +39,28 @@ public class AdminIndexData {
                         info.title
                     )
                     .addHref(
-                        Locale.getString(VantarKey.ADMIN_NEW_RECORD),
+                        VantarKey.ADMIN_NEW_RECORD,
                         "/admin/data/insert?dto=" + dtoName,
                         true,
                         false,
                         "dto-action-link"
                     )
                     .addHref(
-                        Locale.getString(VantarKey.ADMIN_IMPORT),
+                        VantarKey.ADMIN_IMPORT,
                         "/admin/data/import?dto=" + dtoName,
                         true,
                         false,
                         "dto-action-link"
                     )
                     .addHref(
-                        Locale.getString(VantarKey.ADMIN_EXPORT),
+                        VantarKey.ADMIN_EXPORT,
                         "/admin/data/export?dto=" + dtoName,
                         true,
                         false,
                         "dto-action-link"
                     )
                     .addHref(
-                        Locale.getString(VantarKey.ADMIN_DELETE_ALL),
+                        VantarKey.ADMIN_DELETE_ALL,
                         "/admin/data/purge?dto=" + dtoName,
                         true,
                         false,

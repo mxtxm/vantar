@@ -1,4 +1,4 @@
-package com.vantar.admin.model.heath;
+package com.vantar.admin.modelw.monitoring;
 
 import com.vantar.admin.model.index.Admin;
 import com.vantar.business.*;

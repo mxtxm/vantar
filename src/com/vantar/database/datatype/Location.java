@@ -2,8 +2,9 @@ package com.vantar.database.datatype;
 
 import com.vantar.util.json.*;
 import com.vantar.util.number.NumberUtil;
+import com.vantar.util.object.ObjectUtil;
 import com.vantar.util.string.StringUtil;
-import java.util.Map;
+import java.util.*;
 
 
 public class Location {
@@ -20,7 +21,7 @@ public class Location {
 
     public Double latitude;
     public Double longitude;
-    public Double height;
+    public Double altitude;
     public String countryCode;
 
 
@@ -40,20 +41,21 @@ public class Location {
         this.countryCode = countryCode;
     }
 
-    public Location(Double latitude, Double longitude, Double height) {
+    public Location(Double latitude, Double longitude, Double altitude) {
         this.latitude = latitude;
         this.longitude = longitude;
-        this.height = height;
+        this.altitude = altitude;
     }
 
-    public Location(Double latitude, Double longitude, Double height, String countryCode) {
+    public Location(Double latitude, Double longitude, Double altitude, String countryCode) {
         this.latitude = latitude;
         this.longitude = longitude;
-        this.height = height;
+        this.altitude = altitude;
         this.countryCode = countryCode;
     }
 
     public Location(String string) {
+        string = string.trim();
         if (string.startsWith("{")) {
             Location location = Json.d.fromJson(string, Location.class);
             if (location == null) {
@@ -61,41 +63,54 @@ public class Location {
             }
             latitude = location.latitude;
             longitude = location.longitude;
-            height = location.height;
+            altitude = location.altitude;
             countryCode = location.countryCode;
             return;
         }
-        String[] parts = StringUtil.splitTrim(string, ',');
+        String[] parts = StringUtil.splitTrim(StringUtil.trim(string, '[', ']'), ',');
         if (parts.length < 2) {
             return;
         }
         latitude = StringUtil.toDouble(parts[0]);
         longitude = StringUtil.toDouble(parts[1]);
         if (parts.length == 4) {
-            height = StringUtil.toDouble(parts[2]);
+            altitude = StringUtil.toDouble(parts[2]);
             countryCode = parts[3];
         } else if (parts.length == 3) {
-            height = StringUtil.toDouble(parts[2]);
-            if (height == null) {
+            altitude = StringUtil.toDouble(parts[2]);
+            if (altitude == null) {
                 countryCode = parts[2];
             }
         }
     }
 
     public Location(Map<String, Object> map) {
-        Double lat = NumberUtil.toDouble(map.get("latitude"));
-        Double lng = NumberUtil.toDouble(map.get("longitude"));
-        if (lat == null || lng == null) {
-            return;
+        latitude = NumberUtil.toDouble(map.get("latitude"));
+        longitude = NumberUtil.toDouble(map.get("longitude"));
+        altitude = NumberUtil.toDouble(map.get("altitude"));
+        countryCode = ObjectUtil.toString(map.get("countryCode"));
+    }
+
+    public Location(List<Object> collection) {
+        latitude = NumberUtil.toDouble(collection.get(0));
+        longitude = NumberUtil.toDouble(collection.get(1));
+        altitude = NumberUtil.toDouble(collection.get(2));
+        countryCode = ObjectUtil.toString(collection.get(3));
+    }
+
+    public Location(Object[] array) {
+        if (array.length > 0) {
+            latitude = NumberUtil.toDouble(array[0]);
+            if (array.length > 1) {
+                longitude = NumberUtil.toDouble(array[1]);
+                if (array.length > 2) {
+                    altitude = NumberUtil.toDouble(array[2]);
+                    if (array.length > 3) {
+                        countryCode = ObjectUtil.toString(array[3]);
+                    }
+                }
+            }
         }
-        latitude = lat;
-        longitude = lng;
-        height = NumberUtil.toDouble(map.get("height"));
-        Object cc = map.get("countryCode");
-        if (cc == null) {
-            return;
-        }
-        countryCode = cc.toString();
     }
 
     public void round(int decimals) {
@@ -105,8 +120,8 @@ public class Location {
         if (longitude != null) {
             longitude = NumberUtil.round(longitude, decimals);
         }
-        if (height != null) {
-            height = NumberUtil.round(height, decimals);
+        if (altitude != null) {
+            altitude = NumberUtil.round(altitude, decimals);
         }
     }
 
@@ -116,8 +131,8 @@ public class Location {
         sb.append('{');
         sb.append("\"latitude\":").append(latitude).append(',');
         sb.append("\"longitude\":").append(longitude).append(',');
-        if (height != null) {
-            sb.append("\"height\":").append(height).append(',');
+        if (altitude != null) {
+            sb.append("\"altitude\":").append(altitude).append(',');
         }
         if (countryCode != null) {
             sb.append("\"countryCode\":\"").append(countryCode).append("\"");
@@ -171,7 +186,7 @@ public class Location {
         if ((longitude == null && location.longitude != null) || (longitude != null && !longitude.equals(location.longitude))) {
             return false;
         }
-        if ((height == null && location.height != null) || (height != null && !height.equals(location.height))) {
+        if ((altitude == null && location.altitude != null) || (altitude != null && !altitude.equals(location.altitude))) {
             return false;
         }
         return (countryCode != null || location.countryCode == null)
@@ -183,7 +198,7 @@ public class Location {
         int hash = 7;
         hash = 31 * hash + (longitude == null ? 0 : longitude.hashCode());
         hash = 31 * hash + (latitude == null ? 0 : latitude.hashCode());
-        hash = 31 * hash + (height == null ? 0 : height.hashCode());
+        hash = 31 * hash + (altitude == null ? 0 : altitude.hashCode());
         hash = 31 * hash + (countryCode == null ? 0 : countryCode.hashCode());
         return hash;
     }
@@ -201,7 +216,6 @@ public class Location {
             Location location = new Location((Map) value);
             return location.isValid() ? location : null;
         }
-
         return null;
     }
 

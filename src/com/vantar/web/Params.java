@@ -920,7 +920,12 @@ public class Params {
         String locationString = getString(key);
         Location location = locationString != null ?
             new Location(locationString) :
-            new Location(getDouble(key + "_latitude"), getDouble(key + "_longitude"), getDouble(key + "_altitude"));
+            new Location(
+                getDouble(key + "_latitude"),
+                getDouble(key + "_longitude"),
+                getDouble(key + "_altitude"),
+                getString(key + "_countryCode")
+            );
         return location.isEmpty() ? null : location;
     }
 

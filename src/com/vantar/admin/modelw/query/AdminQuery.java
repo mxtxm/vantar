@@ -1,19 +1,14 @@
 package com.vantar.admin.modelw.query;
 
-import com.vantar.admin.Dto.StoredQuery;
 import com.vantar.admin.model.index.Admin;
-import com.vantar.business.*;
+import com.vantar.business.ModelMongo;
 import com.vantar.common.VantarParam;
 import com.vantar.database.common.ValidationError;
-import com.vantar.database.dto.*;
-import com.vantar.database.nosql.elasticsearch.ElasticSearch;
-import com.vantar.database.nosql.mongo.MongoQuery;
+import com.vantar.database.dto.DtoDictionary;
 import com.vantar.database.query.*;
-import com.vantar.database.sql.*;
 import com.vantar.exception.*;
-import com.vantar.locale.*;
 import com.vantar.locale.Locale;
-import com.vantar.service.log.ServiceLog;
+import com.vantar.locale.*;
 import com.vantar.util.json.Json;
 import com.vantar.util.number.NumberUtil;
 import com.vantar.util.object.ObjectUtil;
@@ -36,6 +31,7 @@ public class AdminQuery {
                 storedQuery = ModelMongo.getById(storedQuery);
             } catch (VantarException e) {
                 ui.addErrorMessage(e).finish();
+                return;
             }
         }
 
@@ -160,22 +156,21 @@ public class AdminQuery {
 
             PageData data = null;
             try {
-                if (dtoInfo.dbms.equals(DtoDictionary.Dbms.SQL)) {
-
-                } else if (dtoInfo.dbms.equals(DtoDictionary.Dbms.MONGO)) {
-                    q.condition().inspect();
-                    data = ModelMongo.search(q);
+                if (dtoInfo.dbms.equals(DtoDictionary.Dbms.MONGO)) {
+                    qx.condition().inspect();
+                    data = ModelMongo.search(qx);
+                } else if (dtoInfo.dbms.equals(DtoDictionary.Dbms.SQL)) {
+                    // todo
                 } else if (dtoInfo.dbms.equals(DtoDictionary.Dbms.ELASTIC)) {
-
+                    // todo
                 }
             } catch (NoContentException ignore) {
                 ui.addMessage(Locale.getString(VantarKey.NO_CONTENT));
             } catch (VantarException e) {
                 ui.addErrorMessage(ObjectUtil.throwableToString(e));
             }
-ServiceLog.log.error(">>>>>> {}", data);
             if (data != null) {
-                ui.addDtoList(data, true, q.getDto().getProperties());
+                ui.addDtoList(data, true, qx.getDto().getProperties());
             }
         }
 

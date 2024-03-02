@@ -1,4 +1,4 @@
-package com.vantar.admin.model.heath;
+package com.vantar.admin.modelw.monitoring;
 
 import com.vantar.admin.model.database.AdminData;
 import com.vantar.admin.model.index.Admin;
@@ -20,7 +20,7 @@ import java.util.*;
 public class AdminMonitoring {
 
     public static void index(Params params, HttpServletResponse response) throws FinishException {
-        WebUi ui = Admin.getUi(Locale.getString(VantarKey.ADMIN_MENU_MONITORING), params, response, true);
+        WebUi ui = Admin.getUi(VantarKey.ADMIN_MENU_MONITORING, params, response, true);
 
         Map<String, List<String>> links = new LinkedHashMap<>(10, 1);
 
@@ -29,7 +29,7 @@ public class AdminMonitoring {
         links.put(Locale.getString(VantarKey.ADMIN_SYSTEM_ERRORS), items);
 
         items = new ArrayList<>(2);
-        items.add(Locale.getString(VantarKey.ADMIN_SERVICES_STATUS) + ":/admin/services/index");
+        items.add(Locale.getString(VantarKey.ADMIN_SERVICES_STATUS) + ":/admin/service/index");
         links.put(Locale.getString(VantarKey.ADMIN_SERVICES), items);
 
         items = new ArrayList<>(1);
@@ -45,9 +45,9 @@ public class AdminMonitoring {
         links.put(Locale.getString(VantarKey.ADMIN_CACHE), items);
 
         items = new ArrayList<>(3);
-        items.add(Locale.getString(VantarKey.ADMIN_DATABASE_STATUS_PARAM, "Mongo") + ":/admin/data/mongo/status");
-        items.add(Locale.getString(VantarKey.ADMIN_DATABASE_STATUS_PARAM, "SQL") + ":/admin/data/sql/status");
-        items.add(Locale.getString(VantarKey.ADMIN_DATABASE_STATUS_PARAM, "Elastic") + ":/admin/data/elastic/status");
+        items.add("Mongo:/admin/data/mongo/status");
+        items.add("SQL:/admin/data/sql/status");
+        items.add("Elastic:/admin/data/elastic/status");
         links.put(Locale.getString(VantarKey.ADMIN_DATABASE_TITLE), items);
 
         String adminApp = Settings.getAdminApp();
@@ -107,8 +107,8 @@ public class AdminMonitoring {
             // >
             ui.addHeading(3, "/admin/system/log/tags");
             ui.addHrefBlock(VantarKey.ADMIN_SYSTEM_ERRORS, "/admin/system/errors/index");
-            ui.addHeading(3, "/admin/system/log/errors");
-            ui.addHrefBlock(VantarKey.ADMIN_SYSTEM_ERRORS, "/admin/system/errors/index");
+            ui.addHeading(3, "/admin/system/log/search");
+            ui.addHrefBlock(VantarKey.ADMIN_SYSTEM_ERRORS, "/admin/system/errors/search");
             // >
             ui.blockEnd();
         }

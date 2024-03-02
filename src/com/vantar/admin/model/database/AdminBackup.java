@@ -29,7 +29,7 @@ public class AdminBackup {
 
 
     public static void backup(Params params, HttpServletResponse response, DtoDictionary.Dbms dbms) throws FinishException {
-        WebUi ui = Admin.getUi(Locale.getString(VantarKey.ADMIN_BACKUP_CREATE), params, response, true);
+        WebUi ui = Admin.getUi(VantarKey.ADMIN_BACKUP_CREATE, params, response, true);
         ui.beginBox(dbms);
 
         ServiceBackup backup;
@@ -50,16 +50,16 @@ public class AdminBackup {
         );
 
         if (!params.isChecked("f")) {
-            ui  .addMessage(Locale.getString(VantarKey.ADMIN_BACKUP_MSG1))
-                .addMessage(Locale.getString(VantarKey.ADMIN_BACKUP_MSG2))
+            ui  .addMessage(VantarKey.ADMIN_BACKUP_MSG1)
+                .addMessage(VantarKey.ADMIN_BACKUP_MSG2)
                 .beginFormPost()
-                .addInput(Locale.getString(VantarKey.ADMIN_BACKUP_FILE_PATH), "dumpfile", dbDumpFilename)
-                .addInput(Locale.getString(VantarKey.ADMIN_IMPORT_EXCLUDE), "exclude", backup.exclude)
-                .addInput(Locale.getString(VantarKey.ADMIN_DATE_FROM), "datemin",
-                    dateRange.dateMin == null ? "" : dateRange.dateMin.formatter().getDateTimePersian())
-                .addInput(Locale.getString(VantarKey.ADMIN_DATE_TO), "datemax",
-                    dateRange.dateMax == null ? "" : dateRange.dateMax.formatter().getDateTimePersian())
-                .addSubmit(Locale.getString(VantarKey.ADMIN_BACKUP_CREATE_START))
+                .addInput(VantarKey.ADMIN_BACKUP_FILE_PATH, "dumpfile", dbDumpFilename)
+                .addInput(VantarKey.ADMIN_IMPORT_EXCLUDE, "exclude", backup.exclude)
+                .addInput(VantarKey.ADMIN_DATE_FROM, "datemin"
+                    , dateRange.dateMin == null ? "" : dateRange.dateMin.formatter().getDateTimePersian())
+                .addInput(VantarKey.ADMIN_DATE_TO, "datemax"
+                    , dateRange.dateMax == null ? "" : dateRange.dateMax.formatter().getDateTimePersian())
+                .addSubmit(VantarKey.ADMIN_BACKUP_CREATE_START)
                 .addHrefBlock("Query", "/admin/data/backup/mongo/q")
                 .finish();
             return;
@@ -80,7 +80,7 @@ public class AdminBackup {
     }
 
     public static void backupQuery(Params params, HttpServletResponse response, DtoDictionary.Dbms dbms) throws FinishException {
-        WebUi ui = Admin.getUi(Locale.getString(VantarKey.ADMIN_BACKUP_CREATE), params, response, true);
+        WebUi ui = Admin.getUi(VantarKey.ADMIN_BACKUP_CREATE, params, response, true);
         ui.beginBox(dbms);
 
         ServiceBackup backup;
@@ -104,7 +104,7 @@ public class AdminBackup {
                 dtos.put(i.getDtoClassName(), i.getDtoClassName());
             }
             ui  .beginFormPost()
-                .addInput(Locale.getString(VantarKey.ADMIN_BACKUP_FILE_PATH), "dumpfile", dbDumpFilename)
+                .addInput(VantarKey.ADMIN_BACKUP_FILE_PATH, "dumpfile", dbDumpFilename)
                 .addSelect("DTO", "dto-class", dtos)
                 .addTextArea(
                     "Query",
@@ -124,7 +124,7 @@ public class AdminBackup {
                     "        ]\n" +
                     "    }\n" +
                     "}")
-                .addSubmit(Locale.getString(VantarKey.ADMIN_BACKUP_CREATE_START))
+                .addSubmit(VantarKey.ADMIN_BACKUP_CREATE_START)
                 .finish();
             return;
         }
@@ -158,7 +158,7 @@ public class AdminBackup {
     }
 
     public static void restore(Params params, HttpServletResponse response, DtoDictionary.Dbms dbms) throws FinishException {
-        WebUi ui = Admin.getUi(Locale.getString(VantarKey.ADMIN_BACKUP_RESTORE), params, response, true);
+        WebUi ui = Admin.getUi(VantarKey.ADMIN_BACKUP_RESTORE, params, response, true);
 
         ui.beginBox(dbms);
 
@@ -189,7 +189,7 @@ public class AdminBackup {
                 .addSelect(VantarKey.ADMIN_BACKUP_FILE_PATH, "dumpfile", files)
                 .addCheckbox(VantarKey.ADMIN_RESTORE_DELETE_CURRENT_DATA, "deleteall", true)
                 .addCheckbox("camelCaseProperties", "camelcase", false)
-                .addSubmit(Locale.getString(VantarKey.ADMIN_BACKUP_RESTORE))
+                .addSubmit(VantarKey.ADMIN_BACKUP_RESTORE)
                 .finish();
             return;
         }
@@ -206,7 +206,7 @@ public class AdminBackup {
     }
 
     public static void backupFiles(Params params, HttpServletResponse response, DtoDictionary.Dbms dbms) throws FinishException {
-        WebUi ui = Admin.getUi(Locale.getString(VantarKey.ADMIN_BACKUP_FILES), params, response, true);
+        WebUi ui = Admin.getUi(VantarKey.ADMIN_BACKUP_FILES, params, response, true);
 
         ServiceBackup backup;
         try {
@@ -257,17 +257,17 @@ public class AdminBackup {
 
         ui  .addEmptyLine(3)
             .addCheckbox(VantarKey.ADMIN_DELETE_DO, WebUi.PARAM_CONFIRM)
-            .addSubmit(Locale.getString(VantarKey.ADMIN_DELETE))
+            .addSubmit(VantarKey.ADMIN_DELETE)
             .finish();
     }
 
     public static void upload(Params params, HttpServletResponse response) throws FinishException {
-        WebUi ui = Admin.getUi(Locale.getString(VantarKey.ADMIN_BACKUP_UPLOAD), params, response, true);
+        WebUi ui = Admin.getUi(VantarKey.ADMIN_BACKUP_UPLOAD, params, response, true);
 
         if (!params.isChecked("f")) {
             ui  .beginUploadForm()
-                .addFile(Locale.getString(VantarKey.ADMIN_BACKUP_UPLOAD_FILE), "file")
-                .addSubmit(Locale.getString(VantarKey.ADMIN_SUBMIT))
+                .addFile(VantarKey.ADMIN_BACKUP_UPLOAD_FILE, "file")
+                .addSubmit(VantarKey.ADMIN_SUBMIT)
                 .finish();
             return;
         }
@@ -288,16 +288,16 @@ public class AdminBackup {
             }
 
             if (!uploaded.moveTo(backup.getPath(), uploaded.getOriginalFilename())) {
-                ui.addMessage(Locale.getString(VantarKey.UPLOAD_FAIL)).finish();
+                ui.addMessage(VantarKey.UPLOAD_FAIL).finish();
                 return;
             }
         }
 
-        ui.addMessage(Locale.getString(VantarKey.UPLOAD_SUCCESS)).finish();
+        ui.addMessage(VantarKey.UPLOAD_SUCCESS).finish();
     }
 
     public static void logs(Params params, HttpServletResponse response) throws FinishException {
-        WebUi ui = Admin.getUi(Locale.getString(VantarKey.ADMIN_BACKUP), params, response, true);
+        WebUi ui = Admin.getUi(VantarKey.ADMIN_BACKUP, params, response, true);
 
         try {
             ServiceBackup serviceBackup = Services.getService(ServiceBackup.class);

@@ -471,7 +471,7 @@ public class AdminData {
                 }
             } else if (dtoInfo.dbms.equals(DtoDictionary.Dbms.MONGO)) {
                 if (MongoConnection.isUp()) {
-                    ModelMongo.updateJson(params, "asjson", dto, new CommonModel.WriteEvent() {
+                    ModelMongo.updateJson(params, "asjson", dto, new ModelCommon.WriteEvent() {
                         @Override
                         public void beforeSet(Dto dto) {
 
@@ -485,7 +485,7 @@ public class AdminData {
                         @Override
                         public void afterWrite(Dto dto) throws ServerException {
                             if (dto instanceof CommonUser) {
-                                CommonModel.insertPassword(
+                                ModelCommon.insertPassword(
                                     dto,
                                     Json.d.extract(params.getString("asjson"), "password", String.class)
                                 );
@@ -555,7 +555,7 @@ public class AdminData {
                 }
             } else if (dtoInfo.dbms.equals(DtoDictionary.Dbms.MONGO)) {
                 if (MongoConnection.isUp()) {
-                    ModelMongo.insertJson(params, "asjson", dto, new CommonModel.WriteEvent() {
+                    ModelMongo.insertJson(params, "asjson", dto, new ModelCommon.WriteEvent() {
                         @Override
                         public void beforeSet(Dto dto) {
 
@@ -569,7 +569,7 @@ public class AdminData {
                         @Override
                         public void afterWrite(Dto dto) throws ServerException {
                             if (dto instanceof CommonUser) {
-                                CommonModel.insertPassword(
+                                ModelCommon.insertPassword(
                                     dto,
                                     Json.d.extract(params.getString("asjson"), "password", String.class)
                                 );
@@ -745,7 +745,7 @@ public class AdminData {
 
 
     public static void statusSql(Params params, HttpServletResponse response) throws FinishException {
-        WebUi ui = Admin.getUi(Locale.getString(VantarKey.ADMIN_STATUS, "SQL"), params, response, true);
+        WebUi ui = Admin.getUi("SQL", params, response, true);
         statusSql(ui);
         ui.finish();
     }
@@ -776,7 +776,7 @@ public class AdminData {
     }
 
     public static void statusMongo(Params params, HttpServletResponse response) throws FinishException {
-        WebUi ui = Admin.getUi(Locale.getString(VantarKey.ADMIN_STATUS, "Mongo"), params, response, true);
+        WebUi ui = Admin.getUi("Mongo", params, response, true);
         statusMongo(ui);
         ui.finish();
     }
@@ -811,7 +811,7 @@ public class AdminData {
 
 
     public static void statusElastic(Params params, HttpServletResponse response) throws FinishException {
-        WebUi ui = Admin.getUi(Locale.getString(VantarKey.ADMIN_STATUS, "Elastic"), params, response, true);
+        WebUi ui = Admin.getUi("Elastic", params, response, true);
         statusElastic(ui);
         ui.finish();
     }

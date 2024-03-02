@@ -1,4 +1,4 @@
-package com.vantar.admin.Dto;
+package com.vantar.admin.modelw.bugger;
 
 import com.vantar.database.dto.*;
 

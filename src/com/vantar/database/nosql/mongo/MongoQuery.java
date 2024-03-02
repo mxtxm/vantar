@@ -6,6 +6,7 @@ import com.vantar.common.VantarParam;
 import com.vantar.database.dto.*;
 import com.vantar.database.query.*;
 import com.vantar.exception.*;
+import com.vantar.service.log.ServiceLog;
 import com.vantar.util.object.*;
 import org.bson.Document;
 import java.util.*;
@@ -169,48 +170,45 @@ public class MongoQuery {
      * if dto.id is set, it will be taken into account thus (id, property) must be unique
      */
     public static boolean isUnique(Dto dto, String... properties) throws DatabaseException {
-        //Document condition = new Document(Mongo.LOGICAL_DELETE_FIELD, new Document("$ne", Mongo.LOGICAL_DELETE_VALUE));
         Document condition = new Document();
         for (String property : properties) {
             property = property.trim();
-            if (property.equals(Mongo.ID)) {
-                property = VantarParam.ID;
+            if (property.equals(VantarParam.ID) || property.equals(Mongo.ID)) {
+                continue;
             }
             Object v = dto.getPropertyValue(property);
             if (properties.length == 1 && ObjectUtil.isEmpty(v)) {
                 return true;
             }
-            condition.append(property.equals(VantarParam.ID) ? Mongo.ID : property, v);
+            condition.append(property, v);
         }
 
+        if (condition.isEmpty()) {
+            return true;
+        }
+
+        Long id = dto.getId();
+        if (id != null) {
+            condition.append(Mongo.ID, new Document("$ne", id));
+        }
         try {
-            MongoCursor<Document> documents = MongoConnection.getDatabase().getCollection(dto.getStorage())
+            return  !MongoConnection.getDatabase().getCollection(dto.getStorage())
                 .find(condition)
-                .limit(2)
-                .iterator();
-            if (!documents.hasNext()) {
-                return true;
-            }
-            Long id = dto.getId();
-            if (id != null) {
-                Document d = documents.next();
-                if (documents.hasNext()) {
-                    return false;
-                }
-                return id.equals(d.getLong(Mongo.ID));
-            }
+                .projection(Projections.include(Mongo.ID))
+                .limit(1)
+                .iterator()
+                .hasNext();
         } catch (Exception e) {
             Mongo.log.error("! isUnique({})", dto, e);
             throw new DatabaseException(e);
         }
-        return false;
     }
 
     public static boolean exists(Dto dto, String property) throws DatabaseException {
         return Mongo.exists(
-            DtoBase.getStorage(dto.getClass()),
+            DtoBase.getStorage(
+                dto.getClass()),
                 new Document(property.equals(VantarParam.ID) ? Mongo.ID : property, dto.getPropertyValue(property))
-              //      .append(Mongo.LOGICAL_DELETE_FIELD, new Document("$ne", Mongo.LOGICAL_DELETE_VALUE))
             );
     }
 

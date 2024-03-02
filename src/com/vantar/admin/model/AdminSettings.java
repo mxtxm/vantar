@@ -20,7 +20,7 @@ public class AdminSettings {
 
 
     public static void settingsReload(Params params, HttpServletResponse response) throws FinishException {
-        WebUi ui = Admin.getUi(Locale.getString(VantarKey.ADMIN_SETTINGS_RELOAD), params, response, true);
+        WebUi ui = Admin.getUi(VantarKey.ADMIN_SETTINGS_RELOAD, params, response, true);
 
         reloadSettings();
         Services.messaging.broadcast(VantarParam.MESSAGE_SETTINGS_UPDATED);
@@ -58,11 +58,11 @@ public class AdminSettings {
     }
 
     public static void settingsEdit(Params params, HttpServletResponse response, Class<?> configInterface) throws FinishException {
-        WebUi ui = Admin.getUi(Locale.getString(VantarKey.ADMIN_SETTINGS_EDIT), params, response, true);
+        WebUi ui = Admin.getUi(VantarKey.ADMIN_SETTINGS_EDIT, params, response, true);
 
         String filename = getPropertiesFilename(configInterface);
         if (filename == null) {
-            ui.addErrorMessage(Locale.getString(VantarKey.ADMIN_SETTINGS_MSG1)).finish();
+            ui.addErrorMessage(VantarKey.ADMIN_SETTINGS_MSG1).finish();
             return;
         }
 
@@ -71,11 +71,11 @@ public class AdminSettings {
         if (StringUtil.contains(filename, "config")) {
             properties = Settings.config;
             propertiesInterface = Settings.configClass;
-            ui.addMessage(Locale.getString(VantarKey.ADMIN_SETTINGS_MSG2));
+            ui.addMessage(VantarKey.ADMIN_SETTINGS_MSG2);
         } else {
             properties = Settings.tune;
             propertiesInterface = Settings.tuneClass;
-            ui.addMessage(Locale.getString(VantarKey.ADMIN_SETTINGS_MSG3));
+            ui.addMessage(VantarKey.ADMIN_SETTINGS_MSG3);
         }
         ui  .addEmptyLine()
             .addHeading(3, filename)
@@ -92,15 +92,15 @@ public class AdminSettings {
 
             String json = Json.d.toJson(settings);
             if (updateProperties(json, properties, propertiesInterface)) {
-                ui.addMessage(Locale.getString(VantarKey.ADMIN_SETTINGS_UPDATED));
+                ui.addMessage(VantarKey.ADMIN_SETTINGS_UPDATED);
                 reloadSettings();
-                ui.addMessage(Locale.getString(VantarKey.ADMIN_SETTINGS_LOADED));
+                ui.addMessage(VantarKey.ADMIN_SETTINGS_LOADED);
                 if (propertiesInterface.equals(Settings.configClass)) {
                     Services.messaging.broadcast(VantarParam.MESSAGE_UPDATE_SETTINGS, json);
-                    ui.addMessage(Locale.getString(VantarKey.ADMIN_SETTINGS_UPDATE_MSG_SENT));
+                    ui.addMessage(VantarKey.ADMIN_SETTINGS_UPDATE_MSG_SENT);
                 }
             } else {
-                ui.addErrorMessage(Locale.getString(VantarKey.ADMIN_SETTINGS_UPDATE_FAILED));
+                ui.addErrorMessage(VantarKey.ADMIN_SETTINGS_UPDATE_FAILED);
             }
         }
 
@@ -125,7 +125,7 @@ public class AdminSettings {
             }
         }
 
-        ui.addSubmit(Locale.getString(VantarKey.ADMIN_EDIT)).finish();
+        ui.addSubmit(VantarKey.ADMIN_EDIT).finish();
     }
 
     public static boolean updateProperties(String json, org.aeonbits.owner.Accessible properties, Class<?> propertiesInterface) {

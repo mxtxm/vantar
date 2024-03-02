@@ -52,7 +52,7 @@ public class AdminSchedule {
             DateTime time = Beat.getBeat(ServiceScheduler.class, "run:" + info.getName());
 
             ui  .beginBox(info.getName())
-                .addHrefNewPage(VantarKey.ADMIN_SCHEDULE_RUN, "/schedule/run?cm=" + info.getName())
+                .addHrefNewPage(VantarKey.ADMIN_SCHEDULE_RUN, "/admin/schedule/run?cm=" + info.getName())
                 .addKeyValue(VantarKey.ADMIN_SCHEDULE_START_AT, startAtComment)
                 .addKeyValue(VantarKey.ADMIN_SCHEDULE_REPEAT_AT, repeatAtComment)
                 .addKeyValue(VantarKey.ADMIN_SERVICES_BEAT, time == null ? "-" : time.toString() + " ("

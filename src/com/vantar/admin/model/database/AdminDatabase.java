@@ -396,7 +396,7 @@ public class AdminDatabase {
                     count = MongoQuery.count(dto.getStorage());
                 }
                 msg = Locale.getString(count == 0 ? VantarKey.DELETE_SUCCESS : VantarKey.DELETE_FAIL);
-            } catch (DatabaseException | VantarException e) {
+            } catch (VantarException e) {
                 msg = Locale.getString(VantarKey.DELETE_FAIL);
             }
 

@@ -15,23 +15,23 @@ public class CommonRepoElastic extends ElasticWrite {
 
     public static long insertOne(Dto dto) throws DatabaseException, VantarException {
         long id = ElasticWrite.insertOne(dto);
-        CommonModel.afterDataChange(dto);
+        ModelCommon.afterDataChange(dto);
         return id;
     }
 
     public static void updateOne(Dto dto) throws DatabaseException, VantarException {
         ElasticWrite.updateOne(dto);
-        CommonModel.afterDataChange(dto);
+        ModelCommon.afterDataChange(dto);
     }
 
     public static void upsertOne(Dto dto) throws DatabaseException, VantarException {
         ElasticWrite.upsertOne(dto);
-        CommonModel.afterDataChange(dto);
+        ModelCommon.afterDataChange(dto);
     }
 
     public static void deleteOne(Dto dto) throws DatabaseException, VantarException {
         ElasticWrite.deleteOne(dto);
-        CommonModel.afterDataChange(dto);
+        ModelCommon.afterDataChange(dto);
     }
 
     public static List<ValidationError> getUniqueViolation(Dto dto) throws DatabaseException {

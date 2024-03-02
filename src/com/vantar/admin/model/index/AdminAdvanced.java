@@ -93,8 +93,7 @@ public class AdminAdvanced {
         // > > >
         ui.beginBox(VantarKey.ADMIN_SYSTEM_AND_SERVICES);
         ui  .beginFloatBox("system-box", VantarKey.ADMIN_STARTUP)
-            .addHrefBlock(VantarKey.ADMIN_SERVICE_STOP, "/admin/services/stop")
-            .addHrefBlock(VantarKey.ADMIN_SERVICE_START, "/admin/services/start")
+            .addHrefBlock(VantarKey.ADMIN_SERVICE_ACTION, "/admin/service/action")
             .addHrefBlock(VantarKey.ADMIN_FACTORY_RESET, "/admin/factory/reset")
             .addHrefBlock("GC", "/admin/system/gc")
             .blockEnd();
