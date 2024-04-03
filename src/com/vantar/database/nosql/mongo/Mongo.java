@@ -180,6 +180,24 @@ public class Mongo {
                 throw new DatabaseException(e);
             }
         }
+
+        public static synchronized long getCurrentValue(String sequenceName) throws DatabaseException {
+            try {
+                Document item = MongoConnection.getDatabase().getCollection(COLLECTION)
+                    .find(new Document(COLLECTION_FIELD, sequenceName))
+                    .sort(new Document(ID, -1))
+                    .limit(1).first();
+
+                if (item != null) {
+                    return item.getLong(COUNT_FIELD);
+                }
+
+            } catch (Exception e) {
+                log.error("! next seq", e);
+                throw new DatabaseException(e);
+            }
+            return 0;
+        }
     }
 
     /* SEQUENCE < < < */
@@ -257,7 +275,7 @@ public class Mongo {
 
     /* INSERT > > > */
 
-    public static long insert(Dto dto) throws DatabaseException {
+    public static long insert(Dto dto) throws VantarException {
         dto.setToDefaultsWhenNull();
         dto.setCreateTime(true);
         dto.setUpdateTime(true);
@@ -268,18 +286,18 @@ public class Mongo {
 
         runInnerBeforeInsert(dto);
         if (!dto.beforeInsert()) {
-            throw new DatabaseException(VantarKey.EVENT_REJECT);
+            throw new ServerException(VantarKey.CUSTOM_EVENT_ERROR);
         }
 
+        Document doc = MongoMapping.getFieldValuesAsDocument(dto, Dto.Action.INSERT);
         try {
             if (dto.getId() == null) {
-                throw new DatabaseException("! id missing");
+                throw new ServerException("DTO id is missing!");
             }
-            MongoConnection.getDatabase().getCollection(dto.getStorage())
-                .insertOne(MongoMapping.getFieldValuesAsDocument(dto, Dto.Action.INSERT));
+            MongoConnection.getDatabase().getCollection(dto.getStorage()).insertOne(doc);
         } catch (Exception e) {
-            log.error("! insert {}", MongoMapping.getFieldValuesAsDocument(dto, Dto.Action.INSERT).getClass(), e);
-            throw new DatabaseException(e);
+            log.error("! {}", doc, e);
+            throw new ServerException(e);
         }
 
         dto.afterInsert();
@@ -287,7 +305,7 @@ public class Mongo {
         return dto.getId();
     }
 
-    public static long insert(String collectionName, Map<String, Object> data) throws DatabaseException {
+    public static long insert(String collectionName, Map<String, Object> data) throws VantarException {
         Long idValue = (Long) data.get(ID);
         if (idValue == null) {
             idValue = Sequence.getNextValue(collectionName, Sequence.INIT_SEQUENCE_VALUE);
@@ -301,12 +319,12 @@ public class Mongo {
                 .insertOne(MongoMapping.mapToDocument(data, Dto.Action.INSERT));
         } catch (Exception e) {
             log.error("! insert {}", data, e);
-            throw new DatabaseException(e);
+            throw new ServerException(e);
         }
         return idValue;
     }
 
-    public static void insert(List<? extends Dto> dtos) throws DatabaseException {
+    public static void insert(List<? extends Dto> dtos) throws VantarException {
         if (dtos.isEmpty()) {
             return;
         }
@@ -323,7 +341,7 @@ public class Mongo {
 
             runInnerBeforeInsert(dto);
             if (!dto.beforeInsert()) {
-                throw new DatabaseException(VantarKey.EVENT_REJECT);
+                throw new DatabaseException(VantarKey.CUSTOM_EVENT_ERROR);
             }
             documents.add(MongoMapping.getFieldValuesAsDocument(dto, Dto.Action.INSERT));
         }
@@ -334,8 +352,8 @@ public class Mongo {
             options.ordered(false);
             MongoConnection.getDatabase().getCollection(collectionName).insertMany(documents, options);
         } catch (Exception e) {
-            log.error("! insert {}", dtos, e);
-            throw new DatabaseException(e);
+            log.error("! {}", dtos, e);
+            throw new ServerException(e);
         }
 
         for (Dto dto : dtos) {
@@ -403,7 +421,7 @@ public class Mongo {
         }
     }
 
-    public static void insert(String collectionName, List<Document> documents) throws DatabaseException {
+    public static void insert(String collectionName, List<Document> documents) throws VantarException {
         if (documents.isEmpty()) {
             return;
         }
@@ -414,8 +432,8 @@ public class Mongo {
             options.ordered(false);
             MongoConnection.getDatabase().getCollection(collectionName).insertMany(documents, options);
         } catch (Exception e) {
-            log.error("! insert {}", documents, e);
-            throw new DatabaseException(e);
+            log.error("! {}", documents, e);
+            throw new ServerException(e);
         }
     }
 
@@ -424,18 +442,18 @@ public class Mongo {
 
     /* UPDATE > > > */
 
-    public static void update(String collection, Long id, Document update) throws DatabaseException {
+    public static void update(String collection, Long id, Document update) throws VantarException {
         try {
             MongoConnection.getDatabase()
                 .getCollection(collection)
                 .updateOne(new Document(ID, id), new Document("$set", update));
         } catch (Exception e) {
             log.error("! update({}, {}, {})", collection, id, update, e);
-            throw new DatabaseException(e);
+            throw new ServerException(e);
         }
     }
 
-    public static void update(String collection, Document condition, Document update) throws DatabaseException {
+    public static void update(String collection, Document condition, Document update) throws VantarException {
         UpdateOptions options = new UpdateOptions();
         options.upsert(true);
 
@@ -445,19 +463,19 @@ public class Mongo {
                 .updateMany(condition,  new Document("$set", update), options);
         } catch (Exception e) {
             log.error("! update({}, {}, {})", collection, condition, update, e);
-            throw new DatabaseException(e);
+            throw new ServerException(e);
         }
     }
 
-    public static void update(QueryBuilder q) throws DatabaseException {
+    public static void update(QueryBuilder q) throws VantarException {
         update(new MongoQuery(q).matches, q.getDto(), true);
     }
 
-    public static void update(Dto dto, Dto condition) throws DatabaseException {
+    public static void update(Dto dto, Dto condition) throws VantarException {
         update(MongoMapping.getFieldValuesAsDocument(condition, Dto.Action.GET), dto, true);
     }
 
-    public static void update(Dto dto) throws DatabaseException {
+    public static void update(Dto dto) throws VantarException {
         Object id = dto.getId();
         if (id != null) {
             update(new Document(ID, id), dto, false);
@@ -465,13 +483,13 @@ public class Mongo {
     }
 
     // nulls not included
-    private static void update(Document condition, Dto dto, boolean all) throws DatabaseException {
+    private static void update(Document condition, Dto dto, boolean all) throws VantarException {
         dto.setCreateTime(false);
         dto.setUpdateTime(true);
 
         runInnerBeforeUpdate(dto);
         if (!dto.beforeUpdate()) {
-            throw new DatabaseException(VantarKey.EVENT_REJECT);
+            throw new ServerException(VantarKey.CUSTOM_EVENT_ERROR);
         }
         MongoCollection<Document> collection = MongoConnection.getDatabase().getCollection(dto.getStorage());
         try {
@@ -482,11 +500,11 @@ public class Mongo {
             if (all) {
                 collection.updateMany(condition, toUpdate);
             } else {
-                collection.updateOne( condition, toUpdate);
+                collection.updateOne(condition, toUpdate);
             }
         } catch (Exception e) {
             log.error("! update({}, {})", condition, dto, e);
-            throw new DatabaseException(e);
+            throw new ServerException(e);
         }
         dto.afterUpdate();
     }
@@ -581,52 +599,41 @@ public class Mongo {
 
     /* DELETE > > > */
 
-    public static long delete(QueryBuilder q) throws DatabaseException {
+    public static long delete(QueryBuilder q) throws VantarException {
         Dto dto = q.getDto();
-        String storage = dto.getStorage();
-//        if (dto.getDeleteLogicalState()) {
-//            update(storage, new MongoQuery(q).matches, new Document(LOGICAL_DELETE_FIELD, LOGICAL_DELETE_VALUE));
-//            return 1L;
-//        }
         if (!dto.beforeDelete()) {
-            throw new DatabaseException(VantarKey.EVENT_REJECT);
+            throw new ServerException(VantarKey.CUSTOM_EVENT_ERROR);
         }
-        long id = delete(storage, new MongoQuery(q).matches);
+        long id = delete(dto.getStorage(), new MongoQuery(q).matches);
         dto.afterDelete();
         return id;
     }
 
-    public static long delete(Dto condition) throws DatabaseException {
+    public static long delete(Dto condition) throws VantarException {
+        if (!condition.beforeDelete()) {
+            throw new ServerException(VantarKey.CUSTOM_EVENT_ERROR);
+        }
+
         Object id = condition.getId();
         Document conditionDocument = id == null ?
             MongoMapping.getFieldValuesAsDocument(condition, Dto.Action.GET) :
             new Document(ID, id);
 
-        if (!condition.beforeDelete()) {
-            throw new DatabaseException(VantarKey.EVENT_REJECT);
-        }
-
-//        if (condition.getDeleteLogicalState()) {
-//            update(condition.getStorage(), conditionDocument, new Document(LOGICAL_DELETE_FIELD, LOGICAL_DELETE_VALUE));
-//            condition.afterDelete();
-//            return 1L;
-//        }
-
         try {
-            long idd = MongoConnection.getDatabase()
+            long count = MongoConnection.getDatabase()
                 .getCollection(condition.getStorage())
                 .deleteMany(conditionDocument)
                 .getDeletedCount();
 
             condition.afterDelete();
-            return idd;
+            return count;
         } catch (Exception e) {
             log.error("! delete {}", condition, e);
-            throw new DatabaseException(e);
+            throw new ServerException(e);
         }
     }
 
-    public static long delete(String collectionName, Document query) throws DatabaseException {
+    public static long delete(String collectionName, Document query) throws VantarException {
         try {
             return MongoConnection.getDatabase()
                 .getCollection(collectionName)
@@ -634,37 +641,37 @@ public class Mongo {
                 .getDeletedCount();
         } catch (Exception e) {
             log.error("! delete({}, {})", collectionName, query, e);
-            throw new DatabaseException(e);
+            throw new ServerException(e);
         }
     }
 
-    public static void deleteAll(Dto dto) throws DatabaseException {
+    public static void deleteAll(Dto dto) throws VantarException {
         deleteAll(dto.getStorage());
     }
 
-    public static void deleteAll(String collectionName) throws DatabaseException {
+    public static void deleteAll(String collectionName) throws VantarException {
         try {
             MongoConnection.getDatabase()
                 .getCollection(collectionName)
                 .drop();
         } catch (Exception e) {
             log.error("! delete all {}", collectionName, e);
-            throw new DatabaseException(e);
+            throw new ServerException(e);
         }
     }
 
-    public static void deleteCollection(Dto dto) throws DatabaseException {
+    public static void deleteCollection(Dto dto) throws VantarException {
         deleteCollection(dto.getStorage());
     }
 
-    public static void deleteCollection(String collectionName) throws DatabaseException {
+    public static void deleteCollection(String collectionName) throws VantarException {
         try {
             MongoConnection.getDatabase()
                 .getCollection(collectionName)
                 .drop();
         } catch (Exception e) {
             log.error("! delete {}", collectionName, e);
-            throw new DatabaseException(e);
+            throw new ServerException(e);
         }
     }
 
@@ -848,7 +855,7 @@ public class Mongo {
         }
     }
 
-    public static void increaseValue(Dto dto, String fieldName, long value) throws DatabaseException {
+    public static void increaseValue(Dto dto, String fieldName, long value) throws VantarException {
         QueryBuilder q = new QueryBuilder(dto);
         q.setConditionFromDtoEqualTextMatch();
         if (!MongoQuery.exists(q)) {
@@ -869,7 +876,7 @@ public class Mongo {
         }
     }
 
-    public static void increaseValues(Dto dto, List<String> fields, long value) throws DatabaseException {
+    public static void increaseValues(Dto dto, List<String> fields, long value) throws VantarException {
         QueryBuilder q = new QueryBuilder(dto);
         q.setConditionFromDtoEqualTextMatch();
         if (!MongoQuery.exists(q)) {

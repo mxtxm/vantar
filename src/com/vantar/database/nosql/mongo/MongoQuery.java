@@ -1,12 +1,11 @@
 package com.vantar.database.nosql.mongo;
 
 import com.mongodb.client.*;
-import com.mongodb.client.model.Projections;
+import com.mongodb.client.model.*;
 import com.vantar.common.VantarParam;
 import com.vantar.database.dto.*;
 import com.vantar.database.query.*;
 import com.vantar.exception.*;
-import com.vantar.service.log.ServiceLog;
 import com.vantar.util.object.*;
 import org.bson.Document;
 import java.util.*;
@@ -71,6 +70,14 @@ public class MongoQuery {
                 MongoConnection.getDatabase().getCollection(storage).find() :
                 MongoConnection.getDatabase().getCollection(storage).find(matches);
 
+            find.collation(
+                Collation.builder()
+                    .locale("fa")
+                    .collationStrength(CollationStrength.PRIMARY)
+                    .caseLevel(false)
+                    .build()
+            );
+
             if (sort != null) {
                 find.sort(sort);
             }
@@ -95,6 +102,14 @@ public class MongoQuery {
             FindIterable<Document> find = (matches == null || matches.isEmpty()) ?
                 MongoConnection.getDatabase().getCollection(storage).find() :
                 MongoConnection.getDatabase().getCollection(storage).find(matches);
+
+            find.collation(
+                Collation.builder()
+                    .locale("fa")
+                    .collationStrength(CollationStrength.PRIMARY)
+                    .caseLevel(false)
+                    .build()
+            );
 
             if (sort != null) {
                 find.sort(sort);
@@ -280,27 +295,6 @@ public class MongoQuery {
 
     public static QueryResult getAllData(Dto dto, String... sort) throws DatabaseException {
         try {
-//            if (dto.isDeleteLogicalEnabled()) {
-//                Document condition;
-//                switch (dto.getDeletedQueryPolicy()) {
-//                    case SHOW_NOT_DELETED:
-//                        condition = new Document(Mongo.LOGICAL_DELETE_FIELD, new Document("$ne", Mongo.LOGICAL_DELETE_VALUE));
-//                        break;
-//                    case SHOW_DELETED:
-//                        condition = new Document(Mongo.LOGICAL_DELETE_FIELD, Mongo.LOGICAL_DELETE_VALUE);
-//                        break;
-//                    default:
-//                        condition = null;
-//                }
-//                Document sortDoc = MongoMapping.sort(sort);
-//                return new MongoQueryResult(
-//                    condition == null ?
-//                        MongoConnection.getDatabase().getCollection(dto.getStorage()).find().sort(sortDoc) :
-//                        MongoConnection.getDatabase().getCollection(dto.getStorage()).find(condition).sort(sortDoc),
-//                    dto
-//                );
-//            }
-
             return new MongoQueryResult(
                 MongoConnection.getDatabase().getCollection(dto.getStorage()).find().sort(MongoMapping.sort(sort)),
                 dto

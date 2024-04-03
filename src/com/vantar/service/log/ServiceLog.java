@@ -195,9 +195,6 @@ public class ServiceLog implements Services.Service  {
         Params params = Params.getThreadParams();
         if (params != null) {
             userLog.url = params.request.getRequestURI();
-            if (userLog.url.startsWith("/admin/")) {
-                return;
-            }
             CommonUser user = ServiceAuth.getCurrentSignedInUser(params);
             if (user != null) {
                 userLog.userId = user.getId();
@@ -359,7 +356,7 @@ public class ServiceLog implements Services.Service  {
         }
     }
 
-    private void logTaskMongo() throws DatabaseException {
+    private void logTaskMongo() throws VantarException {
         List<Packet> packets = Queue.takeAllItems(VantarParam.QUEUE_NAME_USER_ACTION_LOG);
         if (packets.isEmpty()) {
             return;

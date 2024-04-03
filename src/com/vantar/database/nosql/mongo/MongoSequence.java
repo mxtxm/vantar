@@ -7,9 +7,6 @@ import com.vantar.database.dto.*;
 public class MongoSequence extends DtoBase {
 
     public Long id;
-
     public String n;
-
     public Long c;
-
 }

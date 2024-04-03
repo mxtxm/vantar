@@ -121,6 +121,8 @@ public class ObjectUtil {
         } else if (object instanceof Number || object instanceof Boolean || object instanceof DateTime
             || object instanceof Character) {
             return object.toString();
+        } else if (object.getClass().isEnum()) {
+            return  ((Enum<?>) object).name();
         } else if (object instanceof Throwable) {
             return throwableToString((Throwable) object);
         }

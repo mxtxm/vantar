@@ -1,7 +1,10 @@
 package com.vantar.util.object;
 
+import com.vantar.service.log.ServiceLog;
 import org.slf4j.*;
+import java.io.*;
 import java.lang.reflect.Field;
+import java.net.URL;
 import java.util.*;
 import java.util.regex.Pattern;
 import java.util.stream.*;
@@ -23,6 +26,15 @@ public class EnumUtil {
         return Stream.of(values)
             .map(Enum::toString)
             .collect(Collectors.toList());
+    }
+
+    public static String[] getEnumValues(Class<? extends Enum<?>> enumType) {
+        String[] values = new String[enumType.getEnumConstants().length];
+        int i = 0;
+        for (Enum<?> x : enumType.getEnumConstants()) {
+            values[i++] = x.toString();
+        }
+        return values;
     }
 
     /**
@@ -95,5 +107,31 @@ public class EnumUtil {
         return value == null ?
             null :
             (T) Enum.valueOf((Class<? extends Enum>) type, PATTERN_ENUM_INVALID_CHARS.matcher(value).replaceAll(""));
+    }
+
+    public static List<Class<?>> getClasses(String packageName) {
+        ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+        if (classLoader == null) {
+            return new ArrayList<>(1);
+        }
+
+        Enumeration<URL> resources;
+        try {
+            resources = classLoader.getResources(packageName.replace('.', '/'));
+        } catch (IOException e) {
+            ServiceLog.log.error(" !! package({})\n", packageName, e);
+            return new ArrayList<>(1);
+        }
+
+        List<File> dirs = new ArrayList<>();
+        while (resources.hasMoreElements()) {
+            dirs.add(new File(resources.nextElement().getFile()));
+        }
+
+        List<Class<?>> classes = new ArrayList<>(40);
+        for (File directory : dirs) {
+            classes.addAll(ClassUtil.findClasses(directory, packageName, Enum.class));
+        }
+        return classes;
     }
 }

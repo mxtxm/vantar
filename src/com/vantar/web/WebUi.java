@@ -1,6 +1,6 @@
 package com.vantar.web;
 
-import com.vantar.admin.model.database.AdminData;
+import com.vantar.admin.model.database.data.panel.DataUtil;
 import com.vantar.business.ModelMongo;
 import com.vantar.common.VantarParam;
 import com.vantar.database.datatype.Location;
@@ -9,7 +9,6 @@ import com.vantar.database.query.PageData;
 import com.vantar.exception.*;
 import com.vantar.locale.Locale;
 import com.vantar.locale.*;
-import com.vantar.service.Services;
 import com.vantar.service.auth.*;
 import com.vantar.service.dbarchive.ServiceDbArchive;
 import com.vantar.service.log.ServiceLog;
@@ -18,7 +17,6 @@ import com.vantar.util.collection.CollectionUtil;
 import com.vantar.util.datetime.DateTime;
 import com.vantar.util.json.Json;
 import com.vantar.util.object.*;
-import com.vantar.util.string.StringUtil;
 import javax.servlet.http.HttpServletResponse;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
@@ -59,161 +57,226 @@ public class WebUi extends WebUiBasics<WebUi> {
 
     // > > > DTO
 
-    public WebUi addDeleteForm(List<Dto> dtos) {
-        beginFormPost();
-        addErrorMessage(VantarKey.ADMIN_DELETE);
-        addEmptyLine();
-        for (Dto dto : dtos) {
-            html.append("<div class=\"row delete-item\"><input name=\"ids\" type=\"checkbox\" value=\"")
-                .append(dto.getId()).append("\"/>").append(dto.getId());
-            for (String name : dto.getPresentationPropertyNames()) {
-                if (!"id".equals(name)) {
-                    Object value = dto.getPropertyValue(name);
-                    html.append(" - ").append(value);
-                }
-            }
-            html.append("</div>");
-        }
-        addSubmit(VantarKey.ADMIN_DELETE);
-        return blockEnd();
-    }
-
     public WebUi addDtoAddForm(Dto dto, String... fields) {
-        return addDtoForm(dto, "insert", fields);
+        return dtoForm(dto, false, fields);
     }
 
     public WebUi addDtoUpdateForm(Dto dto, String... fields) {
-        return addDtoForm(dto, "update", fields);
+        return dtoForm(dto, true, fields);
     }
 
-    /**
-     * VantarAdminTags: not exists: include, none: exclude, insert/update: include for action
-     */
-    private WebUi addDtoForm(Dto dto, String action, String... include) {
-        html.append("<form method=\"post\" id=\"dto-form\" autocomplete=\"off\" ><input name=\"f\" value=\"1\" type=\"hidden\"/>\n");
-        addSubmit(VantarKey.ADMIN_DO);
-
-        if ("update".equals(action)) {
-            addInput("id", "id", dto.getId());
+    public WebUi addDtoItemLinks(Dto dto, boolean showUpdate, boolean showView) {
+        String cName = dto.getClass().getSimpleName();
+        html.append("<div id=\"actions\">")
+            .append(" <a href=\"").append(getLink("/admin/data/delete?dto=" + cName + "&id=" + dto.getId()))
+            .append("\">").append(Locale.getString(VantarKey.ADMIN_DELETE)).append("</a>");
+        if (showUpdate) {
+            html.append(" | <a href=\"").append(getLink("/admin/data/update?dto=" + cName + "&id=" + dto.getId()))
+                .append("\">").append(Locale.getString(VantarKey.ADMIN_UPDATE)).append("</a>");
         }
+        if (showView) {
+            html.append(" | <a href=\"").append(getLink("/admin/data/view?dto=" + cName + "&id=" + dto.getId()))
+                .append("\">").append(Locale.getString(VantarKey.ADMIN_VIEW)).append("</a>");
+        }
+        html.append(" | <a href=\"").append(getLink("/admin/data/dependencies?dto=" + cName + "&id=" + dto.getId()))
+            .append("\">").append(Locale.getString(VantarKey.ADMIN_DEPENDENCIES)).append("</a>")
 
-        for (String name : include) {
-            if ("id".equals(name)) {
+            .append(" | <a href=\"").append(getLink("/admin/data/action/log?dto=" + cName + "&id=" + dto.getId()))
+            .append("\">").append(Locale.getString(VantarKey.ADMIN_ACTION_LOG)).append("</a>")
+            .append("</div>");
+        return getThis();
+    }
+
+    private WebUi dtoForm(Dto dto, boolean isUpdate, String... include) {
+        html.append("<div id='data-hint'><p id='hint-close' onclick=\"$('#data-hint').hide()\">x</p>")
+            .append("<div id='hint-container'></div></div>\n")
+            .append("<form method='post' id='dto-form' autocomplete='off'><input name='f' value='1' type='hidden'/>\n");
+
+        addSubmit(VantarKey.ADMIN_SUBMIT);
+        dto.setLang(params.getLang());
+
+        setWidgetComment("<pre class='type'>auto increment (serial)</pre>");
+        addInput("id", "id", dto.getId());
+
+        for (String col : include) {
+            if ("id".equals(col)) {
                 continue;
             }
 
-            setAdditive(dto, name, Required.class, "<pre class='required'>*</pre>");
-            setAdditive(dto, name, Unique.class, "<pre class='unique'>unique</pre>");
-            setAdditive(dto, name, UniqueCi.class, "<pre class='unique'>unique-ci</pre>");
-            Default a = dto.getAnnotation(name, Default.class);
-            if (a != null) {
-                setAdditive(
-                    dto,
-                    name,
-                    Default.class,
-                    "<pre class='default' title=\"default value\">" + dto.getAnnotation(name, Default.class).value() + "</pre>"
-                );
+            Field field = dto.getField(col);
+            Class<?> type = dto.getPropertyType(col);
+            Object value = dto.getPropertyValue(col);
+            if (ObjectUtil.isEmpty(value)) {
+                value = dto.getDefaultValue(col);
             }
-            setAdditive(dto, name, Localized.class, "<pre class='format'>{\"en\":\"\", \"fa\":\"\"}</pre>");
+            String inputClass = field.isAnnotationPresent(Required.class) ? "required" : null;
 
-            Field field = dto.getField(name);
-            Class<?> type = dto.getPropertyType(name);
-            Object value = dto.getPropertyValue(name);
-            if (value == null || (type == String.class && StringUtil.isEmpty((String) value))) {
-                value = dto.getDefaultValue(name);
+            // > > > tags
+            setWidgetComment("<pre class='type'>" + type.getSimpleName() + "</pre>");
+            setWidgetComment(dto, col, Unique.class, "<pre class='unique'>unique</pre>");
+            setWidgetComment(dto, col, UniqueCi.class, "<pre class='unique'>unique-ci</pre>");
+            Limit limitA = dto.getAnnotation(col, Limit.class);
+            if (limitA != null) {
+                setWidgetComment(dto, col, Limit.class, "<pre class='limit' title='limit'>" + limitA.value() + "</pre>");
             }
+            if (isUpdate) {
+                setWidgetComment(dto, col, UpdateTime.class, "<pre class='default' title='default value'>current date-time</pre>");
+            } else {
+                setWidgetComment(dto, col, CreateTime.class, "<pre class='default' title='default value'>current date-time</pre>");
+            }
+            Default defaultA = dto.getAnnotation(col, Default.class);
+            if (defaultA != null) {
+                setWidgetComment(dto, col, Default.class, "<pre class='default' title='default value'>" + defaultA.value() + "</pre>");
+            }
+            setWidgetComment(dto, col, Localized.class, "<pre class='format'>{\"en\":\"\", \"fa\":\"\"}</pre>");
+            Regex regexA = dto.getAnnotation(col, Regex.class);
+            if (regexA != null) {
+                setWidgetComment(dto, col, Regex.class, "<pre class='regex'>" + regexA.value() + "</pre>");
+            }
+            // tags < < <
 
+            // > > > DEPENDING VALUE
+            DependsValue dependsValueA = dto.getAnnotation(col, DependsValue.class);
+            if (dependsValueA != null) {
+                Class<? extends Dto> depClass = dependsValueA.dto();
+                String f = dependsValueA.field();
+                Collection<Object> data;
+                try {
+                    if (dto.getClass().isAnnotationPresent(Mongo.class)) {
+                        data = ModelMongo.getPropertyList(DtoDictionary.getInstance(depClass), f, params.getLang());
+                    } else {
+                        // todo sql
+                        data = new ArrayList<>(1);
+                    }
+                } catch (NoContentException e) {
+                    continue;
+                } catch (VantarException ignore) {
+                    data = new ArrayList<>(1);
+                }
+                addInputSelectable(col, col, data, value, inputClass);
+                continue;
+            }
+            // > > > NUMBER
             if (ClassUtil.isInstantiable(type, Number.class)) {
-
+                // > > > RELATION
                 Depends depends = field.getAnnotation(Depends.class);
                 if (depends != null) {
-                    Class<? extends Dto> depClass = depends.value();
-
-                    if (dto.getClass().isAnnotationPresent(Mongo.class)) {
+                    Class<? extends Dto>[] dependClasses = depends.value();
+                    if (dependClasses.length == 1) {
+                        Class<? extends Dto> depClass = depends.value()[0];
+                        List<Dto> dtos;
                         try {
-                            List<Dto> dtos = ModelMongo.getAll(DtoDictionary.getInstance(depClass));
-                            if (dtos.size() <= 1000) {
-                                Map<String, String> map = new HashMap<>();
-                                for (Dto depDto : dtos) {
-                                    map.put(depDto.getId().toString(), depDto.getPresentationValue());
-                                }
-                                addSelect(name, name, map, false, value == null ? null : value.toString());
-                                continue;
+                            if (dto.getClass().isAnnotationPresent(Mongo.class)) {
+                                dtos = ModelMongo.getAll(DtoDictionary.getInstance(depClass));
+                            } else {
+                                // todo sql
+                                dtos = new ArrayList<>(1);
                             }
                         } catch (NoContentException e) {
                             addText("No data: " + depClass.getSimpleName());
                             continue;
-                        } catch (VantarException ignore) {
-
+                        } catch (VantarException e) {
+                            addErrorMessage(e);
+                            continue;
+                        }
+                        if (dtos.size() <= 1000) {
+                            Map<String, String> map = new HashMap<>(1000, 1);
+                            for (Dto depDto : dtos) {
+                                depDto.setLang(params.getLang());
+                                map.put(depDto.getId().toString(), depDto.getId() + ": " + depDto.getPresentationValue());
+                            }
+                            addSelect(col, col, map, false, value, inputClass);
+                            continue;
                         }
                     }
                 }
-
-                addInput(name, name, value == null ? null : value.toString());
-
-            } else if (type == Boolean.class) {
-                addSelect(name, name, new String[] {"Yes", "No"}, false, value == null ? null : ((Boolean) value ? "Yes" : "No"));
-
-            } else if (type.isEnum()) {
-                final Class<? extends Enum<?>> enumType = (Class<? extends Enum<?>>) type;
-                String[] values = new String[enumType.getEnumConstants().length];
-                int i = 0;
-                for (Enum<?> x : enumType.getEnumConstants()) {
-                    values[i++] = x.toString();
-                }
-                addSelect(name, name, values, false, value == null ? null : value.toString());
-
-            } else if (ClassUtil.isInstantiable(type, CollectionUtil.class) && dto.getPropertyGenericTypes(name)[0].isEnum()) {
-                final Class<? extends Enum<?>> enumType = (Class<? extends Enum<?>>) dto.getPropertyGenericTypes(name)[0];
-                String[] values = new String[enumType.getEnumConstants().length];
-                int i = 0;
-                for (Enum<?> x : enumType.getEnumConstants()) {
-                    values[i++] = x.toString();
-                }
-
+                // > > > NORMAL NUMBER
+                addInput(col, col, value, inputClass);
+                continue;
+            }
+            // > > > BOOL
+            if (type == Boolean.class) {
+                addSelect(
+                    col,
+                    col,
+                    new String[] {"Yes", "No"},
+                    false, value == null ? null : ((Boolean) value ? "Yes" : "No"),
+                    inputClass
+                );
+                continue;
+            }
+            // > > > ENUM
+            if (type.isEnum()) {
+                addSelect(col, col, EnumUtil.getEnumValues((Class<? extends Enum<?>>) type), false, value, inputClass);
+                continue;
+            }
+            // > > > ENUM COLLECTION
+            if (CollectionUtil.isCollection(type) && dto.getPropertyGenericTypes(col)[0].isEnum()) {
                 List<String> selectedValues;
                 if (value == null) {
                     selectedValues = null;
                 } else {
-                    selectedValues = new ArrayList<>();
-                    for (Object x : (List<?>) value) {
-                        selectedValues.add(x.toString());
+                    selectedValues = new ArrayList<>(((List<?>) value).size());
+                    for (Enum<?> x : (List<? extends Enum<?>>) value) {
+                        selectedValues.add(x.name());
                     }
                 }
-                addSelect(name, name, values, true, value == null ? null : selectedValues, "json");
-
-            } else if (CollectionUtil.isCollection(type)) {
+                addSelect(
+                    col,
+                    col,
+                    EnumUtil.getEnumValues((Class<? extends Enum<?>>) dto.getPropertyGenericTypes(col)[0]),
+                    true,
+                    selectedValues,
+                    inputClass
+                );
+                continue;
+            }
+            // > > > COLLECTION
+            if (CollectionUtil.isCollection(type)) {
                 Class<?>[] g = ClassUtil.getGenericTypes(field);
                 if (ObjectUtil.isNotEmpty(g)) {
                     if (ClassUtil.isInstantiable(g[0], Dto.class)) {
                         Object obj = ClassUtil.getInstance(g[0]);
                         if (obj != null) {
-                            setAdditive("<pre class='format'>[" + Json.getWithNulls().toJsonPretty(obj) + "]</pre>");
+                            setWidgetComment("<pre class='format'>[" + Json.getWithNulls().toJsonPretty(obj) + "]</pre>");
                         }
                     } else {
-                        setAdditive("<pre class='format'>[" + g[0].getSimpleName() + "]</pre>");
+                        setWidgetComment("<pre class='format'>[" + g[0].getSimpleName() + "]</pre>");
                     }
                 }
                 addTextArea(
-                    name,
-                    name,
+                    col,
+                    col,
                     value == null ? null : Json.getWithNulls().toJsonPretty(value),
-                    "small json"
+                    "small json" + (inputClass == null ? "" : (" " + inputClass))
                 );
-
-            } else if (CollectionUtil.isMap(type)) {
+                continue;
+            }
+            // > > > MAP
+            if (CollectionUtil.isMap(type)) {
                 Class<?>[] g = ClassUtil.getGenericTypes(field);
                 if (ObjectUtil.isNotEmpty(g) && g.length == 2) {
-                    setAdditive("<pre class='format'>{" + g[0].getSimpleName() + ": " + g[1].getSimpleName() + "}</pre>");
+                    if (ClassUtil.isInstantiable(g[1], Dto.class)) {
+                        Object obj = ClassUtil.getInstance(g[1]);
+                        if (obj != null) {
+                            setWidgetComment("<pre class='format'>{" + g[0].getSimpleName() + ": "
+                                + Json.getWithNulls().toJsonPretty(obj) + "}</pre>");
+                        }
+                    } else if (!field.isAnnotationPresent(Localized.class)) {
+                        setWidgetComment("<pre class='format'>{" + g[0].getSimpleName() + ": " + g[1].getSimpleName() + "}</pre>");
+                    }
                 }
                 addTextArea(
-                    name,
-                    name,
+                    col,
+                    col,
                     value == null ? null : Json.getWithNulls().toJsonPretty(value),
-                    "small json"
+                    "small json" + (inputClass == null ? "" : (" " + inputClass))
                 );
+                continue;
 
-            } else if (ClassUtil.isInstantiable(type, Dto.class)) {
+            }
+            // > > > DTO
+            if (ClassUtil.isInstantiable(type, Dto.class)) {
                 DtoDictionary.Info info = DtoDictionary.get(type);
                 if (info == null) {
                     ServiceLog.log.error("! dto not in dictionary? ({})", type);
@@ -222,405 +285,374 @@ public class WebUi extends WebUiBasics<WebUi> {
                     if (dtoX == null) {
                         ServiceLog.log.error("! dto not in dictionary? ({})", type);
                     } else {
-                        setAdditive("<pre class='format'>" + Json.getWithNulls().toJsonPretty(dtoX) + "</pre>");
+                        setWidgetComment("<pre class='format'>" + Json.getWithNulls().toJsonPretty(dtoX) + "</pre>");
                     }
                 }
                 addTextArea(
-                    name,
-                    name,
+                    col,
+                    col,
                     value == null ? null : Json.getWithNulls().toJsonPretty(value),
-                    "small json"
+                    "small json" + (inputClass == null ? "" : (" " + inputClass))
                 );
+                continue;
+            }
+            // data looks like JSON
+            if (Json.isJsonShallow(value)) {
+                addTextArea(
+                    col,
+                    col,
+                    Json.getWithNulls().toJsonPretty(value),
+                    "small json" + (inputClass == null ? "" : (" " + inputClass))
+                );
+                continue;
+            }
+            // > > > STRING/TEXT
+            if (value instanceof Location) {
+                Location location = (Location) value;
+                setWidgetComment("<a target='_blank' href='https://www.google.com/maps/search/?api=1&query="
+                    + location.latitude + "," + location.longitude + "'>map</a>");
+            }
 
+            if (field.isAnnotationPresent(Text.class)) {
+                addTextArea(col, col, value, "small" + (inputClass == null ? "" : (" " + inputClass)));
+            } else if (col.contains("password")) {
+                addPassword(col, col, value, "password");
             } else {
-                if (Json.isJsonShallow(value)) {
-                    addTextArea(
-                        name,
-                        name,
-                        Json.getWithNulls().toJsonPretty(value),
-                        "small json"
-                    );
-                    continue;
-                }
-
-                String iType;
-                if (name.contains("password")) {
-                    iType = "password";
-                    value = "";
-                } else {
-                    iType = null;
-                }
-                if (value instanceof Location) {
-                    Location location = (Location) value;
-                    setAdditive("<a target='_blank' href='https://www.google.com/maps/search/?api=1&query="
-                        + location.latitude + "," + location.longitude + "'>map</a>");
-                }
-                addInput(name, name, value == null ? null : value.toString(), iType);
+                addInput(col, col, value, inputClass);
             }
         }
 
         if (dto instanceof CommonUser && !(dto instanceof CommonUserPassword)) {
-            addInput("password", "password", null, "password");
+            addPassword("password", "password", null, "password");
         }
 
-        addSubmit(VantarKey.ADMIN_DO);
-        html.append("<input type=\"hidden\" name=\"asjson\" id=\"asjson\"/>").append("</form>");
+        addSubmit(VantarKey.ADMIN_SUBMIT);
+        html.append("<input type='hidden' name='asjson' id='asjson'/>")
+            .append("</form>");
         return this;
     }
 
-    private void setAdditive(Dto dto, String name, Class<? extends Annotation> annotation, String msg) {
-        if (dto.hasAnnotation(name, annotation)) {
-            if (additive == null) {
-                additive = new StringBuilder(100);
-            }
-            additive.append(msg);
-        }
-    }
-
-    private void setAdditive(String msg) {
-        if (additive == null) {
-            additive = new StringBuilder(100);
-        }
-        additive.append(msg);
-    }
-
-    public WebUi addDtoListWithHeader(PageData data, DtoDictionary.Info info, String... fields) {
+    public WebUi addDtoListWithHeader(PageData data, DtoDictionary.Info info, DtoListOptions options) {
         Dto dto = info.getDtoInstance();
-
         Class<?> upperClass = dto.getClass().getDeclaringClass();
-        String className = upperClass == null ? dto.getClass().getSimpleName() : upperClass.getSimpleName();
-
-        html.append("<div id='actions'>")
-            .append(" <a href='").append(getLink("/admin/data/insert?dto=" + className))
-            .append("'>").append(Locale.getString(VantarKey.ADMIN_NEW_RECORD)).append("</a>")
-            .append(" | <a href='").append(getLink("/admin/data/import?dto=" + className))
-            .append("'>").append(Locale.getString(VantarKey.ADMIN_IMPORT)).append("</a>")
-            .append(" | <a href='").append(getLink("/admin/data/export?dto=" + className))
-            .append("'>").append(Locale.getString(VantarKey.ADMIN_EXPORT)).append("</a>");
-
-        if (data != null) {
-            html
-                //.append(" | <a href='").append(getLink("/admin/data/update?dto=" + className))
-                //.append("'>").append(Locale.getString(VantarKey.ADMIN_BATCH_EDIT)).append("</a>")
-                //.append(" | <a href='").append(getLink("/admin/data/delete?dto=" + className))
-                //.append("'>").append(Locale.getString(VantarKey.ADMIN_BATCH_DELETE)).append("</a>")
-                .append(" | <a href='").append(getLink("/admin/data/purge?dto=" + className))
-                .append("'>").append(Locale.getString(VantarKey.ADMIN_DELETE_ALL)).append("</a>");
+        if (upperClass != null) {
+            info = DtoDictionary.get(upperClass);
+            dto = info.getDtoInstance();
         }
+        String cName = dto.getClass().getSimpleName();
+        String cNameFull = dto.getClass().getName();
 
-        html.append("</div>");
+        // > > > action links
+        if (options.actionLink) {
+            html.append("<div id=\"actions\">")
+                .append(" <a href=\"").append(getLink("/admin/data/insert?dto=" + cName))
+                .append("\">").append(Locale.getString(VantarKey.ADMIN_INSERT)).append("</a>")
+                .append(" | <a href=\"").append(getLink("/admin/data/import?dto=" + cName))
+                .append("\">").append(Locale.getString(VantarKey.ADMIN_IMPORT)).append("</a>")
+                .append(" | <a href=\"").append(getLink("/admin/data/export?dto=" + cName))
+                .append("\">").append(Locale.getString(VantarKey.ADMIN_EXPORT)).append("</a>")
+                .append(" | <a href=\"").append(getLink("/admin/data/undelete/index?dto=" + cName))
+                .append("\">").append(Locale.getString(VantarKey.ADMIN_UNDELETE)).append("</a>");
+            if (data != null) {
+                html.append(" | <a href=\"").append(getLink("/admin/data/purge?dto=" + cName))
+                    .append("\">").append(Locale.getString(VantarKey.ADMIN_DATA_PURGE)).append("</a>");
+            }
 
-        if (dto.hasAnnotation(Archive.class)) {
+            String url;
+            if (DtoDictionary.Dbms.MONGO.equals(info.dbms)) {
+                url = "/admin/database/mongo/index/get";
+            } else if (DtoDictionary.Dbms.SQL.equals(info.dbms)) {
+                url = "/admin/database/sql/index/get";
+            } else {
+                url = null;
+            }
+            if (url != null) {
+                html.append(" | <a target=\"_blank\" href=\"").append(getLink(url + "?dto=" + cName))
+                    .append("\">").append(Locale.getString(VantarKey.ADMIN_DATABASE_INDEX)).append("</a>");
+            }
+
+            html.append(" | <a href=\"").append(getLink("/admin/data/dependencies/dto?dto=" + cName))
+                .append("\">").append(Locale.getString(VantarKey.ADMIN_DEPENDENCIES)).append("</a>");
+
+            if (dto.hasAnnotation(Cache.class)) {
+                html.append(" | <a class=\"cached\" target=\"_blank\" href=\"")
+                    .append(getLink("/admin/database/cache/view?c=" + cNameFull))
+                    .append("\">").append(Locale.getString(VantarKey.ADMIN_CACHE)).append("</a>")
+                    .append(" | <a class=\"cached\" target=\"_blank\" href=\"")
+                    .append(getLink("/admin/database/cache/refresh?c=" + cNameFull))
+                    .append("\">").append(Locale.getString(VantarKey.ADMIN_REFRESH)).append("</a>");
+            }
+
+            html.append("</div>");
+        }
+        // action links < < <
+
+        // archive > > >
+        if (options.archive && dto.hasAnnotation(Archive.class)) {
             html.append("<div id='archives'>");
-            ServiceDbArchive.ArchiveInfo aInfo = ServiceDbArchive.getArchives().get(className);
+            ServiceDbArchive.ArchiveInfo aInfo = ServiceDbArchive.getArchives().get(cName);
             if (aInfo == null || ObjectUtil.isEmpty(aInfo.collections)) {
                 html.append("no archives");
             } else {
-                String linkM = className.equalsIgnoreCase(aInfo.activeCollection) ?
+                String linkM = cName.equalsIgnoreCase(aInfo.activeCollection) ?
                     "(active)" :
-                    getHref("switch", "/admin/data/archive/switch?dto=" + className + "&a=" + className, true, false, "");
-                addKeyValue("current", className + " " + linkM, null, false);
+                    getHref("switch", "/admin/data/archive/switch?dto=" + cName + "&a=" + cName, true, false, "");
+                addKeyValue("current", cName + " " + linkM, null, false);
 
                 aInfo.collections.forEach((name, date) -> {
                     String link = name.equalsIgnoreCase(aInfo.activeCollection) ?
                         "(active)" :
-                        getHref("switch", "/admin/data/archive/switch?dto=" + className + "&a=" + name, true, false, "");
+                        getHref("switch", "/admin/data/archive/switch?dto=" + cName + "&a=" + name, true, false, "");
                     addKeyValue(date, name + " " + link, null, false);
                 });
             }
             html.append("</div>");
         }
+        // < < < archive
 
-        // PAGE
-        // SORT
-        // PAGE
+        // > > > params
         int pageNo = params.getInteger("page-no", 1);
-        int pageLength = params.getInteger("page-length", AdminData.N_PER_PAGE);
+        int pageLength = params.getInteger("page-length", DataUtil.N_PER_PAGE);
         String sort = params.getString("sort", VantarParam.ID);
         String sortPos = params.getString("sortpos", "desc");
-
-        html.append("<form id='dto-list-form' method='post'>");
-        if (authToken != null) {
-            html.append("<input type='hidden' name='" + VantarParam.AUTH_TOKEN + "' value='")
-                .append(authToken).append("'/>\n");
-        }
-        // N PER PAGE
-        html.append("<table id='container-search-options'>")
-
-            // N PER PAGE
-            .append("<tr>")
-            .append("<td class='dto-list-form-title'>").append(Locale.getString(VantarKey.ADMIN_PAGING)).append("</td>")
-            .append("<td class='dto-list-form-option'>")
-            .append("<input id='page-length' name='page-length' title='page length' value='").append(pageLength).append("'/>")
-            .append("<input id='page-no' name='page-no' title='page number' value='").append(pageNo).append("'/>");
-
-            if (data != null) {
-                html.append("<input id='total-pages' value='")
-                    .append((long) Math.ceil((double) data.total / (double) data.length)).append(" pages'/>");
-            }
-
-            html.append("</td>")
-                .append("</tr>")
-
-            // SORT
-            .append("<tr>").append("<td class='dto-list-form-title'>")
-            .append(Locale.getString(VantarKey.ADMIN_SORT)).append("</td>")
-            .append("<td class='dto-list-form-option'>");
-
-
-        html.append("<input id='sort' name='sort' value='id'/>");
-
-//        html.append("<select id='sort' name='sort'>");
-//        for (String name : dto.getProperties()) {
-//            html.append("<option ");
-//            if (name.equals(sort)) {
-//                html.append("selected='selected' ");
-//            }
-//            html.append("value='").append(name).append("'>").append(name).append("</option>");
-//        }
-//        html.append("</select>");
-
-
-        html.append("<select id='sortpos' name='sortpos'>")
-            .append("<option ");
-        if ("asc".equals(sortPos)) {
-            html.append("selected='selected' ");
-        }
-        html.append("value='asc'>asc</option>")
-            .append("<option ");
-        if ("desc".equals(sortPos)) {
-            html.append("selected='selected' ");
-        }
-        html.append("value='desc'>desc</option>")
-            .append("</select>")
-            .append("</td></tr>");
-
-        // search
         String jsonSearch = params.getString("jsonsearch", "");
-
-        html.append("<tr>")
-            .append("<td class='dto-list-form-title'>").append(Locale.getString(VantarKey.ADMIN_SEARCH)).append("</td>")
-            .append("<td class='dto-list-form-option'><div>");
-
-        html.append("<input id='search-col' value='id'/>");
-//        html.append("<select id='search-col'>");
-//        for (String name : dto.getProperties()) {
-//            if (ClassUtil.isInstantiable(dto.getPropertyType(name), Dto.class)) {
-//                DtoDictionary.Info obj = DtoDictionary.get(name);
-//                if (obj == null) {
-//                    continue;
-//                }
-//                for (String nameInner : obj.getDtoInstance().getProperties()) {
-//                    nameInner = name + '.' + nameInner;
-//                    html.append("<option value='").append(nameInner).append("'>").append(nameInner).append("</option>");
-//                }
-//            } else {
-//                html.append("<option value='").append(name).append("'>").append(name).append("</option>");
-//            }
-//        }
-//        html.append("</select>");
-
-        html.append("<select id='search-type'>")
-            .append("    <optgroup label='equal' selected='selected'>")
-            .append("        <option value='EQUAL'>EQUAL</option>")
-            .append("        <option value='NOT_EQUAL'>NOT_EQUAL</option>")
-            .append("    </optgroup>")
-            .append("    <optgroup label='string'>")
-            .append("        <option value='LIKE'>LIKE</option>")
-            .append("        <option value='NOT_LIKE'>NOT_LIKE</option>")
-            .append("        <option value='FULL_SEARCH'>FULL_SEARCH</option>")
-            .append("    </optgroup>")
-            .append("    <optgroup label='collection'>")
-            .append("        <option value='IN' title='if col value exists in list'>IN [list,]</option>")
-            .append("        <option value='NOT_IN' title='if col value not-exists in list'>NOT_IN [list,]</option>")
-            .append("        <option value='CONTAINS_ALL' title='if col(list) contains all items of list'>CONTAINS_ALL [list,]</option>")
-            .append("        <option value='CONTAINS_ALL-object' title='if col(dictionary).k has value v'>CONTAINS_ALL {k:v,}</option>")
-            .append("    </optgroup>")
-            .append("    <optgroup label='number/date compare'>")
-            .append("        <option value='LESS_THAN'>LESS_THAN</option>")
-            .append("        <option value='LESS_THAN_EQUAL'>LESS_THAN_EQUAL</option>")
-            .append("        <option value='GREATER_THAN'>GREATER_THAN</option>")
-            .append("        <option value='GREATER_THAN_EQUAL'>GREATER_THAN_EQUAL</option>")
-            .append("        <option value='BETWEEN'>BETWEEN (x, y)</option>")
-            .append("        <option value='BETWEEN-2'>BETWEEN (col2, x, y)</option>")
-            .append("        <option value='NOT_BETWEEN'>NOT_BETWEEN (x, y)</option>")
-            .append("    </optgroup>")
-            .append("    <optgroup label='empty check'>")
-            .append("        <option value='IS_NULL'>IS_NULL</option>")
-            .append("        <option value='IS_NOT_NULL'>IS_NOT_NULL</option>")
-            .append("        <option value='IS_EMPTY'>IS_EMPTY</option>")
-            .append("        <option value='IS_NOT_EMPTY'>IS_NOT_EMPTY</option>")
-            .append("    </optgroup>")
-            .append("    <optgroup label='point'>")
-            .append("        <option value='NEAR'>NEAR (lat, lng, maxDistance(m), minDistance(m))</option>")
-            .append("        <option value='FAR'>FAR (lat, lng, maxDistance(m))</option>")
-            .append("    </optgroup>")
-            .append("    <optgroup label='polygon'>")
-            .append("        <option value='WITHIN'>WITHIN [lat1, lng1, lat2, lng2,]</option>")
-            .append("    </optgroup>")
-            .append("</select>")
-
-            .append("<input type='text' id='search-value'/>")
-            .append("<button id='add-search-item' type='button'>+</button>")
-            .append("</div></td>")
-            .append("</tr>")
-
-            .append("<tr><td></td>")
-            .append("<td>")
-            .append("<ul id='search-items'></ul>")
-            .append("<p><textarea id='jsonsearch' name='jsonsearch'>")
-            .append(jsonSearch).append("</textarea></p>")
-            .append("</td>")
-            .append("</tr>");
-
-//        if (dto.isDeleteLogicalEnabled()) {
-//            String deletePolicy = params.getString("delete-policy", "n");
-//            html.append("<tr><td></td><td class='dto-list-form-option'><select name='delete-policy'>")
-//                .append("<option value='n'")
-//                    .append(deletePolicy.equals("n") ? " selected='selected'" : "").append(">")
-//                    .append(Locale.getString(VantarKey.SHOW_NOT_DELETED)).append("</option>")
-//                .append("<option value='d'")
-//                    .append(deletePolicy.equals("d") ? " selected='selected'" : "").append(">")
-//                    .append(Locale.getString(VantarKey.SHOW_DELETED)).append("</option>")
-//                .append("<option value='a'")
-//                    .append(deletePolicy.equals("a") ? " selected='selected'" : "").append(">")
-//                    .append(Locale.getString(VantarKey.SHOW_ALL)).append("</option>")
-//                .append("</select></td></tr>");
-//        }
-
-        // button
-        html.append("<tr><td>");
-
-        html.append("<select id='search-op'>")
-            .append("    <option value='AND' selected='selected'>AND</option>")
-            .append("    <option value='OR'>OR</option>")
-            .append("    <option value='XOR'>XOR</option>")
-            .append("</select>");
-
-        html.append("</td><td class='dto-list-form-option'>");
-
-        html.append("<button type='submit'>&gt;&gt;</button><button id='get-search-json' type='button'>JSON</button></td></tr>")
-            .append("<tr><td></td><td>")
-            .append("</td></tr></table></form>")
-            .append("<form method='post' action='/admin/data/delete/many'>");
-        if (authToken != null) {
-            html.append("<input type='hidden' name='" + VantarParam.AUTH_TOKEN + "' value='")
-                .append(authToken).append("'/>\n");
+        if (jsonSearch != null) {
+            jsonSearch = Json.d.toJsonPretty(jsonSearch);
         }
+
+        html.append("<div id=\"s-container\" class=\"clearfix\">");
+        html.append("<form id=\"dto-list-form\" method=\"post\">");
+        addHidden(VantarParam.AUTH_TOKEN, authToken);
+        // > > > pagination
+        if (options.pagination) {
+            html.append("<div id=\"s-options-a\">");
+            html.append("<div class=\"s-col\">");
+            html.append("<label>").append(Locale.getString(VantarKey.ADMIN_PAGING)).append("</label>")
+                .append("<input id='page-length' name='page-length' title='limit' value='").append(pageLength).append("'/>")
+                .append("<input id='page-no' name='page-no' title='page no.' value='").append(pageNo).append("'/>");
+            if (data != null) {
+                html.append("<span id=\"total-pages\">/ ")
+                    .append((long) Math.ceil((double) data.total / (double) data.length)).append("</span>");
+            }
+            // sort
+            html.append("</div>");
+            html.append("<div class=\"s-col\">");
+            html.append("<label>").append(Locale.getString(VantarKey.ADMIN_SORT)).append("</label>")
+                .append("<input id='sort' name='sort' value='").append(sort).append("'/>")
+                .append("<select id='sortpos' name='sortpos'>")
+                .append("<option ");
+            if ("asc".equals(sortPos)) {
+                html.append("selected='selected' ");
+            }
+            html.append("value='asc'>asc</option>")
+                .append("<option ");
+            if ("desc".equals(sortPos)) {
+                html.append("selected='selected' ");
+            }
+            html.append("value='desc'>desc</option>")
+                .append("</select>");
+            html.append("</div>");
+            html.append("</div>");
+        }
+        // > > > search
+        if (options.search) {
+            html.append("<div id=\"s-options-b\">");
+            html.append("<div class=\"s-col\">");
+            html.append("<label>").append(Locale.getString(VantarKey.ADMIN_SEARCH)).append("</label>")
+                .append("<select id='search-type'>")
+                .append("    <optgroup label='equal' selected='selected'>")
+                .append("        <option value='EQUAL'>EQUAL</option>")
+                .append("        <option value='NOT_EQUAL'>NOT_EQUAL</option>")
+                .append("    </optgroup>")
+                .append("    <optgroup label='string'>")
+                .append("        <option value='LIKE'>LIKE</option>")
+                .append("        <option value='NOT_LIKE'>NOT_LIKE</option>")
+                .append("        <option value='FULL_SEARCH'>FULL_SEARCH</option>")
+                .append("    </optgroup>")
+                .append("    <optgroup label='collection'>")
+                .append("        <option value='IN' title='if col value exists in list'>IN [list,]</option>")
+                .append("        <option value='NOT_IN' title='if col value not-exists in list'>NOT_IN [list,]</option>")
+                .append("        <option value='CONTAINS_ALL' title='if col(list) contains all items of list'>CONTAINS_ALL [list,]</option>")
+                .append("        <option value='CONTAINS_ALL-object' title='if col(dictionary).k has value v'>CONTAINS_ALL {k:v,}</option>")
+                .append("    </optgroup>")
+                .append("    <optgroup label='number/date compare'>")
+                .append("        <option value='LESS_THAN'>LESS_THAN</option>")
+                .append("        <option value='LESS_THAN_EQUAL'>LESS_THAN_EQUAL</option>")
+                .append("        <option value='GREATER_THAN'>GREATER_THAN</option>")
+                .append("        <option value='GREATER_THAN_EQUAL'>GREATER_THAN_EQUAL</option>")
+                .append("        <option value='BETWEEN'>BETWEEN (x, y) x&gt;=col&lt;=y </option>")
+                .append("        <option value='BETWEEN'>BETWEEN (colB, x) col&gt;=x&lt;=colB </option>")
+                .append("        <option value='NOT_BETWEEN'>NOT_BETWEEN (x, y) x&lt;col&gt;y</option>")
+                .append("        <option value='NOT_BETWEEN'>NOT_BETWEEN (colB, y) col&lt;x&gt;colB</option>")
+                .append("    </optgroup>")
+                .append("    <optgroup label='empty check'>")
+                .append("        <option value='IS_NULL'>IS_NULL</option>")
+                .append("        <option value='IS_NOT_NULL'>IS_NOT_NULL</option>")
+                .append("        <option value='IS_EMPTY'>IS_EMPTY</option>")
+                .append("        <option value='IS_NOT_EMPTY'>IS_NOT_EMPTY</option>")
+                .append("    </optgroup>")
+                .append("    <optgroup label='point'>")
+                .append("        <option value='NEAR'>NEAR (lat, lng, maxDistance(m), minDistance(m))</option>")
+                .append("        <option value='FAR'>FAR (lat, lng, maxDistance(m))</option>")
+                .append("    </optgroup>")
+                .append("    <optgroup label='polygon'>")
+                .append("        <option value='WITHIN'>WITHIN [lat1, lng1, lat2, lng2,]</option>")
+                .append("    </optgroup>")
+                .append("    <optgroup label='recursive (not supported)'>")
+                .append("        <option value='QUERY'>QUERY (recursive-query)</option>")
+                .append("        <option value='MAP_KEY_EXISTS'>MAP_KEY_EXISTS</option>")
+                .append("        <option value='IN_DTO'>IN_DTO (recursive-query)</option>")
+                .append("        <option value='IN_LIST'>IN_LIST (recursive-query)</option>")
+                .append("    </optgroup>")
+                .append("    <optgroup label='polygon'>")
+                .append("        <option value='WITHIN'>WITHIN [lat1, lng1, lat2, lng2,]</option>")
+                .append("    </optgroup>")
+                .append("</select>")
+                .append("<input id='search-col' value='id'/>")
+                .append("<input id=\"search-value\"/>")
+                .append("<button type='button' id=\"add-search-item\">+</button>");
+            html.append("</div>");
+            html.append("<div class=\"s-col\">");
+            html.append("<label></label>")
+                .append("<select id='search-op'>")
+                .append("    <option value='AND' selected='selected'>AND</option>")
+                .append("    <option value='OR'>OR</option>")
+                .append("    <option value='XOR'>XOR</option>")
+                .append("    <option value='NOR'>XOR</option>")
+                .append("    <option value='NOT'>XOR</option>")
+                .append("</select>")
+                .append("<button type='submit' id=\"search-b\">Search</button>")
+                .append("<button type='button' id='get-search-json'>JSON</button>");
+            html.append("</div>");
+            html.append("</div>");
+            // > > > search conditions
+            html.append("<div id=\"s-options-c\">")
+                .append("<ul id='search-items'></ul>")
+                .append("<p><textarea id='jsonsearch' name='jsonsearch'>").append(jsonSearch).append("</textarea></p>")
+                .append("</div>\n");
+        }
+        html.append("</form>");
+
+        // > > > serial
+        if (options.lastSerialId != null) {
+            html.append("<div id=\"s-options-d\">");
+            html.append("<form method='post'>");
+            html.append("<div class=\"s-col\">");
+            html.append("<input title='current serial id' id='serial-i' name='serial-i' value='").append(options.lastSerialId).append("'/>");
+            html.append("</div>");
+            html.append("<div class=\"s-col\">");
+            html.append("<button id=\"serial-b\">change</button>");
+            html.append("</div>");
+            html.append("</form>");
+            html.append("</div>");
+        }
+
+        html.append("</div>");
+
+        // > > > form multi delete
+        if (options.checkListFormUrl != null) {
+            html.append("<form method='post' action='").append(options.checkListFormUrl).append("'>");
+            addHidden(VantarParam.AUTH_TOKEN, authToken);
+            addHidden("dto", dto.getClass().getSimpleName());
+        }
+
         if (data == null) {
             addMessage(Locale.getString(VantarKey.NO_CONTENT));
         } else {
-            addDtoList(data, true, fields);
-
-            html.append("<div id='delete-container'>")
-                .append("<input name='dto' value='").append(dto.getClass().getSimpleName())
-                .append("' type='hidden'/>");
-
-            html.append("<div class='delete-type-container'>")
-                .append("<input type='checkbox' id='delete-select-all'/> ")
-                .append("<label for='delete-select-all'>").append(Locale.getString(VantarKey.SELECT_ALL))
-                .append("</label></div>");
-
-//            if (dto.isDeleteLogicalEnabled()) {
-//                html.append("<div class='delete-type-container'>")
-//                    .append("<input type='checkbox' name='do-logical-delete' id='do-logical-delete' checked='checked'/> ")
-//                    .append("<label for='do-logical-delete'>").append(Locale.getString(VantarKey.LOGICAL_DELETED))
-//                    .append("</label></div>");
-//            }
-
-            html.append("<div><input type='checkbox' name='confirm-delete'/> <label for='confirm-delete'>")
-                .append(Locale.getString(VantarKey.ADMIN_CONFIRM)).append("</label></div>")
-                .append("<div class='delete-button-container'><button id='delete-button' type='submit'>")
-                .append(Locale.getString(VantarKey.ADMIN_DELETE)).append("</button></div>")
-                .append("</div>");
+            addDtoList(data, options);
+            if (options.event != null) {
+                options.event.checkListFormContent();
+            }
         }
-
-        html.append("</form>");
+        if (options.checkListFormUrl != null) {
+            html.append("</form>");
+        }
         return this;
     }
 
-    public WebUi addDtoList(PageData data, boolean options, String... fields) {
+    /**
+     * options: include add/delete/...
+     */
+    public WebUi addDtoList(PageData data, DtoListOptions options) {
         html.append("<div class='scroll'><table class='list'>");
-        boolean isLogServiceUp = Services.isUp(ServiceLog.class);
-        boolean isFirst = true;
+
+        // > > > header
+        Set<String> exclude = new HashSet<>(10, 1);
+        Dto dtoSample = data.data.get(0);
+        html.append("<tr>");
+        if (options.colOptionCount > 0) {
+            html.append("<th id='total' colspan='").append(options.colOptionCount).append("'>")
+                .append(data.total).append("</th>");
+        }
+        html.append("<th class='list-head-id'>id</th>");
+        for (String name : options.fields) {
+            if ("id".equals(name)) {
+                continue;
+            }
+            Field f = dtoSample.getField(name);
+            if (f.isAnnotationPresent(ExcludeList.class)) {
+                exclude.add(name);
+                continue;
+            }
+            html.append("<th>").append(name).append("</th>");
+        }
+        html.append("</tr>");
+
         for (Dto dto : data.data) {
-            if (isFirst) {
-                html.append("<tr>");
-                if (options) {
-                    html.append("<th id='total' colspan='").append(isLogServiceUp ? 3 : 2).append("'>")
-                        .append(data.total).append("</th>");
-                }
-                html.append("<th class='list-head-id'>id</th>");
-                for (String name : fields) {
-                    if ("id".equals(name)) {
-                        continue;
-                    }
-                    Class<?> type = dto.getPropertyType(name);
-                    if ((!name.equals("name") && !name.equals("title")) &&
-                        (CollectionUtil.isCollectionOrMap(type) || ClassUtil.isInstantiable(type, Dto.class))) {
-                        continue;
-                    }
-
-                    html.append("<th>").append(name).append("</th>");
-                }
-                html.append("</tr>");
-                isFirst = false;
-            }
-
             html.append("<tr>");
-            if (options) {
-                String x = authToken == null ? "" : ("&" + VantarParam.AUTH_TOKEN + "=" + authToken);
-                if (lang != null) {
-                    x += "&" + VantarParam.LANG + "=" + lang;
-                }
-
-                Class<?> upperClass = dto.getClass().getDeclaringClass();
-                String className = upperClass == null ? dto.getClass().getSimpleName() : upperClass.getSimpleName();
-
-                html
-                    .append("<td class='option delete-option'><input class='delete-check' name='delete-check' value='")
-                    .append(dto.getId()).append("' type='checkbox'/></td>")
-                    .append("<td class='option'><div class='option'><a href='" + "/admin/data/update?dto=")
-                    .append(className).append("&id=").append(dto.getId()).append(x).append("'>")
-                    .append(Locale.getString(VantarKey.ADMIN_EDIT)).append("</a></div></td>");
-
-
-                if (isLogServiceUp) {
-                    html.append("<td class='option'><div class='option'><a href='" + "/admin/data/log?dto=")
-                        .append(dto.getClass().getSimpleName()).append("&id=").append(dto.getId()).append(x).append("'>")
-                        .append(Locale.getString(VantarKey.ADMIN_ACTION_LOG)).append("</a></div></td>");
+            if (options.colOptionCount > 0) {
+                for (DtoListOptions.ColOption colOption : options.event.getColOptions(dto)) {
+                    html.append("<td class='option");
+                    if (colOption.containerClass != null) {
+                        html.append(' ').append(colOption.containerClass);
+                    }
+                    html.append("'>").append(colOption.content).append("</td>");
                 }
             }
 
-            html.append("<td><div onclick='cellClick(this)'>");
-            html.append(dto.getId()).append("<input type='hidden' value='").append(dto.getId()).append("'/>").append("</div></td>");
-
-            for (String name : fields) {
-                if ("id".equals(name)) {
+            html.append("<td>").append(dto.getId()).append("<input type='hidden' value='").append(dto.getId()).append("'/></td>");
+            for (String name : options.fields) {
+                if ("id".equals(name) || exclude.contains(name)) {
                     continue;
                 }
-                Class<?> type = dto.getPropertyType(name);
+                Field field = dto.getField(name);
+                Object actualValue = dto.getPropertyValue(name);
 
-                if ((!name.equals("name") && !name.equals("title")) &&
-                    (CollectionUtil.isCollectionOrMap(type) || ClassUtil.isInstantiable(type, Dto.class))) {
-                    continue;
-                }
-
-                Object realValue = dto.getPropertyValue(name);
-                if (!(realValue instanceof Long) && !(realValue instanceof DateTime)) {
-                    realValue = "";
-                }
-
-                Object value = ObjectUtil.toStringViewable(dto.getPropertyValue(name));
-                if (value == null) {
+                String value;
+                String hint;
+                if (actualValue == null) {
                     value = "-";
+                    hint = null;
+                    // datetime
+                } else if (actualValue instanceof DateTime) {
+                    if ("fa".equals(lang)) {
+                        value = ((DateTime) actualValue).formatter().getDateTimePersian().getDateTime();
+                        hint = ((DateTime) actualValue).formatter().getDateTime();
+                    } else {
+                        value = ((DateTime) actualValue).formatter().getDateTime();
+                        hint = ((DateTime) actualValue).formatter().getDateTimePersian().getDateTime();
+                    }
+                    // lang
+                } else if (field.isAnnotationPresent(Localized.class)) {
+                    Map<String, String> l = (Map<String, String>) actualValue;
+                    if (l.isEmpty()) {
+                        value = "-";
+                        hint = null;
+                    } else {
+                        value = l.get(lang);
+                        hint = ObjectUtil.toStringViewable(actualValue);
+                    }
+                    // anything else
+                } else {
+                    value = ObjectUtil.toStringViewable(actualValue);
+                    hint = null;
                 }
 
-                html.append("<td><div onclick='cellClick(this)'>");
-                if (realValue instanceof DateTime) {
-                    html.append(((DateTime) realValue).formatter().getDateTimePersianStyled()).append("<br/>");
+                html.append("<td><div");
+                if (hint != null) {
+                    html.append(" title='").append(hint).append("'");
                 }
-                html.append(value).append("<input type='hidden' value='").append(realValue).append("'/>").append("</div></td>");
+                html.append(">").append(value).append("</div></td>");
             }
             html.append("</tr>");
         }
@@ -628,44 +660,32 @@ public class WebUi extends WebUiBasics<WebUi> {
         return this;
     }
 
-    public WebUi addPagination(long total, int pageNumber, int nPerPage) {
-        return addPagination(total, pageNumber, nPerPage, null);
-    }
 
-    public WebUi addPagination(long total, int pageNumber, int nPerPage, String newParams) {
-        html.append("<div class='pagination'>").append("<select class='page-select' onchange='location=this.value;'>");
+    public static class DtoListOptions {
+        public boolean actionLink;
+        public boolean archive;
+        public boolean pagination;
+        public boolean search;
+        public Long lastSerialId;
+        public String checkListFormUrl;
+        public String[] fields;
+        public int colOptionCount;
+        public Event event;
 
-        for (long i = 1, l = (long) Math.ceil((double) total / (double) nPerPage); i <= l; ++i) {
-            html.append("<option ").append(pageNumber == i ? "selected='selected' " : "").append("value='?");
-
-            Map<String, Object> q = params.getAll();
-            q.put("page", Long.toString(i));
-            if (authToken != null) {
-                q.put(VantarParam.AUTH_TOKEN, authToken);
-            }
-            if (lang != null) {
-                q.put(VantarParam.LANG, lang);
-            }
-            boolean first = true;
-            for (Map.Entry<String, Object> entry : q.entrySet()) {
-                String k = entry.getKey();
-                String v = entry.getValue().toString();
-                if (!first) {
-                    html.append("&");
-                }
-                first = false;
-                html.append(k).append("=").append(v);
-            }
-
-            if (StringUtil.isNotEmpty(newParams)) {
-                html.append('&').append(newParams);
-            }
-
-            html.append("'>").append(i).append("</option>");
+        public interface Event {
+            void checkListFormContent();
+            List<ColOption> getColOptions(Dto dto);
         }
-        html.append("</select></div>");
-        return this;
+
+        public static class ColOption {
+            public String containerClass;
+            public String content;
+        }
     }
+
+
+
+
 
 
 
@@ -709,10 +729,23 @@ public class WebUi extends WebUiBasics<WebUi> {
             }
             html.append("</strong>\n");
         }
-        html.append("</pre><textarea id='log-object" + userLog.id + "' onclick='setObject(").append(userLog.id).append(")' class='object'>");
+        html.append("</pre><textarea id='log-object").append(userLog.id).append("' onclick='setObject(").append(userLog.id).append(")' class='object'>");
         html.append("</textarea>");
         html.append("</div></div>");
     }
 
     // LOG < < <
+
+    private void setWidgetComment(Dto dto, String col, Class<? extends Annotation> annotation, String comment) {
+        if (dto.hasAnnotation(col, annotation)) {
+            setWidgetComment(comment);
+        }
+    }
+
+    private void setWidgetComment(String comment) {
+        if (widgetComment == null) {
+            widgetComment = new StringBuilder(100);
+        }
+        widgetComment.append(comment);
+    }
 }

@@ -4,6 +4,7 @@ public enum QueryOperator {
     AND,
     OR,
     NOR,
+    XOR,
     NOT,
     EXISTS,
 
@@ -15,20 +16,22 @@ public enum QueryOperator {
     FULL_SEARCH,
     IN,
     NOT_IN,
-    BETWEEN,
-    NOT_BETWEEN,
+    CONTAINS_ALL,
     LESS_THAN,
     GREATER_THAN,
     LESS_THAN_EQUAL,
     GREATER_THAN_EQUAL,
+    BETWEEN,
+    NOT_BETWEEN,
     IS_NULL,
     IS_NOT_NULL,
     IS_EMPTY,
     IS_NOT_EMPTY,
-    CONTAINS_ALL,
     NEAR,
+    //FAR, (pseudo operator)
     WITHIN,
 
+    MAP_KEY_EXISTS,
     IN_LIST,
     IN_DTO,
 }

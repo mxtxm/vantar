@@ -231,13 +231,14 @@ public class Params {
         Enumeration<String> parameterNames = request.getParameterNames();
         while (parameterNames.hasMoreElements()) {
             String key = parameterNames.nextElement();
-
             if (ignoreParams != null && ignoreParams.contains(key)) {
                 continue;
             }
-
             String[] values = request.getParameterValues(key);
-            params.putIfAbsent(key, values != null && values.length > 1 ? values : request.getParameter(key));
+            Object v = values != null && values.length > 1 ? values : request.getParameter(key);
+            if (ObjectUtil.isNotEmpty(v)) {
+                params.putIfAbsent(key, v);
+            }
         }
         return params;
     }
@@ -251,7 +252,10 @@ public class Params {
         while (parameterNames.hasMoreElements()) {
             String key = parameterNames.nextElement();
             String[] values = request.getParameterValues(key);
-            params.putIfAbsent(key, values != null && values.length > 1 ? values : request.getParameter(key));
+            Object v = values != null && values.length > 1 ? values : request.getParameter(key);
+            if (ObjectUtil.isNotEmpty(v)) {
+                params.putIfAbsent(key, v);
+            }
         }
         return params;
     }
@@ -268,13 +272,14 @@ public class Params {
 
     @SuppressWarnings("unchecked")
     public <T> T getX(String key) {
-        return map == null ? null : (T) map.get(key);
+        T obj = map == null ? null : (T) map.get(key);
+        return ObjectUtil.isEmpty(obj) ? null : obj;
     }
 
     @SuppressWarnings("unchecked")
     public <T> T getX(String key, T defaultValue) {
         T obj = map == null ? defaultValue : (T) map.get(key);
-        return obj == null ? defaultValue : obj;
+        return ObjectUtil.isEmpty(obj) ? defaultValue : obj;
     }
 
     public String getParameter(String key) {
@@ -285,17 +290,35 @@ public class Params {
         if (map != null) {
             Object obj = map.get(key);
             if (obj != null) {
-                return obj.toString();
+                String x = obj.toString();
+                return StringUtil.isEmpty(x) ? null : x;
             }
         }
 
         String v = request == null ? null : request.getParameter(key);
-        return v == null ? null : StringUtil.remove(v, '\r');
+        v = v == null ? null : StringUtil.remove(v, '\r');
+        return StringUtil.isEmpty(v) ? null : v;
+    }
+
+    public Object getParameters(String key) {
+        if (ignoreParams != null && ignoreParams.contains(key)) {
+            return null;
+        }
+
+        if (map != null) {
+            Object obj = map.get(key);
+            if (obj != null) {
+                return obj;
+            }
+        }
+
+        String[] v = request == null ? null : request.getParameterValues(key);
+        return v == null || v.length == 0 ? null : v;
     }
 
     public Object getObjectRequired(String key, Class<?> typeClass) throws InputException {
         Object v = getObject(key, typeClass);
-        if (v == null) {
+        if (ObjectUtil.isEmpty(v)) {
             throw new InputException(VantarKey.REQUIRED, key);
         }
         return v;
@@ -534,18 +557,20 @@ public class Params {
     }
 
     public <T> List<T> getList(String key, Class<T> type) {
+        typeMisMatch = false;
         if (ignoreParams != null && ignoreParams.contains(key)) {
             return null;
         }
-
-        Object object = request == null ? null : request.getParameterValues(key);
-        boolean isEmpty = object == null || ((String[]) object).length <= 1;
-        if (isEmpty) {
-            object = getParameter(key);
-            isEmpty = StringUtil.isEmpty((String) object);
+        Object object = request == null ? null : getParameters(key);
+        if (ObjectUtil.isEmpty(object)) {
+            return null;
         }
+        //log.info(">>>>>>{}", object);
         List<T> list = CollectionUtil.toList(object, type);
-        typeMisMatch = (list == null || list.isEmpty()) && isEmpty;
+        if (list.isEmpty()) {
+            list = null;
+        }
+        typeMisMatch = list == null;
         return list;
     }
 
@@ -557,22 +582,9 @@ public class Params {
         return v;
     }
 
-    public <T> Set<T> getSet(String key, Class<T> typeClass) {
-        typeMisMatch = false;
-        String value = getParameter(key);
-        if (value == null || value.isEmpty() ) {
-            return new HashSet<>(1, 1);
-        }
-        return new HashSet<>(getListFromJson(value, typeClass));
-    }
-
-    private <T> List<T> getListFromJson(String value, Class<T> typeClass) {
-        try {
-            return Json.d.listFromJson(value, typeClass);
-        } catch (Exception e) {
-            typeMisMatch = true;
-            return new ArrayList<>(1);
-        }
+    public <T> Set<T> getSet(String key, Class<T> type) {
+        List<T> list = getList(key, type);
+        return list == null ? null : new HashSet<>(list);
     }
 
     public List<Integer> getIntegerListRequired(String key) throws InputException {
@@ -596,8 +608,7 @@ public class Params {
     }
 
     public Set<Integer> getIntegerSet(String key) {
-        List<Integer> value = getIntegerList(key);
-        return value == null ? null : new HashSet<>(value);
+        return getSet(key, Integer.class);
     }
 
     public List<Long> getLongListRequired(String key) throws InputException {
@@ -621,8 +632,7 @@ public class Params {
     }
 
     public Set<Long> getLongSet(String key) {
-        List<Long> value = getLongList(key);
-        return value == null ? null : new HashSet<>(value);
+        return getSet(key, Long.class);
     }
 
     public List<Double> getDoubleListRequired(String key) throws InputException {
@@ -646,8 +656,7 @@ public class Params {
     }
 
     public Set<Double> getDoubleSet(String key) {
-        List<Double> value = getDoubleList(key);
-        return value == null ? null : new HashSet<>(value);
+        return getSet(key, Double.class);
     }
 
     public List<Float> getFloatListRequired(String key) throws InputException {
@@ -671,8 +680,7 @@ public class Params {
     }
 
     public Set<Float> getFloatSet(String key) {
-        List<Float> value = getFloatList(key);
-        return value == null ? null : new HashSet<>(value);
+        return getSet(key, Float.class);
     }
 
     public List<String> getStringListRequired(String key) throws InputException {
@@ -696,8 +704,7 @@ public class Params {
     }
 
     public Set<String> getStringSet(String key) {
-        List<String> value = getStringList(key);
-        return value == null ? null : new HashSet<>(value);
+        return getSet(key, String.class);
     }
 
 
@@ -747,7 +754,6 @@ public class Params {
             return json;
         }
 
-
         StringBuilder buffer = new StringBuilder(1000);
         String line;
         try (BufferedReader reader = request.getReader()) {
@@ -774,7 +780,8 @@ public class Params {
         if (request == null) {
             return null;
         }
-        return Json.d.listFromJson(getJson(), typeClass);
+        List<T> v = Json.d.listFromJson(getJson(), typeClass);
+        return ObjectUtil.isEmpty(v) ? null : v;
     }
 
     public <T> List<T> getJsonListRequired(Class<T> typeClass) throws InputException {
@@ -782,7 +789,7 @@ public class Params {
             throw new InputException(VantarKey.REQUIRED, "-");
         }
         List<T> v = Json.d.listFromJson(getJson(), typeClass);
-        if (v == null) {
+        if (ObjectUtil.isEmpty(v)) {
             throw new InputException(VantarKey.REQUIRED, "-");
         }
         return v;
@@ -792,7 +799,8 @@ public class Params {
         if (request == null) {
             return null;
         }
-        return Json.d.mapFromJson(getJson(), typeClassKey, typeClassValue);
+        Map<K, V> v = Json.d.mapFromJson(getJson(), typeClassKey, typeClassValue);
+        return ObjectUtil.isEmpty(v) ? null : v;
     }
 
     public <K, V> Map<K,V> getJsonMapRequired(Class<K> typeClassKey, Class<V> typeClassValue) throws InputException {
@@ -800,19 +808,20 @@ public class Params {
             throw new InputException(VantarKey.REQUIRED, "-");
         }
         Map<K, V> v = Json.d.mapFromJson(getJson(), typeClassKey, typeClassValue);
-        if (v == null) {
+        if (ObjectUtil.isEmpty(v)) {
             throw new InputException(VantarKey.REQUIRED, "-");
         }
         return v;
     }
 
     public <T> T extractFromJson(String key, Class<T> type) {
-        return Json.d.extract(getJson(), key, type);
+        T v = Json.d.extract(getJson(), key, type);
+        return ObjectUtil.isEmpty(v) ? null : v;
     }
 
     public <T> T extractFromJsonRequired(String key, Class<T> type) throws InputException {
         T v = Json.d.extract(getJson(), key, type);
-        if (v == null) {
+        if (ObjectUtil.isEmpty(v)) {
             throw new InputException(VantarKey.REQUIRED, key);
         }
         return v;
@@ -820,8 +829,8 @@ public class Params {
 
     @SuppressWarnings("unchecked")
     public <T> T extractFromJson(String key, Class<T> type, Object defaultValue) {
-        T value = Json.d.extract(getJson(), key, type);
-        return value == null ? (T) defaultValue : value;
+        T v = Json.d.extract(getJson(), key, type);
+        return ObjectUtil.isEmpty(v) ? (T) defaultValue : v;
     }
 
 
@@ -926,7 +935,7 @@ public class Params {
                 getDouble(key + "_altitude"),
                 getString(key + "_countryCode")
             );
-        return location.isEmpty() ? null : location;
+        return location.isEmpty() || !location.isValid() ? null : location;
     }
 
 
@@ -1056,11 +1065,11 @@ public class Params {
         String contentType = request.getContentType();
         if (!"post".equalsIgnoreCase(request.getMethod())) {
             log.error("! bad upload request method={} content-type={}", request.getMethod(), contentType);
-            return new Uploaded(VantarKey.MUST_BE_POST_MULTIPART);
+            return new Uploaded(VantarKey.HTTP_POST_MULTIPART);
         }
         if (contentType == null || !contentType.toLowerCase().contains("multipart")) {
             log.error("! bad upload request method={} content-type={}", request.getMethod(), contentType);
-            return new Uploaded(VantarKey.MUST_BE_POST_MULTIPART);
+            return new Uploaded(VantarKey.HTTP_POST_MULTIPART);
         }
 
         fileUploaded = true;

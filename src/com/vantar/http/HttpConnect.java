@@ -231,7 +231,7 @@ public class HttpConnect {
                 }
                 request = r;
             } else {
-                throw new HttpException(Locale.getString(VantarKey.INVALID_METHOD));
+                throw new HttpException(Locale.getString(VantarKey.HTTP_METHOD_INVALID));
             }
 
             setHeaders(request);
@@ -279,7 +279,7 @@ public class HttpConnect {
                 r.setEntity(entity);
                 request = r;
             } else {
-                throw new HttpException(Locale.getString(VantarKey.INVALID_METHOD));
+                throw new HttpException(Locale.getString(VantarKey.HTTP_METHOD_INVALID));
             }
 
             setHeaders(request);

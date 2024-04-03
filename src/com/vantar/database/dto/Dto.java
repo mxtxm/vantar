@@ -3,7 +3,6 @@ package com.vantar.database.dto;
 import com.vantar.common.VantarParam;
 import com.vantar.database.common.ValidationError;
 import com.vantar.web.Params;
-import javax.ws.rs.DELETE;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.util.*;
@@ -31,6 +30,7 @@ public interface Dto {
     boolean hasAnnotation(Class<? extends Annotation> annotation);
     <T extends Annotation> T getAnnotation(String property, Class<T> annotation);
     List<String> annotatedProperties(Class<? extends Annotation> annotation);
+    List<Field> annotatedFields(Class<? extends Annotation> annotation);
 
     void setInclude(String... include);
     void setExclude(String... exclude);
@@ -56,7 +56,8 @@ public interface Dto {
     Class<?>[] getPropertyGenericTypes(Field field);
 
     String[] getProperties();
-    String[] getProperties(String... exclude);
+    String[] getPropertiesEx(String... exclude);
+    String[] getPropertiesInc(String... include);
 
     Object getPropertyValue(String name);
     Map<String, Object> getPropertyValues(String... include);
@@ -85,11 +86,6 @@ public interface Dto {
     List<ValidationError> set(Params params, Action action, String prefix, String suffix);
     List<ValidationError> validate(Action action);
 
-    //void setDeleteLogical(boolean deleteLogical);
-    //boolean getDeleteLogicalState();
-    //boolean isDeleteLogicalEnabled();
-    //void setDeletedQueryPolicy(QueryDeleted policy);
-    //QueryDeleted getDeletedQueryPolicy();
     void setColPrefix(String colPrefix);
 
     Dto.Action getAction(Dto.Action defaultAction);

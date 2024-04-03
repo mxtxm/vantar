@@ -1,7 +1,6 @@
 package com.vantar.util.datetime;
 
 import com.vantar.locale.VantarKey;
-import com.vantar.service.log.ServiceLog;
 import com.vantar.util.string.*;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -238,7 +237,6 @@ public class DateTimeFormatter {
                     DateTimeNormalizer.MONTH_NAMES_FA[date.month] + " " +
                     Persian.Number.toPersian(Integer.toString(date.year));
         } catch (Exception e) {
-            ServiceLog.log.error(">>>>> {} {} {}", year, month, day, e);
             return "-";
         }
     }

@@ -11,4 +11,6 @@ public @interface DependsValue {
 
     Class<? extends Dto> dto();
     String field();
+    boolean isKey() default false;
+    boolean isValue() default false;
 }

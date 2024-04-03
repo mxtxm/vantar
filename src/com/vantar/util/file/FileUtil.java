@@ -255,10 +255,15 @@ public class FileUtil {
         }
     }
 
+    /**
+     * <path, <path, <files>>>
+     * <path, <path, <path, <files>>>
+     * if path = "/"
+     */
     public static Map<String, Object> getResourceStructure(String path) {
         path = '/' + StringUtil.trim(path, '/') + '/';
 
-        Map<String, Object> structure = new HashMap<>();
+        Map<String, Object> structure = new TreeMap<>();
         URL dir = FileUtil.class.getClassLoader().getResource(path);
         if (dir == null) {
             dir = FileUtil.class.getClassLoader().getResource(FileUtil.class.getName().replace(".", "/") + ".class");

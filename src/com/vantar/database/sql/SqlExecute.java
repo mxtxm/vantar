@@ -75,7 +75,7 @@ public class SqlExecute extends SqlQueryHelper {
         long id = insert(dto.getStorage(), StorableData.toMap(dto.getStorableData()));
 
         if (!dto.beforeInsert()) {
-            throw new DatabaseException(VantarKey.EVENT_REJECT);
+            throw new DatabaseException(VantarKey.CUSTOM_EVENT_ERROR);
         }
         List<ManyToManyDefinition> many = dto.getManyToManyFieldValues(id);
         if (many != null) {
@@ -188,7 +188,7 @@ public class SqlExecute extends SqlQueryHelper {
             }
 
             if (!dto.beforeInsert()) {
-                throw new DatabaseException(VantarKey.EVENT_REJECT);
+                throw new DatabaseException(VantarKey.CUSTOM_EVENT_ERROR);
             }
         }
         sql.append(';');
@@ -210,7 +210,7 @@ public class SqlExecute extends SqlQueryHelper {
 
     public void update(Dto dto) throws DatabaseException, VantarException {
         if (!dto.beforeUpdate()) {
-            throw new DatabaseException(VantarKey.EVENT_REJECT);
+            throw new DatabaseException(VantarKey.CUSTOM_EVENT_ERROR);
         }
 
         SqlParams sqlParams = new SqlParams(dto, ",");
@@ -222,7 +222,7 @@ public class SqlExecute extends SqlQueryHelper {
 
     public void update(Dto dto, String fieldName) throws DatabaseException {
         if (!dto.beforeUpdate()) {
-            throw new DatabaseException(VantarKey.EVENT_REJECT);
+            throw new DatabaseException(VantarKey.CUSTOM_EVENT_ERROR);
         }
 
         SqlParams sqlParams = new SqlParams(dto, ",");
@@ -235,7 +235,7 @@ public class SqlExecute extends SqlQueryHelper {
 
     public void update(QueryBuilder q) throws DatabaseException, VantarException {
         if (!q.getDto().beforeUpdate()) {
-            throw new DatabaseException(VantarKey.EVENT_REJECT);
+            throw new DatabaseException(VantarKey.CUSTOM_EVENT_ERROR);
         }
 
         SqlParams set = new SqlParams(q.getDto(), ",");

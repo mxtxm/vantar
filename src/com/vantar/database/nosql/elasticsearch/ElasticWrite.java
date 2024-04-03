@@ -40,7 +40,7 @@ public class ElasticWrite implements Closeable {
         }
 
         if (!dto.beforeInsert()) {
-            throw new DatabaseException(VantarKey.EVENT_REJECT);
+            throw new DatabaseException(VantarKey.CUSTOM_EVENT_ERROR);
         }
 
         writeIndex(dto, DocWriteRequest.OpType.CREATE);
@@ -52,7 +52,7 @@ public class ElasticWrite implements Closeable {
         dto.setUpdateTime(true);
 
         if (!dto.beforeUpdate()) {
-            throw new DatabaseException(VantarKey.EVENT_REJECT);
+            throw new DatabaseException(VantarKey.CUSTOM_EVENT_ERROR);
         }
 
         writeIndexOne(dto, null);
@@ -63,7 +63,7 @@ public class ElasticWrite implements Closeable {
         dto.setUpdateTime(true);
 
         if (!dto.beforeUpdate()) {
-            throw new DatabaseException(VantarKey.EVENT_REJECT);
+            throw new DatabaseException(VantarKey.CUSTOM_EVENT_ERROR);
         }
 
         writeIndex(dto, null);
@@ -75,7 +75,7 @@ public class ElasticWrite implements Closeable {
         Long id = dto.getId();
 
         if (!dto.beforeUpdate()) {
-            throw new DatabaseException(VantarKey.EVENT_REJECT);
+            throw new DatabaseException(VantarKey.CUSTOM_EVENT_ERROR);
         }
 
         if (id != null) {
@@ -102,7 +102,7 @@ public class ElasticWrite implements Closeable {
         dto.setUpdateTime(true);
 
         if (!dto.beforeUpdate()) {
-            throw new DatabaseException(VantarKey.EVENT_REJECT);
+            throw new DatabaseException(VantarKey.CUSTOM_EVENT_ERROR);
         }
 
         bulk.add(new UpdateRequest(dto.getStorage(), dto.getId().toString()).doc(StorableData.toMap(dto.getStorableData())));

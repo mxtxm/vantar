@@ -4,6 +4,7 @@ import com.vantar.common.VantarParam;
 import com.vantar.exception.*;
 import com.vantar.locale.VantarKey;
 import com.vantar.service.Services;
+import com.vantar.service.log.ServiceLog;
 import com.vantar.util.file.FileUtil;
 import com.vantar.util.json.*;
 import com.vantar.util.object.*;
@@ -72,7 +73,7 @@ public class ServiceAuth extends Permit implements Services.Service {
                     json.toJson(oneTimeTokens) + VantarParam.SEPARATOR_BLOCK_COMPLEX +
                     json.toJson(verifyTokens)
             );
-            Services.log.info("  -> auth-data backed-up");
+            ServiceLog.log.info("  -> auth-data backed-up");
         }
         schedule.shutdown();
         serviceUp = true;
@@ -146,13 +147,13 @@ public class ServiceAuth extends Permit implements Services.Service {
 
         String contents = FileUtil.getFileContent(backupPath + AUTH_BACKUP_FILENAME);
         if (StringUtil.isEmpty(contents)) {
-            Services.log.warn(" ! auth-data NOT restored (no backup)");
+            ServiceLog.log.warn(" ! auth-data NOT restored (no backup)");
             return this;
         }
 
         String[] parts = StringUtil.splitTrim(contents, VantarParam.SEPARATOR_BLOCK_COMPLEX);
         if (parts.length != 4) {
-            Services.log.warn(" ! auth-users NOT restored corrupted data)");
+            ServiceLog.log.warn(" ! auth-users NOT restored corrupted data)");
             return this;
         }
 
@@ -183,7 +184,7 @@ public class ServiceAuth extends Permit implements Services.Service {
                 verifyTokens.putAll(x);
             }
         }
-        Services.log.info("  -> auth-data restored");
+        ServiceLog.log.info("  -> auth-data restored");
         return this;
     }
 
@@ -233,7 +234,7 @@ public class ServiceAuth extends Permit implements Services.Service {
         String password = params.getString(VantarParam.PASSWORD);
         Map<String, Object> extraData = params.getX("extraData");
         if (StringUtil.isEmpty(username) || StringUtil.isEmpty(password)) {
-            throw new AuthException(VantarKey.USER_PASSWORD_EMPTY);
+            throw new AuthException(VantarKey.USER_OR_PASSWORD_EMPTY);
         }
 
         lastSuccess = true;
@@ -251,34 +252,34 @@ public class ServiceAuth extends Permit implements Services.Service {
         try {
             signinBundle = event.getUserPassword(username);
         } catch (NoContentException e) {
-            throw new AuthException(VantarKey.USER_NOT_EXISTS, "?");
+            throw new AuthException(VantarKey.USER_NOT_EXISTS);
         } catch (Exception e) {
-            Services.log.warn(" ! failed to get signinBundle\n", e);
+            ServiceLog.log.warn(" ! failed to get signinBundle\n", e);
             lastSuccess = false;
             setLog(e.getMessage());
             throw new ServerException(VantarKey.FETCH_FAIL);
         }
 
         if (signinBundle.commonUser.getAccessStatus().equals(AccessStatus.DISABLED)) {
-            throw new AuthException(VantarKey.USER_DISABLED, signinBundle.commonUser.getUsername());
+            throw new AuthException(VantarKey.USER_DISABLED);
         }
         if (signinBundle.commonUser.getAccessStatus().equals(AccessStatus.UNSUBSCRIBED)) {
-            throw new AuthException(VantarKey.USER_NOT_EXISTS, signinBundle.commonUser.getUsername());
+            throw new AuthException(VantarKey.USER_NOT_EXISTS);
         }
 
         Integer c = signinFail.get(signinBundle.commonUser.getId());
         if (c != null && c > maxSigninFail) {
-            throw new AuthException(VantarKey.USER_DISABLED_MAX_FAILED, signinBundle.commonUser.getUsername());
+            throw new AuthException(VantarKey.USER_DISABLED_MAX_FAILED);
         }
 
         if (signinBundle.commonUserPassword == null) {
-            Services.log.error(" ! commonUserPassword is null > \n{}", signinBundle);
+            ServiceLog.log.error(" ! commonUserPassword is null > \n{}", signinBundle);
             addFail(signinBundle.commonUser.getId());
-            throw new AuthException(VantarKey.WRONG_PASSWORD, signinBundle.commonUser.getUsername());
+            throw new AuthException(VantarKey.USER_WRONG_PASSWORD, signinBundle.commonUser.getUsername());
         }
         if (!signinBundle.commonUserPassword.passwordEquals(password)) {
             addFail(signinBundle.commonUser.getId());
-            throw new AuthException(VantarKey.WRONG_PASSWORD, signinBundle.commonUser.getUsername());
+            throw new AuthException(VantarKey.USER_WRONG_PASSWORD, signinBundle.commonUser.getUsername());
         }
 
         tokenData = new TokenData(signinBundle.commonUser);
@@ -381,7 +382,7 @@ public class ServiceAuth extends Permit implements Services.Service {
                     }
                 }
             } catch (Exception e) {
-                Services.log.error(" !! token={} online={}\n", tNew, onlineUsers, e);
+                ServiceLog.log.error(" !! token={} online={}\n", tNew, onlineUsers, e);
                 lastSuccess = false;
                 setLog(e.getMessage());
             }
@@ -397,7 +398,7 @@ public class ServiceAuth extends Permit implements Services.Service {
                     onlineUsers.remove(tokenToDelete);
                 }
             } catch (Exception e) {
-                Services.log.error(" !! token={} online={}\n", tNew, onlineUsers, e);
+                ServiceLog.log.error(" !! token={} online={}\n", tNew, onlineUsers, e);
                 lastSuccess = false;
                 setLog(e.getMessage());
             }
@@ -414,7 +415,7 @@ public class ServiceAuth extends Permit implements Services.Service {
                     if (t instanceof AuthException) {
                         throw (AuthException) t;
                     }
-                    Services.log.error(" !! token={} online={}\n", tNew, onlineUsers, t);
+                    ServiceLog.log.error(" !! token={} online={}\n", tNew, onlineUsers, t);
                     lastSuccess = false;
                     setLog(t.getMessage());
                 }

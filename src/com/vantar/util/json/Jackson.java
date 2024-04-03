@@ -5,6 +5,7 @@ import com.fasterxml.jackson.core.*;
 import com.fasterxml.jackson.core.util.*;
 import com.fasterxml.jackson.databind.*;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
+import com.fasterxml.jackson.databind.exc.MismatchedInputException;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.ser.impl.*;
@@ -15,7 +16,9 @@ import com.vantar.util.datetime.DateTime;
 import com.vantar.util.string.StringUtil;
 import org.slf4j.*;
 import java.io.*;
+import java.lang.reflect.Field;
 import java.util.*;
+
 
 /**
  * static: ignored
@@ -86,6 +89,10 @@ public class Jackson {
         mLocation.addDeserializer(Location.class, new LocationDeserializer());
         mLocation.addSerializer(Location.class, new LocationSerializer());
         mapper.registerModule(mLocation);
+
+        SimpleModule mFiled = new SimpleModule();
+        mFiled.addSerializer(Field.class, new FieldSerializer());
+        mapper.registerModule(mFiled);
     }
 
     public <T> void addPolymorphism(Class<T> typeClass, Class<? extends T> objectClass) {
@@ -174,8 +181,14 @@ public class Jackson {
     // > > > FROM JSON
 
     public <T> T fromJson(String json, Class<T> typeClass) {
+        if (json == null || json.isEmpty()) {
+            return null;
+        }
         try {
             return mapper.readValue(json, typeClass);
+        } catch (MismatchedInputException e) {
+            log.warn("! type missmatch ({} > {})\n", json, typeClass.getName());
+            return null;
         } catch (Exception e) {
             log.warn("! failed to get object ({} > {})\n", json, typeClass.getName(), e);
             return null;
@@ -183,6 +196,9 @@ public class Jackson {
     }
 
     public <T> T fromJsonSilent(String json, Class<T> typeClass) {
+        if (json == null || json.isEmpty()) {
+            return null;
+        }
         try {
             return mapper.readValue(json, typeClass);
         } catch (Exception e) {
@@ -191,6 +207,9 @@ public class Jackson {
     }
 
     public <V> List<V> listFromJson(String json, Class<V> v) {
+        if (json == null || json.isEmpty()) {
+            return null;
+        }
         try {
             return mapper.readValue(json, mapper.getTypeFactory().constructCollectionType(List.class, v));
         } catch (Exception e) {
@@ -200,6 +219,9 @@ public class Jackson {
     }
 
     public <V> Set<V> setFromJson(String json, Class<V> v) {
+        if (json == null || json.isEmpty()) {
+            return null;
+        }
         try {
             return mapper.readValue(json, mapper.getTypeFactory().constructCollectionType(Set.class, v));
         } catch (Exception e) {
@@ -209,6 +231,9 @@ public class Jackson {
     }
 
     public <K, V> Map<K, V> mapFromJson(String json, Class<K> k, Class<V> v) {
+        if (json == null || json.isEmpty()) {
+            return null;
+        }
         try {
             return mapper.readValue(json, mapper.getTypeFactory().constructMapType(Map.class, k, v));
         } catch (Exception e) {
@@ -218,31 +243,49 @@ public class Jackson {
     }
 
     public String extractRaw(String json, String... key) {
+        if (json == null || json.isEmpty()) {
+            return null;
+        }
         JsonNode node = key.length == 1 ? getNode(json, key[0]) : getNodePath(json, key);
         return node == null ? null : node.toString();
     }
 
     public String extractString(String json, String... key) {
+        if (json == null || json.isEmpty()) {
+            return null;
+        }
         JsonNode node = key.length == 1 ? getNode(json, key[0]) : getNodePath(json, key);
         return node == null ? null : node.asText();
     }
 
     public Long extractLong(String json, String... key) {
+        if (json == null || json.isEmpty()) {
+            return null;
+        }
         JsonNode node = key.length == 1 ? getNode(json, key[0]) : getNodePath(json, key);
         return node == null ? null : node.asLong();
     }
 
     public Integer extractInteger(String json, String... key) {
+        if (json == null || json.isEmpty()) {
+            return null;
+        }
         JsonNode node = key.length == 1 ? getNode(json, key[0]) : getNodePath(json, key);
         return node == null ? null : node.asInt();
     }
 
     public Boolean extractBoolean(String json, String... key) {
+        if (json == null || json.isEmpty()) {
+            return null;
+        }
         JsonNode node = key.length == 1 ? getNode(json, key[0]) : getNodePath(json, key);
         return node == null ? null : node.asBoolean();
     }
 
     public Double extractDouble(String json, String... key) {
+        if (json == null || json.isEmpty()) {
+            return null;
+        }
         JsonNode node = key.length == 1 ? getNode(json, key[0]) : getNodePath(json, key);
         return node == null ? null : node.asDouble();
     }
@@ -271,6 +314,9 @@ public class Jackson {
     }
 
     private JsonNode getNode(String json, String key) {
+        if (json == null || json.isEmpty()) {
+            return null;
+        }
         try {
             JsonNode t = mapper.readTree(json);
             if (t == null) {
@@ -284,6 +330,9 @@ public class Jackson {
     }
 
     private JsonNode getNodePath(String json, String[] keys) {
+        if (json == null || json.isEmpty()) {
+            return null;
+        }
         JsonNode node = null;
         for (String key : keys) {
             if (node == null) {
@@ -299,8 +348,6 @@ public class Jackson {
     }
 
     // < < < FROM JSON
-
-
 
     // > > > DATETIME
 
@@ -406,6 +453,28 @@ public class Jackson {
                 generator.writeStringField("countryCode", location.countryCode);
             }
             generator.writeEndObject();
+        }
+    }
+
+    // > > > Field
+
+    public static class FieldSerializer extends StdSerializer<Field> {
+
+        public FieldSerializer() {
+            this(null);
+        }
+
+        protected FieldSerializer(Class<Field> t) {
+            super(t);
+        }
+
+        @Override
+        public void serialize(Field field, JsonGenerator generator, SerializerProvider provider) throws IOException {
+            if (field == null) {
+                generator.writeNull();
+                return;
+            }
+            generator.writeString(field.getName() + " (" + field.getType().getSimpleName() + ")");
         }
     }
 

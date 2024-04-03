@@ -49,7 +49,7 @@ public class StopWord {
 
         set.removeIf(element -> element.startsWith(COMMENT_INDICATOR) && element.endsWith(COMMENT_INDICATOR));
 
-        log.debug(" > stop word file loaded lang={}", lang);
+        log.trace(" > stop word file loaded lang={}", lang);
         return set.toArray(new String[0]);
     }
 

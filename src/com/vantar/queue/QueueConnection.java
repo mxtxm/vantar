@@ -102,7 +102,7 @@ public class QueueConnection {
                 return null;
             }
             channel.queueDeclare(queueName, false, false, false, null);
-            log.debug(" > rabbitmq created channel to '{}'", queueName);
+            log.trace(" > rabbitmq created channel to '{}'", queueName);
             return channel;
         } catch (IOException e) {
             log.error(" !! rabbitmq channel to '{}' failed\n", queueName, e);

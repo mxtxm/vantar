@@ -1,7 +1,7 @@
 package com.vantar.admin.model.index;
 
-import com.vantar.admin.model.AdminAuth;
-import com.vantar.admin.modelw.service.*;
+import com.vantar.admin.model.auth.AdminAuth;
+import com.vantar.admin.model.service.*;
 import com.vantar.common.*;
 import com.vantar.database.dto.DtoDictionary;
 import com.vantar.exception.*;
@@ -100,8 +100,8 @@ public class Admin {
                 ui.blockEnd();
 
                 // services
-                ui.beginBox(VantarKey.ADMIN_RUNNING_SERVICES_DEPENDENCIES);
-                AdminServiceMonitoring.plotDependencyServicesStatus(ui);
+                ui.beginBox(VantarKey.ADMIN_RUNNING_SERVICES_DATA_SOURCE);
+                AdminServiceMonitoring.plotDataSourcesStatus(ui);
                 ui.blockEnd();
 
                 ui.beginBox(VantarKey.ADMIN_RUNNING_SERVICES_ME);
@@ -193,7 +193,7 @@ public class Admin {
             menu.put(Locale.getString(VantarKey.ADMIN_MENU_PATCH), "/admin/patch");
             menu.put(Locale.getString(VantarKey.ADMIN_MENU_QUERY), "/admin/query/index");
         }
-        menu.put(Locale.getString(VantarKey.ADMIN_MENU_DOCUMENTS), "/admin/document/index");
+        menu.put(Locale.getString(VantarKey.ADMIN_MENU_DOCUMENTS), "/admin/documentation/index");
         menu.put(Locale.getString(VantarKey.ADMIN_MENU_BUGGER), "/admin/bugger/index");
 
         // custom menu

@@ -22,6 +22,10 @@ public interface QueryResult {
 
     <T extends Dto> List<T> asList() throws NoContentException, DatabaseException;
 
+    Collection<Object> asPropertyList(String property) throws VantarException;
+
+    Map<Long, Object> asPropertyMap(String property) throws VantarException;
+
     void forEach(QueryResultBase.EventForeach event) throws VantarException;
 
     <T extends Dto> Map<Object, T> asMap(String keyField) throws NoContentException, DatabaseException;

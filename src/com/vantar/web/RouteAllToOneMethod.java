@@ -28,7 +28,7 @@ public abstract class RouteAllToOneMethod extends RouteBase {
 
             if (logRequest) {
                 ServiceLog.addRequest(params);
-                log.debug(" > {}", request.getRequestURI());
+                log.trace(" > {}", request.getRequestURI());
             }
 
             Locale.setSelectedLocale(params);

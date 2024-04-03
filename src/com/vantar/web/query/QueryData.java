@@ -121,7 +121,7 @@ public class QueryData {
         QueryCondition queryCondition = new QueryCondition(condition.getOperator());
         for (ConditionItem item : condition.items) {
             if (StringUtil.isEmpty(item.type)) {
-                q.addError(item.col, VantarKey.SEARCH_PARAM_INVALID_CONDITION_TYPE);
+                q.addError(item.col, VantarKey.SEARCH_CONDITION_TYPE_INVALID);
                 return null;
             }
             String conditionType = item.type.toUpperCase();
@@ -130,7 +130,7 @@ public class QueryData {
                 && !conditionType.equals("FULL_SEARCH")
                 && !conditionType.equals("CONDITION")
                 && !conditionType.equals("EXISTS")) {
-                q.addError("?", VantarKey.SEARCH_PARAM_COL_MISSING);
+                q.addError("?", VantarKey.SEARCH_COL_MISSING);
                 return null;
             }
             item.separateCols();
@@ -144,7 +144,7 @@ public class QueryData {
                 case "CONDITION": {
                     QueryCondition cond = ObjectUtil.isEmpty(item.condition) ? null : getCondition(item.condition, null);
                     if (cond == null) {
-                        q.addError("CONDITION", VantarKey.SEARCH_PARAM_VALUE_MISSING);
+                        q.addError("CONDITION", VantarKey.SEARCH_VALUE_MISSING);
                         continue;
                     }
                     queryCondition.addCondition(cond);
@@ -153,7 +153,7 @@ public class QueryData {
                 case "EXISTS": {
                     QueryCondition cond = ObjectUtil.isEmpty(item.condition) ? null : getCondition(item.condition, null);
                     if (cond == null) {
-                        q.addError("EXISTS", VantarKey.SEARCH_PARAM_VALUE_MISSING);
+                        q.addError("EXISTS", VantarKey.SEARCH_VALUE_MISSING);
                         continue;
                     }
                     queryCondition.exists(cond);
@@ -223,7 +223,7 @@ public class QueryData {
                         } else if (DateTime.class.equals(dataType)) {
                             queryCondition.between(item.col, getValuesAsDateTime(item));
                         } else {
-                            q.addError(item.col, VantarKey.SEARCH_PARAM_VALUE_INVALID);
+                            q.addError(item.col, VantarKey.SEARCH_VALUE_INVALID);
                         }
                     } else {
                         if (ClassUtil.isInstantiable(dataType, Number.class)) {
@@ -231,7 +231,7 @@ public class QueryData {
                         } else if (DateTime.class.equals(dataType)) {
                             queryCondition.between(item.col, item.colB, (DateTime) getValue(item, DateTime.class));
                         } else {
-                            q.addError(item.col + ":" + item.colB, VantarKey.SEARCH_PARAM_VALUE_INVALID);
+                            q.addError(item.col + ":" + item.colB, VantarKey.SEARCH_VALUE_INVALID);
                         }
                     }
                     break;
@@ -242,7 +242,7 @@ public class QueryData {
                         } else if (DateTime.class.equals(dataType)) {
                             queryCondition.notBetween(item.col, getValuesAsDateTime(item));
                         } else {
-                            q.addError(item.col, VantarKey.SEARCH_PARAM_VALUE_INVALID);
+                            q.addError(item.col, VantarKey.SEARCH_VALUE_INVALID);
                         }
                     } else {
                         if (ClassUtil.isInstantiable(dataType, Number.class)) {
@@ -250,7 +250,7 @@ public class QueryData {
                         } else if (DateTime.class.equals(dataType)) {
                             queryCondition.notBetween(item.col, item.colB, (DateTime) getValue(item, DateTime.class));
                         } else {
-                            q.addError(item.col + ":" + item.colB, VantarKey.SEARCH_PARAM_VALUE_INVALID);
+                            q.addError(item.col + ":" + item.colB, VantarKey.SEARCH_VALUE_INVALID);
                         }
                     }
                     break;
@@ -261,7 +261,7 @@ public class QueryData {
                     } else if (DateTime.class.equals(dataType)) {
                         queryCondition.lessThan(item.col, (DateTime) getValue(item, DateTime.class));
                     } else {
-                        q.addError(item.col, VantarKey.SEARCH_PARAM_VALUE_INVALID);
+                        q.addError(item.col, VantarKey.SEARCH_VALUE_INVALID);
                     }
                     break;
                 case "GREATER_THAN":
@@ -270,7 +270,7 @@ public class QueryData {
                     } else if (DateTime.class.equals(dataType)) {
                         queryCondition.greaterThan(item.col, (DateTime) getValue(item, DateTime.class));
                     } else {
-                        q.addError(item.col, VantarKey.SEARCH_PARAM_VALUE_INVALID);
+                        q.addError(item.col, VantarKey.SEARCH_VALUE_INVALID);
                     }
                     break;
                 case "LESS_THAN_EQUAL":
@@ -279,7 +279,7 @@ public class QueryData {
                     } else if (DateTime.class.equals(dataType)) {
                         queryCondition.lessThanEqual(item.col, (DateTime) getValue(item, DateTime.class));
                     } else {
-                        q.addError(item.col, VantarKey.SEARCH_PARAM_VALUE_INVALID);
+                        q.addError(item.col, VantarKey.SEARCH_VALUE_INVALID);
                     }
                     break;
                 case "GREATER_THAN_EQUAL":
@@ -288,7 +288,7 @@ public class QueryData {
                     } else if (DateTime.class.equals(dataType)) {
                         queryCondition.greaterThanEqual(item.col, (DateTime) getValue(item, DateTime.class));
                     } else {
-                        q.addError(item.col, VantarKey.SEARCH_PARAM_VALUE_INVALID);
+                        q.addError(item.col, VantarKey.SEARCH_VALUE_INVALID);
                     }
                     break;
 
@@ -298,19 +298,19 @@ public class QueryData {
                     } else if (ObjectUtil.isNotEmpty(item.values)) {
                         queryCondition.containsAll(item.col, Arrays.asList(item.values));
                     } else {
-                        q.addError(item.col, VantarKey.SEARCH_PARAM_VALUE_INVALID);
+                        q.addError(item.col, VantarKey.SEARCH_VALUE_INVALID);
                     }
                     break;
 
                 case "NEAR": {
                     if (item.values.length < 3 || item.values.length > 4) {
-                        q.addError(item.col, VantarKey.SEARCH_PARAM_VALUE_INVALID);
+                        q.addError(item.col, VantarKey.SEARCH_VALUE_INVALID);
                         break;
                     }
                     Location location = new Location(NumberUtil.toDouble(item.values[0]), NumberUtil.toDouble(item.values[1]));
                     Double maxDistance = NumberUtil.toDouble(item.values[2]);
                     if (!location.isValid() || maxDistance == null) {
-                        q.addError(item.col, VantarKey.SEARCH_PARAM_VALUE_INVALID);
+                        q.addError(item.col, VantarKey.SEARCH_VALUE_INVALID);
                         break;
                     }
                     if (item.values.length == 3) {
@@ -318,7 +318,7 @@ public class QueryData {
                     } else {
                         Double minDistance = NumberUtil.toDouble(item.values[3]);
                         if (minDistance == null) {
-                            q.addError(item.col, VantarKey.SEARCH_PARAM_VALUE_INVALID);
+                            q.addError(item.col, VantarKey.SEARCH_VALUE_INVALID);
                             break;
                         }
                         queryCondition.near(item.col, location, maxDistance, minDistance);
@@ -327,13 +327,13 @@ public class QueryData {
                 }
                 case "FAR": {
                     if (item.values.length != 3) {
-                        q.addError(item.col, VantarKey.SEARCH_PARAM_VALUE_INVALID);
+                        q.addError(item.col, VantarKey.SEARCH_VALUE_INVALID);
                         break;
                     }
                     Location location = new Location(NumberUtil.toDouble(item.values[0]), NumberUtil.toDouble(item.values[1]));
                     Double minDistance = NumberUtil.toDouble(item.values[2]);
                     if (!location.isValid() || minDistance == null) {
-                        q.addError(item.col, VantarKey.SEARCH_PARAM_VALUE_INVALID);
+                        q.addError(item.col, VantarKey.SEARCH_VALUE_INVALID);
                         break;
                     }
                     queryCondition.far(item.col, location, minDistance);
@@ -342,7 +342,7 @@ public class QueryData {
                 case "WITHIN":
                     int l = item.values.length;
                     if (l < 6 || l % 2 != 0) {
-                        q.addError(item.col, VantarKey.SEARCH_PARAM_VALUE_INVALID);
+                        q.addError(item.col, VantarKey.SEARCH_VALUE_INVALID);
                         break;
                     }
                     List<Location> polygon = new ArrayList<>(16);
@@ -352,10 +352,14 @@ public class QueryData {
                     queryCondition.within(item.col, polygon);
                     break;
 
+                case "MAP_KEY_EXISTS":
+                    queryCondition.mapKeyExists(item.col, getValue(item, String.class));
+                    break;
+
                 case "IN_LIST": {
                     QueryCondition cond = ObjectUtil.isEmpty(item.condition) ? null : getCondition(item.condition, item.col);
                     if (cond == null) {
-                        q.addError("IN_LIST", VantarKey.SEARCH_PARAM_VALUE_MISSING);
+                        q.addError("IN_LIST", VantarKey.SEARCH_VALUE_MISSING);
                         continue;
                     }
                     queryCondition.inList(item.col, cond);
@@ -368,7 +372,7 @@ public class QueryData {
                     QueryCondition cond = ObjectUtil.isEmpty(item.condition) ? null : getCondition(item.condition, null);
                     dtObject = dtObjectTemp;
                     if (cond == null) {
-                        q.addError("condition", VantarKey.SEARCH_PARAM_VALUE_MISSING);
+                        q.addError("condition", VantarKey.SEARCH_VALUE_MISSING);
                         continue;
                     }
                     queryCondition.inDto(item.col, item.getDto(), cond);
@@ -376,7 +380,7 @@ public class QueryData {
                 }
 
                 default:
-                    q.addError(item.col, VantarKey.SEARCH_PARAM_INVALID_CONDITION_TYPE);
+                    q.addError(item.col, VantarKey.SEARCH_CONDITION_TYPE_INVALID);
             }
         }
 
@@ -386,7 +390,7 @@ public class QueryData {
     private Object getValue(ConditionItem item, Class<?> dataType) {
         Object v = ObjectUtil.convert(item.value, dataType);
         if (v == null) {
-            q.addError(item.col, VantarKey.SEARCH_PARAM_VALUE_MISSING);
+            q.addError(item.col, VantarKey.SEARCH_VALUE_MISSING);
             return null;
         }
         return v;
@@ -394,7 +398,7 @@ public class QueryData {
 
     private String[] getValuesAsString(ConditionItem item) {
         if (item.values == null) {
-            q.addError(item.col, VantarKey.SEARCH_PARAM_VALUE_MISSING);
+            q.addError(item.col, VantarKey.SEARCH_VALUE_MISSING);
             return null;
         }
         String[] items = new String[item.values.length];
@@ -406,7 +410,7 @@ public class QueryData {
 
     private Number[] getValuesAsNumber(ConditionItem item, Class<?> dataType) {
         if (item.values == null) {
-            q.addError(item.col, VantarKey.SEARCH_PARAM_VALUE_MISSING);
+            q.addError(item.col, VantarKey.SEARCH_VALUE_MISSING);
             return null;
         }
         Number[] items = new Number[item.values.length];
@@ -422,7 +426,7 @@ public class QueryData {
                 n = NumberUtil.toDouble(item.values[i].toString());
             }
             if (n == null) {
-                q.addError(item.col, VantarKey.SEARCH_PARAM_VALUE_INVALID);
+                q.addError(item.col, VantarKey.SEARCH_VALUE_INVALID);
                 return null;
             }
             items[i] = n;
@@ -432,7 +436,7 @@ public class QueryData {
 
     private DateTime[] getValuesAsDateTime(ConditionItem item) {
         if (item.values == null) {
-            q.addError(item.col, VantarKey.SEARCH_PARAM_VALUE_MISSING);
+            q.addError(item.col, VantarKey.SEARCH_VALUE_MISSING);
             return null;
         }
         DateTime[] items = new DateTime[item.values.length];
@@ -440,7 +444,7 @@ public class QueryData {
             try {
                 items[i] = new DateTime(item.values[i].toString());
             } catch (DateTimeException e) {
-                q.addError(item.col, VantarKey.SEARCH_PARAM_VALUE_INVALID);
+                q.addError(item.col, VantarKey.SEARCH_VALUE_INVALID);
                 return null;
             }
         }
@@ -449,14 +453,14 @@ public class QueryData {
 
     private Character[] getValuesAsCharacter(ConditionItem item) {
         if (item.values == null) {
-            q.addError(item.col, VantarKey.SEARCH_PARAM_VALUE_MISSING);
+            q.addError(item.col, VantarKey.SEARCH_VALUE_MISSING);
             return null;
         }
         Character[] items = new Character[item.values.length];
         for (int i = 0, l = item.values.length; i < l; ++i) {
             Character c = StringUtil.toCharacter(item.values[i].toString());
             if (c == null) {
-                q.addError(item.col, VantarKey.SEARCH_PARAM_VALUE_INVALID);
+                q.addError(item.col, VantarKey.SEARCH_VALUE_INVALID);
                 return null;
             }
             items[i] = c;
@@ -467,7 +471,7 @@ public class QueryData {
     private void setGroups(QueryBuilder q) {
         for (GroupDef groupDef : group) {
             if (StringUtil.isEmpty(groupDef.column)) {
-                q.addError("GROUP.column", VantarKey.SEARCH_PARAM_VALUE_MISSING);
+                q.addError("GROUP.column", VantarKey.SEARCH_VALUE_MISSING);
                 continue;
             }
             if (groupDef.groupType != null) {
@@ -475,7 +479,7 @@ public class QueryData {
                 try {
                     type = QueryGroupType.valueOf(groupDef.groupType);
                 } catch (IllegalArgumentException e) {
-                    q.addError("GROUP.groupType=" + groupDef.groupType, VantarKey.SEARCH_PARAM_VALUE_INVALID);
+                    q.addError("GROUP.groupType=" + groupDef.groupType, VantarKey.SEARCH_VALUE_INVALID);
                     continue;
                 }
                 if (StringUtil.isEmpty(groupDef.columnAs)) {
@@ -497,20 +501,20 @@ public class QueryData {
     private void setJoins(QueryBuilder q) {
         for (JoinDef joinDef : joins) {
             if (StringUtil.isEmpty(joinDef.joinType)) {
-                q.addError("JOIN.joinType", VantarKey.SEARCH_PARAM_VALUE_MISSING);
+                q.addError("JOIN.joinType", VantarKey.SEARCH_VALUE_MISSING);
                 continue;
             }
 
             Dto dtoRight = DtoDictionary.getInstance(joinDef.dtoRight);
             if (dtoRight == null) {
-                q.addError("JOIN.dtoRight", VantarKey.SEARCH_PARAM_VALUE_MISSING);
+                q.addError("JOIN.dtoRight", VantarKey.SEARCH_VALUE_MISSING);
                 continue;
             }
 
             if (StringUtil.isNotEmpty(joinDef.dtoLeft)) {
                 Dto dtoLeft = DtoDictionary.getInstance(joinDef.dtoLeft);
                 if (dtoLeft == null) {
-                    q.addError("JOIN.dtoLeft", VantarKey.SEARCH_PARAM_VALUE_MISSING);
+                    q.addError("JOIN.dtoLeft", VantarKey.SEARCH_VALUE_MISSING);
                     continue;
                 }
                 q.addJoin(joinDef.joinType, dtoLeft, dtoRight);

@@ -2,18 +2,15 @@ package com.vantar.database.dto;
 
 import com.vantar.common.*;
 import com.vantar.database.query.QueryBuilder;
+import com.vantar.service.log.ServiceLog;
 import com.vantar.util.file.FileUtil;
 import com.vantar.util.object.ClassUtil;
 import com.vantar.util.string.StringUtil;
-import org.slf4j.*;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 
 
 public class DtoDictionary {
-
-    private static final Logger log = LoggerFactory.getLogger(DtoDictionary.class);
-
 
     public enum Dbms {
         MONGO,
@@ -22,93 +19,131 @@ public class DtoDictionary {
         NOSTORE,
     }
 
-    // <group, <dtoName, info>>
-    private static final Map<String, Map<String, Info>> index = new LinkedHashMap<>();
-    private static String tempCategory;
+    private static List<String> indexGroup;
+    private static Map<String, Info> indexDto;
 
 
-    public static void setCategory(String category) {
-        tempCategory = category;
+    public static void init(int dtoCount) {
+        indexGroup = new ArrayList<>(dtoCount);
+        indexDto = new LinkedHashMap<>(dtoCount, 1);
     }
 
-    public static void add(String title, Class<? extends Dto> dtoClass, Integer onUpdateBroadcastMessage, QueryBuilder queryCache) {
+    public static void setGroup(String group) {
+        indexGroup.add(group);
+    }
 
-        Map<String, Info> catInfo = index.get(tempCategory);
-        if (catInfo == null) {
-            catInfo = new LinkedHashMap<>();
-        }
-
+    public static void add(String title, Class<? extends Dto> dtoClass) {
         Info info = new Info();
-        info.queryCache = queryCache;
-        info.category = tempCategory;
+        info.hidden = false;
         info.title = title;
         info.dtoClass = dtoClass;
-        info.broadcastMessage = onUpdateBroadcastMessage;
+        add(info);
+    }
 
-        if (dtoClass.isAnnotationPresent(Mongo.class)) {
+    public static void addHidden(String title, Class<? extends Dto> dtoClass) {
+        Info info = new Info();
+        info.hidden = true;
+        info.title = title;
+        info.dtoClass = dtoClass;
+        add(info);
+    }
+
+    @SuppressWarnings("unchecked")
+    public static void add(Info info) {
+        info.group = indexGroup.get(indexGroup.size() - 1);
+        if (info.dtoClass.isAnnotationPresent(Mongo.class)) {
             info.dbms = Dbms.MONGO;
-        } else if (dtoClass.isAnnotationPresent(Sql.class)) {
+        } else if (info.dtoClass.isAnnotationPresent(Sql.class)) {
             info.dbms = Dbms.SQL;
-        } else if (dtoClass.isAnnotationPresent(Elastic.class)) {
+        } else if (info.dtoClass.isAnnotationPresent(Elastic.class)) {
             info.dbms = Dbms.ELASTIC;
         } else {
             info.dbms = Dbms.NOSTORE;
         }
-
-        catInfo.put(dtoClass.getSimpleName(), info);
-        index.put(tempCategory, catInfo);
+        indexDto.put(info.dtoClass.getSimpleName(), info);
+        for (Class<?> innerClass : info.dtoClass.getDeclaredClasses()) {
+            if (!ClassUtil.implementsInterface(innerClass, Dto.class)) {
+                continue;
+            }
+            Info innerInfo = new Info(info, (Class<? extends Dto>) innerClass);
+            innerInfo.hidden = true;
+            indexDto.put(info.dtoClass.getSimpleName() + "." + innerClass.getSimpleName(), innerInfo);
+        }
     }
 
-    public static void add(String title, Class<? extends Dto> dtoClass, Integer onUpdateBroadcastMessage) {
-        add(title, dtoClass, onUpdateBroadcastMessage, null);
+    /**
+     * <group, <dto, info>>
+     * hidden not included
+     */
+    public static Map<String, Map<String, Info>> getManifest() {
+        Map<String, Map<String, Info>> manifest = new LinkedHashMap<>(indexGroup.size(), 1);
+        for (String g : indexGroup) {
+            manifest.put(g, new LinkedHashMap<>(20, 1));
+        }
+        for (Map.Entry<String, Info> d : indexDto.entrySet()) {
+            Info i = d.getValue();
+            if (i.hidden) {
+                continue;
+            }
+            manifest.get(i.group).put(d.getKey(), i);
+        }
+        return manifest;
     }
 
-    public static void add(String title, Class<? extends Dto> dtoClass) {
-        add(title, dtoClass, null, null);
-    }
-
-    public static void add(String title, Class<? extends Dto> dtoClass, QueryBuilder queryCache) {
-        add(title, dtoClass, null, queryCache);
-    }
-
-    public static Map<String, Map<String, Info>> getStructure() {
-        return index;
-    }
-
+    /**
+     * hidden not included
+     */
     public static List<Info> getAll(Dbms... dbmses) {
-        List<Info> info = new ArrayList<>(100);
-        for (Map<String, Info> bucket : index.values()) {
-            for (Info item : bucket.values()) {
-                if (dbmses.length == 0) {
-                    info.add(item);
-                    continue;
-                }
+        List<Info> info = new ArrayList<>(indexDto.size());
+        for (Info i : indexDto.values()) {
+            if (i.hidden) {
+                continue;
+            }
+            if (dbmses.length > 0) {
                 for (Dbms dbms : dbmses) {
-                    if (dbms.equals(item.dbms)) {
-                        info.add(item);
+                    if (dbms.equals(i.dbms)) {
+                        info.add(i);
                         break;
                     }
                 }
+            } else {
+                info.add(i);
             }
         }
         return info;
     }
 
-    public static List<Info> getAll() {
-        List<Info> info = new ArrayList<>(100);
-        for (Map<String, Info> bucket : index.values()) {
-            info.addAll(bucket.values());
+    /**
+     * hidden not included
+     */
+    public static List<String> getDtoClassNames(Dbms dbms) {
+        List<String> names = new ArrayList<>(indexDto.size());
+        for (Info i : getAll(dbms)) {
+            if (i.hidden) {
+                continue;
+            }
+            names.add(i.dtoClass.getSimpleName());
+        }
+        return names;
+    }
+
+    public static List<Info> getSubClasses(String className) {
+        className = className + ".";
+        List<Info> info = new ArrayList<>(indexDto.size());
+        for (Map.Entry<String, Info> e : indexDto.entrySet()) {
+            Info i = e.getValue();
+            if (!i.hidden) {
+                continue;
+            }
+            if (e.getKey().startsWith(className)) {
+                info.add(i);
+            }
         }
         return info;
     }
 
-    public static String[] getNames(Dbms dbms) {
-        List<Info> info = getAll(dbms);
-        String[] names = new String[info.size()];
-        for (int i = 0; i < info.size(); ++i) {
-            names[i] = info.get(i).dtoClass.getSimpleName();
-        }
-        return names;
+    public static Info get(Class<?> type) {
+        return get(type.getSimpleName());
     }
 
     /**
@@ -118,35 +153,24 @@ public class DtoDictionary {
         if (name == null) {
             return null;
         }
-        for (Map<String, Info> bucket : index.values()) {
-            Info i = bucket.get(name);
-            if (i != null) {
+        if (name.contains("$") || name.contains(".")) {
+            name = StringUtil.replace(name, '$', '.');
+        }
+        Info i = indexDto.get(name);
+        if (i != null) {
+            return i;
+        }
+        for (Info j : indexDto.values()) {
+            if (name.equals(j.getStorage())) {
                 return i;
-            }
-            for (Info info : bucket.values()) {
-                if (info.getDtoInstance().getStorage().equals(name)) {
-                    return info;
-                }
             }
         }
         return null;
-    }
-
-    public static Info get(Class<?> type) {
-        return get(type.getSimpleName());
     }
 
     public static Dto getInstance(String className) {
-        if (className == null) {
-            return null;
-        }
-        for (Map<String, Info> bucket : index.values()) {
-            Info i = bucket.get(className);
-            if (i != null) {
-                return i.getDtoInstance();
-            }
-        }
-        return null;
+        Info i = indexDto.get(className);
+        return i == null ? null : i.getDtoInstance();
     }
 
     public static <T extends Dto> T getInstance(Class<T> classType) {
@@ -159,19 +183,30 @@ public class DtoDictionary {
 
     public static class Info {
 
+        public boolean hidden;
         public Dbms dbms;
-        public String category;
+        public String group;
         public String title;
         public Class<? extends Dto> dtoClass;
         public Integer broadcastMessage;
         public QueryBuilder queryCache;
 
+        public Info() {
+
+        }
+
+        public Info(Info i, Class<? extends  Dto> dtoClass) {
+            dbms = i.dbms;
+            group = i.group;
+            title = i.title;
+            this.dtoClass = dtoClass;
+        }
 
         public Dto getDtoInstance() {
             try {
                 return dtoClass.getConstructor().newInstance();
             } catch (NoSuchMethodException | InstantiationException | IllegalAccessException | InvocationTargetException e) {
-                log.error("! failed to create dto instance ({})", dtoClass, e);
+                ServiceLog.log.error("! failed to create dto instance ({})", dtoClass, e);
                 return null;
             }
         }
@@ -189,6 +224,15 @@ public class DtoDictionary {
                 }
             }
             return FileUtil.getFileContentFromClassPath("/data/import/" + StringUtil.toKababCase(getDtoClassName()));
+        }
+
+        public String getStorage() {
+            return DtoBase.getStorage(dtoClass);
+        }
+
+        @Override
+        public String toString() {
+            return dtoClass.getSimpleName();
         }
     }
 }

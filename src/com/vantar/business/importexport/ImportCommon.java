@@ -3,17 +3,14 @@ package com.vantar.business.importexport;
 import com.vantar.business.ModelCommon;
 import com.vantar.database.common.ValidationError;
 import com.vantar.database.dto.Dto;
+import com.vantar.service.log.ServiceLog;
 import com.vantar.util.json.Json;
 import com.vantar.util.string.StringUtil;
 import com.vantar.web.WebUi;
-import org.slf4j.*;
 import java.util.*;
 
 
 public abstract class ImportCommon {
-
-    public static final Logger log = LoggerFactory.getLogger(ImportCommon.class);
-
 
     protected static void importDataX(Import importCallback, String data, Dto dto, List<String> presentField, WebUi ui) {
         try {
@@ -22,7 +19,9 @@ public abstract class ImportCommon {
             } else {
                 String[] dataArray = StringUtil.split(data, '\n');
                 if (dataArray.length < 1) {
-                    ui.write();
+                    if (ui != null) {
+                        ui.write();
+                    }
                     return;
                 }
 
@@ -36,10 +35,12 @@ public abstract class ImportCommon {
             ModelCommon.afterDataChange(dto);
 
         } catch (Exception e) {
-            log.error(" ! {}", dto, e);
+            if (ui == null) {
+                ServiceLog.log.error("! import({})", dto.getClass().getSimpleName(), e);
+            } else {
+                ui.addErrorMessage(e).write();
+            }
         }
-
-        ui.write();
     }
 
     private static void importHumanReadable(Import importCallback, String data, Dto dto, List<String> presentField, WebUi ui) {
@@ -89,8 +90,9 @@ public abstract class ImportCommon {
                 importCallback.execute(presentValue.toString(), values);
                 continue;
             }
-
-            ui.addKeyValue(presentValue.toString(), ValidationError.toString(errors), "error");
+            if (ui != null) {
+                ui.addKeyValue(presentValue.toString(), ValidationError.toString(errors), "error").write();
+            }
         }
     }
 
@@ -112,8 +114,11 @@ public abstract class ImportCommon {
             String[] cols = StringUtil.split(row, ',');
 
             if (cols.length != fieldCount) {
-                ui.addKeyValue(row, "invalid data. column/field mismatch (" + dataArray[0] + " : " + row + ")", "error");
-                log.error(" !! import failed column/field mismatch > ({} : {})", dataArray[0], row);
+                if (ui == null) {
+                    ServiceLog.log.error(" !! import failed column/field mismatch > ({} : {})", dataArray[0], row);
+                } else {
+                    ui.addKeyValue(row, "invalid data. column/field mismatch (" + dataArray[0] + " : " + row + ")", "error");
+                }
                 continue;
             }
 
@@ -151,7 +156,9 @@ public abstract class ImportCommon {
                 importCallback.execute(presentValue, new HashMap<>(1, 1));
                 continue;
             }
-            ui.addKeyValue(presentValue, ValidationError.toString(errors), "error");
+            if (ui != null) {
+                ui.addKeyValue(presentValue, ValidationError.toString(errors), "error");
+            }
         }
     }
 

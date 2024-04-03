@@ -1,13 +1,15 @@
 package com.vantar.database.nosql.mongo;
 
 import com.mongodb.client.*;
-import com.vantar.admin.model.database.AdminDatabase;
+import com.vantar.admin.model.database.dbms.indexing.AdminDatabaseIndex;
 import com.vantar.database.dto.*;
 import com.vantar.database.query.QueryBuilder;
 import com.vantar.exception.*;
+import com.vantar.locale.*;
+import com.vantar.locale.Locale;
 import com.vantar.service.Services;
 import com.vantar.service.log.ServiceLog;
-import com.vantar.util.datetime.DateTimeRange;
+import com.vantar.util.datetime.*;
 import com.vantar.util.file.FileUtil;
 import com.vantar.util.string.StringUtil;
 import com.vantar.web.WebUi;
@@ -22,11 +24,9 @@ public class MongoBackup {
     private static final int BULK_ACTION_RECORD_COUNT = 1000;
 
 
-    public static void dump(String dumpPath, WebUi ui) {
-        dump(dumpPath, null, null, ui);
-    }
+    public static void dump(String dumpPath, DateTimeRange dateRange
+        , Collection<String> excludes, Collection<String> includes, WebUi ui) {
 
-    public static void dump(String dumpPath, DateTimeRange dateRange, Set<String> excludeDtos, WebUi ui) {
         MongoDatabase database;
         try {
             database = MongoConnection.getDatabase();
@@ -38,14 +38,17 @@ public class MongoBackup {
         }
 
         if (ui != null) {
-            ui.addHeading(2, "Mongo " + database.getName() + " > " + dumpPath).write();
+            ui.addHeading(3, database.getName() + " > " + dumpPath).write();
         }
 
         long r = 0;
         long startTime = System.currentTimeMillis();
         try (ZipOutputStream zip = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(dumpPath)))) {
             for (String collection : MongoConnection.getCollections()) {
-                if (excludeDtos != null && excludeDtos.contains(collection)) {
+                if (excludes != null && excludes.contains(collection)) {
+                    continue;
+                }
+                if (includes != null && !includes.contains(collection)) {
                     continue;
                 }
 
@@ -99,19 +102,14 @@ public class MongoBackup {
             zip.closeEntry();
 
             if (ui != null) {
-                ui.addBlock("pre",
-                    "finished in: " + ((System.currentTimeMillis() - startTime) / 1000) + "s" +
-                    "\n" + r + " records" + "\n" + FileUtil.getSizeReadable(dumpPath)
-                );
+                ui  .addMessage(r + " records")
+                    .addMessage(FileUtil.getSizeReadable(dumpPath))
+                    .addMessage(DateTimeFormatter.secondsToDateTime((System.currentTimeMillis() - startTime) / 1000));
             }
         } catch (IOException | DatabaseException e) {
             if (ui != null) {
-                ui.addErrorMessage(e);
+                ui.addErrorMessage(e).write();
             }
-        }
-
-        if (ui != null) {
-            ui.finish();
         }
     }
 
@@ -127,7 +125,7 @@ public class MongoBackup {
         }
 
         if (ui != null) {
-            ui.addHeading(2, "Mongo " + database.getName() + " > " + dumpPath).write();
+            ui.addHeading(3, database.getName() + " > " + dumpPath).write();
         }
 
         int r = 0;
@@ -143,38 +141,29 @@ public class MongoBackup {
             zip.closeEntry();
 
             if (ui != null) {
-                ui.addBlock("pre",
-                    "finished in: " + ((System.currentTimeMillis() - startTime) / 1000) + "s" +
-                        "\n" + r + " records" + "\n" + FileUtil.getSizeReadable(dumpPath)
-                );
+                ui  .addMessage(r + " records")
+                    .addMessage(FileUtil.getSizeReadable(dumpPath))
+                    .addMessage(DateTimeFormatter.secondsToDateTime((System.currentTimeMillis() - startTime) / 1000));
             }
         } catch (IOException | DatabaseException e) {
             if (ui != null) {
-                ui.addErrorMessage(e);
+                ui.addErrorMessage(e).write();
             }
         }
-
-        if (ui != null) {
-            ui.finish();
-        }
     }
 
-    public static void restore(String zipPath, boolean deleteData) {
-        restore(zipPath, deleteData, false, null);
-    }
+    public static void restore(String zipPath, boolean deleteData, boolean toCamelCase
+        , Collection<String> excludes, Collection<String> includes, WebUi ui) {
 
-    public static void restore(String zipPath, boolean deleteData, boolean toCamelCase, WebUi ui) {
-        ServiceLog.log.info("---> RESTORING database");
         MongoDatabase database;
         try {
             database = MongoConnection.getDatabase();
         } catch (DatabaseException e) {
-            if (ui != null) {
-                ui.addErrorMessage(e).write();
-            }
+            ui.addErrorMessage(e).finish();
             return;
         }
 
+        ServiceLog.log.info("---> RESTORING database");
         ServiceLog logService;
         try {
             logService = Services.getService(ServiceLog.class);
@@ -183,31 +172,32 @@ public class MongoBackup {
             logService = null;
         }
 
-        if (ui != null) {
-            ui.addHeading(2, "Mongo " + zipPath + " > " + database.getName()).write();
-        }
-
         long startTime = System.currentTimeMillis();
         long r = 0;
 
         if (deleteData) {
+            ui.addHeading(3, VantarKey.ADMIN_DATA_PURGE).write();
             try {
-                for (String s : MongoConnection.getCollections()) {
+                for (String collection : MongoConnection.getCollections()) {
+                    if (excludes != null && excludes.contains(collection)) {
+                        continue;
+                    }
+                    if (includes != null && !includes.contains(collection)) {
+                        continue;
+                    }
                     try {
-                        Mongo.deleteAll(s);
-                    } catch (DatabaseException e) {
-                        if (ui != null) {
-                            ui.addErrorMessage(e);
-                        }
+                        Mongo.deleteAll(collection);
+                        ui.addMessage("Purged: " + collection).write();
+                    } catch (VantarException e) {
+                        ui.addErrorMessage(e).write();
                     }
                 }
             } catch (DatabaseException e) {
-                if (ui != null) {
-                    ui.addErrorMessage(e);
-                }
+                ui.addErrorMessage(e).write();
             }
         }
 
+        ui.addHeading(3, zipPath + " > " + database.getName()).write();
         try (ZipFile zipFile = new ZipFile(zipPath)) {
             Enumeration<? extends ZipEntry> entries = zipFile.entries();
             while (entries.hasMoreElements()) {
@@ -220,6 +210,13 @@ public class MongoBackup {
                 String[] parts = StringUtil.split(entry.getName(), '/');
                 String collection = StringUtil.replace(parts[parts.length - 1], ".dump", "");
                 collection = StringUtil.toStudlyCase(collection);
+                if (excludes != null && excludes.contains(collection)) {
+                    continue;
+                }
+                if (includes != null && !includes.contains(collection)) {
+                    continue;
+                }
+
                 String line = null;
                 try (
                     InputStream stream = zipFile.getInputStream(entry);
@@ -234,58 +231,49 @@ public class MongoBackup {
                         }
                         line = reader.readLine();
                         if (toCamelCase) {
-                            line = jsonToCamelCaseProperties(line);
+                            line = jsonKeysToCamelCase(line);
                         }
                         documents.add(Document.parse(line));
                     }
                     Mongo.insert(collection, documents);
                     long seq = Mongo.Sequence.setToMax(collection);
 
-                    if (ui != null) {
-                        long elapsed = (System.currentTimeMillis() - startItemTime) / 1000;
-                        ui.addKeyValue(collection, (i - 1) + " records - seq=" + seq + ",    "
-                            + (elapsed * 10 / 10d) + "s").write();
-                        r += i - 1;
-                    }
+                    long elapsed = (System.currentTimeMillis() - startItemTime) / 1000;
+                    ui.addKeyValue(
+                        collection,
+                        "records=" + (i - 1) + " - seq=" + seq + " - " + (elapsed * 10 / 10d) + "s"
+                    ).write();
+
+                    r += i - 1;
                 } catch (Exception e) {
                     ServiceLog.log.info("! {}\n{}\n", entry.getName(), line, e);
-                    if (ui != null) {
-                        ui.addErrorMessage(e);
-                    }
+                    ui.addErrorMessage(e).write();
                 }
             }
         } catch (IOException e) {
-            if (ui != null) {
-                ui.addErrorMessage(e).write();
-            }
+            ui.addErrorMessage(e).write();
+        }
+        ServiceLog.log.info("<--- finished RESTORING database");
+
+        ui  .addMessage(r + " records")
+            .addMessage(FileUtil.getSizeReadable(zipPath))
+            .addMessage(DateTimeFormatter.secondsToDateTime((System.currentTimeMillis() - startTime) / 1000))
+            .write();
+
+        try {
+            ui.addHeading(3, Locale.getString(VantarKey.ADMIN_DATABASE_INDEX_CREATE, DtoDictionary.Dbms.MONGO)).write();
+            AdminDatabaseIndex.createIndexMongo(ui, true);
+        } catch (Exception e) {
+            ServiceLog.log.error("! restore failed to create database indexes.", e);
+            ui.addErrorMessage(e);
         }
 
         if (logService != null) {
             logService.resume();
         }
-
-        if (ui != null) {
-            ServiceLog.log.info("<--- finished RESTORING database");
-            ui .addBlock("pre",
-                    "finished in: " + ((System.currentTimeMillis() - startTime) / 1000) + "s" +
-                    "\n" + r + " records" +
-                    "\n" + FileUtil.getSizeReadable(zipPath)
-                )
-                .blockEnd()
-                .write();
-
-            try {
-                AdminDatabase.createMongoIndex(ui, true);
-            } catch (Exception e) {
-                ServiceLog.log.error("! restore failed to create database indexes.", e);
-                ui.addErrorMessage("Failed to create indexes.");
-            }
-
-            ui.finish();
-        }
     }
 
-    private static String jsonToCamelCaseProperties(String json) {
+    private static String jsonKeysToCamelCase(String json) {
         json = StringUtil.replace(json, "\\\"", "==-+-=-=-+-==");
         StringBuilder buffer = new StringBuilder();
         boolean isIn = false;

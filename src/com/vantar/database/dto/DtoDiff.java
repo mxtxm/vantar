@@ -137,7 +137,7 @@ public class DtoDiff {
                         Dto x = (Dto) item;
                         //           TestController.log.error(">>>>>>>>T>>>{} {} {}", x.getClass().getSimpleName(), includes, excludes);
                         if (includes != null) {
-                            for (String name : x.getProperties(includes.toArray(new String[0]))) {
+                            for (String name : x.getPropertiesEx(includes.toArray(new String[0]))) {
                                 x.setPropertyValue(name, null);
                             }
                         } else if (excludes != null) {

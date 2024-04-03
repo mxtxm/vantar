@@ -482,12 +482,16 @@ public class MongoMapping {
                     matches.add(Filters.geoWithinPolygon(fieldName, polygon));
                     break;
 
+                case MAP_KEY_EXISTS: {
+                    matches.add(new Document(fieldName + "." + item.getValue(), new Document("$exists", true)));
+                    break;
+                }
+
                 case IN_LIST: {
                     Document innerMatch = getMongoMatches(item.queryValue, dto);
                     if (innerMatch == null || innerMatch.isEmpty()) {
                         continue;
                     }
-
                     matches.add(new Document(fieldName, new Document("$elemMatch", innerMatch)));
                     break;
                 }
@@ -549,7 +553,7 @@ public class MongoMapping {
 
         Document document = matches.isEmpty() ? new Document() : new Document(op, matches);
         if (qCondition != null && qCondition.inspect) {
-            Mongo.log.info(" > mongo condition dump: {}", document);
+            Mongo.log.info(" > mongo condition dump: {} --> {}", dto.getClass().getSimpleName(), document);
         }
 
         return document;

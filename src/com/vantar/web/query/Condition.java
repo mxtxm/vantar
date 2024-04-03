@@ -24,6 +24,9 @@ public class Condition {
         if ("not".equals(operator.toLowerCase())) {
             return QueryOperator.NOT;
         }
+        if ("xor".equals(operator.toLowerCase())) {
+            return QueryOperator.XOR;
+        }
         if ("nor".equals(operator.toLowerCase())) {
             return QueryOperator.NOR;
         }

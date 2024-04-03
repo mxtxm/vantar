@@ -9,5 +9,5 @@ import java.lang.annotation.*;
 @Target(ElementType.FIELD)
 public @interface Depends {
 
-    Class<? extends Dto> value();
+    Class<? extends Dto>[] value();
 }

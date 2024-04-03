@@ -56,6 +56,17 @@ public class QueryCondition {
 
     // IN LIST
 
+    public QueryCondition mapKeyExists(String fieldName, Object value) {
+        if (value == null) {
+            return this;
+        }
+        q.add(new QueryMatchItem(QueryOperator.MAP_KEY_EXISTS, fieldName, value.toString()));
+        return this;
+    }
+
+
+    // IN LIST
+
     public QueryCondition inList(String fieldName, QueryCondition c) {
         q.add(new QueryMatchItem(QueryOperator.IN_LIST, fieldName, c));
         return this;

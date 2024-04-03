@@ -28,17 +28,26 @@ abstract class WebUiBasics <T extends WebUiBasics<T>> {
 
     protected String authToken;
     protected String lang;
-    protected String direction;
-    protected String boxFloat;
-    protected String align;
-    protected String alignKey;
-    protected String alignValue;
-    protected StringBuilder additive;
+    public String direction;
+    public String boxFloat;
+    public String align;
+    public String alignKey;
+    public String alignValue;
+    protected StringBuilder widgetComment;
     protected final HtmlEscape escape = new HtmlEscape();
 
 
     public T setAuthToken(String token) {
         authToken = token;
+        return getThis();
+    }
+
+    public T reverseDirection() {
+        direction = "ltr".equalsIgnoreCase(direction) ? "rtl" : "ltr";
+        boxFloat = "float-right".equalsIgnoreCase(boxFloat) ? "float-left" : "float-right";
+        align = "right".equalsIgnoreCase(align) ? "left" : "right";
+        alignKey = "left".equalsIgnoreCase(alignKey) ? "right" : "left";
+        alignValue = "right".equalsIgnoreCase(alignValue) ? "left" : "right";
         return getThis();
     }
 
@@ -60,7 +69,7 @@ abstract class WebUiBasics <T extends WebUiBasics<T>> {
 
         if (text.length > 0) {
             html.append("<li class='signout'><a href='").append("/admin/signout").append("'>")
-                .append(Locale.getString(VantarKey.ADMIN_MENU_SIGN_OUT)).append("</a></li>\n");
+                .append(Locale.getString(VantarKey.SIGN_OUT)).append("</a></li>\n");
         }
 
         String path = params.request.getRequestURI();
@@ -88,7 +97,7 @@ abstract class WebUiBasics <T extends WebUiBasics<T>> {
 
     public T setBreadcrumb(String title, DtoDictionary.Info dtoInfo) {
         html.append("<h1>")
-            .append(dtoInfo.category)
+            .append(dtoInfo.group)
             .append(" &gt; ")
             .append("<a href='").append(getLink("/admin/data/list?dto=" + dtoInfo.getDtoClassName()))
             .append("'>").append(dtoInfo.title).append("</a>")
@@ -322,6 +331,10 @@ abstract class WebUiBasics <T extends WebUiBasics<T>> {
         return getThis();
     }
 
+    public String getBlock(String type, String value, boolean escape) {
+        return "<" + type + ">" + (escape ? escapeWithNtoBr(value) : value) + "</" + type + ">";
+    }
+
     // BLOCK < < <
 
     // > > > FORM
@@ -378,13 +391,17 @@ abstract class WebUiBasics <T extends WebUiBasics<T>> {
 
     // > > > INPUTS
 
-    public T addHidden(String id, Object value) {
-        html.append(getInput("hidden", id, value));
+    public T addHidden(String name, Object value) {
+        html.append("<input type=\"hidden\" name=\"").append(name).append("\" value=\"").append(value).append("\"/>");
         return getThis();
     }
 
     public T addInput(Object label, String id, Object... options) {
         return addWidgetRow(label, id, getInput("text", id, options));
+    }
+
+    public T addInputSelectable(Object label, String id, Collection<Object> selectable, Object... options) {
+        return addWidgetRow(label, id, getInputSelectable("text", id, selectable, options));
     }
 
     public T addPassword(Object label, String id, Object... options) {
@@ -413,6 +430,22 @@ abstract class WebUiBasics <T extends WebUiBasics<T>> {
         return sb.toString();
     }
 
+    /**
+     * options --> value, class, direction
+     */
+    public String getInputSelectable(String type, String id, Collection<Object> selectable, Object... options) {
+        return
+            getInput(type, id, options)
+            + getSelect(
+                id + "-select",
+                selectable,
+                false,
+                null,
+                "input-selectable",
+                "$('#" + id + "').val($('#" + id + "').val() + ',' + $(this).val())"
+            );
+    }
+
     public T addSubmit() {
         return addSubmit(VantarKey.ADMIN_SUBMIT);
     }
@@ -426,8 +459,9 @@ abstract class WebUiBasics <T extends WebUiBasics<T>> {
 
     public String getSubmit(Object label, String... options) {
         String value = label instanceof LangKey ? Locale.getString((LangKey) label) : label.toString();
+        String id = options.length > 1 && options[1] != null ? options[1] : null;
         return  "<button type=\"submit\" value=\"" + value + "\""
-            + (options.length > 1 && options[1] != null ? " name=\"" + options[1] + "\"" : "")
+            + (id != null ? " name=\"" + id + "\" id=\"" + id + "\"" : "")
             + (options.length > 0 && options[0] != null ? " class=\"" + options[0] + "\"" : "")
             + " style=\"direction:" + alignValue + "\">" + value
             + "</button>\n";
@@ -473,14 +507,15 @@ abstract class WebUiBasics <T extends WebUiBasics<T>> {
     }
 
     /**
-     * options --> checked, value, class, direction
+     * options --> checked, value, class, adjust
      */
     public String getCheckbox(String id, Object... options) {
         StringBuilder sb = new StringBuilder(250);
         sb  .append("<input type=\"checkbox\" id=\"").append(id).append("\" name=\"").append(id).append("\"")
-            .append(" value=\"").append(options.length > 1 && options[1] != null ? options[1] : "1").append("\"")
-            .append(" style=\"margin-top:5px;direction:")
-            .append(options.length > 3 && options[3] != null ? options[3] : alignValue).append("\"");
+            .append(" value=\"").append(options.length > 1 && options[1] != null ? options[1] : "1").append("\"");
+        if (options.length <= 3 || options[3] == null || (boolean) options[3]) {
+            sb.append(" style=\"margin-top:5px;direction:").append(alignValue).append("\"");
+        }
         if (options.length > 0 && options[0] != null && (boolean) options[0]) {
             sb.append(" checked=\"checked\"");
         }
@@ -496,7 +531,7 @@ abstract class WebUiBasics <T extends WebUiBasics<T>> {
     }
 
     /**
-     * options --> isMultiSelect, value, class, direction
+     * options --> isMultiSelect, value, class, direction, onchange
      */
     public String getSelect(String id, Object items, Object... options) {
         boolean isMulti = (options.length > 1) && (boolean) options[0];
@@ -516,25 +551,30 @@ abstract class WebUiBasics <T extends WebUiBasics<T>> {
             }
             sb.append("\"");
         }
+        if (options.length > 3 && options[3] != null) {
+            sb.append(" onchange=\"").append(options[3]).append("\"");
+        }
         sb.append(">\n");
         if (!isMulti) {
             sb.append("<option></option>\n");
         }
         Object value = options.length > 1 ? options[1] : null;
+
         if (items instanceof Map) {
             for (Map.Entry<?, ?> item : ((Map<?, ?>) items).entrySet()) {
                 sb.append("<option value=\"").append(item.getKey()).append("\"");
-                if (isMulti) {
-                    for (Object v : (Collection<?>) value) {
-                        if (item.getKey().equals(v)) {
-                            sb.append(" selected=\"selected\"");
+                if (value != null) {
+                    if (isMulti) {
+                        for (Object v : (Collection<?>) value) {
+                            if (item.getKey().toString().equals(v.toString())) {
+                                sb.append(" selected=\"selected\"");
+                            }
                         }
+                    } else if (item.getKey().toString().equals(value.toString())) {
+                        sb.append(" selected=\"selected\"");
                     }
-                } else if (item.getKey().equals(value)) {
-                    sb.append(" selected=\"selected\"");
                 }
-                sb.append(" title=\"").append(item.getKey()).append("\" ");
-                sb.append(">").append(item.getValue()).append("</option>\n");
+                sb.append(" title=\"").append(item.getKey()).append("\">").append(item.getValue()).append("</option>\n");
             }
         } else if (items instanceof Collection<?>) {
             for (Object item : (Collection<?>) items) {
@@ -542,11 +582,11 @@ abstract class WebUiBasics <T extends WebUiBasics<T>> {
                 if (value != null) {
                     if (isMulti) {
                         for (Object v : (Collection<?>) value) {
-                            if (item.equals(v)) {
+                            if (item.toString().equals(v.toString())) {
                                 sb.append(" selected=\"selected\"");
                             }
                         }
-                    } else if (item.equals(value)) {
+                    } else if (item.toString().equals(value.toString())) {
                         sb.append(" selected=\"selected\"");
                     }
                 }
@@ -558,11 +598,11 @@ abstract class WebUiBasics <T extends WebUiBasics<T>> {
                 if (value != null) {
                     if (isMulti) {
                         for (Object v : (Collection<?>) value) {
-                            if (item.equals(v)) {
+                            if (item.equals(v.toString())) {
                                 sb.append(" selected=\"selected\"");
                             }
                         }
-                    } else if (item.equals(value)) {
+                    } else if (item.equals(value.toString())) {
                         sb.append(" selected=\"selected\"");
                     }
                 }
@@ -579,9 +619,10 @@ abstract class WebUiBasics <T extends WebUiBasics<T>> {
             .append("<label style=\"text-align:").append(alignKey).append("\" for=\"").append(name).append("\">\n")
             .append(label instanceof LangKey ? Locale.getString((LangKey) label) : label).append("</label>\n")
             .append(widget);
-        if (additive != null) {
-            html.append(additive);
-            additive = null;
+        if (widgetComment != null) {
+            html.append("<button type=\"button\" class=\"data-hint-b\" onclick=\"dataHintB(this)\">...</button>")
+                .append("<span class=\"field-hint\">").append(widgetComment).append("</span>");
+            widgetComment = null;
         }
         html.append("</div>\n");
         return getThis();
@@ -664,8 +705,15 @@ abstract class WebUiBasics <T extends WebUiBasics<T>> {
         // title
         for (int i = 0, l = titles.length; i < l; ++i) {
             Object t = titles[i];
+            String[] txt = StringUtil.split(
+                escapeWithNtoBr(t instanceof LangKey ? Locale.getString((LangKey) t) : t.toString()),
+                "|"
+            );
             html.append(i == 0 ? "<p class=\"title\">" : "<p class=\"comment\">");
-            html.append(escapeWithNtoBr(t instanceof LangKey ? Locale.getString((LangKey) t) : t.toString()));
+            html.append(txt[0]);
+            if (txt.length > 1) {
+                html.append("<label class=\"title-tag\">").append(txt[1]).append("</label>");
+            }
             html.append("</p>\n");
         }
         html.append("</h2></a>\n<div class=\"solid-box-clear clearfix\">\n");
@@ -726,13 +774,13 @@ abstract class WebUiBasics <T extends WebUiBasics<T>> {
 
     public T setJs(String path) {
         if (js == null) {
-            js = new ArrayList<>(14);
+            js = new ArrayList<>(7);
         }
         js.add(path);
         return getThis();
     }
 
-    public T sleep(int ms) {
+    public T sleepMs(int ms) {
         try {
             Thread.sleep(ms);
         } catch (InterruptedException ignore) {
@@ -749,7 +797,8 @@ abstract class WebUiBasics <T extends WebUiBasics<T>> {
                 "    <meta charset=\"UTF-8\">\n" +
                 "    <meta name=\"description\" content=\"Vantar admin dashboard\">\n" +
                 "    <meta name=\"author\" content=\"Mehdi Torabi\">\n" +
-                "    <link rel='stylesheet' type='text/css' href='/css/index.css'>\n</head>\n<body class="
+                "    <link rel='stylesheet' type='text/css' href='/css/index.css?v=" +
+                VantarParam.VERSION + "'>\n</head>\n<body class="
                 + direction + ">\n\n"
                 + html.toString();
 
@@ -774,7 +823,7 @@ abstract class WebUiBasics <T extends WebUiBasics<T>> {
         setJs("/js/webservice.js");
         if (js != null) {
             for (String j : js.stream().distinct().collect(Collectors.toList())) {
-                html.append("<script src=\"").append(j).append("\"></script>\n");
+                html.append("<script src=\"").append(j).append("?v=" + VantarParam.VERSION + "\"></script>\n");
             }
         }
         html.append("</body>\n</html>");

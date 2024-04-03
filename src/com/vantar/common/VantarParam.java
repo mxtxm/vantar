@@ -3,23 +3,19 @@ package com.vantar.common;
 
 public class VantarParam {
 
-    public static final String VERSION = "4.8beta";
+    public static final String VERSION = "4.9.2beta";
 
     // these can be override in Application
     public static String QUEUE_NAME_USER_ACTION_LOG = "user-action-log";
     public static String QUEUE_NAME_MESSAGE_BROADCAST = "message";
 
     public static final int MESSAGE_SERVICES_ACTION = 7001;
+    public static final int MESSAGE_SERVICE_STARTED = 7003;
+    public static final int MESSAGE_SERVICE_STOPPED = 7004;
 
-    public static final int MESSAGE_SERVICES_START = 7001;
-    public static final int MESSAGE_SERVICES_STOP = 7002;
-    public static final int MESSAGE_SERVICES_RESTART = 7003;
-
-    public static final int MESSAGE_SERVICE_STARTED = 7004;
-    public static final int MESSAGE_SERVICE_STOPPED = 7005;
-    public static final int MESSAGE_SETTINGS_UPDATED = 7006;
-    public static final int MESSAGE_UPDATE_SETTINGS = 7007;
-    public static final int MESSAGE_DATABASE_UPDATED = 7008;
+    public static final int MESSAGE_SETTINGS_UPDATED = 7005;
+    public static final int MESSAGE_UPDATE_SETTINGS = 7006;
+    public static final int MESSAGE_DATABASE_UPDATED = 7007;
 
     public static final char SEPARATOR_COMMON = ',';
     public static final char SEPARATOR_URL = '|';

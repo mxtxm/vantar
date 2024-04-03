@@ -434,8 +434,7 @@ public class CollectionUtil {
                 return new ArrayList<>(1);
             }
 
-            List<T> items = new ArrayList<>(object instanceof Collection<?> ?
-                ((Collection<?>) object).size() : DEFAULT_INIT_SIZE);
+            List<T> items = new ArrayList<>(object instanceof Collection<?> ? ((Collection<?>) object).size() : DEFAULT_INIT_SIZE);
             for (Object item : (Iterable<?>) object) {
                 item = ObjectUtil.convert(item, genericType);
                 if (item != null) {

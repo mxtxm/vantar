@@ -32,6 +32,7 @@ public class ServiceBackup implements Services.Service {
     public Integer deleteOldFilesAfterDays;
     public String path;
     public String exclude;
+    public String include;
     // < < <
 
     // > > > service methods
@@ -110,24 +111,24 @@ public class ServiceBackup implements Services.Service {
         setLogs("begin: " + lastRun.formatter().getDateTime());
 
         Set<String> excludeDtos = StringUtil.splitToSet(exclude, ',');
-
+        Set<String> includeDtos = StringUtil.splitToSet(this.include, ',');
         try {
             if (StringUtil.contains(dbms, DtoDictionary.Dbms.MONGO.toString())) {
-                Beat.set(this.getClass(), "Mongo backed-up start...");
-                MongoBackup.dump(path + "mongo" + tail, null, excludeDtos, null);
-                Beat.set(this.getClass(), "Mongo backed-up");
+                Beat.set(this.getClass(), "Mongo backup start...");
+                MongoBackup.dump(path + "mongo" + tail, null, excludeDtos, includeDtos, null);
+                Beat.set(this.getClass(), "Mongo backup");
                 setLogs("success: " + lastRun.formatter().getDateTime() + " mongo");
             }
             if (StringUtil.contains(dbms, DtoDictionary.Dbms.SQL.toString())) {
-                Beat.set(this.getClass(), "SQL backed-up start...");
+                Beat.set(this.getClass(), "SQL backup start...");
                 SqlBackup.dump(path + "sql" + tail, null, null);
-                Beat.set(this.getClass(), "SQL backed-up");
+                Beat.set(this.getClass(), "SQL backup");
                 setLogs("success: " + lastRun.formatter().getDateTime() + " sql");
             }
             if (StringUtil.contains(dbms, DtoDictionary.Dbms.ELASTIC.toString())) {
-                Beat.set(this.getClass(), "Elastic backed-up start...");
+                Beat.set(this.getClass(), "Elastic backup start...");
                 ElasticBackup.dump(path + "elastic" + tail, null, null);
-                Beat.set(this.getClass(), "Elastic backed-up");
+                Beat.set(this.getClass(), "Elastic backup");
                 setLogs("success: " + lastRun.formatter().getDateTime() + " elastic");
             }
 

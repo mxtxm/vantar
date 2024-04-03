@@ -196,7 +196,7 @@ public class ServiceDbArchive implements Services.Service {
 
             archiveByRecordCount(dto, archiveInfo, className, now, archivePolicy);
 
-        } catch (DatabaseException e) {
+        } catch (Exception e) {
             ServiceLog.log.error(" ! archive {} > {}", className, newClassName, e);
             lastSuccess = true;
             setLog(e.getMessage());

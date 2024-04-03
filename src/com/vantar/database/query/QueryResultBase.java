@@ -85,7 +85,44 @@ abstract public class QueryResultBase {
                 data.put(dto.getPropertyValue(keyField), (T) dto);
                 dto = dto.getClass().getConstructor().newInstance();
             }
+            if (data.isEmpty()) {
+                throw new NoContentException();
+            }
+            return data;
+        } catch (NoSuchMethodException | IllegalAccessException | InstantiationException | InvocationTargetException e) {
+            log.error("! data > dto({})", dto, e);
+            throw new NoContentException();
+        } finally {
+            close();
+        }
+    }
 
+    public Collection<Object> asPropertyList(String property) throws VantarException {
+        Collection<Object> data = new ArrayList<>(1000);
+        try {
+            while (next()) {
+                data.add(dto.getPropertyValue(property));
+                dto = dto.getClass().getConstructor().newInstance();
+            }
+            if (data.isEmpty()) {
+                throw new NoContentException();
+            }
+            return data;
+        } catch (NoSuchMethodException | IllegalAccessException | InstantiationException | InvocationTargetException e) {
+            log.error("! data > dto({})", dto, e);
+            throw new NoContentException();
+        } finally {
+            close();
+        }
+    }
+
+    public Map<Long, Object> asPropertyMap(String property) throws VantarException {
+        Map<Long, Object> data = new HashMap<>(1000, 1);
+        try {
+            while (next()) {
+                data.put(dto.getId(), dto.getPropertyValue(property));
+                dto = dto.getClass().getConstructor().newInstance();
+            }
             if (data.isEmpty()) {
                 throw new NoContentException();
             }

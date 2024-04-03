@@ -26,7 +26,9 @@ public class UserLog extends DtoBase {
     public Long objectId;
 
     public String object;
+    @ExcludeList
     public Map<String, Object> objectX;
+    @ExcludeList
     public Map<String, Object> extraData;
 
 

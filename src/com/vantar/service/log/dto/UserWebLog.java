@@ -24,16 +24,20 @@ public class UserWebLog extends DtoBase {
     @CreateTime
     public DateTime time;
 
+    @ExcludeList
     public List<String> uploadedFiles;
     @StoreString
+    @ExcludeList
     public Map<String, String> headers;
 
     public Long objectId;
     public String className;
     public String classNameSimple;
     public String params;
+    @ExcludeList
     public Map<String, Object> paramsX;
 
+    @ExcludeList
     public Map<String, Object> extraData;
 
 

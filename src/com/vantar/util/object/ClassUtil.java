@@ -230,17 +230,17 @@ public class ClassUtil {
             resources = classLoader.getResources(packageName.replace('.', '/'));
         } catch (IOException e) {
             ObjectUtil.log.error(" !! package({})\n", packageName, e);
-            return new ArrayList<>();
+            return new ArrayList<>(1);
         }
 
-        List<File> dirs = new ArrayList<>();
+        List<File> dirs = new ArrayList<>(100);
         while (resources.hasMoreElements()) {
             dirs.add(new File(resources.nextElement().getFile()));
         }
 
         List<Class<?>> classes = new ArrayList<>();
         for (File directory : dirs) {
-            classes.addAll(findClasses(directory, packageName));
+            classes.addAll(findClasses(directory, packageName, null));
         }
         return classes;
     }
@@ -251,8 +251,8 @@ public class ClassUtil {
         return classes;
     }
 
-    private static List<Class<?>> findClasses(File directory, String packageName) {
-        List<Class<?>> classes = new ArrayList<>();
+    public static List<Class<?>> findClasses(File directory, String packageName, Class<?> filterClass) {
+        List<Class<?>> classes = new ArrayList<>(100);
         if (!directory.exists()) {
             return classes;
         }
@@ -267,10 +267,14 @@ public class ClassUtil {
                 if (file.getName().contains(".")) {
                     continue;
                 }
-                classes.addAll(findClasses(file, packageName + "." + file.getName()));
+                classes.addAll(findClasses(file, packageName + "." + file.getName(), filterClass));
             } else if (file.getName().endsWith(".class")) {
                 try {
-                    classes.add(Class.forName(packageName + '.' + file.getName().substring(0, file.getName().length() - 6)));
+                    Class<?> c = Class.forName(packageName + '.' + file.getName().substring(0, file.getName().length() - 6));
+                    if (filterClass != null && !isInstantiable(c, filterClass)) {
+                        continue;
+                    }
+                    classes.add(c);
                 } catch (ClassNotFoundException e) {
                     ObjectUtil.log.error(" !! package({}) class not found\n", packageName, e);
                 }

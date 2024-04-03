@@ -441,7 +441,7 @@ public class CommonModelSql extends ModelCommon {
     // > > > admin tools
 
     public static void importDataAdmin(String data, Dto dto, List<String> presentField, boolean deleteAll, WebUi ui) {
-        ui.beginBox(dto.getClass().getSimpleName(), null, "box-title2").write();
+        ui.addHeading(3, dto.getClass().getSimpleName()).write();
 
         try (SqlConnection connection = new SqlConnection()) {
             connection.startTransaction();
@@ -450,7 +450,9 @@ public class CommonModelSql extends ModelCommon {
 
             if (deleteAll) {
                 repo.purgeData(dto.getStorage());
-                ui.addBlock("pre", Locale.getString(VantarKey.DELETE_SUCCESS)).write();
+                if (ui != null) {
+                    ui.addMessage(VantarKey.DELETE_SUCCESS).write();
+                }
             }
 
             AtomicInteger failed = new AtomicInteger();
@@ -467,7 +469,9 @@ public class CommonModelSql extends ModelCommon {
                     //sqlExecute.insert(dto);
                     success.getAndIncrement();
                 } catch (DatabaseException e) {
-                    ui.addErrorMessage(presentValue + " " + Locale.getString(VantarKey.IMPORT_FAIL));
+                    if (ui != null) {
+                        ui.addErrorMessage(presentValue + " " + Locale.getString(VantarKey.IMPORT_FAIL));
+                    }
                     failed.getAndIncrement();
                 }
             };
@@ -475,15 +479,17 @@ public class CommonModelSql extends ModelCommon {
             //importDataX(imp, data, dto, presentField, ui);
             connection.commit();
 
-            ui.addBlock("pre",
-                Locale.getString(VantarKey.BUSINESS_WRITTEN_COUNT, success) + "\n" +
-                Locale.getString(VantarKey.BUSINESS_ERROR_COUNT, failed) + "\n" +
-                Locale.getString(VantarKey.BUSINESS_DUPLICATE_COUNT, duplicate)
-            );
+            if (ui != null) {
+                ui  .addKeyValue(VantarKey.BUSINESS_WRITTEN_COUNT, success)
+                    .addKeyValue(VantarKey.BUSINESS_ERROR_COUNT, failed)
+                    .addKeyValue(VantarKey.BUSINESS_DUPLICATE_COUNT, duplicate)
+                    .write();
+            }
 
         } catch (DatabaseException e) {
-            ui.addErrorMessage(e);
-            log.error("! batch import failed", e);
+            if (ui != null) {
+                ui.addErrorMessage(e);
+            }
         }
 
         ui.blockEnd().blockEnd().write();

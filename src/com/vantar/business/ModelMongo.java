@@ -2,7 +2,7 @@ package com.vantar.business;
 
 import com.vantar.common.VantarParam;
 import com.vantar.database.common.*;
-import com.vantar.database.dependency.DataDependency;
+import com.vantar.database.dependency.*;
 import com.vantar.database.dto.*;
 import com.vantar.database.nosql.mongo.Mongo;
 import com.vantar.database.nosql.mongo.*;
@@ -15,170 +15,62 @@ import com.vantar.service.log.ServiceLog;
 import com.vantar.service.log.dto.UserLog;
 import com.vantar.util.number.NumberUtil;
 import com.vantar.util.object.*;
-import com.vantar.util.string.StringUtil;
+import com.vantar.util.string.*;
 import com.vantar.web.*;
 import org.bson.Document;
-import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.*;
 import java.util.*;
 
 /**
  * params  write methods: +events +validation +mutex +log
  * normal  write methods: +events +validation +mutex +log
- * noLog   write methods: +events +validation +mutex -log
- * NoMutex write methods: +events +validation -mutex -log
  */
 public class ModelMongo extends ModelCommon {
+
+    public static long getNextSequence(Dto dto) throws ServerException {
+        try {
+            return Mongo.Sequence.getNext(dto);
+        } catch (DatabaseException e) {
+            throw new ServerException(VantarKey.FETCH_FAIL);
+        }
+    }
 
 
     // INSERT > > >
 
-    public static ResponseMessage insert(Params params, Dto dto) throws VantarException {
-        return insertX(params, dto, null);
-    }
-    public static ResponseMessage insert(Params params, Dto dto, WriteEvent event) throws VantarException {
-        return insertX(params, dto, event);
-    }
-    public static ResponseMessage insertJson(Params params, Dto dto) throws VantarException {
-        return insertX(params.getJson(), dto, null);
-    }
-    public static ResponseMessage insertJson(Params params, Dto dto, WriteEvent event) throws VantarException {
-        return insertX(params.getJson(), dto, event);
-    }
-    public static ResponseMessage insertJson(Params params, String key, Dto dto) throws VantarException {
-        return insertX(params.getString(key), dto, null);
-    }
-    public static ResponseMessage insertJson(Params params, String key, Dto dto, WriteEvent event) throws VantarException {
-        return insertX(params.getString(key), dto, event);
-    }
-    private static ResponseMessage insertX(Object params, Dto dto, WriteEvent event) throws VantarException {
-        return (ResponseMessage) mutex(dto.getClass(), () -> {
-            if (event != null) {
-                try {
-                    event.beforeSet(dto);
-                } catch (NoContentException e) {
-                    throw new InputException(VantarKey.NO_CONTENT);
-                }
-            }
-
-            List<ValidationError> errors = params instanceof String ?
-                dto.set((String) params, Dto.Action.INSERT) :
-                dto.set((Params) params, Dto.Action.INSERT);
-
-            if (ObjectUtil.isNotEmpty(errors)) {
-                throw new InputException(errors);
-            }
-
-            if (event != null) {
-                try {
-                    event.beforeWrite(dto);
-                } catch (NoContentException e) {
-                    throw new InputException(VantarKey.NO_CONTENT);
-                }
-                dto.removeNullPropertiesNatural();
-            }
-
-            try {
-                errors = getUniqueViolation(dto);
-                if (errors != null) {
-                    throw new InputException(errors);
-                }
-                errors = getRelationViolation(dto);
-                if (errors != null) {
-                    throw new InputException(errors);
-                }
-                errors = getRelationValueViolation(dto);
-                if (errors != null) {
-                    throw new InputException(errors);
-                }
-                Mongo.insert(dto);
-                errors = getParentChildViolation(dto);
-                if (errors != null) {
-                    Mongo.delete(dto);
-                    throw new InputException(errors);
-                }
-            } catch (DatabaseException e) {
-                log.error(" !! {} : {}\n", dto.getClass().getSimpleName(), dto, e);
-                throw new ServerException(VantarKey.INSERT_FAIL);
-            }
-
-            ModelCommon.afterDataChange(dto, event, true, Dto.Action.INSERT);
-
-            return ResponseMessage.success(VantarKey.INSERT_SUCCESS, dto.getId(), dto);
-        });
+    public static ResponseMessage insert(Settings settings) throws VantarException {
+        return settings.mutex ?
+            (ResponseMessage) mutex(settings.dto, (Dto dto) -> insertX(settings, dto)) :
+            insertX(settings, settings.dto);
     }
 
-    public static ResponseMessage insert(Dto dto) throws VantarException {
-        return (ResponseMessage) mutex(dto.getClass(), () -> insertY(dto, true, null));
-    }
-    public static ResponseMessage insert(Dto dto, WriteEvent event) throws VantarException {
-        return (ResponseMessage) mutex(dto.getClass(), () -> insertY(dto, true, event));
-    }
-    public static ResponseMessage insertNoLog(Dto dto) throws VantarException {
-        return (ResponseMessage) mutex(dto.getClass(), () -> insertY(dto, false, null));
-    }
-    public static ResponseMessage insertNoLog(Dto dto, WriteEvent event) throws VantarException {
-        return (ResponseMessage) mutex(dto.getClass(), () -> insertY(dto, false, event));
-    }
-    public static ResponseMessage insertNoMutex(Dto dto) throws VantarException {
-        return insertY(dto, true, null);
-    }
-    public static ResponseMessage insertNoMutex(Dto dto, WriteEvent event) throws VantarException {
-        return insertY(dto, true, event);
-    }
-    public static ResponseMessage insertNoMutexNoLog(Dto dto) throws VantarException {
-        return insertY(dto, false, null);
-    }
-    public static ResponseMessage insertNoMutexNoLog(Dto dto, WriteEvent event) throws VantarException {
-        return insertY(dto, false, event);
-    }
-    private static ResponseMessage insertY(Dto dto, boolean logEvent, WriteEvent event) throws VantarException {
-        if (event != null) {
-            try {
-                event.beforeSet(dto);
-            } catch (NoContentException e) {
-                throw new InputException(VantarKey.NO_CONTENT);
-            }
+    private static ResponseMessage insertX(Settings s, Dto dto) throws VantarException {
+        s.action = Dto.Action.INSERT;
+        List<ValidationError> errors;
+        if (s.params == null) {
+            errors = dto.validate(s.action);
+        } else {
+            errors = s.isJson ?
+                dto.set(s.key == null ? s.params.getJson() : s.params.getString(s.key), s.action) :
+                dto.set(s.params, s.action);
         }
-
-        List<ValidationError> errors = dto.validate(Dto.Action.INSERT);
         if (ObjectUtil.isNotEmpty(errors)) {
             throw new InputException(errors);
         }
 
-        if (event != null) {
+        if (s.event != null) {
             try {
-                event.beforeWrite(dto);
+                s.event.beforeWrite(dto);
             } catch (NoContentException e) {
                 throw new InputException(VantarKey.NO_CONTENT);
             }
-            dto.removeNullPropertiesNatural();
         }
 
-        try {
-            errors = getUniqueViolation(dto);
-            if (errors != null) {
-                throw new InputException(errors);
-            }
-            errors = getRelationViolation(dto);
-            if (errors != null) {
-                throw new InputException(errors);
-            }
-            errors = getRelationValueViolation(dto);
-            if (errors != null) {
-                throw new InputException(errors);
-            }
-            Mongo.insert(dto);
-            errors = getParentChildViolation(dto);
-            if (errors != null) {
-                Mongo.delete(dto);
-                throw new InputException(errors);
-            }
-        } catch (DatabaseException e) {
-            log.error(" !! {} : {}\n", dto.getClass().getSimpleName(), dto, e);
-            throw new ServerException(VantarKey.INSERT_FAIL);
-        }
-
-        ModelCommon.afterDataChange(dto, event, logEvent, Dto.Action.INSERT);
+        dto.removeNullPropertiesNatural();
+        ModelMongoChecking.throwUniqueViolation(dto);
+        ModelMongoChecking.throwDependencyViolations(dto);
+        Mongo.insert(dto);
+        ModelCommon.afterDataChange(dto, s.event, s.logEvent, Dto.Action.INSERT);
 
         return ResponseMessage.success(VantarKey.INSERT_SUCCESS, dto.getId(), dto);
     }
@@ -188,268 +80,92 @@ public class ModelMongo extends ModelCommon {
 
     // UPDATE > > >
 
-    public static ResponseMessage update(Params params, Dto dto) throws VantarException {
-        return updateX(params, dto, null, params.getX("action", Dto.Action.UPDATE_FEW_COLS));
-    }
-    public static ResponseMessage update(Params params, Dto dto, WriteEvent event) throws VantarException {
-        return updateX(params, dto, event, params.getX("action", Dto.Action.UPDATE_FEW_COLS));
-    }
-    public static ResponseMessage updateJson(Params params, Dto dto) throws VantarException {
-        return updateX(params.getJson(), dto, null, params.getX("action", Dto.Action.UPDATE_FEW_COLS));
-    }
-    public static ResponseMessage updateJson(Params params, Dto dto, WriteEvent event) throws VantarException {
-        return updateX(params.getJson(), dto, event, params.getX("action", Dto.Action.UPDATE_FEW_COLS));
-    }
-    public static ResponseMessage updateJson(Params params, String key, Dto dto) throws VantarException {
-        return updateX(params.getString(key), dto, null, params.getX("action", Dto.Action.UPDATE_FEW_COLS));
-    }
-    public static ResponseMessage updateJson(Params params, String key, Dto dto, WriteEvent event) throws VantarException {
-        return updateX(params.getString(key), dto, event, params.getX("action", Dto.Action.UPDATE_FEW_COLS));
-    }
-    private static ResponseMessage updateX(Object params, Dto dto, WriteEvent event, Dto.Action action) throws VantarException {
-        return (ResponseMessage) mutex(dto.getClass(), () -> {
-            if (event != null) {
-                try {
-                    event.beforeSet(dto);
-                } catch (NoContentException e) {
-                    throw new InputException(VantarKey.NO_CONTENT);
-                }
-            }
-
-            List<ValidationError> errors = params instanceof String ?
-                dto.set((String) params, action) :
-                dto.set((Params) params, action);
-
-            if (ObjectUtil.isNotEmpty(errors)) {
-                throw new InputException(errors);
-            }
-
-            if (action.equals(Dto.Action.UPDATE_FEW_COLS)) {
-                if (dto.hasAnnotation(UniqueGroup.class)
-                    || dto.hasAnnotation(RequiredGroupOr.class)
-                    || dto.hasAnnotation(RequiredGroupXor.class)) {
-                    if (dto.getId() != null) {
-                        Dto dtoX = ClassUtil.getInstance(dto.getClass());
-                        dtoX.setId(dto.getId());
-                        dtoX = getById(dtoX).getClone();
-                        dtoX.set(dto);
-                        errors = dtoX.validate(Dto.Action.UPDATE_FEW_COLS);
-                        if (ObjectUtil.isNotEmpty(errors)) {
-                            throw new InputException(errors);
-                        }
-                    }
-                }
-            }
-
-            if (event != null) {
-                try {
-                    event.beforeWrite(dto);
-                } catch (NoContentException e) {
-                    throw new InputException(VantarKey.NO_CONTENT);
-                }
-                dto.removeNullPropertiesNatural();
-            }
-
-            try {
-                errors = getUniqueViolation(dto);
-                if (errors != null) {
-                    throw new InputException(errors);
-                }
-                errors = getParentChildViolation(dto);
-                if (errors != null) {
-                    throw new InputException(errors);
-                }
-                errors = getRelationViolation(dto);
-                if (errors != null) {
-                    throw new InputException(errors);
-                }
-                errors = getRelationValueViolation(dto);
-                if (errors != null) {
-                    throw new InputException(errors);
-                }
-                Mongo.update(dto);
-            } catch (DatabaseException e) {
-                log.error(" !! {} : {}\n", dto.getClass().getSimpleName(), dto, e);
-                throw new ServerException(VantarKey.UPDATE_FAIL);
-            }
-
-            ModelCommon.afterDataChange(dto, event, true, action);
-
-            return ResponseMessage.success(VantarKey.UPDATE_SUCCESS, dto);
-        });
-    }
-
-    public static ResponseMessage update(Dto dto) throws VantarException {
-        return (ResponseMessage) mutex(dto.getClass(), () -> updateY(dto, null, Dto.Action.UPDATE_FEW_COLS, true, null));
-    }
-    public static ResponseMessage update(Dto dto, Dto.Action action) throws VantarException {
-        return (ResponseMessage) mutex(dto.getClass(), () -> updateY(dto, null, action, true, null));
-    }
-    public static ResponseMessage update(Dto dto, WriteEvent event) throws VantarException {
-        return (ResponseMessage) mutex(dto.getClass(), () -> updateY(dto, null, Dto.Action.UPDATE_FEW_COLS, true, event));
-    }
-    public static ResponseMessage update(Dto dto, Dto.Action action, WriteEvent event) throws VantarException {
-        return (ResponseMessage) mutex(dto.getClass(), () -> updateY(dto, null, action, true, event));
-    }
-
-    public static ResponseMessage update(QueryBuilder q) throws VantarException {
-        Dto dto = q.getDto();
-        return (ResponseMessage) mutex(dto.getClass(), () -> updateY(dto, q, Dto.Action.UPDATE_FEW_COLS, true, null));
-    }
-    public static ResponseMessage update(QueryBuilder q, Dto.Action action) throws VantarException {
-        Dto dto = q.getDto();
-        return (ResponseMessage) mutex(dto.getClass(), () -> updateY(dto, q, action, true, null));
-    }
-    public static ResponseMessage update(QueryBuilder q, WriteEvent event) throws VantarException {
-        Dto dto = q.getDto();
-        return (ResponseMessage) mutex(dto.getClass(), () -> updateY(dto, q, Dto.Action.UPDATE_FEW_COLS, true, event));
-    }
-    public static ResponseMessage update(QueryBuilder q, Dto.Action action, WriteEvent event) throws VantarException {
-        Dto dto = q.getDto();
-        return (ResponseMessage) mutex(dto.getClass(), () -> updateY(dto, q, action, true, event));
-    }
-
-    public static ResponseMessage updateNoLog(Dto dto) throws VantarException {
-        return (ResponseMessage) mutex(dto.getClass(), () -> updateY(dto, null, Dto.Action.UPDATE_FEW_COLS, false, null));
-    }
-    public static ResponseMessage updateNoLog(Dto dto, Dto.Action action) throws VantarException {
-        return (ResponseMessage) mutex(dto.getClass(), () -> updateY(dto, null, action, false, null));
-    }
-    public static ResponseMessage updateNoLog(Dto dto, WriteEvent event) throws VantarException {
-        return (ResponseMessage) mutex(dto.getClass(), () -> updateY(dto, null, Dto.Action.UPDATE_FEW_COLS, false, event));
-    }
-    public static ResponseMessage updateNoLog(Dto dto, Dto.Action action, WriteEvent event) throws VantarException {
-        return (ResponseMessage) mutex(dto.getClass(), () -> updateY(dto, null, action, false, event));
-    }
-
-    public static ResponseMessage updateNoLog(QueryBuilder q) throws VantarException {
-        Dto dto = q.getDto();
-        return (ResponseMessage) mutex(dto.getClass(), () -> updateY(dto, q, Dto.Action.UPDATE_FEW_COLS, false, null));
-    }
-    public static ResponseMessage updateNoLog(QueryBuilder q, Dto.Action action) throws VantarException {
-        Dto dto = q.getDto();
-        return (ResponseMessage) mutex(dto.getClass(), () -> updateY(dto, q, action, false, null));
-    }
-    public static ResponseMessage updateNoLog(QueryBuilder q, WriteEvent event) throws VantarException {
-        Dto dto = q.getDto();
-        return (ResponseMessage) mutex(dto.getClass(), () -> updateY(dto, q, Dto.Action.UPDATE_FEW_COLS, false, event));
-    }
-    public static ResponseMessage updateNoLog(QueryBuilder q, Dto.Action action, WriteEvent event) throws VantarException {
-        Dto dto = q.getDto();
-        return (ResponseMessage) mutex(dto.getClass(), () -> updateY(dto, q, action, false, event));
-    }
-
-    public static ResponseMessage updateNoMutex(Dto dto) throws VantarException {
-        return updateY(dto, null, Dto.Action.UPDATE_FEW_COLS, true, null);
-    }
-    public static ResponseMessage updateNoMutex(Dto dto, Dto.Action action) throws VantarException {
-        return updateY(dto, null, action, true, null);
-    }
-    public static ResponseMessage updateNoMutex(Dto dto, WriteEvent event) throws VantarException {
-        return updateY(dto, null, Dto.Action.UPDATE_FEW_COLS, true, event);
-    }
-    public static ResponseMessage updateNoMutex(Dto dto, Dto.Action action, WriteEvent event) throws VantarException {
-        return updateY(dto, null, action, true, event);
-    }
-
-    public static ResponseMessage updateNoMutex(QueryBuilder q) throws VantarException {
-        return updateY(q.getDto(), q, Dto.Action.UPDATE_FEW_COLS, true, null);
-    }
-    public static ResponseMessage updateNoMutex(QueryBuilder q, Dto.Action action) throws VantarException {
-        return updateY(q.getDto(), q, action, true, null);
-    }
-    public static ResponseMessage updateNoMutex(QueryBuilder q, WriteEvent event) throws VantarException {
-        return updateY(q.getDto(), q, Dto.Action.UPDATE_FEW_COLS, true, event);
-    }
-    public static ResponseMessage updateNoMutex(QueryBuilder q, Dto.Action action, WriteEvent event) throws VantarException {
-        return updateY(q.getDto(), q, action, true, event);
-    }
-
-    public static ResponseMessage updateNoMutexNoLog(Dto dto) throws VantarException {
-        return updateY(dto, null, Dto.Action.UPDATE_FEW_COLS, false, null);
-    }
-    public static ResponseMessage updateNoMutexNoLog(Dto dto, Dto.Action action) throws VantarException {
-        return updateY(dto, null, action, false, null);
-    }
-    public static ResponseMessage updateNoMutexNoLog(Dto dto, WriteEvent event) throws VantarException {
-        return updateY(dto, null, Dto.Action.UPDATE_FEW_COLS, false, event);
-    }
-    public static ResponseMessage updateNoMutexNoLog(Dto dto, Dto.Action action, WriteEvent event) throws VantarException {
-        return updateY(dto, null, action, false, event);
-    }
-
-    public static ResponseMessage updateNoMutexNoLog(QueryBuilder q) throws VantarException {
-        return updateY(q.getDto(), q, Dto.Action.UPDATE_FEW_COLS, false, null);
-    }
-    public static ResponseMessage updateNoMutexNoLog(QueryBuilder q, Dto.Action action) throws VantarException {
-        return updateY(q.getDto(), q, action, false, null);
-    }
-    public static ResponseMessage updateNoMutexNoLog(QueryBuilder q, WriteEvent event) throws VantarException {
-        return updateY(q.getDto(), q, Dto.Action.UPDATE_FEW_COLS, false, event);
-    }
-    public static ResponseMessage updateNoMutexNoLog(QueryBuilder q, Dto.Action action, WriteEvent event) throws VantarException {
-        return updateY(q.getDto(), q, action, false, event);
-    }
-
-    private static ResponseMessage updateY(Dto dto, QueryBuilder q, Dto.Action action, boolean logEvent, WriteEvent event)
-        throws VantarException {
-
-        boolean updateFewCols = action.equals(Dto.Action.UPDATE_FEW_COLS);
-        if (q != null) {
-            action = updateFewCols ? Dto.Action.UPDATE_FEW_COLS_NO_ID : Dto.Action.UPDATE_ALL_COLS_NO_ID;
-        }
-        if (event != null) {
-            try {
-                event.beforeSet(dto);
-            } catch (NoContentException e) {
-                throw new InputException(VantarKey.NO_CONTENT);
-            }
+    public static ResponseMessage update(Settings settings) throws VantarException {
+        if (settings.q != null) {
+            return ResponseMessage.success(
+                VantarKey.UPDATE_SUCCESS,
+                settings.mutex ? mutex(settings.dto, (Dto dto) -> updateByQuery(settings)) : updateByQuery(settings)
+            );
         }
 
-        List<ValidationError> errors = dto.validate(action);
+        if (settings.params != null) {
+            settings.dto.setId(
+                settings.params.getLong(VantarParam.ID, settings.params.extractFromJson(VantarParam.ID, Long.class))
+            );
+        }
+        if (NumberUtil.isIdInvalid(settings.dto.getId())) {
+            throw new InputException(VantarKey.INVALID_ID, VantarParam.ID);
+        }
+        if (!settings.dtoHasFullData) {
+            if (settings.params == null) {
+                Dto dtoX = ClassUtil.getInstance(settings.dto.getClass());
+                dtoX.setId(settings.dto.getId());
+                dtoX = getById(dtoX);
+                dtoX.set(settings.dto);
+                settings.dto = dtoX;
+            } else {
+                settings.dto = getById(settings.dto);
+            }
+        }
+        if (settings.mutex) {
+            mutex(settings.dto, (Dto dto) -> {
+                updateById(settings, dto);
+                return null;
+            });
+        } else {
+            updateById(settings, settings.dto);
+        }
+        return ResponseMessage.success(VantarKey.UPDATE_SUCCESS, settings.dto);
+    }
+
+    private static List<Dto> updateByQuery(Settings s) throws VantarException {
+        s.dtoHasFullData = true;
+        List<Dto> dtos = new ArrayList<>(100);
+        try {
+            disableDtoCache(s.q.getDto());
+            forEach(s.q, dto -> {
+                dto.set(s.dto);
+                updateById(s, dto);
+                dtos.add(dto);
+            });
+        } catch (NoContentException ignore) {
+
+        } finally {
+            enableDtoCache(s.q.getDto(), s.event);
+        }
+        return dtos;
+    }
+
+    private static void updateById(Settings s, Dto dto) throws VantarException {
+        if (s.action == null) {
+            s.action = Dto.Action.UPDATE_FEW_COLS;
+        }
+        List<ValidationError> errors;
+        if (s.params == null) {
+            errors = dto.validate(s.action);
+        } else {
+            s.action = s.params.getX("action", s.action);
+            errors = s.isJson ?
+                dto.set(s.key == null ? s.params.getJson() : s.params.getString(s.key), s.action) :
+                dto.set(s.params, s.action);
+        }
         if (ObjectUtil.isNotEmpty(errors)) {
             throw new InputException(errors);
         }
 
-        if (event != null) {
+        if (s.event != null) {
             try {
-                event.beforeWrite(dto);
+                s.event.beforeWrite(dto);
             } catch (NoContentException e) {
                 throw new InputException(VantarKey.NO_CONTENT);
             }
-            dto.removeNullPropertiesNatural();
         }
 
-        try {
-            errors = getUniqueViolation(dto);
-            if (errors != null) {
-                throw new InputException(errors);
-            }
-            errors = getParentChildViolation(dto);
-            if (errors != null) {
-                throw new InputException(errors);
-            }
-            errors = getRelationViolation(dto);
-            if (errors != null) {
-                throw new InputException(errors);
-            }
-            errors = getRelationValueViolation(dto);
-            if (errors != null) {
-                throw new InputException(errors);
-            }
-            if (q == null) {
-                Mongo.update(dto);
-            } else {
-                Mongo.update(q);
-            }
-        } catch (DatabaseException e) {
-            log.error(" !! {} : {}\n", dto.getClass().getSimpleName(), dto, e);
-            throw new ServerException(VantarKey.UPDATE_FAIL);
-        }
-
-        ModelCommon.afterDataChange(dto, event, logEvent, action);
-
-        return ResponseMessage.success(VantarKey.UPDATE_SUCCESS, dto);
+        dto.removeNullPropertiesNatural();
+        ModelMongoChecking.throwUniqueViolation(dto);
+        ModelMongoChecking.throwDependencyViolations(dto);
+        Mongo.update(dto);
+        ModelCommon.afterDataChange(dto, s.event, s.logEvent, s.action);
     }
 
     /**
@@ -461,8 +177,8 @@ public class ModelMongo extends ModelCommon {
             return;
         }
         Document updates = new Document();
-        for (int i = 0, l = options.length; i < l; i+=2) {
-            updates.append((String) options[i], options[i+1]);
+        for (int i = 0, l = options.length; i < l; i += 2) {
+            updates.append((String) options[i], options[i + 1]);
         }
         Mongo.update(dto.getStorage(), dto.getId(), updates);
     }
@@ -472,260 +188,82 @@ public class ModelMongo extends ModelCommon {
 
     // DELETE > > >
 
-    public static ResponseMessage delete(Params params, Dto dto) throws VantarException {
-        return delete(params, dto, null);
-    }
-    public static ResponseMessage delete(Params params, Dto dtoX, WriteEvent event) throws VantarException {
-        dtoX.setId(params.getLong(VantarParam.ID, params.extractFromJson(VantarParam.ID, Long.class)));
-        if (NumberUtil.isIdInvalid(dtoX.getId())) {
-            throw new InputException(VantarKey.EMPTY_ID, VantarParam.ID);
+    public static ResponseMessage delete(Settings settings) throws VantarException {
+        if (settings.q != null) {
+            if (settings.mutex) {
+                mutex(settings.dto, (Dto dto) -> {
+                    deleteByQuery(settings);
+                    return null;
+                });
+            } else {
+                deleteByQuery(settings);
+            }
+        } else {
+            if (settings.params != null) {
+                settings.dto.setId(
+                    settings.params.getLong(VantarParam.ID, settings.params.extractFromJson(VantarParam.ID, Long.class))
+                );
+            }
+            if (NumberUtil.isIdInvalid(settings.dto.getId())) {
+                throw new InputException(VantarKey.INVALID_ID, VantarParam.ID);
+            }
+            if (settings.logEvent && !settings.dtoHasFullData) {
+                settings.dto = getById(settings.dto);
+            }
+            if (settings.mutex) {
+                mutex(settings.dto, (Dto dto) -> {
+                    deleteById(settings, dto);
+                    return null;
+                });
+            } else {
+                deleteById(settings, settings.dto);
+            }
         }
+        return ResponseMessage.success(VantarKey.DELETE_SUCCESS, settings.getDeletedCount());
+    }
 
-        return (ResponseMessage) mutex(dtoX, (Dto dto) -> {
-            if (event != null) {
-                try {
-                    event.beforeSet(dto);
-                    event.beforeWrite(dto);
-                } catch (NoContentException e) {
-                    throw new InputException(VantarKey.NO_CONTENT);
-                }
-            }
+    private static void deleteByQuery(Settings s) throws VantarException {
+        s.dtoHasFullData = true;
+        try {
+            disableDtoCache(s.q.getDto());
+            forEach(s.q, dto -> deleteById(s, dto));
+        } catch (NoContentException ignore) {
 
-            List<DataDependency.Dependants> items = new DataDependency(dto, 1).getDependencies();
-            if (!items.isEmpty()) {
-                throw new InputException(VantarKey.DELETE_FAIL_HAS_DEPENDENCIES, DataDependency.toString(items));
-            }
+        } finally {
+            enableDtoCache(s.q.getDto(), s.event);
+        }
+    }
 
+    private static void deleteById(Settings s, Dto dto) throws VantarException {
+        if (s.event != null) {
             try {
-                ResponseMessage r = ResponseMessage.success(VantarKey.DELETE_SUCCESS, Mongo.delete(dto));
-                ModelCommon.afterDataChange(dto, event, true, Dto.Action.DELETE);
-                return r;
-            } catch (DatabaseException e) {
-                log.error(" !! {} : {}\n", dto.getClass().getSimpleName(), dto, e);
-                throw new ServerException(VantarKey.DELETE_FAIL);
-            }
-        });
-    }
-
-    public static ResponseMessage deleteById(Dto dtoX) throws VantarException {
-        if (NumberUtil.isIdInvalid(dtoX.getId())) {
-            throw new InputException(VantarKey.EMPTY_ID, VantarParam.ID);
-        }
-        return (ResponseMessage) mutex(dtoX, (Dto dto) -> deleteByIdX(dto, true, null, null));
-    }
-    public static ResponseMessage deleteById(Dto dtoX, WriteEvent event) throws VantarException {
-        if (NumberUtil.isIdInvalid(dtoX.getId())) {
-            throw new InputException(VantarKey.EMPTY_ID, VantarParam.ID);
-        }
-        return (ResponseMessage) mutex(dtoX, (Dto dto) -> deleteByIdX(dto, true, event, null));
-    }
-    public static ResponseMessage deleteByIdNoLog(Dto dtoX) throws VantarException {
-        if (NumberUtil.isIdInvalid(dtoX.getId())) {
-            throw new InputException(VantarKey.EMPTY_ID, VantarParam.ID);
-        }
-        return (ResponseMessage) mutex(dtoX, (Dto dto) -> deleteByIdX(dto, false, null, null));
-    }
-    public static ResponseMessage deleteByIdNoLog(Dto dtoX, WriteEvent event) throws VantarException {
-        if (NumberUtil.isIdInvalid(dtoX.getId())) {
-            throw new InputException(VantarKey.EMPTY_ID, VantarParam.ID);
-        }
-        return (ResponseMessage) mutex(dtoX, (Dto dto) -> deleteByIdX(dto, false, event, null));
-    }
-    public static ResponseMessage deleteByIdNoMutex(Dto dto) throws VantarException {
-        if (NumberUtil.isIdInvalid(dto.getId())) {
-            throw new InputException(VantarKey.EMPTY_ID, VantarParam.ID);
-        }
-        return deleteByIdX(dto, true, null, null);
-    }
-    public static ResponseMessage deleteByIdNoMutex(Dto dto, WriteEvent event) throws VantarException {
-        if (NumberUtil.isIdInvalid(dto.getId())) {
-            throw new InputException(VantarKey.EMPTY_ID, VantarParam.ID);
-        }
-        return deleteByIdX(dto, true, event, null);
-    }
-    public static ResponseMessage deleteByIdNoMutexNoLog(Dto dto) throws VantarException {
-        if (NumberUtil.isIdInvalid(dto.getId())) {
-            throw new InputException(VantarKey.EMPTY_ID, VantarParam.ID);
-        }
-        return deleteByIdX(dto, false, null, null);
-    }
-    public static ResponseMessage deleteByIdNoMutexNoLog(Dto dto, WriteEvent event) throws VantarException {
-        if (NumberUtil.isIdInvalid(dto.getId())) {
-            throw new InputException(VantarKey.EMPTY_ID, VantarParam.ID);
-        }
-        return deleteByIdX(dto, false, event, null);
-    }
-    private static ResponseMessage deleteByIdX(Dto dto, boolean logEvent, WriteEvent event
-        , List<DataDependency.Dependants> dependants) throws VantarException {
-
-        if (event != null) {
-            try {
-                event.beforeSet(dto);
-                event.beforeWrite(dto);
+                s.event.beforeWrite(dto);
             } catch (NoContentException e) {
                 throw new InputException(VantarKey.NO_CONTENT);
             }
         }
-
-        List<DataDependency.Dependants> items = new DataDependency(dto, 1).getDependencies();
-        if (!items.isEmpty()) {
-            if (dependants == null) {
-                throw new InputException(VantarKey.DELETE_FAIL_HAS_DEPENDENCIES, DataDependency.toString(items));
-            }
-            dependants.addAll(items);
-            return null;
-        }
-
-        try {
-            ResponseMessage r = ResponseMessage.success(VantarKey.DELETE_SUCCESS, Mongo.delete(dto));
-            ModelCommon.afterDataChange(dto, event, logEvent, Dto.Action.DELETE);
-            return r;
-        } catch (DatabaseException e) {
-            log.error(" !! {} : {}\n", dto.getClass().getSimpleName(), dto, e);
-            throw new ServerException(VantarKey.DELETE_FAIL);
+        if (s.cascade) {
+            DataDependencyMongo dep = new DataDependencyMongo(dto);
+            dep.deleteCascade(dtoX -> {
+                s.addDeletedCount(Mongo.delete(dtoX));
+                ModelCommon.afterDataChange(dtoX, s.event, s.logEvent, Dto.Action.DELETE);
+            });
+        } else if (s.force) {
+            s.addDeletedCount(Mongo.delete(dto));
+            ModelCommon.afterDataChange(dto, s.event, s.logEvent, Dto.Action.DELETE);
+        } else {
+            new DataDependencyMongo(dto).throwOnFirstDependency();
+            s.addDeletedCount(Mongo.delete(dto));
+            ModelCommon.afterDataChange(dto, s.event, s.logEvent, Dto.Action.DELETE);
         }
     }
 
-    public static ResponseMessage delete(QueryBuilder q) throws VantarException {
-        return deleteByQuery(q, true, true, null);
-    }
-    public static ResponseMessage delete(QueryBuilder q, WriteEvent event) throws VantarException {
-        return deleteByQuery(q, true, true, event);
-    }
-    public static ResponseMessage deleteNoLog(QueryBuilder q) throws VantarException {
-        return deleteByQuery(q, false, true, null);
-    }
-    public static ResponseMessage deleteNoLog(QueryBuilder q, WriteEvent event) throws VantarException {
-        return deleteByQuery(q, false, true, event);
-    }
-    public static ResponseMessage deleteNoMutex(QueryBuilder q) throws VantarException {
-        return deleteByQuery(q, false, true, null);
-    }
-    public static ResponseMessage deleteNoMutex(QueryBuilder q, WriteEvent event) throws VantarException {
-        return deleteByQuery(q, false, true, event);
-    }
-    public static ResponseMessage deleteNoMutexNoLog(QueryBuilder q) throws VantarException {
-        return deleteByQuery(q, false, false, null);
-    }
-    public static ResponseMessage deleteNoMutexNoLog(QueryBuilder q, WriteEvent event) throws VantarException {
-        return deleteByQuery(q, false, false, event);
-    }
-    private static ResponseMessage deleteByQuery(QueryBuilder q, boolean logEvent, boolean mutex, WriteEvent event)
-        throws VantarException {
 
-        List<DataDependency.Dependants> dependants = new ArrayList<>(10);
-        Dto sample = null;
-        try {
-            List<Dto> data = getData(q);
-            sample = data.get(0);
-            disableDtoCache(sample);
-            for (Dto dto : data) {
-                if (mutex) {
-                    mutex(dto, dtoX -> {
-                        deleteByIdX(dtoX, logEvent, event, dependants);
-                        return null;
-                    });
-                } else {
-                    deleteByIdX(dto, logEvent, event, dependants);
-                }
-            }
-        } catch (NoContentException nc) {
-            return ResponseMessage.success(VantarKey.DELETE_SUCCESS);
-        } finally {
-            if (sample != null) {
-                enableDtoCache(sample, event);
-            }
-        }
 
-        if (!dependants.isEmpty()) {
-            throw new InputException(VantarKey.DELETE_FAIL_HAS_DEPENDENCIES, DataDependency.toString(dependants));
-        }
 
-        return ResponseMessage.success(VantarKey.DELETE_SUCCESS);
-    }
 
-    public static <T extends Dto> ResponseMessage deleteBatch(Params params, Class<T> tClass) throws VantarException {
-        return deleteBatch(params, tClass, null);
-    }
-    public static <T extends Dto> ResponseMessage deleteBatch(Params params, Class<T> tClass, WriteEvent event)
-        throws VantarException {
 
-        List<Long> ids = params.getLongList("ids");
-        if (ids == null || ids.isEmpty()) {
-            ids = params.getJsonList(Long.class);
-        }
-        if (ids == null || ids.isEmpty()) {
-            throw new InputException(VantarKey.INVALID_JSON_DATA);
-        }
 
-        T dto = ClassUtil.getInstance(tClass);
-        if (dto == null) {
-            throw new InputException(VantarKey.INVALID_JSON_DATA);
-        }
-
-        List<DataDependency.Dependants> dependants = new ArrayList<>(10);
-        for (Long id : ids) {
-            dto.setId(id);
-            deleteByIdX(dto, true, event, dependants);
-        }
-
-        if (!dependants.isEmpty()) {
-            throw new InputException(VantarKey.DELETE_FAIL_HAS_DEPENDENCIES, DataDependency.toString(dependants));
-        }
-
-        return ResponseMessage.success(VantarKey.DELETE_SUCCESS, ids.size());
-    }
-
-//    public static <T extends Dto> ResponseMessage unDeleteBatch(Params params, Class<T> tClass) throws VantarException {
-//        return unDeleteBatch(params, tClass, null);
-//    }
-//    public static <T extends Dto> ResponseMessage unDeleteBatch(Params params, Class<T> tClass, WriteEvent event)
-//        throws VantarException {
-//
-//        List<Long> ids = params.getLongList("ids");
-//        if (ids == null || ids.isEmpty()) {
-//            ids = params.getJsonList(Long.class);
-//        }
-//        if (ids == null || ids.isEmpty()) {
-//            throw new InputException(VantarKey.INVALID_JSON_DATA);
-//        }
-//
-//        T dto = ClassUtil.getInstance(tClass);
-//        if (dto == null) {
-//            throw new InputException(VantarKey.INVALID_JSON_DATA);
-//        }
-//
-//        try {
-//            for (Long id : ids) {
-//                if (event != null) {
-//                    try {
-//                        event.beforeSet(dto);
-//                    } catch (NoContentException e) {
-//                        throw new InputException(VantarKey.NO_CONTENT);
-//                    }
-//                }
-//
-//                dto.setId(id);
-//
-//                if (event != null) {
-//                    try {
-//                        event.beforeWrite(dto);
-//                    } catch (NoContentException e) {
-//                        throw new InputException(VantarKey.NO_CONTENT);
-//                    }
-//                }
-//
-//                Mongo.unset(dto.getStorage(), dto.getId(), Mongo.LOGICAL_DELETE_FIELD);
-//
-//                afterDataChange(dto, event, true, Dto.Action.UN_DELETE);
-//            }
-//        } catch (DatabaseException e) {
-//            log.error(" !! {} : {}\n", dto.getClass().getSimpleName(), dto, e);
-//            throw new ServerException(VantarKey.UPDATE_FAIL);
-//        }
-//
-//        return ResponseMessage.success(VantarKey.UPDATE_MANY_SUCCESS, ids.size());
-//    }
 
     public static ResponseMessage retrieveFromLog(long id) throws VantarException {
         UserLog userLog = new UserLog();
@@ -738,7 +276,6 @@ public class ModelMongo extends ModelCommon {
         }
 
         dto.set(userLog.object, Dto.Action.SET);
-        log.error(">>>>{}", dto);
         return new ResponseMessage();
     }
 
@@ -759,7 +296,7 @@ public class ModelMongo extends ModelCommon {
             }
             return ResponseMessage.success(VantarKey.DELETE_SUCCESS);
         } catch (DatabaseException e) {
-            log.error(" !! {} : {}\n", dto.getClass().getSimpleName(), dto, e);
+            ServiceLog.log.error(" !! {} : {}\n", dto.getClass().getSimpleName(), dto, e);
             throw new ServerException(VantarKey.DELETE_FAIL);
         }
     }
@@ -772,27 +309,35 @@ public class ModelMongo extends ModelCommon {
     public static ResponseMessage addToList(Dto dto, String fieldName, Object item) throws VantarException {
         return addToCollection(dto, null, fieldName, item, true, true);
     }
+
     public static ResponseMessage addToList(QueryBuilder q, String fieldName, Object item) throws VantarException {
         return addToCollection(q.getDto(), q, fieldName, item, true, true);
     }
+
     public static ResponseMessage addToListNoLog(Dto dto, String fieldName, Object item) throws VantarException {
         return addToCollection(dto, null, fieldName, item, true, false);
     }
+
     public static ResponseMessage addToListNoLog(QueryBuilder q, String fieldName, Object item) throws VantarException {
         return addToCollection(q.getDto(), q, fieldName, item, true, false);
     }
+
     public static ResponseMessage addToSet(Dto dto, String fieldName, Object item) throws VantarException {
         return addToCollection(dto, null, fieldName, item, false, true);
     }
+
     public static ResponseMessage addToSet(QueryBuilder q, String fieldName, Object item) throws VantarException {
         return addToCollection(q.getDto(), q, fieldName, item, false, true);
     }
+
     public static ResponseMessage addToSetNoLog(Dto dto, String fieldName, Object item) throws VantarException {
         return addToCollection(dto, null, fieldName, item, false, false);
     }
+
     public static ResponseMessage addToSetNoLog(QueryBuilder q, String fieldName, Object item) throws VantarException {
         return addToCollection(q.getDto(), q, fieldName, item, false, false);
     }
+
     private static ResponseMessage addToCollection(Dto dto, QueryBuilder q, String fieldName, Object item
         , boolean isList, boolean logEvent) throws VantarException {
 
@@ -820,15 +365,19 @@ public class ModelMongo extends ModelCommon {
     public static ResponseMessage removeFromCollection(Dto dto, String fieldName, Object item) throws VantarException {
         return removeFromCollection(dto, null, fieldName, item, true);
     }
+
     public static ResponseMessage removeFromCollection(QueryBuilder q, String fieldName, Object item) throws VantarException {
         return removeFromCollection(q.getDto(), q, fieldName, item, true);
     }
+
     public static ResponseMessage removeFromCollectionNoLog(Dto dto, String fieldName, Object item) throws VantarException {
         return removeFromCollection(dto, null, fieldName, item, false);
     }
+
     public static ResponseMessage removeFromCollectionNoLog(QueryBuilder q, String fieldName, Object item) throws VantarException {
         return removeFromCollection(q.getDto(), q, fieldName, item, false);
     }
+
     private static ResponseMessage removeFromCollection(Dto dto, QueryBuilder q, String fieldName, Object item
         , boolean logEvent) throws VantarException {
 
@@ -855,15 +404,19 @@ public class ModelMongo extends ModelCommon {
     public static ResponseMessage addToMap(Dto dto, String fieldName, String key, Object item) throws VantarException {
         return addToMap(dto, null, fieldName, key, item, true);
     }
+
     public static ResponseMessage addToMap(QueryBuilder q, String fieldName, String key, Object item) throws VantarException {
         return addToMap(q.getDto(), q, fieldName, key, item, true);
     }
+
     public static ResponseMessage addToMapNoLog(Dto dto, String fieldName, String key, Object item) throws VantarException {
         return addToMap(dto, null, fieldName, key, item, false);
     }
+
     public static ResponseMessage addToMapNoLog(QueryBuilder q, String fieldName, String key, Object item) throws VantarException {
         return addToMap(q.getDto(), q, fieldName, key, item, false);
     }
+
     private static ResponseMessage addToMap(Dto dto, QueryBuilder q, String fieldName, String key, Object value
         , boolean logEvent) throws VantarException {
 
@@ -891,15 +444,19 @@ public class ModelMongo extends ModelCommon {
     public static ResponseMessage removeFromMap(Dto dto, String fieldName, String key) throws VantarException {
         return removeFromMap(dto, null, fieldName, key, true);
     }
+
     public static ResponseMessage removeFromMap(QueryBuilder q, String fieldName, String key) throws VantarException {
         return removeFromMap(q.getDto(), q, fieldName, key, true);
     }
+
     public static ResponseMessage removeFromMapNoLog(Dto dto, String fieldName, String key) throws VantarException {
         return removeFromMap(dto, null, fieldName, key, false);
     }
+
     public static ResponseMessage removeFromMapNoLog(QueryBuilder q, String fieldName, String key) throws VantarException {
         return removeFromMap(q.getDto(), q, fieldName, key, false);
     }
+
     private static ResponseMessage removeFromMap(Dto dto, QueryBuilder q, String fieldName, String key, boolean logEvent)
         throws VantarException {
 
@@ -923,25 +480,6 @@ public class ModelMongo extends ModelCommon {
     }
 
     // ITEM WORKS < < <
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
     // GET DATA > > >
@@ -1038,7 +576,7 @@ public class ModelMongo extends ModelCommon {
     public static PageData searchForEach(QueryBuilder q, QueryResultBase.EventForeach event, String... locales) throws VantarException {
         PageData data;
         try {
-            data =  MongoQuery.getPageForeach(q, event, locales);
+            data = MongoQuery.getPageForeach(q, event, locales);
         } catch (DatabaseException e) {
             throw new ServerException(VantarKey.FETCH_FAIL);
         }
@@ -1118,6 +656,54 @@ public class ModelMongo extends ModelCommon {
                 result.setLocale(locales);
             }
             return result.asMap(keyProperty);
+        } catch (DatabaseException e) {
+            throw new ServerException(VantarKey.FETCH_FAIL);
+        }
+    }
+
+    public static Collection<Object> getPropertyList(QueryBuilder q, String property, String... locales) throws VantarException {
+        try {
+            QueryResult result = MongoQuery.getData(q);
+            if (ObjectUtil.isNotEmpty(locales)) {
+                result.setLocale(locales);
+            }
+            return result.asPropertyList(property);
+        } catch (DatabaseException e) {
+            throw new ServerException(VantarKey.FETCH_FAIL);
+        }
+    }
+
+    public static Collection<Object> getPropertyList(Dto dto, String property, String... locales) throws VantarException {
+        try {
+            QueryResult result = MongoQuery.getAllData(dto);
+            if (ObjectUtil.isNotEmpty(locales)) {
+                result.setLocale(locales);
+            }
+            return result.asPropertyList(property);
+        } catch (DatabaseException e) {
+            throw new ServerException(VantarKey.FETCH_FAIL);
+        }
+    }
+
+    public static Map<Long, Object> getPropertyMap(QueryBuilder q, String property, String... locales) throws VantarException {
+        try {
+            QueryResult result = MongoQuery.getData(q);
+            if (ObjectUtil.isNotEmpty(locales)) {
+                result.setLocale(locales);
+            }
+            return result.asPropertyMap(property);
+        } catch (DatabaseException e) {
+            throw new ServerException(VantarKey.FETCH_FAIL);
+        }
+    }
+
+    public static Map<Long, Object> getPropertyMap(Dto dto, String property, String... locales) throws VantarException {
+        try {
+            QueryResult result = MongoQuery.getAllData(dto);
+            if (ObjectUtil.isNotEmpty(locales)) {
+                result.setLocale(locales);
+            }
+            return result.asPropertyMap(property);
         } catch (DatabaseException e) {
             throw new ServerException(VantarKey.FETCH_FAIL);
         }
@@ -1217,7 +803,7 @@ public class ModelMongo extends ModelCommon {
             }
             return result.first();
         } catch (DatabaseException e) {
-            log.error(" !! {} : {}\n", dto.getClass().getSimpleName(), dto, e);
+            ServiceLog.log.error(" !! {} : {}\n", dto.getClass().getSimpleName(), dto, e);
             throw new ServerException(VantarKey.FETCH_FAIL);
         }
     }
@@ -1292,7 +878,7 @@ public class ModelMongo extends ModelCommon {
             try {
                 localizedDto = localizedDtoClass.getConstructor().newInstance();
             } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
-                log.warn(" ! ({}, {}) < {}\n", dto, localizedDtoClass, d, e);
+                ServiceLog.log.warn(" ! ({}, {}) < {}\n", dto, localizedDtoClass, d, e);
                 continue;
             }
             localizedDto.set(d, lang);
@@ -1406,147 +992,6 @@ public class ModelMongo extends ModelCommon {
     public static boolean existsByDto(Dto dto) throws ServerException {
         try {
             return MongoQuery.existsByDto(dto);
-        } catch (DatabaseException e) {
-            throw new ServerException(VantarKey.FETCH_FAIL);
-        }
-    }
-
-
-
-
-
-    // > > > checking
-
-
-
-    public static List<ValidationError> getUniqueViolation(Dto dto) throws DatabaseException {
-        List<ValidationError> errors = null;
-        for (String fieldName : dto.annotatedProperties(Unique.class)) {
-            if (!MongoQuery.isUnique(dto, fieldName)) {
-                if (errors == null) {
-                    errors = new ArrayList<>(5);
-                }
-                errors.add(new ValidationError(fieldName, VantarKey.UNIQUE));
-            }
-        }
-        for (String fieldName : dto.annotatedProperties(UniqueCi.class)) {
-            if (!MongoQuery.isUnique(dto, fieldName)) {
-                if (errors == null) {
-                    errors = new ArrayList<>(5);
-                }
-                errors.add(new ValidationError(fieldName, VantarKey.UNIQUE));
-            }
-        }
-        if (dto.getClass().isAnnotationPresent(UniqueGroup.class)) {
-            for (String group : dto.getClass().getAnnotation(UniqueGroup.class).value()) {
-                if (!MongoQuery.isUnique(dto, StringUtil.split(group, VantarParam.SEPARATOR_COMMON))) {
-                    if (errors == null) {
-                        errors = new ArrayList<>(5);
-                    }
-                    errors.add(new ValidationError("(" + group + ")", VantarKey.UNIQUE));
-                }
-            }
-        }
-
-        return errors;
-    }
-
-    @SuppressWarnings("unchecked")
-    public static List<ValidationError> getRelationViolation(Dto dto) {
-        List<ValidationError> errors = new ArrayList<>(5);
-        for (String name : dto.annotatedProperties(Depends.class)) {
-            Object value = dto.getPropertyValue(name);
-            if (value != null) {
-                if (value instanceof Long) {
-                    checkRelation(dto, name, (Long) value, errors);
-                } else if (ClassUtil.isInstantiable(value.getClass(), Collection.class)) {
-                    if (ClassUtil.getGenericTypes(dto.getField(name))[0].equals(Long.class)) {
-                        for (Long v : (Collection<Long>) value) {
-                            checkRelation(dto, name, v, errors);
-                        }
-                    }
-                }
-            }
-        }
-        return errors.isEmpty() ? null : errors;
-    }
-
-    private static void checkRelation(Dto dto, String name, Long value, List<ValidationError> errors) {
-        boolean exists;
-        try {
-            exists = Mongo.exists(
-                DtoBase.getStorage(dto.getAnnotation(name, Depends.class).value()),
-                new Document(Mongo.ID, value)
-            );
-        } catch (DatabaseException e) {
-            log.error(" !! could not check reference dto={} field={} value={}", dto, name, value, e);
-            return;
-        }
-        if (!exists) {
-            errors.add(new ValidationError(name, VantarKey.REFERENCE, value));
-        }
-    }
-
-    public static List<ValidationError> getRelationValueViolation(Dto dto) {
-        List<ValidationError> errors = new ArrayList<>();
-        for (String name : dto.annotatedProperties(DependsValue.class)) {
-            Object value = dto.getPropertyValue(name);
-            if (value != null) {
-                if (ClassUtil.isInstantiable(value.getClass(), Collection.class)) {
-                    if (ClassUtil.getGenericTypes(dto.getField(name))[0].equals(Long.class)) {
-                        for (Object v : (Collection<?>) value) {
-                            checkValueRelation(dto, name, v, errors);
-                        }
-                    }
-                } else if (value instanceof Long) {
-                    checkValueRelation(dto, name, value, errors);
-                }
-            }
-        }
-        return errors.isEmpty() ? null : errors;
-    }
-
-    private static void checkValueRelation(Dto dto, String name, Object value, List<ValidationError> errors) {
-        boolean exists;
-        DependsValue depends = dto.getAnnotation(name, DependsValue.class);
-        try {
-            exists = Mongo.exists(DtoBase.getStorage(depends.dto()), new Document(depends.field(), value));
-        } catch (DatabaseException e) {
-            log.error(" !! could not check reference dto={} field={} value={}", dto, name, value, e);
-            return;
-        }
-        if (!exists) {
-            errors.add(new ValidationError(name, VantarKey.REFERENCE, value));
-        }
-    }
-
-    /**
-     * if a property is depended on the same object (is child)
-     *     if parent.id=child.id ---> throw error
-     */
-    public static List<ValidationError> getParentChildViolation(Dto dto) {
-        Long id = dto.getId();
-        if (id == null) {
-            return null;
-        }
-        List<ValidationError> errors = null;
-        for (String name : dto.annotatedProperties(Depends.class)) {
-            if (dto.getAnnotation(name, Depends.class).value().equals(dto.getClass())) {
-                Object value = dto.getPropertyValue(name);
-                if (value != null && value.equals(id)) {
-                    if (errors == null) {
-                        errors = new ArrayList<>(5);
-                    }
-                    errors.add(new ValidationError(name, VantarKey.REFERENCE));
-                }
-            }
-        }
-        return errors;
-    }
-
-    public static long getNextSequence(Dto dto) throws ServerException {
-        try {
-            return Mongo.Sequence.getNext(dto);
         } catch (DatabaseException e) {
             throw new ServerException(VantarKey.FETCH_FAIL);
         }

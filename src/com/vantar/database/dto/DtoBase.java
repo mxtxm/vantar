@@ -109,7 +109,7 @@ public abstract class DtoBase implements Dto {
 
     public void setInclude(String... include) {
         excludeProperties = new HashSet<>(include.length * 2, 1);
-        excludeProperties.addAll(Arrays.asList(getProperties(include)));
+        excludeProperties.addAll(Arrays.asList(getPropertiesEx(include)));
     }
 
     public void addExclude(String... exclude) {
@@ -178,7 +178,16 @@ public abstract class DtoBase implements Dto {
     }
 
     public boolean isEmpty() {
-        return getId() == null;
+        for (Field field : getClass().getFields()) {
+            try {
+                if (isDataField(field) && !ObjectUtil.isEmpty(field.get(this))) {
+                    return false;
+                }
+            } catch (IllegalAccessException ignore) {
+
+            }
+        }
+        return true;
     }
 
     public String toString() {
@@ -235,6 +244,17 @@ public abstract class DtoBase implements Dto {
             }
         }
         return properties;
+    }
+
+    public List<Field> annotatedFields(Class<? extends Annotation> annotation) {
+        Field[] f = getClass().getFields();
+        List<Field> fields = new ArrayList<>(f.length);
+        for (Field field : f) {
+            if (field.isAnnotationPresent(annotation)) {
+                fields.add(field);
+            }
+        }
+        return fields;
     }
 
     public void setToDefaults() {
@@ -420,8 +440,7 @@ public abstract class DtoBase implements Dto {
             for (String propertyName : getPresentationPropertyNames()) {
                 Field field = getField(propertyName);
                 Object value = field.get(this);
-                sb
-                    .append(
+                sb  .append(
                         value == null ?
                             "" :
                             (
@@ -479,11 +498,22 @@ public abstract class DtoBase implements Dto {
         return properties.toArray(new String[0]);
     }
 
-    public String[] getProperties(String... exclude) {
+    public String[] getPropertiesEx(String... exclude) {
         Field[] f = getClass().getFields();
         List<String> properties = new ArrayList<>(f.length);
         for (Field field : f) {
             if (isDataField(field) && !CollectionUtil.contains(exclude, field.getName())) {
+                properties.add(field.getName());
+            }
+        }
+        return properties.toArray(new String[0]);
+    }
+
+    public String[] getPropertiesInc(String... include) {
+        Field[] f = getClass().getFields();
+        List<String> properties = new ArrayList<>(f.length);
+        for (Field field : f) {
+            if (isDataField(field) && CollectionUtil.contains(include, field.getName())) {
                 properties.add(field.getName());
             }
         }
@@ -651,6 +681,10 @@ public abstract class DtoBase implements Dto {
 
     // > > > set
 
+    private Object getCleanValue(Object value) {
+        return ObjectUtil.isEmpty(value) ? null : value;
+    }
+
     /**
      * can do:
      * sets include values from dto to current object
@@ -667,7 +701,7 @@ public abstract class DtoBase implements Dto {
                 }
                 String name = field.getName();
                 if (CollectionUtil.contains(include, name)) {
-                    field.set(this, dto.getPropertyValue(name));
+                    field.set(this, getCleanValue(dto.getPropertyValue(name)));
                 }
             }
         } catch (IllegalAccessException e) {
@@ -753,7 +787,7 @@ public abstract class DtoBase implements Dto {
                         continue;
                     }
                     if (locales == null || locales.length == 0) {
-                        log.error(" !! invalid @DeLocalized (no locale) ({}.{} = {})", dto.getClass().getSimpleName(), name, value);
+                        log.error(" !! invalid @DeLocalized (no locale) ({}.{} = {})", dto.getClass().getName(), name, value);
                         continue;
                     }
                     Map<String, String> localedValues = (Map<String, String>) value;
@@ -768,18 +802,24 @@ public abstract class DtoBase implements Dto {
                     }
                 }
 
-                if (field.getType() == value.getClass()) {
-                    field.set(this, value);
+                if (ClassUtil.implementsInterface(value.getClass(), field.getType())) {
+                    field.set(this, getCleanValue(value));
                 } else {
                     if (errors == null) {
                         errors = new ArrayList<>(10);
                         errors.add(new ValidationError(name, VantarKey.INVALID_VALUE_TYPE));
                     }
-                    log.warn(" !! type mismatch ({}.{} = {})", getClass().getSimpleName(), name, value);
+                    log.warn(" !! type mismatch ({}.{}({}) = {}({}))",
+                        getClass().getName(), field.getType(), name, value, value.getClass());
+                    try {
+                        field.set(this, getCleanValue(value));
+                    } catch (Exception e) {
+                        log.warn(" !! type mismatch ", e);
+                    }
                 }
             }
         } catch (Exception e) {
-            log.error(" !! ({}, {})\n", getClass().getSimpleName(), this, e);
+            log.error(" !! ({}, {})\n", getClass().getName(), this, e);
         }
         if (errors == null) {
             return validate(action);
@@ -817,8 +857,8 @@ public abstract class DtoBase implements Dto {
         Map<String, Object> map = Json.d.mapFromJson(json, String.class, Object.class);
         if (map != null) {
             setDtoSetConfigs(
-                (Set<String>) map.get(VantarParam.EXCLUDE_PROPERTIES),
-                (Set<String>) map.get(VantarParam.NULL_PROPERTIES),
+                (Collection<String>) map.get(VantarParam.EXCLUDE_PROPERTIES),
+                (Collection<String>) map.get(VantarParam.NULL_PROPERTIES),
                 (String) map.get(VantarParam.SET_ACTION),
                 action
             );
@@ -928,7 +968,7 @@ public abstract class DtoBase implements Dto {
         return errors;
     }
 
-    private void setDtoSetConfigs(Set<String> excludes, Set<String> nulls, String actionString, Action defaultAction) {
+    private void setDtoSetConfigs(Collection<String> excludes, Collection<String> nulls, String actionString, Action defaultAction) {
         if (excludes != null) {
             if (excludeProperties == null) {
                 excludeProperties = new HashSet<>(excludes.size() * 2, 1);
@@ -1066,7 +1106,7 @@ public abstract class DtoBase implements Dto {
 
                     Object defaultValue = getDefaultValue(field);
                     if (defaultValue != null) {
-                        field.set(this, defaultValue);
+                        field.set(this, getCleanValue(defaultValue));
                     }
                     if (field.get(this) == null && !name.equals(ID)) {
                         addNullProperties(name);
@@ -1076,15 +1116,15 @@ public abstract class DtoBase implements Dto {
                 } else if (action.equals(Action.UPDATE_FEW_COLS) || action.equals(Action.UPDATE_FEW_COLS_NO_ID)) {
                     Object defaultValue = getDefaultValue(field);
                     if (defaultValue != null) {
-                        field.set(this, defaultValue);
+                        field.set(this, getCleanValue(defaultValue));
                     }
                 }
             } else {
-                field.set(this, value);
+                field.set(this, getCleanValue(value));
             }
         } catch (Exception e) {
             log.error(" !! {}>{} ({}, {})\n", name, value, getClass().getName(), this, e);
-            errors.add(new ValidationError(name, VantarKey.ILLEGAL));
+            errors.add(new ValidationError(name, VantarKey.ILLEGAL_FIELD));
         }
 
         validateField(field, value, action, errors);
@@ -1111,7 +1151,7 @@ public abstract class DtoBase implements Dto {
             || action.equals(Action.DELETE) || action.equals(Action.UN_DELETE)) && name.equals(ID)) {
 
             if (NumberUtil.isIdInvalid(getId())) {
-                errors.add(new ValidationError(VantarParam.ID, VantarKey.EMPTY_ID));
+                errors.add(new ValidationError(VantarParam.ID, VantarKey.INVALID_ID));
             }
             return;
         }
@@ -1125,7 +1165,7 @@ public abstract class DtoBase implements Dto {
         try {
             value = field.get(this);
         } catch (IllegalAccessException e) {
-            errors.add(new ValidationError(name, VantarKey.ILLEGAL));
+            errors.add(new ValidationError(name, VantarKey.ILLEGAL_FIELD));
             return;
         }
 
@@ -1154,7 +1194,7 @@ public abstract class DtoBase implements Dto {
         }
 
         if (field.isAnnotationPresent(Regex.class) && !value.toString().matches(field.getAnnotation(Regex.class).value())) {
-            errors.add(new ValidationError(name, VantarKey.REGEX));
+            errors.add(new ValidationError(name, VantarKey.INVALID_FORMAT));
         }
 
         if (type.equals(Location.class) && !((Location) value).isValid()) {
@@ -1178,7 +1218,7 @@ public abstract class DtoBase implements Dto {
                     errors.add(new ValidationError(name, VantarKey.MAX_EXCEED));
                 }
             } else if (value.toString().length() > StringUtil.toInteger(minMax[0])) {
-                errors.add(new ValidationError(name, VantarKey.STRING_LENGTH_EXCEED));
+                errors.add(new ValidationError(name, VantarKey.INVALID_LENGTH));
             }
         }
 

@@ -2,7 +2,8 @@ package com.vantar.business;
 
 import com.vantar.common.VantarParam;
 import com.vantar.database.dto.*;
-import com.vantar.database.nosql.mongo.MongoQuery;
+import com.vantar.database.nosql.mongo.Mongo;
+import com.vantar.database.nosql.mongo.*;
 import com.vantar.database.query.*;
 import com.vantar.exception.*;
 import com.vantar.locale.VantarKey;
@@ -13,18 +14,15 @@ import com.vantar.service.log.ServiceLog;
 import com.vantar.util.number.NumberUtil;
 import com.vantar.util.object.*;
 import com.vantar.util.string.StringUtil;
-import org.slf4j.*;
+import com.vantar.web.Params;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 
 public abstract class ModelCommon {
 
-    protected static final Logger log = LoggerFactory.getLogger(ModelCommon.class);
-
     private static Set<String> disabledDtoClasses;
     private static final Map<String, Object> locks = new ConcurrentHashMap<>(500, 1);
-
 
 
     public static void afterDataChange(Dto dto) throws VantarException {
@@ -108,9 +106,9 @@ public abstract class ModelCommon {
                 userPassword.setPassword(password);
                 try {
                     if (MongoQuery.existsById(userPassword)) {
-                        ModelMongo.update(userPassword);
+                        Mongo.update(userPassword);
                     } else {
-                        ModelMongo.insert(userPassword);
+                        Mongo.insert(userPassword);
                     }
                 } catch (VantarException e) {
                     throw new ServerException(VantarKey.FETCH_FAIL);
@@ -276,7 +274,6 @@ public abstract class ModelCommon {
 
     public interface WriteEvent {
 
-        void beforeSet(Dto dto) throws VantarException;
         void beforeWrite(Dto dto) throws VantarException;
         void afterWrite(Dto dto) throws VantarException;
     }
@@ -302,4 +299,103 @@ public abstract class ModelCommon {
         boolean beforeUpdate(Dto dto);
         boolean beforeDelete(Dto dto);
     }
+
+
+    public static class Settings {
+
+        // insert update delete
+        public Params params;
+        // insert update
+        public String key;
+        // insert update delete
+        public Dto dto;
+        // update delete
+        public QueryBuilder q;
+        // insert update delete
+        public WriteEvent event;
+        // update delete
+        public boolean dtoHasFullData;
+        // insert update delete
+        public boolean logEvent = true;
+        // insert update delete
+        public boolean mutex = true;
+        // insert update
+        public boolean isJson;
+        // delete
+        public boolean cascade;
+        // delete
+        public boolean force;
+        // update
+        public Dto.Action action = Dto.Action.UPDATE_FEW_COLS;
+        // delete
+        private long count;
+
+        public Settings(Dto dto) {
+            this.dto = dto;
+        }
+
+        public Settings(Dto dto, WriteEvent event) {
+            this.dto = dto;
+            this.event = event;
+        }
+
+        public Settings(Params params, Dto dto) {
+            this.params = params;
+            this.dto = dto;
+        }
+
+        public Settings(Params params, Dto dto, WriteEvent event) {
+            this.params = params;
+            this.dto = dto;
+            this.event = event;
+        }
+
+        public Settings(QueryBuilder q) {
+            this.q = q;
+        }
+
+        public Settings(QueryBuilder q, WriteEvent event) {
+            this.q = q;
+            this.event = event;
+        }
+
+        public Settings dtoHasFullData(boolean s) {
+            dtoHasFullData = s;
+            return this;
+        }
+        public Settings logEvent(boolean s) {
+            logEvent = s;
+            return this;
+        }
+        public Settings mutex(boolean s) {
+            mutex = s;
+            return this;
+        }
+        public Settings cascade(boolean s) {
+            cascade = s;
+            return this;
+        }
+        public Settings force(boolean s) {
+            force = s;
+            return this;
+        }
+        public Settings isJson() {
+            isJson = true;
+            return this;
+        }
+        public Settings isJson(String key) {
+            isJson = true;
+            this.key = key;
+            return this;
+        }
+
+        public void addDeletedCount(long c) {
+            count += c;
+        }
+
+        public long getDeletedCount() {
+            return count;
+        }
+    }
+
 }

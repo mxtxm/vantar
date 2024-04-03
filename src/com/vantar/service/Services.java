@@ -11,19 +11,17 @@ import com.vantar.service.messaging.ServiceMessaging;
 import com.vantar.service.patch.Patcher;
 import com.vantar.util.object.*;
 import com.vantar.util.string.StringUtil;
-import org.slf4j.*;
 import java.util.*;
 
 
 public class Services {
 
-    public static final Logger log = LoggerFactory.getLogger(Services.class);
     public static final String ID = UUID.randomUUID().toString();
 
     private static Event event;
     public static ServiceMessaging messaging;
 
-    private static Set<Class<?>> dependencies;
+    private static Set<Class<?>> enabledDataSources;
     private static Map<Class<?>, Service> upServicesMe;
     // <serverID, List<service>>
     private static Map<String, List<String>> upServicesOther;
@@ -64,29 +62,15 @@ public class Services {
         return services;
     }
 
-    /**
-     * NONE server startup -> do not run events
-     */
-    public static synchronized void startServices() {
-        startServices(false);
-    }
-
-    /**
-     * Server startup -> start services run events
-     */
-    public static synchronized void startServer() {
-        startServices(true);
-    }
-
-    public static void startServices(boolean doEvents) {
-        dependencies = new HashSet<>(5, 1);
-        String values = Settings.getValue("service.dependencies");
+    public static void startServices() {
+        enabledDataSources = new HashSet<>(5, 1);
+        String values = Settings.getValue("service.data.sources");
         if (values != null) {
             for (String className : StringUtil.splitTrim(values, VantarParam.SEPARATOR_COMMON)) {
                 try {
-                    dependencies.add(Class.forName(className));
+                    enabledDataSources.add(Class.forName(className));
                 } catch (ClassNotFoundException e) {
-                    log.error(" !! dependency('{}') not found", className);
+                    ServiceLog.log.error(" ! dependency({}) not found", className);
                 }
             }
         }
@@ -99,7 +83,7 @@ public class Services {
             }
             Integer priority = Settings.getValue(key, Integer.class);
             if (priority == null) {
-                log.error(" !! invalid priority > service({})", key);
+                ServiceLog.log.error(" ! invalid priority > service({})", key);
                 continue;
             }
 
@@ -108,7 +92,7 @@ public class Services {
             String className = StringUtil.toStudlyCase(key);
             Service service = ClassUtil.getInstance(packageName + '.' + className);
             if (service == null) {
-                log.error(" !! failed to create service instance({}.{})", packageName, className);
+                ServiceLog.log.error(" ! failed to create service instance({}.{})", packageName, className);
                 continue;
             }
 
@@ -125,8 +109,10 @@ public class Services {
             orderedServices.put(priority, service);
         }
 
-        if (doEvents && event != null) {
-            event.beforeStart(dependencies);
+        startDataSources();
+
+        if (event != null) {
+            event.beforeStart(enabledDataSources);
         }
 
         messaging = new ServiceMessaging();
@@ -139,7 +125,7 @@ public class Services {
             }
         }
 
-        if (doEvents && event != null) {
+        if (event != null) {
             event.afterStart();
         }
 
@@ -153,41 +139,25 @@ public class Services {
             Beat.set(service.getClass(), "start");
             upServicesMe.put(service.getClass(), service);
             messaging.broadcast(VantarParam.MESSAGE_SERVICE_STARTED, className);
-            log.info(" > '{}' started", className);
+            ServiceLog.log.info(" > '{}' started", className);
         } catch (Exception e) {
-            log.error(" !! '{}' failed to start\n", className, e);
+            ServiceLog.log.error(" ! '{}' failed to start\n", className, e);
         }
     }
 
     /**
      * Get service start message from other servers
      */
-    public static void onServiceStarted(String serverId, String service) {
+    public synchronized static void onServiceStarted(String serverId, String service) {
         if (upServicesOther == null) {
             upServicesOther = new HashMap<>(10, 1);
         }
-        synchronized (upServicesOther) {
-            List<String> services = upServicesOther.computeIfAbsent(serverId, k -> new ArrayList<>(10));
-            services.add(service);
-        }
+        List<String> services = upServicesOther.computeIfAbsent(serverId, k -> new ArrayList<>(10));
+        services.add(service);
     }
 
-    /**
-     * NONE shutdown -> do not run the shutdown events
-     */
-    public static synchronized void stopServices() {
-        stopServices(false);
-    }
-
-    /**
-     * Server shutdown -> run shutdown events
-     */
-    public static synchronized void stop() {
-        stopServices(true);
-    }
-
-    public static void stopServices(boolean doEvents) {
-        if (doEvents && event != null) {
+    public static void stopServices() {
+        if (event != null) {
             event.beforeStop();
         }
 
@@ -197,11 +167,13 @@ public class Services {
         });
 
         messaging.stop();
-        log.info(" > '{}' stopped gracefully", ServiceMessaging.class.getSimpleName());
+        ServiceLog.log.info(" > '{}' stopped gracefully", ServiceMessaging.class.getSimpleName());
 
-        if (doEvents && event != null) {
+        if (event != null) {
             event.afterStop();
         }
+
+        stopDataSources();
     }
 
     private static void stopService(Service service) {
@@ -210,9 +182,9 @@ public class Services {
             service.stop();
             Beat.set(service.getClass(), "stop");
             messaging.broadcast(VantarParam.MESSAGE_SERVICE_STOPPED, className);
-            log.info(" > '{}' stopped gracefully", className);
+            ServiceLog.log.info(" > '{}' stopped gracefully", className);
         } catch (Exception e) {
-            log.info(" !! '{}' failed to stopped gracefully\n", className, e);
+            ServiceLog.log.error(" > '{}' failed to stopped gracefully\n", className, e);
         }
     }
 
@@ -223,25 +195,23 @@ public class Services {
         if (upServicesOther == null) {
             upServicesOther = new HashMap<>(10, 1);
         }
-        synchronized (upServicesOther) {
-            List<String> services = upServicesOther.get(serverId);
-            if (services == null) {
+        List<String> services = upServicesOther.get(serverId);
+        if (services == null) {
+            upServicesOther.remove(serverId);
+        } else {
+            services.remove(service);
+            if (services.isEmpty()) {
                 upServicesOther.remove(serverId);
-            } else {
-                services.remove(service);
-                if (services.isEmpty()) {
-                    upServicesOther.remove(serverId);
-                }
             }
         }
     }
 
-    public static boolean isDependencyEnabled(Class<?> serviceClass) {
-        return dependencies != null && dependencies.contains(serviceClass);
+    public static boolean isDataSourceEnabled(Class<?> serviceClass) {
+        return enabledDataSources != null && enabledDataSources.contains(serviceClass);
     }
 
     public static boolean isUp(Class<?> serviceClass) {
-        if (dependencies != null && dependencies.contains(serviceClass)) {
+        if (enabledDataSources != null && enabledDataSources.contains(serviceClass)) {
             return true;
         }
         return upServicesMe != null && upServicesMe.containsKey(serviceClass);
@@ -283,19 +253,34 @@ public class Services {
     /**
      * database and queues
      */
-    public static void connectToDataSources(Set<Class<?>> dependencies) {
-        if (dependencies.contains(Queue.class)) {
+    public static void startDataSources() {
+        if (enabledDataSources.contains(Queue.class)) {
             Queue.connect(Settings.queue());
         }
-        if (dependencies.contains(MongoConnection.class)) {
+        if (enabledDataSources.contains(MongoConnection.class)) {
             MongoConnection.isShutdown = false;
             MongoConnection.connect(Settings.mongo());
         }
-        if (dependencies.contains(SqlConnection.class)) {
+        if (enabledDataSources.contains(SqlConnection.class)) {
             SqlConnection.start(Settings.sql());
         }
-        if (dependencies.contains(ElasticConnection.class)) {
+        if (enabledDataSources.contains(ElasticConnection.class)) {
             ElasticConnection.connect(Settings.elastic());
+        }
+    }
+
+    public static void stopDataSources() {
+        if (enabledDataSources.contains(Queue.class)) {
+            Queue.shutdown();
+        }
+        if (enabledDataSources.contains(MongoConnection.class)) {
+            MongoConnection.shutdown();
+        }
+        if (enabledDataSources.contains(SqlConnection.class)) {
+            SqlConnection.shutdown();
+        }
+        if (enabledDataSources.contains(ElasticConnection.class)) {
+            ElasticConnection.shutdown();
         }
     }
 
@@ -312,7 +297,7 @@ public class Services {
 
     public interface Event {
 
-        void beforeStart(Set<Class<?>> dependencies);
+        void beforeStart(Set<Class<?>> dataSources);
         void beforeStop();
         void afterStart();
         void afterStop();

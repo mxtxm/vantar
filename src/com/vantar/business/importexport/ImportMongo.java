@@ -16,48 +16,50 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class ImportMongo extends ImportCommon {
 
-    public static void importDataAdmin(String data, Dto dto, List<String> presentField, boolean deleteAll, WebUi ui) {
+    public static void importDtoData(String data, Dto dto, List<String> presentField, boolean deleteAll, WebUi ui) {
         if (Services.isUp(ServiceLog.class)) {
             ServiceLog.addAction(Dto.Action.IMPORT, dto);
         }
 
-        ui.beginBox(dto.getClass().getSimpleName(), null, "box-title2").write();
-
+        if (ui != null) {
+            ui.addHeading(3, dto.getClass().getSimpleName()).write();
+        }
         if (deleteAll) {
             String collection = dto.getStorage();
             try {
                 Mongo.deleteAll(collection);
-                Mongo.Index.remove(collection);
                 Mongo.Sequence.remove(collection);
-            } catch (DatabaseException e) {
-                ui.addErrorMessage(e);
-                log.error(" !! {} : {} > {}\n", dto.getClass().getSimpleName(), dto, data, e);
+            } catch (Exception e) {
+                if (ui != null) {
+                    ui.addErrorMessage(e).write();
+                }
                 return;
             }
-            ui.addBlock("pre", Locale.getString(VantarKey.DELETE_SUCCESS)).write();
+            if (ui != null) {
+                ui.addMessage(VantarKey.DELETE_SUCCESS).write();
+            }
         }
 
         AtomicInteger failed = new AtomicInteger();
         AtomicInteger success = new AtomicInteger();
         AtomicInteger duplicate = new AtomicInteger();
-
         Import imp = (String presentValue, Map<String, Object> values) -> {
             try {
                 if (dto.getId() == null ? ModelMongo.existsByDto(dto) : ModelMongo.existsById(dto)) {
                     duplicate.getAndIncrement();
                     return;
                 }
-                ModelMongo.insert(dto);
+                ModelMongo.insert(new ModelCommon.Settings(dto).logEvent(false).mutex(false));
+
                 if (dto instanceof CommonUser) {
-                    ModelCommon.insertPassword(
-                        dto,
-                        (String) values.get("password")
-                    );
+                    ModelCommon.insertPassword(dto, (String) values.get("password"));
                 }
 
                 success.getAndIncrement();
             } catch (VantarException e) {
-                ui.addErrorMessage(presentValue + " " + Locale.getString(VantarKey.IMPORT_FAIL));
+                if (ui != null) {
+                    ui.addErrorMessage(presentValue + " " + Locale.getString(VantarKey.IMPORT_FAIL));
+                }
                 failed.getAndIncrement();
             }
         };
@@ -67,16 +69,18 @@ public class ImportMongo extends ImportCommon {
         try {
             max = Mongo.Sequence.setToMax(dto);
         } catch (DatabaseException e) {
-            ui.addErrorMessage(e);
+            if (ui != null) {
+                ui.addErrorMessage(e);
+            }
             max = 0;
         }
 
-        ui.addBlock("pre",
-            Locale.getString(VantarKey.BUSINESS_WRITTEN_COUNT, success) + "\n" +
-            Locale.getString(VantarKey.BUSINESS_ERROR_COUNT, failed) + "\n" +
-            Locale.getString(VantarKey.BUSINESS_DUPLICATE_COUNT, duplicate) + "\n" +
-            Locale.getString(VantarKey.BUSINESS_SERIAL_MAX, max)
-        );
-        ui.blockEnd().blockEnd().write();
+        if (ui != null) {
+            ui  .addKeyValue(VantarKey.BUSINESS_WRITTEN_COUNT, success)
+                .addKeyValue(VantarKey.BUSINESS_ERROR_COUNT, failed)
+                .addKeyValue(VantarKey.BUSINESS_DUPLICATE_COUNT, duplicate)
+                .addKeyValue(VantarKey.BUSINESS_SERIAL_MAX, max)
+                .write();
+        }
     }
 }

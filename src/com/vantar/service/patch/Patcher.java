@@ -1,11 +1,10 @@
 package com.vantar.service.patch;
 
-import com.vantar.business.ModelMongo;
-import com.vantar.common.Settings;
+import com.vantar.business.*;
 import com.vantar.database.dto.DtoBase;
 import com.vantar.database.query.QueryBuilder;
 import com.vantar.exception.NoContentException;
-import com.vantar.service.Services;
+import com.vantar.service.log.ServiceLog;
 import com.vantar.service.patch.dto.PatchHistory;
 import com.vantar.util.object.*;
 import com.vantar.web.WebUi;
@@ -15,10 +14,10 @@ import java.util.*;
 public class Patcher extends DtoBase {
 
     public static void run() {
-        Services.log.info(" > Patcher");
-        String packageName = Settings.config.getProperty("patch.package");
+        ServiceLog.log.info(" > Patcher");
+        String packageName = com.vantar.common.Settings.config.getProperty("package.patch");
         if (packageName == null) {
-            Services.log.info(" < no patches");
+            ServiceLog.log.info(" < no patches");
             return;
         }
 
@@ -31,7 +30,7 @@ public class Patcher extends DtoBase {
             thread.start();
         }
 
-        Services.log.info(" < Patcher");
+        ServiceLog.log.info(" < Patcher");
     }
 
     private static void execPatch(String className) {
@@ -42,18 +41,18 @@ public class Patcher extends DtoBase {
         } catch (NoContentException e) {
             execPatchManually(className, null);
         } catch (Exception e) {
-            Services.log.error(" ! Patcher {}", className, e);
+            ServiceLog.log.error(" ! Patcher {}", className, e);
         }
     }
 
     public static PatchHistory execPatchManually(String className, WebUi ui) {
         PatchHistory history = new PatchHistory();
         try {
-            Services.log.info("  --> running {}", className);
+            ServiceLog.log.info("  --> running {}", className);
 
             Object object = ClassUtil.getInstance(className);
             if (!(object instanceof PatchInterface)) {
-                Services.log.error(" ! invalid patch {}", className);
+                ServiceLog.log.error(" ! invalid patch {}", className);
                 return history;
             }
 
@@ -68,17 +67,17 @@ public class Patcher extends DtoBase {
 
             QueryBuilder q = new QueryBuilder(history);
             q.condition().equal("patchClass", className);
-            ModelMongo.deleteNoLog(q);
+            ModelMongo.delete(new ModelCommon.Settings(q).force(true).logEvent(false).mutex(false));
 
             history.patchClass = className;
             history.success = result.success;
             history.fail = result.fail;
             history.successCount = result.successCount;
             history.failCount = result.failCount;
-            Services.log.info("  <-- finished {} fail={} success={}", className, result.failCount, result.successCount);
-            ModelMongo.insertNoLog(history);
+            ServiceLog.log.info("  <-- finished {} fail={} success={}", className, result.failCount, result.successCount);
+            ModelMongo.insert(new ModelCommon.Settings(history).logEvent(false).mutex(false));
         } catch (Throwable t) {
-            Services.log.error(" ! Patcher {}", className, t);
+            ServiceLog.log.error(" ! Patcher {}", className, t);
         }
         return history;
     }

@@ -428,17 +428,20 @@ public class CommonModelElastic extends ModelCommon {
     // > > > admin tools
 
     public static void importDataAdmin(String data, Dto dto, List<String> presentField, boolean deleteAll, WebUi ui) {
-        ui.beginBox(dto.getClass().getSimpleName(), null, "box-title2").write();
+        ui.addHeading(3, dto.getClass().getSimpleName()).write();
 
         if (deleteAll) {
             try {
                 ElasticWrite.purgeData(dto.getStorage());
             } catch (DatabaseException e) {
-                ui.addErrorMessage(e);
-                log.error("! batch import failed", e);
+                if (ui != null) {
+                    ui.addErrorMessage(e);
+                }
                 return;
             }
-            ui.addBlock("pre", Locale.getString(VantarKey.DELETE_SUCCESS)).write();
+            if (ui != null) {
+                ui.addMessage(VantarKey.DELETE_SUCCESS).write();
+            }
         }
 
         ElasticWrite write = new ElasticWrite();
@@ -468,16 +471,17 @@ public class CommonModelElastic extends ModelCommon {
         try {
             write.commit();
 
-            ui.addBlock("pre",
-                Locale.getString(VantarKey.BUSINESS_WRITTEN_COUNT, success) + "\n" +
-                Locale.getString(VantarKey.BUSINESS_ERROR_COUNT, failed) + "\n" +
-                Locale.getString(VantarKey.BUSINESS_DUPLICATE_COUNT, duplicate)
-            );
-            ui.blockEnd().blockEnd().write();
+            if (ui != null) {
+                ui  .addKeyValue(VantarKey.BUSINESS_WRITTEN_COUNT, success)
+                    .addKeyValue(VantarKey.BUSINESS_ERROR_COUNT, failed)
+                    .addKeyValue(VantarKey.BUSINESS_DUPLICATE_COUNT, duplicate)
+                    .write();
+            }
 
         } catch (DatabaseException e) {
-            ui.addErrorMessage(e);
-            log.error("! batch import failed", e);
+            if (ui != null) {
+                ui.addErrorMessage(e);
+            }
         }
     }
 }

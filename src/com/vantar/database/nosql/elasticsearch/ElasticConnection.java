@@ -47,4 +47,8 @@ public class ElasticConnection {
         client = null;
         isUp = false;
     }
+
+    public static void shutdown() {
+
+    }
 }

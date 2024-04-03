@@ -1,6 +1,7 @@
 package com.vantar.service.healthmonitor;
 
 import com.sun.management.OperatingSystemMXBean;
+import com.vantar.database.dto.DtoDictionary;
 import com.vantar.database.nosql.elasticsearch.ElasticConnection;
 import com.vantar.database.nosql.mongo.MongoConnection;
 import com.vantar.database.sql.SqlConnection;
@@ -127,28 +128,28 @@ public class ServiceHealthMonitor implements Services.Service {
         }
 
         // > > > services
-        if (Services.isDependencyEnabled(MongoConnection.class) && !Services.isUp(MongoConnection.class)) {
+        if (Services.isDataSourceEnabled(MongoConnection.class) && !Services.isUp(MongoConnection.class)) {
             String msg = "SERVICE OFF: Mongo";
             event.warnServiceFail(msg);
             ServiceLog.error(ServiceHealthMonitor.class, msg);
             lastWasOk = false;
             lastMessages.add(msg);
         }
-        if (Services.isDependencyEnabled(ElasticConnection.class) && !Services.isUp(ElasticConnection.class)) {
+        if (Services.isDataSourceEnabled(ElasticConnection.class) && !Services.isUp(ElasticConnection.class)) {
             String msg = "SERVICE OFF: Elastic";
             event.warnServiceFail(msg);
             ServiceLog.error(ServiceHealthMonitor.class, msg);
             lastWasOk = false;
             lastMessages.add(msg);
         }
-        if (Services.isDependencyEnabled(SqlConnection.class) && !Services.isUp(SqlConnection.class)) {
+        if (Services.isDataSourceEnabled(SqlConnection.class) && !Services.isUp(SqlConnection.class)) {
             String msg = "SERVICE OFF: SQL";
             event.warnServiceFail(msg);
             ServiceLog.error(ServiceHealthMonitor.class, msg);
             lastWasOk = false;
             lastMessages.add(msg);
         }
-        if (Services.isDependencyEnabled(Queue.class) && !Services.isUp(Queue.class)) {
+        if (Services.isDataSourceEnabled(Queue.class) && !Services.isUp(Queue.class)) {
             String msg = "SERVICE OFF: Queue";
             event.warnServiceFail(msg);
             ServiceLog.error(ServiceHealthMonitor.class, msg);
@@ -265,30 +266,30 @@ public class ServiceHealthMonitor implements Services.Service {
         }
         report.put("Disks", disks);
 
-        // services dependencies
-        Map<String, Map<String, Boolean>> serviceDependencies = new HashMap<>(5, 1);
+        // services data sources
+        Map<String, Map<String, Boolean>> dataSources = new HashMap<>(5, 1);
         // >
         Map<String, Boolean> queue = new HashMap<>(2, 1);
-        queue.put("Enabled", Services.isDependencyEnabled(Queue.class));
+        queue.put("Enabled", Services.isDataSourceEnabled(Queue.class));
         queue.put("Up", Services.isUp(Queue.class));
-        serviceDependencies.put("Queue", queue);
+        dataSources.put("Queue", queue);
         // >
         Map<String, Boolean> mongo = new HashMap<>(2, 1);
-        mongo.put("Enabled", Services.isDependencyEnabled(MongoConnection.class));
+        mongo.put("Enabled", Services.isDataSourceEnabled(MongoConnection.class));
         mongo.put("Up", Services.isUp(MongoConnection.class));
-        serviceDependencies.put("Mongo", mongo);
+        dataSources.put(DtoDictionary.Dbms.MONGO.name(), mongo);
         // >
         Map<String, Boolean> sql = new HashMap<>(2, 1);
-        sql.put("Enabled", Services.isDependencyEnabled(SqlConnection.class));
+        sql.put("Enabled", Services.isDataSourceEnabled(SqlConnection.class));
         sql.put("Up", Services.isUp(SqlConnection.class));
-        serviceDependencies.put("SQL", sql);
+        dataSources.put(DtoDictionary.Dbms.SQL.name(), sql);
         // >
         Map<String, Boolean> elastic = new HashMap<>(2, 1);
-        elastic.put("Enabled", Services.isDependencyEnabled(ElasticConnection.class));
+        elastic.put("Enabled", Services.isDataSourceEnabled(ElasticConnection.class));
         elastic.put("Up", Services.isUp(ElasticConnection.class));
-        serviceDependencies.put("Elastic search", elastic);
+        dataSources.put(DtoDictionary.Dbms.ELASTIC.name(), elastic);
         // >
-        report.put("Services dependencies", serviceDependencies);
+        report.put("Data sources (connections)", dataSources);
 
         // services
         Map<String, Map<String, Object>> services = new HashMap<>(14, 1);
