@@ -87,7 +87,6 @@ public class DefaultStringsFa {
         tokens.put(VantarKey.DELETE_MANY_SUCCESS, "(\"{0}\") items deleted successfully");
         tokens.put(VantarKey.DELETE_FAIL, "پاک کردن اطلاعات دچار خطا شد");
         tokens.put(VantarKey.IMPORT_FAIL, "data import failed");
-        tokens.put(VantarKey.BATCH_INSERT_FAIL, "ورود اطلاعات دسته ای دچار خطا شد");
         tokens.put(VantarKey.INVALID_JSON_DATA, "ساختار ج ی س و ن نادرست است");
 
 
@@ -101,10 +100,8 @@ public class DefaultStringsFa {
 
         tokens.put(VantarKey.ADMIN_PAGING, "صفحه بندی");
 
-        tokens.put(VantarKey.DELETE_FAIL_HAS_DEPENDENCIES, "بعلت وجود وابستگی امکان حذف وجود ندارد  --> {0}");
 
-        tokens.put(VantarKey.ADMIN_ACTION_LOG_USER, "لاگ کاربران");
-        tokens.put(VantarKey.ADMIN_ACTION_LOG_REQUEST, "لاگ درخواست ها");
+        tokens.put(VantarKey.ADMIN_USER_LOG, "لاگ کاربران");
         tokens.put(VantarKey.ADMIN_MEMORY, "حافظه");
         tokens.put(VantarKey.ADMIN_DISK_SPACE, "دیسک");
         tokens.put(VantarKey.ADMIN_PROCESSOR, "پردازنده");
@@ -155,7 +152,6 @@ public class DefaultStringsFa {
 
         tokens.put(VantarKey.ADMIN_DATABASE, "مدیریت پایگاه داده");
         tokens.put(VantarKey.ADMIN_DATABASE_STATUS, "وضعیت");
-        tokens.put(VantarKey.ADMIN_DATABASE_CREATE_INDEX, "ساختن ایندکس ها");
         tokens.put(VantarKey.ADMIN_DATABASE_CREATE_SEQUENCE, "ساختن سریال");
         tokens.put(VantarKey.ADMIN_DATA_PURGE, "نابودی");
         tokens.put(VantarKey.ADMIN_DELETE_OPTIONAL, "پاک سازی انتخابی داده ها");
@@ -167,7 +163,6 @@ public class DefaultStringsFa {
 
         tokens.put(VantarKey.ADMIN_SYSTEM_AND_SERVICES, "مدیریت سیستم و سرویس ها");
         tokens.put(VantarKey.ADMIN_STARTUP, "راه اندازی");
-        tokens.put(VantarKey.ADMIN_SERVICE_STOP, "خاموش کردن سرویس");
         tokens.put(VantarKey.ADMIN_SERVICE_START, "روشن کردن سرویس");
         tokens.put(VantarKey.ADMIN_FACTORY_RESET, "بازگردانی سیستم به حالا ابتدایی");
 
@@ -218,27 +213,18 @@ public class DefaultStringsFa {
         tokens.put(VantarKey.ADMIN_SIGNIN_TOKEN_TEMP, "کدهای موقت ورود به سیستم");
         tokens.put(VantarKey.ADMIN_RECOVER_TOKEN_TEMP, "کدهای موقت بازیابی و شناسایی");
 
-        tokens.put(VantarKey.ADMIN_ENABLED_SERVICES_THIS, "سرویس های فعال شده بر روی این سرور");
         tokens.put(VantarKey.ADMIN_SERVICE, "سرویس");
-        tokens.put(VantarKey.ADMIN_IS_ON, "روشن بودن");
         tokens.put(VantarKey.ADMIN_MENU_QUERY_TITLE, "جستارها (queries)");
         tokens.put(VantarKey.ADMIN_QUERY_NEW, "جستار جدید");
-        tokens.put(VantarKey.ADMIN_QUERY_WRITE, "نوشتن جستار (queries)");
         tokens.put(VantarKey.ADMIN_TITLE, "عنوان");
-        tokens.put(VantarKey.ADMIN_HELP, "راهنما...");
         tokens.put(VantarKey.ADMIN_CONFIRM, "از انجام کار اطمینان دارم");
-        tokens.put(VantarKey.ADMIN_QUERY_DELETE_TITLE, "پاک کردن جستار (queries)");
         tokens.put(VantarKey.ADMIN_QUERY, "جستار (queries)");
         tokens.put(VantarKey.ADMIN_EDIT, "ویرایش");
-        tokens.put(VantarKey.ADMIN_DELETE2, "پاک کردن");
         tokens.put(VantarKey.ADMIN_NEW, "جدید");
-        tokens.put(VantarKey.ADMIN_IX, "فهرست");
         tokens.put(VantarKey.ADMIN_DELETE_QUEUE, "پاک کردن صف ها");
         tokens.put(VantarKey.ADMIN_ATTEMPTS, "تعداد تلاش");
         tokens.put(VantarKey.ADMIN_NO_QUEUE, "صفی وجود ندارد");
-        tokens.put(VantarKey.ADMIN_NO_ERROR, "خطایی وجود ندارد");
         tokens.put(VantarKey.ADMIN_ERRORS_DELETE, "پاک کردن خطاهای سیستم");
-        tokens.put(VantarKey.ADMIN_RECORDS, " :رکورد ");
         tokens.put(VantarKey.ADMIN_SETTINGS_EDIT, "ویرایش تنظیمات");
         tokens.put(VantarKey.ADMIN_SETTINGS_MSG1, "تنظیمات قابل ویرایش و نوشتن در فایل نیستند");
         tokens.put(VantarKey.ADMIN_SETTINGS_MSG2, "تنضیمات این فایل برای هر سرویس متفاوت است و تنها بر روی این سرویس دهنده بروز خواهند شد.");
@@ -248,8 +234,6 @@ public class DefaultStringsFa {
         tokens.put(VantarKey.ADMIN_SETTINGS_UPDATE_MSG_SENT, "پیام ویرایش تنظیمات به سرویس های دیگر فرستاده شد");
         tokens.put(VantarKey.ADMIN_SETTINGS_UPDATE_FAILED, "تنظیمات بروز نشدند");
         tokens.put(VantarKey.ADMIN_SERVICE_ALL_SERVERS, "تمامی سرورها");
-        tokens.put(VantarKey.ADMIN_SERVICE_ALL_DB_SERVICES, "شامل سرویس های دیتابیس و صف");
-        tokens.put(VantarKey.ADMIN_SERVICE_START_SERVICES_AT_END, "در پایان سرویس ها روشن شوند");
         tokens.put(VantarKey.ADMIN_SERVICE_STOPPED, "تمام سرویس ها به درستی خاموش شدند");//"all services are stopped successfully"
         tokens.put(VantarKey.ADMIN_SERVICE_STARTED, "تمام سرویس ها به درستی روشن شدند");//"all services are started successfully"
         tokens.put(VantarKey.ADMIN_SYSYEM_OBJECTS, "ابجکت های سیستم");
@@ -282,7 +266,6 @@ public class DefaultStringsFa {
         tokens.put(VantarKey.ADMIN_INCLUDE, "شامل باشند");
         tokens.put(VantarKey.ADMIN_EXCLUDE, "شامل نباشند");
 
-        tokens.put(VantarKey.ADMIN_ONLY_DEPENDENCIES, "نمایش وابستگی ها بدون پاک کردن");
         tokens.put(VantarKey.ADMIN_IGNORE_DEPENDENCIES, "از وابستگی ها چشم پوشی شود");
 
     }

@@ -24,12 +24,12 @@ public class UserLog extends DtoBase {
     public String className;
     public String classNameSimple;
     public Long objectId;
-
     public String object;
     @ExcludeList
     public Map<String, Object> objectX;
     @ExcludeList
     public Map<String, Object> extraData;
+
 
 
     public static class Mini extends DtoBase {
@@ -42,29 +42,8 @@ public class UserLog extends DtoBase {
         public String action;
         public String url;
         public DateTime time;
-
         public String className;
         public String classNameSimple;
         public Long objectId;
-    }
-
-
-    public static class View extends DtoBase {
-
-        public Long id;
-
-        public Long userId;
-        public String userName;
-        public Long threadId;
-        public String action;
-        public String url;
-        @Timestamp
-        public DateTime time;
-
-        public String className;
-        public String classNameSimple;
-        public Long objectId;
-
-        public Map<String, Object> extraData;
     }
 }

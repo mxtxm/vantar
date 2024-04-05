@@ -243,9 +243,6 @@ public class ServiceLog implements Services.Service  {
     public static void addRequest(Params params) {
         UserWebLog userLog = new UserWebLog();
         userLog.url = params.request.getRequestURI();
-        if (userLog.url.startsWith("/admin/")) {
-            return;
-        }
         userLog.action = "REQUEST";
         userLog.classNameSimple = "Params";
         userLog.threadId = Thread.currentThread().getId();

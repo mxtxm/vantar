@@ -1,7 +1,7 @@
 package com.vantar.database.nosql.mongo;
 
 import com.mongodb.client.*;
-import com.vantar.admin.model.database.dbms.indexing.AdminDatabaseIndex;
+import com.vantar.admin.database.dbms.indexing.AdminDatabaseIndex;
 import com.vantar.database.dto.*;
 import com.vantar.database.query.QueryBuilder;
 import com.vantar.exception.*;

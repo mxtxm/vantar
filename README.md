@@ -6,8 +6,7 @@ Iman Heydari
 
 
 ## todo ##
-* log data when delete
-* undelete
 * logs
-* backtrack to log
-* dependencies
+* see user action history when clicking on a user
+* dto diff
+* log diff

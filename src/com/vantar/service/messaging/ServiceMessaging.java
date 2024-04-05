@@ -1,7 +1,7 @@
 package com.vantar.service.messaging;
 
-import com.vantar.admin.model.setting.AdminSettings;
-import com.vantar.admin.model.service.AdminService;
+import com.vantar.admin.setting.AdminSettings;
+import com.vantar.admin.service.AdminService;
 import com.vantar.common.*;
 import com.vantar.queue.*;
 import com.vantar.service.Services;

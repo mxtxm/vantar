@@ -38,4 +38,14 @@ public class Log extends DtoBase {
             this.objects.add(ObjectUtil.toString(o));
         }
     }
+
+
+
+    public static class Mini extends DtoBase {
+
+        public Long id;
+        public String tag;
+        public String level;
+        public DateTime createT;
+    }
 }

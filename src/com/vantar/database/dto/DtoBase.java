@@ -1347,10 +1347,10 @@ public abstract class DtoBase implements Dto {
             return false;
         }
         Dto dto = (Dto) obj;
-        Long id = this.getId();
-        if (id != null && this.getId().equals(((Dto) obj).getId())) {
-            return true;
-        }
+//        Long id = this.getId();
+//        if (id != null && this.getId().equals(((Dto) obj).getId())) {
+//            return true;
+//        }
         for (Map.Entry<String, Object> entry : getPropertyValues().entrySet()) {
             Object v1 = entry.getValue();
             Object v2 = dto.getPropertyValue(entry.getKey());
@@ -1384,10 +1384,10 @@ public abstract class DtoBase implements Dto {
 
     @Override
     public int hashCode() {
-        Long id = getId();
-        if (id != null) {
-            return getClass().hashCode() * id.hashCode();
-        }
+//        Long id = getId();
+//        if (id != null) {
+//            return getClass().hashCode() * id.hashCode();
+//        }
         int hash = getClass().hashCode();
         for (Object v : getPropertyValues().values()) {
             hash = 31 * hash + (v == null ? 0 : v.hashCode());

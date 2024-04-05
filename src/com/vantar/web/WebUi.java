@@ -1,6 +1,6 @@
 package com.vantar.web;
 
-import com.vantar.admin.model.database.data.panel.DataUtil;
+import com.vantar.admin.database.data.panel.DataUtil;
 import com.vantar.business.ModelMongo;
 import com.vantar.common.VantarParam;
 import com.vantar.database.datatype.Location;
@@ -10,9 +10,8 @@ import com.vantar.exception.*;
 import com.vantar.locale.Locale;
 import com.vantar.locale.*;
 import com.vantar.service.auth.*;
-import com.vantar.service.dbarchive.ServiceDbArchive;
 import com.vantar.service.log.ServiceLog;
-import com.vantar.service.log.dto.UserLog;
+import com.vantar.service.log.dto.*;
 import com.vantar.util.collection.CollectionUtil;
 import com.vantar.util.datetime.DateTime;
 import com.vantar.util.json.Json;
@@ -81,9 +80,10 @@ public class WebUi extends WebUiBasics<WebUi> {
         html.append(" | <a href=\"").append(getLink("/admin/data/dependencies?dto=" + cName + "&id=" + dto.getId()))
             .append("\">").append(Locale.getString(VantarKey.ADMIN_DEPENDENCIES)).append("</a>")
 
-            .append(" | <a href=\"").append(getLink("/admin/data/action/log?dto=" + cName + "&id=" + dto.getId()))
+            .append(" | <a href=\"").append(getLink("/admin/data/log/action/search?dto=" + cName + "&id=" + dto.getId()))
             .append("\">").append(Locale.getString(VantarKey.ADMIN_ACTION_LOG)).append("</a>")
             .append("</div>");
+
         return getThis();
     }
 
@@ -326,7 +326,13 @@ public class WebUi extends WebUiBasics<WebUi> {
             addPassword("password", "password", null, "password");
         }
 
-        addSubmit(VantarKey.ADMIN_SUBMIT);
+        boolean isLog = Log.class.equals(dto.getClass())
+            || UserWebLog.class.equals(dto.getClass())
+            || UserLog.class.equals(dto.getClass());
+        if (!isLog) {
+            addSubmit(VantarKey.ADMIN_SUBMIT);
+        }
+
         html.append("<input type='hidden' name='asjson' id='asjson'/>")
             .append("</form>");
         return this;
@@ -341,46 +347,61 @@ public class WebUi extends WebUiBasics<WebUi> {
         }
         String cName = dto.getClass().getSimpleName();
         String cNameFull = dto.getClass().getName();
+        boolean isLog = Log.class.equals(dto.getClass())
+            || UserWebLog.class.equals(dto.getClass())
+            || UserLog.class.equals(dto.getClass());
 
         // > > > action links
         if (options.actionLink) {
-            html.append("<div id=\"actions\">")
-                .append(" <a href=\"").append(getLink("/admin/data/insert?dto=" + cName))
-                .append("\">").append(Locale.getString(VantarKey.ADMIN_INSERT)).append("</a>")
-                .append(" | <a href=\"").append(getLink("/admin/data/import?dto=" + cName))
-                .append("\">").append(Locale.getString(VantarKey.ADMIN_IMPORT)).append("</a>")
-                .append(" | <a href=\"").append(getLink("/admin/data/export?dto=" + cName))
-                .append("\">").append(Locale.getString(VantarKey.ADMIN_EXPORT)).append("</a>")
-                .append(" | <a href=\"").append(getLink("/admin/data/undelete/index?dto=" + cName))
-                .append("\">").append(Locale.getString(VantarKey.ADMIN_UNDELETE)).append("</a>");
+            html.append("<div id=\"actions\">");
+
+            if (!isLog) {
+                html.append(" <a href=\"").append(getLink("/admin/data/insert?dto=" + cName)).append("\">")
+                    .append(Locale.getString(VantarKey.ADMIN_INSERT)).append("</a> |");
+            }
+
+            html.append(" <a href=\"").append(getLink("/admin/data/import?dto=" + cName)).append("\">")
+                .append(Locale.getString(VantarKey.ADMIN_IMPORT)).append("</a>")
+                .append(" | <a href=\"").append(getLink("/admin/data/export?dto=" + cName)).append("\">")
+                .append(Locale.getString(VantarKey.ADMIN_EXPORT)).append("</a>");
+
+            if (!isLog) {
+                html.append(" | <a href=\"").append(getLink("/admin/data/undelete/search?dto=" + cName)).append("\">")
+                    .append(Locale.getString(VantarKey.ADMIN_UNDELETE)).append("</a>")
+                    .append(" | <a href=\"").append(getLink("/admin/data/log/action/search?dto=" + cName)).append("\">")
+                    .append(Locale.getString(VantarKey.ADMIN_ACTION_LOG)).append("</a>");
+            }
+
             if (data != null) {
-                html.append(" | <a href=\"").append(getLink("/admin/data/purge?dto=" + cName))
-                    .append("\">").append(Locale.getString(VantarKey.ADMIN_DATA_PURGE)).append("</a>");
+                html.append(" | <a href=\"").append(getLink("/admin/data/purge?dto=" + cName)).append("\">")
+                    .append(Locale.getString(VantarKey.ADMIN_DATA_PURGE)).append("</a>");
             }
 
-            String url;
-            if (DtoDictionary.Dbms.MONGO.equals(info.dbms)) {
-                url = "/admin/database/mongo/index/get";
-            } else if (DtoDictionary.Dbms.SQL.equals(info.dbms)) {
-                url = "/admin/database/sql/index/get";
-            } else {
-                url = null;
-            }
-            if (url != null) {
-                html.append(" | <a target=\"_blank\" href=\"").append(getLink(url + "?dto=" + cName))
-                    .append("\">").append(Locale.getString(VantarKey.ADMIN_DATABASE_INDEX)).append("</a>");
-            }
+            if (!isLog) {
+                String url;
+                if (DtoDictionary.Dbms.MONGO.equals(info.dbms)) {
+                    url = "/admin/database/mongo/index/get";
+                } else if (DtoDictionary.Dbms.SQL.equals(info.dbms)) {
+                    url = "/admin/database/sql/index/get";
+                } else {
+                    url = null;
+                }
+                if (url != null) {
+                    html.append(" | <a target=\"_blank\" href=\"").append(getLink(url + "?dto=" + cName)).append("\">")
+                        .append(Locale.getString(VantarKey.ADMIN_DATABASE_INDEX)).append("</a>");
+                }
 
-            html.append(" | <a href=\"").append(getLink("/admin/data/dependencies/dto?dto=" + cName))
-                .append("\">").append(Locale.getString(VantarKey.ADMIN_DEPENDENCIES)).append("</a>");
+                html.append(" | <a href=\"").append(getLink("/admin/data/dependencies/dto?dto=" + cName)).append("\">")
+                    .append(Locale.getString(VantarKey.ADMIN_DEPENDENCIES)).append("</a>");
 
-            if (dto.hasAnnotation(Cache.class)) {
-                html.append(" | <a class=\"cached\" target=\"_blank\" href=\"")
-                    .append(getLink("/admin/database/cache/view?c=" + cNameFull))
-                    .append("\">").append(Locale.getString(VantarKey.ADMIN_CACHE)).append("</a>")
-                    .append(" | <a class=\"cached\" target=\"_blank\" href=\"")
-                    .append(getLink("/admin/database/cache/refresh?c=" + cNameFull))
-                    .append("\">").append(Locale.getString(VantarKey.ADMIN_REFRESH)).append("</a>");
+                if (dto.hasAnnotation(Cache.class)) {
+                    html.append(" | <a class=\"cached\" target=\"_blank\" href=\"")
+                        .append(getLink("/admin/database/cache/view?c=" + cNameFull)).append("\">")
+                        .append(Locale.getString(VantarKey.ADMIN_CACHE)).append("</a>")
+                        .append(" | <a class=\"cached\" target=\"_blank\" href=\"")
+                        .append(getLink("/admin/database/cache/refresh?c=" + cNameFull)).append("\">")
+                        .append(Locale.getString(VantarKey.ADMIN_REFRESH)).append("</a>");
+                }
             }
 
             html.append("</div>");
@@ -388,26 +409,26 @@ public class WebUi extends WebUiBasics<WebUi> {
         // action links < < <
 
         // archive > > >
-        if (options.archive && dto.hasAnnotation(Archive.class)) {
-            html.append("<div id='archives'>");
-            ServiceDbArchive.ArchiveInfo aInfo = ServiceDbArchive.getArchives().get(cName);
-            if (aInfo == null || ObjectUtil.isEmpty(aInfo.collections)) {
-                html.append("no archives");
-            } else {
-                String linkM = cName.equalsIgnoreCase(aInfo.activeCollection) ?
-                    "(active)" :
-                    getHref("switch", "/admin/data/archive/switch?dto=" + cName + "&a=" + cName, true, false, "");
-                addKeyValue("current", cName + " " + linkM, null, false);
-
-                aInfo.collections.forEach((name, date) -> {
-                    String link = name.equalsIgnoreCase(aInfo.activeCollection) ?
-                        "(active)" :
-                        getHref("switch", "/admin/data/archive/switch?dto=" + cName + "&a=" + name, true, false, "");
-                    addKeyValue(date, name + " " + link, null, false);
-                });
-            }
-            html.append("</div>");
-        }
+//        if (options.archive && dto.hasAnnotation(Archive.class)) {
+//            html.append("<div id='archives'>");
+//            ServiceDbArchive.ArchiveInfo aInfo = ServiceDbArchive.getArchives().get(cName);
+//            if (aInfo == null || ObjectUtil.isEmpty(aInfo.collections)) {
+//                html.append("no archives");
+//            } else {
+//                String linkM = cName.equalsIgnoreCase(aInfo.activeCollection) ?
+//                    "(active)" :
+//                    getHref("switch", "/admin/data/archive/switch?dto=" + cName + "&a=" + cName, true, false, "");
+//                addKeyValue("current", cName + " " + linkM, null, false);
+//
+//                aInfo.collections.forEach((name, date) -> {
+//                    String link = name.equalsIgnoreCase(aInfo.activeCollection) ?
+//                        "(active)" :
+//                        getHref("switch", "/admin/data/archive/switch?dto=" + cName + "&a=" + name, true, false, "");
+//                    addKeyValue(date, name + " " + link, null, false);
+//                });
+//            }
+//            html.append("</div>");
+//        }
         // < < < archive
 
         // > > > params
@@ -660,6 +681,19 @@ public class WebUi extends WebUiBasics<WebUi> {
         return this;
     }
 
+    private void setWidgetComment(Dto dto, String col, Class<? extends Annotation> annotation, String comment) {
+        if (dto.hasAnnotation(col, annotation)) {
+            setWidgetComment(comment);
+        }
+    }
+
+    private void setWidgetComment(String comment) {
+        if (widgetComment == null) {
+            widgetComment = new StringBuilder(100);
+        }
+        widgetComment.append(comment);
+    }
+
 
     public static class DtoListOptions {
         public boolean actionLink;
@@ -681,71 +715,5 @@ public class WebUi extends WebUiBasics<WebUi> {
             public String containerClass;
             public String content;
         }
-    }
-
-
-
-
-
-
-
-    // > > > LOG
-
-    public WebUi addLogPage(String clazz, Long id) {
-        html.append("<div id='log-rows'></div><input id='pageLog' value='1' style='display:none'/><div><button id='more'"
-            +" onclick=\"loadRows('").append(clazz).append("', ").append(id).append(")\">more</button></div>");
-
-        html.append("<script>"
-            + "function loadRows(clazz, id) { var p = parseInt($('#pageLog').val(), 10); $('#pageLog').val(p+1); "
-            + " getString('/admin/data/log/rows', {dto:clazz,id:id,page:p}, '")
-            .append(authToken).append("', 'en', function(o) { if (o=='FINISHED') { $('#more').hide(); return;} $('#log-rows').append(o)}, ); } "
-
-            + "function setObject(id) { if ($('#log-object').hasClass('loaded')) {return;} "
-            + " $('#log-object').addClass('loaded'); getString('/admin/data/log/object', {id:id}, '")
-            .append(authToken).append("', 'en', function(o) {$('#log-object' + id).html(o)}, ); }</script>");
-        return this;
-    }
-
-    public void addLogRows(UserLog.View userLog, CommonUser user) {
-        html.append("<div class='log-row clearfix'>");
-
-        html.append("<div class='log-col-user'>")
-            .append("<p class='action'>").append(userLog.action).append("</p>")
-            .append("<p class='url'>").append(userLog.url).append("</p>")
-            .append("<p class='thread-id'>").append("thread: ").append(userLog.threadId).append("</p>")
-            .append("<p class='time'>").append(userLog.time.formatter().getDateTime()).append("</p>")
-            .append("<p class='time'>").append(userLog.time.formatter().getDateTimePersianAsString()).append("</p>");
-        if (user != null) {
-            html.append("<p class='user'>(").append(user.getId()).append(") ")
-                .append(user.getUsername()).append(" - ").append(user.getFullName()).append("</p>");
-        }
-        html.append("</div>");
-
-        html.append("<div class='log-col-data'><pre class='object'>");
-        if (userLog.className != null) {
-            html.append("<strong>").append(escape(userLog.className));
-            if (userLog.objectId != null) {
-                html.append(" (").append(userLog.objectId).append(")");
-            }
-            html.append("</strong>\n");
-        }
-        html.append("</pre><textarea id='log-object").append(userLog.id).append("' onclick='setObject(").append(userLog.id).append(")' class='object'>");
-        html.append("</textarea>");
-        html.append("</div></div>");
-    }
-
-    // LOG < < <
-
-    private void setWidgetComment(Dto dto, String col, Class<? extends Annotation> annotation, String comment) {
-        if (dto.hasAnnotation(col, annotation)) {
-            setWidgetComment(comment);
-        }
-    }
-
-    private void setWidgetComment(String comment) {
-        if (widgetComment == null) {
-            widgetComment = new StringBuilder(100);
-        }
-        widgetComment.append(comment);
     }
 }

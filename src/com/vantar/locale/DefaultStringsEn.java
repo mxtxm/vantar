@@ -90,7 +90,6 @@ public class DefaultStringsEn {
         tokens.put(VantarKey.DELETE_MANY_SUCCESS, "(\"{0}\") items deleted successfully");
         tokens.put(VantarKey.DELETE_FAIL, "Delete failed");
         tokens.put(VantarKey.IMPORT_FAIL, "Data import failed");
-        tokens.put(VantarKey.BATCH_INSERT_FAIL, "Batch insert failed");
         tokens.put(VantarKey.INVALID_JSON_DATA, "Invalid json data");
 
         // admin
@@ -125,7 +124,6 @@ public class DefaultStringsEn {
 
         tokens.put(VantarKey.ADMIN_DATABASE, "Database administrator");
         tokens.put(VantarKey.ADMIN_DATABASE_STATUS, "Status");
-        tokens.put(VantarKey.ADMIN_DATABASE_CREATE_INDEX, "Create indexes");
         tokens.put(VantarKey.ADMIN_DATABASE_CREATE_SEQUENCE, "Create sequences");
         tokens.put(VantarKey.ADMIN_DATA_PURGE, "Purge");
         tokens.put(VantarKey.ADMIN_DELETE_OPTIONAL, "Delete selected data");
@@ -137,7 +135,6 @@ public class DefaultStringsEn {
 
         tokens.put(VantarKey.ADMIN_SYSTEM_AND_SERVICES, "System and services administrator");
         tokens.put(VantarKey.ADMIN_STARTUP, "Startup");
-        tokens.put(VantarKey.ADMIN_SERVICE_STOP, "Stop service");
         tokens.put(VantarKey.ADMIN_SERVICE_START, "Start service");
         tokens.put(VantarKey.ADMIN_FACTORY_RESET, "Factory reset");
 
@@ -160,6 +157,7 @@ public class DefaultStringsEn {
         tokens.put(VantarKey.ADMIN_DELETE, "Delete");
         tokens.put(VantarKey.ADMIN_UNDELETE, "Undelete");
         tokens.put(VantarKey.ADMIN_UNDELETED, "Undeleted {0} id {1}");
+        tokens.put(VantarKey.ADMIN_REVERTED, "Reverted {0} id {1}");
         tokens.put(VantarKey.ADMIN_UPDATE, "Update");
         tokens.put(VantarKey.ADMIN_DATABASE_SYNCH_TITLE, "Synch database with definition");
         tokens.put(VantarKey.ADMIN_FINISHED, "Finished");
@@ -188,27 +186,18 @@ public class DefaultStringsEn {
         tokens.put(VantarKey.ADMIN_SIGNIN_TOKEN_TEMP, "Temp signin tokens");
         tokens.put(VantarKey.ADMIN_RECOVER_TOKEN_TEMP, "Temp recovery tokens");
 
-        tokens.put(VantarKey.ADMIN_ENABLED_SERVICES_THIS, "Services enabled on this server");
         tokens.put(VantarKey.ADMIN_SERVICE, "Service");
-        tokens.put(VantarKey.ADMIN_IS_ON, "Is on");
         tokens.put(VantarKey.ADMIN_MENU_QUERY_TITLE, "Queries");
         tokens.put(VantarKey.ADMIN_QUERY_NEW, "New query");
-        tokens.put(VantarKey.ADMIN_QUERY_WRITE, "Create query");
         tokens.put(VantarKey.ADMIN_TITLE, "Title");
-        tokens.put(VantarKey.ADMIN_HELP, "Help...");
         tokens.put(VantarKey.ADMIN_CONFIRM, "I'm sure");
-        tokens.put(VantarKey.ADMIN_QUERY_DELETE_TITLE, "Delete queries");
         tokens.put(VantarKey.ADMIN_QUERY, "Queries");
         tokens.put(VantarKey.ADMIN_EDIT, "Update");
-        tokens.put(VantarKey.ADMIN_DELETE2, "Delete");
         tokens.put(VantarKey.ADMIN_NEW, "New");
-        tokens.put(VantarKey.ADMIN_IX, "Index");
         tokens.put(VantarKey.ADMIN_DELETE_QUEUE, "Delete queues");
         tokens.put(VantarKey.ADMIN_ATTEMPTS, "Attempts count");
         tokens.put(VantarKey.ADMIN_NO_QUEUE, "No queues");
-        tokens.put(VantarKey.ADMIN_NO_ERROR, "There are not errors");
         tokens.put(VantarKey.ADMIN_ERRORS_DELETE, "Remove system errors");
-        tokens.put(VantarKey.ADMIN_RECORDS, " :record ");
         tokens.put(VantarKey.ADMIN_SETTINGS_EDIT, "Update settings");
         tokens.put(VantarKey.ADMIN_SETTINGS_MSG1, "Settings can not be written to files");
         tokens.put(VantarKey.ADMIN_SETTINGS_MSG2, "The settings in this file are server specific and will only be updated on this server");
@@ -218,8 +207,6 @@ public class DefaultStringsEn {
         tokens.put(VantarKey.ADMIN_SETTINGS_UPDATE_MSG_SENT, "Update settings message sent to other servers");
         tokens.put(VantarKey.ADMIN_SETTINGS_UPDATE_FAILED, "Settings failed to update");
         tokens.put(VantarKey.ADMIN_SERVICE_ALL_SERVERS, "On all servers");
-        tokens.put(VantarKey.ADMIN_SERVICE_ALL_DB_SERVICES, "Complete (db, queue, ...)");
-        tokens.put(VantarKey.ADMIN_SERVICE_START_SERVICES_AT_END, "Turn on services at the end");
         tokens.put(VantarKey.ADMIN_SERVICE_STOPPED, "Service(s) is(are) stopped");
         tokens.put(VantarKey.ADMIN_SERVICE_STARTED, "Service(s) is(are) started");
         tokens.put(VantarKey.ADMIN_SYSYEM_OBJECTS, "System objects");
@@ -259,11 +246,9 @@ public class DefaultStringsEn {
 
         tokens.put(VantarKey.ADMIN_PAGING, "paging");
 
-        tokens.put(VantarKey.DELETE_FAIL_HAS_DEPENDENCIES, "Not deleted because of dependencies --> {0}");
 
 
-        tokens.put(VantarKey.ADMIN_ACTION_LOG_USER, "User actions");
-        tokens.put(VantarKey.ADMIN_ACTION_LOG_REQUEST, "Request/Response logs");
+        tokens.put(VantarKey.ADMIN_USER_LOG, "User action logs");
         tokens.put(VantarKey.ADMIN_MEMORY, "Memory");
         tokens.put(VantarKey.ADMIN_DISK_SPACE, "Disk space");
         tokens.put(VantarKey.ADMIN_PROCESSOR, "Processor");
@@ -293,11 +278,12 @@ public class DefaultStringsEn {
         tokens.put(VantarKey.ADMIN_EXCLUDE, "Exclude");
 
         tokens.put(VantarKey.DELETE_DEPENDANT_DATA_ERROR, "Can not delete. ({0}, {1}) depends on this data record.");
-        tokens.put(VantarKey.ADMIN_ONLY_DEPENDENCIES, "Show dependencies - do not delete data");
         tokens.put(VantarKey.ADMIN_IGNORE_DEPENDENCIES, "Ignore dependencies");
         tokens.put(VantarKey.ADMIN_DEPENDENCIES, "Dependencies");
         tokens.put(VantarKey.ADMIN_DELETE_CASCADE, "Cascade delete");
         tokens.put(VantarKey.ADMIN_VIEW, "View");
+        tokens.put(VantarKey.ADMIN_REVERT, "Revert");
+        tokens.put(VantarKey.ADMIN_LOG_DIFFERENCES, "View differences");
 
     }
 

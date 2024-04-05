@@ -4,10 +4,10 @@ import com.vantar.database.dto.*;
 import com.vantar.util.datetime.DateTime;
 import java.util.*;
 
-@Archive("500000R")
-@Elastic
 @Mongo
-@Index({"userId:1", "type:1", "objectId:1", "action:1", "time:1", "url:1",})
+@Elastic
+@Archive("500000R")
+@Index({"userId:1", "requestType:1", "action:1", "time:1", "url:1", "classNameSimple:1", "objectId:1",})
 public class UserWebLog extends DtoBase {
 
     public Long id;
@@ -56,6 +56,7 @@ public class UserWebLog extends DtoBase {
         public String ip;
         public DateTime time;
         public Long objectId;
+        public String className;
         public String classNameSimple;
     }
 }

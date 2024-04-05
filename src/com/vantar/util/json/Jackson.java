@@ -19,7 +19,6 @@ import java.io.*;
 import java.lang.reflect.Field;
 import java.util.*;
 
-
 /**
  * static: ignored
  * null-properties-to-json: ignored (default)
@@ -179,6 +178,15 @@ public class Jackson {
     // TO JSON < < <
 
     // > > > FROM JSON
+
+    @SuppressWarnings("unchecked")
+    public <T> T fromJson(String json, String className) {
+        try {
+            return (T) fromJson(json, Class.forName(className));
+        } catch (ClassNotFoundException e) {
+            return null;
+        }
+    }
 
     public <T> T fromJson(String json, Class<T> typeClass) {
         if (json == null || json.isEmpty()) {

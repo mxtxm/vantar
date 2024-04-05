@@ -11,6 +11,7 @@ import com.vantar.service.Services;
 import com.vantar.service.auth.CommonUserPassword;
 import com.vantar.service.cache.ServiceDtoCache;
 import com.vantar.service.log.ServiceLog;
+import com.vantar.service.log.dto.*;
 import com.vantar.util.number.NumberUtil;
 import com.vantar.util.object.*;
 import com.vantar.util.string.StringUtil;
@@ -30,7 +31,8 @@ public abstract class ModelCommon {
     }
 
     public static void afterDataChange(Dto dto, WriteEvent event, boolean logEvent, Dto.Action action) throws VantarException {
-        updateCache(dto.getClass());
+        Class<? extends Dto> dtoClass = dto.getClass();
+        updateCache(dtoClass);
         if (event != null) {
             try {
                 event.afterWrite(dto);
@@ -38,7 +40,9 @@ public abstract class ModelCommon {
                 throw new InputException(VantarKey.NO_CONTENT);
             }
         }
-        if (logEvent && action != null && Services.isUp(ServiceLog.class)) {
+        if (logEvent && action != null && Services.isUp(ServiceLog.class)
+            && !dtoClass.equals(Log.class) && !dtoClass.equals(UserWebLog.class) && !dtoClass.equals(UserLog.class)) {
+
             ServiceLog.addAction(action, dto);
         }
     }

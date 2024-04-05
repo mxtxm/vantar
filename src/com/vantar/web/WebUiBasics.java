@@ -728,7 +728,7 @@ abstract class WebUiBasics <T extends WebUiBasics<T>> {
      * options ---> class, escape, valuePre
      */
     public T addKeyValue(Object key, Object value, Object... options) {
-        boolean escape = options.length <= 1 || (boolean) options[1];
+        boolean escape = options.length <= 1 || options[1] == null || (boolean) options[1];
         key = StringUtil.replace(
             key == null ? "" :
                 (key instanceof LangKey ? Locale.getString((LangKey) key) :
@@ -758,6 +758,9 @@ abstract class WebUiBasics <T extends WebUiBasics<T>> {
             // v
             .append("<label class=\"").append(classV).append("\" style=\"text-align:").append(alignValue).append("\"");
             if (valuePre == null) {
+                if (options.length > 3) {
+                    html.append(" onclick=\"").append(options[3]).append("\"");
+                }
                 html.append(">").append(value).append("</label>");
             } else  {
                 html.append(" onclick='$(this).find(\"pre\").toggle()'>").append(value)
