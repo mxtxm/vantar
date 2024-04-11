@@ -16,6 +16,7 @@ import com.vantar.util.collection.CollectionUtil;
 import com.vantar.util.datetime.DateTime;
 import com.vantar.util.json.Json;
 import com.vantar.util.object.*;
+import com.vantar.util.string.StringUtil;
 import javax.servlet.http.HttpServletResponse;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
@@ -56,35 +57,158 @@ public class WebUi extends WebUiBasics<WebUi> {
 
     // > > > DTO
 
+    public WebUi addDtoLinks(DtoDictionary.Info info, Dto dto, List<String> showItems, String selected) {
+        html.append("<div id=\"actions\">");
+        String qString = "dto=" + dto.getClass().getSimpleName();
+        boolean isFirst = true;
+        for (String item : showItems) {
+            boolean isSelected = item.equals(selected);
+            switch (item) {
+                case "list":
+                    addSubMenuLink(isFirst, VantarKey.ADMIN_DATA_LIST, "list?" + qString, isSelected, false);
+                    break;
+                case "import":
+                    addSubMenuLink(isFirst, VantarKey.ADMIN_IMPORT, "import?" + qString, isSelected, false);
+                    break;
+                case "export":
+                    addSubMenuLink(isFirst, VantarKey.ADMIN_EXPORT, "export?" + qString, isSelected, false);
+                    break;
+                case "purge":
+                    addSubMenuLink(isFirst, VantarKey.ADMIN_DATA_PURGE, "purge?" + qString, isSelected, false);
+                    break;
+                case "insert":
+                    addSubMenuLink(isFirst, VantarKey.ADMIN_INSERT, "insert?" + qString, isSelected, false);
+                    break;
+                case "undelete":
+                    addSubMenuLink(isFirst, VantarKey.ADMIN_UNDELETE, "undelete/search?" + qString, isSelected, false);
+                    break;
+                case "log":
+                    addSubMenuLink(
+                        isFirst,
+                        VantarKey.ADMIN_LIST_OPTION_ACTION_LOG,
+                        "log/action/search?type=a&" + qString,
+                        isSelected,
+                        false
+                    );
+                    break;
+                case "dependencies":
+                    addSubMenuLink(isFirst, VantarKey.ADMIN_DEPENDENCIES, "dependencies/dto?" + qString, isSelected, false);
+                    break;
+                case "cache":
+                    if (!dto.hasAnnotation(Cache.class)) {
+                        continue;
+                    }
+                    String classProp = "class=\"cached" + ("cache".equals(selected) ? " selected" : "") + "\" ";
+                    html.append(" | <a ").append(classProp).append("target=\"_blank\" href=\"")
+                        .append(getLink("/admin/database/cache/view?" + qString)).append("\">")
+                        .append(Locale.getString(VantarKey.ADMIN_CACHE)).append("</a>");
+                    html.append(" | <a ").append(classProp).append("target=\"_blank\" href=\"")
+                        .append(getLink("/admin/database/cache/refresh?" + qString)).append("\">")
+                        .append(Locale.getString(VantarKey.ADMIN_REFRESH)).append("</a>");
+                    break;
+                case "index":
+                    String url;
+                    if (DtoDictionary.Dbms.MONGO.equals(info.dbms)) {
+                        url = "/admin/database/mongo/index/get?" + qString;
+                    } else if (DtoDictionary.Dbms.SQL.equals(info.dbms)) {
+                        url = "/admin/database/sql/index/get?" + qString;
+                    } else {
+                        continue;
+                    }
+                    addSubMenuLink(isFirst, VantarKey.ADMIN_DATABASE_INDEX, url, isSelected, true);
+                    break;
+                default:
+                    continue;
+
+            }
+            isFirst = false;
+        }
+        html.append("</div>");
+        return getThis();
+    }
+
+    public WebUi addDtoItemLinks(String cName, Long id, List<String> showItems, String selected) {
+        html.append("<div id=\"actions\">");
+        Map<String, String> params = new HashMap<>(7, 1);
+        boolean isFirst = true;
+        String qString = "";
+        for (String item : showItems) {
+            if (item.contains(":")) {
+                String[] parts = StringUtil.split(item, ":");
+                params.put(parts[0], parts[1]);
+                continue;
+            }
+            if (isFirst) {
+                qString = "dto=" + cName + "&id=" + id
+                    + (params.containsKey("un") ? "&un=" + params.get("un") + "&ufn=" + params.get("ufn") : "");
+            }
+
+            boolean isSelected = item.equals(selected);
+            switch (item) {
+                case "delete":
+                    addSubMenuLink(isFirst, VantarKey.ADMIN_DELETE, "delete?" + qString, isSelected, false);
+                    break;
+                case "update":
+                    addSubMenuLink(isFirst, VantarKey.ADMIN_UPDATE, "update?" + qString, isSelected, false);
+                    break;
+                case "view":
+                    addSubMenuLink(isFirst, VantarKey.ADMIN_VIEW, "view?" + qString, isSelected, false);
+                    break;
+                case "dependencies":
+                    addSubMenuLink(isFirst, VantarKey.ADMIN_DEPENDENCIES, "dependencies?" + qString, isSelected, false);
+                    break;
+                case "log-action":
+                    addSubMenuLink(
+                        isFirst,
+                        VantarKey.ADMIN_LIST_OPTION_ACTION_LOG,
+                        "log/action/search?type=b&" + qString,
+                        isSelected,
+                        false
+                    );
+                    break;
+                // only for User
+                case "log-activity":
+                    addSubMenuLink(
+                        isFirst,
+                        VantarKey.ADMIN_LIST_OPTION_USER_ACTIVITY,
+                        "log/action/search?type=c&" + qString,
+                        isSelected,
+                        false
+                    );
+                    break;
+                // only for User
+                case "log-web":
+                    addSubMenuLink(isFirst, VantarKey.ADMIN_WEB_LOG, "log/web/search?" + qString, isSelected, false);
+                break;
+                default:
+                    continue;
+            }
+            isFirst = false;
+        }
+        html.append("</div>");
+        return getThis();
+    }
+
+    private void addSubMenuLink(boolean isFirst, VantarKey title, String url, boolean isSelected, boolean newPage) {
+        if (!isFirst) {
+            html.append(" | ");
+        }
+        html.append("<a href=\"").append(getLink("/admin/data/" + url)).append("\"");
+        if (isSelected) {
+            html.append(" class=\"item-selected\"");
+        }
+        if (newPage) {
+            html.append(" target=\"_blank\"");
+        }
+        html.append(">").append(Locale.getString(title)).append("</a>");
+    }
+
     public WebUi addDtoAddForm(Dto dto, String... fields) {
         return dtoForm(dto, false, fields);
     }
 
     public WebUi addDtoUpdateForm(Dto dto, String... fields) {
         return dtoForm(dto, true, fields);
-    }
-
-    public WebUi addDtoItemLinks(Dto dto, boolean showUpdate, boolean showView) {
-        String cName = dto.getClass().getSimpleName();
-        html.append("<div id=\"actions\">")
-            .append(" <a href=\"").append(getLink("/admin/data/delete?dto=" + cName + "&id=" + dto.getId()))
-            .append("\">").append(Locale.getString(VantarKey.ADMIN_DELETE)).append("</a>");
-        if (showUpdate) {
-            html.append(" | <a href=\"").append(getLink("/admin/data/update?dto=" + cName + "&id=" + dto.getId()))
-                .append("\">").append(Locale.getString(VantarKey.ADMIN_UPDATE)).append("</a>");
-        }
-        if (showView) {
-            html.append(" | <a href=\"").append(getLink("/admin/data/view?dto=" + cName + "&id=" + dto.getId()))
-                .append("\">").append(Locale.getString(VantarKey.ADMIN_VIEW)).append("</a>");
-        }
-        html.append(" | <a href=\"").append(getLink("/admin/data/dependencies?dto=" + cName + "&id=" + dto.getId()))
-            .append("\">").append(Locale.getString(VantarKey.ADMIN_DEPENDENCIES)).append("</a>")
-
-            .append(" | <a href=\"").append(getLink("/admin/data/log/action/search?dto=" + cName + "&id=" + dto.getId()))
-            .append("\">").append(Locale.getString(VantarKey.ADMIN_ACTION_LOG)).append("</a>")
-            .append("</div>");
-
-        return getThis();
     }
 
     private WebUi dtoForm(Dto dto, boolean isUpdate, String... include) {
@@ -345,68 +469,6 @@ public class WebUi extends WebUiBasics<WebUi> {
             info = DtoDictionary.get(upperClass);
             dto = info.getDtoInstance();
         }
-        String cName = dto.getClass().getSimpleName();
-        String cNameFull = dto.getClass().getName();
-        boolean isLog = Log.class.equals(dto.getClass())
-            || UserWebLog.class.equals(dto.getClass())
-            || UserLog.class.equals(dto.getClass());
-
-        // > > > action links
-        if (options.actionLink) {
-            html.append("<div id=\"actions\">");
-
-            if (!isLog) {
-                html.append(" <a href=\"").append(getLink("/admin/data/insert?dto=" + cName)).append("\">")
-                    .append(Locale.getString(VantarKey.ADMIN_INSERT)).append("</a> |");
-            }
-
-            html.append(" <a href=\"").append(getLink("/admin/data/import?dto=" + cName)).append("\">")
-                .append(Locale.getString(VantarKey.ADMIN_IMPORT)).append("</a>")
-                .append(" | <a href=\"").append(getLink("/admin/data/export?dto=" + cName)).append("\">")
-                .append(Locale.getString(VantarKey.ADMIN_EXPORT)).append("</a>");
-
-            if (!isLog) {
-                html.append(" | <a href=\"").append(getLink("/admin/data/undelete/search?dto=" + cName)).append("\">")
-                    .append(Locale.getString(VantarKey.ADMIN_UNDELETE)).append("</a>")
-                    .append(" | <a href=\"").append(getLink("/admin/data/log/action/search?dto=" + cName)).append("\">")
-                    .append(Locale.getString(VantarKey.ADMIN_ACTION_LOG)).append("</a>");
-            }
-
-            if (data != null) {
-                html.append(" | <a href=\"").append(getLink("/admin/data/purge?dto=" + cName)).append("\">")
-                    .append(Locale.getString(VantarKey.ADMIN_DATA_PURGE)).append("</a>");
-            }
-
-            if (!isLog) {
-                String url;
-                if (DtoDictionary.Dbms.MONGO.equals(info.dbms)) {
-                    url = "/admin/database/mongo/index/get";
-                } else if (DtoDictionary.Dbms.SQL.equals(info.dbms)) {
-                    url = "/admin/database/sql/index/get";
-                } else {
-                    url = null;
-                }
-                if (url != null) {
-                    html.append(" | <a target=\"_blank\" href=\"").append(getLink(url + "?dto=" + cName)).append("\">")
-                        .append(Locale.getString(VantarKey.ADMIN_DATABASE_INDEX)).append("</a>");
-                }
-
-                html.append(" | <a href=\"").append(getLink("/admin/data/dependencies/dto?dto=" + cName)).append("\">")
-                    .append(Locale.getString(VantarKey.ADMIN_DEPENDENCIES)).append("</a>");
-
-                if (dto.hasAnnotation(Cache.class)) {
-                    html.append(" | <a class=\"cached\" target=\"_blank\" href=\"")
-                        .append(getLink("/admin/database/cache/view?c=" + cNameFull)).append("\">")
-                        .append(Locale.getString(VantarKey.ADMIN_CACHE)).append("</a>")
-                        .append(" | <a class=\"cached\" target=\"_blank\" href=\"")
-                        .append(getLink("/admin/database/cache/refresh?c=" + cNameFull)).append("\">")
-                        .append(Locale.getString(VantarKey.ADMIN_REFRESH)).append("</a>");
-                }
-            }
-
-            html.append("</div>");
-        }
-        // action links < < <
 
         // archive > > >
 //        if (options.archive && dto.hasAnnotation(Archive.class)) {
@@ -696,7 +758,6 @@ public class WebUi extends WebUiBasics<WebUi> {
 
 
     public static class DtoListOptions {
-        public boolean actionLink;
         public boolean archive;
         public boolean pagination;
         public boolean search;

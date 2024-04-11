@@ -1,6 +1,5 @@
 package com.vantar.admin.database.data.panel;
 
-import com.vantar.admin.index.Admin;
 import com.vantar.business.*;
 import com.vantar.business.importexport.ImportMongo;
 import com.vantar.database.dto.*;
@@ -8,7 +7,7 @@ import com.vantar.database.nosql.elasticsearch.ElasticConnection;
 import com.vantar.database.nosql.mongo.MongoConnection;
 import com.vantar.database.sql.SqlConnection;
 import com.vantar.exception.*;
-import com.vantar.locale.*;
+import com.vantar.locale.VantarKey;
 import com.vantar.service.Services;
 import com.vantar.util.datetime.DateTime;
 import com.vantar.util.file.FileUtil;
@@ -25,7 +24,6 @@ public class AdminDataImportExport {
      * Dump collection/table
      */
     public static void exportData(Params params, HttpServletResponse response, DtoDictionary.Info dtoInfo) throws VantarException {
-
         Dto dto = dtoInfo.getDtoInstance();
 
         if (dtoInfo.dbms.equals(DtoDictionary.Dbms.MONGO)) {
@@ -52,25 +50,18 @@ public class AdminDataImportExport {
         }
     }
 
-    public static void importData(Params params, HttpServletResponse response, DtoDictionary.Info dtoInfo) throws FinishException {
-        WebUi ui = Admin.getUiDto(VantarKey.ADMIN_IMPORT, params, response, dtoInfo);
-        if (dtoInfo == null) {
-            return;
-        }
-        if (!DataUtil.isUp(dtoInfo.dbms, ui)) {
-            ui.finish();
-            return;
-        }
-        Dto dto = dtoInfo.getDtoInstance();
+    public static void importData(Params params, HttpServletResponse response, DtoDictionary.Info info) throws FinishException {
+        DataUtil.Ui u = DataUtil.initDto(VantarKey.ADMIN_IMPORT, "import", params, response, info);
+
         DataUtil.Event event = DataUtil.getEvent();
         if (event != null) {
-            dto = event.dtoExchange(dto, "import");
+            u.dto = event.dtoExchange(u.dto, "import");
         }
 
         if (!params.isChecked("f")) {
-            ui.beginFormPost()
+            u.ui.beginFormPost()
                 .addEmptyLine(2)
-                .addTextArea(VantarKey.ADMIN_MENU_DATA, "imd", dtoInfo.getImportData(), "large ltr")
+                .addTextArea(VantarKey.ADMIN_MENU_DATA, "imd", info.getImportData(), "large ltr")
                 .addCheckbox(VantarKey.ADMIN_DATA_PURGE, "da")
                 .addSubmit(VantarKey.ADMIN_SUBMIT)
                 .blockEnd()
@@ -81,18 +72,18 @@ public class AdminDataImportExport {
         String data = params.getString("imd");
         boolean deleteAll = params.isChecked("da");
 
-        if (dtoInfo.dbms.equals(DtoDictionary.Dbms.MONGO)) {
-            ImportMongo.importDtoData(data, dto, dto.getPresentationPropertyNames(), deleteAll, ui);
-        } else if (dtoInfo.dbms.equals(DtoDictionary.Dbms.SQL)) {
-            CommonModelSql.importDataAdmin(data, dto, dto.getPresentationPropertyNames(), deleteAll, ui);
-        } else if (dtoInfo.dbms.equals(DtoDictionary.Dbms.ELASTIC)) {
-            CommonModelElastic.importDataAdmin(data, dto, dto.getPresentationPropertyNames(), deleteAll, ui);
+        if (info.dbms.equals(DtoDictionary.Dbms.MONGO)) {
+            ImportMongo.importDtoData(data, u.dto, u.dto.getPresentationPropertyNames(), deleteAll, u.ui);
+        } else if (info.dbms.equals(DtoDictionary.Dbms.SQL)) {
+            CommonModelSql.importDataAdmin(data, u.dto, u.dto.getPresentationPropertyNames(), deleteAll, u.ui);
+        } else if (info.dbms.equals(DtoDictionary.Dbms.ELASTIC)) {
+            CommonModelElastic.importDataAdmin(data, u.dto, u.dto.getPresentationPropertyNames(), deleteAll, u.ui);
         }
 
-        if (dtoInfo.broadcastMessage != null) {
-            Services.messaging.broadcast(dtoInfo.broadcastMessage);
+        if (info.broadcastMessage != null) {
+            Services.messaging.broadcast(info.broadcastMessage);
         }
 
-        ui.finish();
+        u.ui.finish();
     }
 }

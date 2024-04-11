@@ -1,15 +1,14 @@
 package com.vantar.admin.database.data.panel;
 
-import com.vantar.admin.index.Admin;
-import com.vantar.business.*;
+import com.vantar.business.ModelMongo;
 import com.vantar.database.differences.DtoChanges;
-import com.vantar.database.dto.*;
+import com.vantar.database.dto.DtoDictionary;
 import com.vantar.database.query.QueryBuilder;
 import com.vantar.exception.*;
-import com.vantar.locale.*;
-import com.vantar.service.log.dto.*;
+import com.vantar.locale.VantarKey;
+import com.vantar.service.log.dto.UserLog;
 import com.vantar.util.json.Json;
-import com.vantar.util.object.*;
+import com.vantar.util.object.ObjectUtil;
 import com.vantar.web.*;
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
@@ -17,32 +16,26 @@ import java.util.List;
 
 public class AdminLogActionDiff {
 
-    public static void view(Params params, HttpServletResponse response, DtoDictionary.Info dtoInfo) throws FinishException {
-        WebUi ui = Admin.getUiDto(Locale.getString(VantarKey.ADMIN_LOG_DIFFERENCES), params, response, dtoInfo);
-        if (dtoInfo == null) {
-            return;
-        }
-        if (!DataUtil.isUp(dtoInfo.dbms, ui)) {
-            ui.finish();
-            return;
-        }
+    public static void view(Params params, HttpServletResponse response, DtoDictionary.Info info) throws FinishException {
+        DataUtil.Ui u = DataUtil.initDto(VantarKey.ADMIN_LOG_DIFFERENCES, "delete-check", params, response, info);
+
         List<Long> ids = params.getLongList("delete-check");
         if (ObjectUtil.isEmpty(ids)) {
-            ui.finish();
+            u.ui.finish();
             return;
         }
 
         QueryBuilder q = new QueryBuilder(new UserLog());
         q.sort("id:desc");
         q.condition()
-            .equal("classNameSimple", dtoInfo.dtoClass.getSimpleName())
+            .equal("classNameSimple", info.dtoClass.getSimpleName())
             .inNumber("id", ids);
 
         List<UserLog> data;
         try {
             data = ModelMongo.getData(q);
         } catch (VantarException e) {
-            ui.addErrorMessage(e).finish();
+            u.ui.addErrorMessage(e).finish();
             return;
         }
 
@@ -54,12 +47,12 @@ public class AdminLogActionDiff {
                     Json.d.fromJson(Json.d.toJson(userLogAfter.objectX), userLogAfter.className),
                     Json.d.fromJson(Json.d.toJson(userLogBefore.objectX), userLogBefore.className)
                 );
-                plotLogDiff(ui, changes, userLogBefore, userLogAfter);
+                plotLogDiff(u.ui, changes, userLogBefore, userLogAfter);
             }
             userLogBefore = userLogAfter;
         }
 
-        ui.finish();
+        u.ui.finish();
     }
 
     private static void plotLogDiff(WebUi ui, List<DtoChanges.Change> changes, UserLog userLogBefore, UserLog userLogAfter) {

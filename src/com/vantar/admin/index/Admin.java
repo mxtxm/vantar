@@ -135,8 +135,8 @@ public class Admin {
 
         return ui.addHeading(
                 1,
-                Settings.config.getProperty("title") + " : "
-                    + (title instanceof LangKey ? Locale.getString((LangKey) title) : title.toString())
+                Settings.config.getProperty("title") + " | " +
+                (title instanceof LangKey ? Locale.getString((LangKey) title) : title.toString())
             )
             .beginBlock("main");
     }
@@ -155,8 +155,8 @@ public class Admin {
             .addMenu(getMenus(ui), getOnlineUserTitle(params))
             .addHeading(
                 1,
-                Settings.config.getProperty("title") + " : "
-                    + (title instanceof LangKey ? Locale.getString((LangKey) title) : title.toString())
+                Settings.config.getProperty("title") + " | " +
+                    (title instanceof LangKey ? Locale.getString((LangKey) title) : title.toString())
             )
             .beginBlock("main");
     }
@@ -174,9 +174,8 @@ public class Admin {
         return ui
             .addMenu(getMenus(ui), getOnlineUserTitle(params))
             .setBreadcrumb(
-                Settings.config.getProperty("title") + " : "
-                    + (title instanceof LangKey ? Locale.getString((LangKey) title) : title.toString())
-                ,
+                Settings.config.getProperty("title") + " | " +
+                    (title instanceof LangKey ? Locale.getString((LangKey) title) : title.toString()),
                 dtoInfo
             )
             .beginBlock("main");

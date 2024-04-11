@@ -30,7 +30,7 @@ import javax.servlet.http.HttpServletResponse;
     "/admin/data/log/action/revert",
     "/admin/data/log/action/differences",
     "/admin/data/log/web/get",
-
+    "/admin/data/log/web/search",
 
     "/admin/data/archive/switch",
 })
@@ -50,7 +50,7 @@ public class Controller extends RouteToMethod {
         AdminDataView.view(params, response, DtoDictionary.get(params.getString("dto")));
     }
 
-    public void delete(Params params, HttpServletResponse response) throws FinishException {
+    public void dataDelete(Params params, HttpServletResponse response) throws FinishException {
         AdminDataDelete.deleteOne(params, response, DtoDictionary.get(params.getString("dto")));
     }
 
@@ -91,7 +91,7 @@ public class Controller extends RouteToMethod {
     }
 
     public void dataDependencies(Params params, HttpServletResponse response) throws FinishException {
-        AdminDataDependency.getRecord(params, response, DtoDictionary.get(params.getString("dto")));
+        AdminDataDependency.getDtoItem(params, response, DtoDictionary.get(params.getString("dto")));
     }
 
     public void dataDependenciesDto(Params params, HttpServletResponse response) throws FinishException {
@@ -114,6 +114,9 @@ public class Controller extends RouteToMethod {
         Response.writeJson(response, AdminLogWeb.getData(params));
     }
 
+    public void dataLogWebSearch(Params params, HttpServletResponse response) throws FinishException {
+        AdminLogWeb.search(params, response, DtoDictionary.get(params.getString("dto")));
+    }
 
     public void dataArchiveSwitch(Params params, HttpServletResponse response) throws FinishException {
         AdminDataArchive.archiveSwitch(params, response, DtoDictionary.get(params.getString("dto")));

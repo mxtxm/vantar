@@ -11,6 +11,7 @@ import com.vantar.queue.Queue;
 import com.vantar.service.Services;
 import com.vantar.service.auth.*;
 import com.vantar.service.log.dto.*;
+import com.vantar.util.datetime.DateTime;
 import com.vantar.util.json.Json;
 import com.vantar.web.*;
 import org.bson.Document;
@@ -228,6 +229,8 @@ public class ServiceLog implements Services.Service  {
             Queue.add(VantarParam.QUEUE_NAME_USER_ACTION_LOG, new Packet(userLog));
         } else {
             try {
+                userLog.time = new DateTime();
+                userLog.timeDay = new DateTime().truncateTime().getAsTimestamp();
                 Mongo.insert(userLog);
             } catch (Exception e) {
                 log.error(" ! failed to store log {}", userLog);
@@ -271,6 +274,8 @@ public class ServiceLog implements Services.Service  {
             Queue.add(VantarParam.QUEUE_NAME_USER_ACTION_LOG, new Packet(userLog));
         } else {
             try {
+                userLog.time = new DateTime();
+                userLog.timeDay = new DateTime().truncateTime().getAsTimestamp();
                 Mongo.insert(userLog);
             } catch (Exception e) {
                 log.error(" ! failed to store log {}", userLog);
@@ -313,6 +318,8 @@ public class ServiceLog implements Services.Service  {
             Queue.add(VantarParam.QUEUE_NAME_USER_ACTION_LOG, new Packet(userLog));
         } else {
             try {
+                userLog.time = new DateTime();
+                userLog.timeDay = new DateTime().truncateTime().getAsTimestamp();
                 Mongo.insert(userLog);
             } catch (Exception e) {
                 log.error(" ! failed to store log {}", userLog);
@@ -359,16 +366,27 @@ public class ServiceLog implements Services.Service  {
             return;
         }
 
+        DateTime time = new DateTime();
+        Long timeDay = new DateTime().truncateTime().getAsTimestamp();
+
         List<UserWebLog> webItems = new ArrayList<>(packets.size());
         List<UserLog> userLogItems = new ArrayList<>(packets.size());
         List<Log> logItems = new ArrayList<>(packets.size());
         for (Packet packet : packets) {
             Object obj = packet.getObject();
             if (obj instanceof UserWebLog) {
-                webItems.add((UserWebLog) obj);
+                UserWebLog l = (UserWebLog) obj;
+                l.time = time;
+                l.timeDay = timeDay;
+                webItems.add(l);
             } else if (obj instanceof UserLog) {
-                userLogItems.add((UserLog) obj);
+                UserLog l = (UserLog) obj;
+                l.time = time;
+                l.timeDay = timeDay;
+                userLogItems.add(l);
             } else {
+                Log l = (Log) obj;
+                l.createT = time;
                 logItems.add((Log) obj);
             }
         }

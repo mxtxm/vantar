@@ -18,19 +18,12 @@ public class AdminDataDependency {
         Map<Class<? extends Dto>, List<RelationMap.Relation>> relations = new RelationMap().getRelations();
     }
 
-    public static void getDto(Params params, HttpServletResponse response, DtoDictionary.Info dtoInfo) throws FinishException {
-        WebUi ui = Admin.getUiDto(VantarKey.ADMIN_DEPENDENCIES, params, response, dtoInfo);
-        if (dtoInfo == null) {
-            return;
-        }
-        if (!DataUtil.isUp(dtoInfo.dbms, ui)) {
-            ui.finish();
-            return;
-        }
+    public static void getDto(Params params, HttpServletResponse response, DtoDictionary.Info info) throws FinishException {
+        DataUtil.Ui u = DataUtil.initDto(VantarKey.ADMIN_DEPENDENCIES, "dependencies", params, response, info);
 
         Map<Class<? extends Dto>, List<RelationMap.Relation>> all = new RelationMap().getRelations();
-        ui.addHeading(3, "Relations");
-        List<RelationMap.Relation> r = all.get(dtoInfo.dtoClass);
+        u.ui.addHeading(3, "Relations");
+        List<RelationMap.Relation> r = all.get(info.dtoClass);
         if (r != null) {
             for (RelationMap.Relation relation : r) {
                 StringBuilder colBuff = new StringBuilder(30);
@@ -63,9 +56,9 @@ public class AdminDataDependency {
                 }
                 String name1 = relation.fkClasses[0].getSimpleName();
                 String name2 = relation.fkClasses.length == 2 ? relation.fkClasses[1].getSimpleName() : null;
-                ui.addKeyValue(
-                    ui.getHref(name1, "/admin/data/dependencies/dto?dto=" + name1, false, false, null)
-                    + (name2 == null ? "" : "," + ui.getHref(name2, "/admin/data/dependencies/dto?dto=" + name2, false, false, null)),
+                u.ui.addKeyValue(
+                    u.ui.getHref(name1, "/admin/data/dependencies/dto?dto=" + name1, false, false, null)
+                    + (name2 == null ? "" : "," + u.ui.getHref(name2, "/admin/data/dependencies/dto?dto=" + name2, false, false, null)),
                     colBuff.toString(),
                     null,
                     false
@@ -74,8 +67,8 @@ public class AdminDataDependency {
         }
 
         Map<Class<? extends Dto>, Set<ReverseRelationMap.Relation>> rev = new ReverseRelationMap().getRelations();
-        ui.addHeading(3, "Reverse relations");
-        Set<ReverseRelationMap.Relation> rr = rev.get(dtoInfo.dtoClass);
+        u.ui.addHeading(3, "Reverse relations");
+        Set<ReverseRelationMap.Relation> rr = rev.get(info.dtoClass);
         if (rr != null) {
             for (ReverseRelationMap.Relation relation : rr) {
                 StringBuilder colBuff = new StringBuilder(30);
@@ -107,8 +100,8 @@ public class AdminDataDependency {
                     // map < < <
                 }
                 String name = relation.fkClass.getSimpleName();
-                ui.addKeyValue(
-                    ui.getHref(name, "/admin/data/dependencies/dto?dto=" + name, false, false, null),
+                u.ui.addKeyValue(
+                    u.ui.getHref(name, "/admin/data/dependencies/dto?dto=" + name, false, false, null),
                     colBuff.toString(),
                     null,
                     false
@@ -116,51 +109,37 @@ public class AdminDataDependency {
             }
         }
 
-        ui.finish();
+        u.ui.finish();
     }
 
-    public static void getRecord(Params params, HttpServletResponse response, DtoDictionary.Info dtoInfo) throws FinishException {
-        WebUi ui = Admin.getUiDto(VantarKey.ADMIN_DEPENDENCIES, params, response, dtoInfo);
-        if (dtoInfo == null) {
-            return;
-        }
-        if (!DataUtil.isUp(dtoInfo.dbms, ui)) {
-            ui.finish();
-            return;
-        }
-        Dto dto = dtoInfo.getDtoInstance();
-        try {
-            dto.setId(params.getLongRequired("id"));
-        } catch (InputException e) {
-            ui.addErrorMessage(e).finish();
-            return;
-        }
+    public static void getDtoItem(Params params, HttpServletResponse response, DtoDictionary.Info info) throws FinishException {
+        DataUtil.Ui u = DataUtil.initDtoItem(VantarKey.ADMIN_DEPENDENCIES, "dependencies", params, response, info);
 
         int limit = params.getInteger("limit", 7);
         String filterDto = params.getString("filter-dto");
-        ui  .addEmptyLine()
+        u.ui.addEmptyLine()
             .beginFormGet()
             .addInput("Limit", "limit", limit)
             .addInput("Filter DTO", "filter-dto", filterDto)
-            .addHidden("dto", dto.getClass().getSimpleName())
-            .addHidden("id", dto.getId())
+            .addHidden("dto", u.dto.getClass().getSimpleName())
+            .addHidden("id", u.dto.getId())
             .addSubmit()
             .blockEnd();
 
-        ui.addHeading(2, dtoInfo.dtoClass.getSimpleName() + " (" + dto.getId() + ")");
+        u.ui.addHeading(2, info.dtoClass.getSimpleName() + " (" + u.dto.getId() + ")");
 
-        DataDependencyMongo ddm = new DataDependencyMongo(dto);
+        DataDependencyMongo ddm = new DataDependencyMongo(u.dto);
         ddm.setLimit(limit);
         ddm.setFilterDto(filterDto);
-        plot(ui, ddm.getDependencies());
+        plot(u.ui, ddm.getDependencies());
 
-        ui.finish();
+        u.ui.finish();
     }
 
     private static void plot(WebUi ui, List<DataDependencyMongo.Dependency> deps) {
         for (DataDependencyMongo.Dependency d : deps) {
             ui.beginTree(d.baseClass + " --> " + d.blockerClass);
-            for (Map.Entry<String, List<DataDependencyMongo.Dependency>> e : d.items.entrySet()) {
+           for (Map.Entry<String, List<DataDependencyMongo.Dependency>> e : d.items.entrySet()) {
                 ui.addHeading(3, e.getKey());
                 plot(ui, e.getValue());
             }

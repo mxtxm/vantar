@@ -1,6 +1,5 @@
 package com.vantar.admin.database.data.panel;
 
-import com.vantar.admin.index.Admin;
 import com.vantar.business.*;
 import com.vantar.common.VantarParam;
 import com.vantar.database.common.ValidationError;
@@ -12,9 +11,9 @@ import com.vantar.database.sql.*;
 import com.vantar.exception.*;
 import com.vantar.locale.Locale;
 import com.vantar.locale.*;
-import com.vantar.service.log.dto.*;
+import com.vantar.service.log.dto.UserLog;
 import com.vantar.util.json.Json;
-import com.vantar.util.object.*;
+import com.vantar.util.object.ClassUtil;
 import com.vantar.web.*;
 import javax.servlet.http.HttpServletResponse;
 import java.util.*;
@@ -22,16 +21,9 @@ import java.util.*;
 
 public class AdminDataUnDelete {
 
-    public static void search(Params params, HttpServletResponse response, DtoDictionary.Info dtoInfo) throws FinishException {
-        WebUi ui = Admin.getUiDto(Locale.getString(VantarKey.ADMIN_UNDELETE), params, response, dtoInfo);
-        if (dtoInfo == null) {
-            return;
-        }
-        if (!DataUtil.isUp(dtoInfo.dbms, ui)) {
-            ui.finish();
-            return;
-        }
-        String dtoName = dtoInfo.dtoClass.getSimpleName();
+    public static void search(Params params, HttpServletResponse response, DtoDictionary.Info info) throws FinishException {
+        DataUtil.Ui u = DataUtil.initDto(VantarKey.ADMIN_UNDELETE, "undelete", params, response, info);
+        String dtoName = info.dtoClass.getSimpleName();
 
         QueryBuilder q = params.getQueryBuilder("jsonsearch", new UserLog());
         if (q == null) {
@@ -41,7 +33,7 @@ public class AdminDataUnDelete {
         } else {
             List<ValidationError> errors = q.getErrors();
             if (errors != null) {
-                ui.write().addErrorMessage(ValidationError.toString(errors)).finish();
+                u.ui.write().addErrorMessage(ValidationError.toString(errors)).finish();
                 return;
             }
         }
@@ -52,27 +44,26 @@ public class AdminDataUnDelete {
         PageData data = null;
         try {
             // > > > MONGO
-            if (dtoInfo.dbms.equals(DtoDictionary.Dbms.MONGO)) {
+            if (info.dbms.equals(DtoDictionary.Dbms.MONGO)) {
                 data = MongoQuery.getPage(q, null);
                 // > > > SQL
-            } else if (dtoInfo.dbms.equals(DtoDictionary.Dbms.SQL)) {
+            } else if (info.dbms.equals(DtoDictionary.Dbms.SQL)) {
                 try (SqlConnection connection = new SqlConnection()) {
                     SqlSearch search = new SqlSearch(connection);
                     data = search.getPage(q);
                 }
                 // > > > ELASTIC
-            } else if (dtoInfo.dbms.equals(DtoDictionary.Dbms.ELASTIC)) {
+            } else if (info.dbms.equals(DtoDictionary.Dbms.ELASTIC)) {
                 data = ElasticSearch.getPage(q);
             }
 
         } catch (NoContentException ignore) {
 
         } catch (DatabaseException e) {
-            ui.addErrorMessage(e);
+            u.ui.addErrorMessage(e);
         }
 
         WebUi.DtoListOptions options = new WebUi.DtoListOptions();
-        options.actionLink = false;
         options.archive = false;
         options.pagination = true;
         options.search = true;
@@ -82,14 +73,14 @@ public class AdminDataUnDelete {
         options.event = new WebUi.DtoListOptions.Event() {
             @Override
             public void checkListFormContent() {
-                ui.addEmptyLine();
-                ui.direction = "ltr".equalsIgnoreCase(ui.direction) ? "rtl" : "ltr";
-                ui.alignKey = "left".equalsIgnoreCase(ui.alignKey) ? "right" : "left";
-                ui.addCheckbox(VantarKey.SELECT_ALL, "delete-select-all");
-                ui.addCheckbox(VantarKey.ADMIN_CONFIRM, "confirm");
-                ui.addSubmit(VantarKey.ADMIN_UNDELETE, "undelete-button", "undelete-button");
-                ui.direction = "ltr".equalsIgnoreCase(ui.direction) ? "rtl" : "ltr";
-                ui.alignKey = "left".equalsIgnoreCase(ui.alignKey) ? "right" : "left";
+                u.ui.addEmptyLine();
+                u.ui.direction = "ltr".equalsIgnoreCase(u.ui.direction) ? "rtl" : "ltr";
+                u.ui.alignKey = "left".equalsIgnoreCase(u.ui.alignKey) ? "right" : "left";
+                u.ui.addCheckbox(VantarKey.SELECT_ALL, "delete-select-all");
+                u.ui.addCheckbox(VantarKey.ADMIN_CONFIRM, "confirm");
+                u.ui.addSubmit(VantarKey.ADMIN_UNDELETE, "undelete-button", "undelete-button");
+                u.ui.direction = "ltr".equalsIgnoreCase(u.ui.direction) ? "rtl" : "ltr";
+                u.ui.alignKey = "left".equalsIgnoreCase(u.ui.alignKey) ? "right" : "left";
             }
 
             @Override
@@ -98,11 +89,11 @@ public class AdminDataUnDelete {
 
                 WebUi.DtoListOptions.ColOption undeleteCheckBox = new WebUi.DtoListOptions.ColOption();
                 undeleteCheckBox.containerClass = "delete-option";
-                undeleteCheckBox.content = ui.getCheckbox("delete-check", false, dtoX.getId(), "delete-check", false);
+                undeleteCheckBox.content = u.ui.getCheckbox("delete-check", false, dtoX.getId(), "delete-check", false);
                 colOptions.add(undeleteCheckBox);
 
                 WebUi.DtoListOptions.ColOption view = new WebUi.DtoListOptions.ColOption();
-                view.content = ui.getHref(
+                view.content = u.ui.getHref(
                     VantarKey.ADMIN_VIEW,
                     "/admin/data/view?dto=UserLog&id=" + dtoX.getId(), true, false, null
                 );
@@ -112,21 +103,19 @@ public class AdminDataUnDelete {
             }
         };
 
-        ui.addDtoListWithHeader(data, dtoInfo, options);
-        ui.finish();
+        u.ui.addDtoListWithHeader(data, info, options);
+        u.ui.finish();
     }
 
-    public static void undeleteMany(Params params, HttpServletResponse response, DtoDictionary.Info dtoInfo) throws FinishException {
-        WebUi ui = Admin.getUiDto(Locale.getString(VantarKey.ADMIN_UNDELETE), params, response, dtoInfo);
-        if (dtoInfo == null) {
-            return;
-        }
+    public static void undeleteMany(Params params, HttpServletResponse response, DtoDictionary.Info info) throws FinishException {
+        DataUtil.Ui u = DataUtil.initDto(VantarKey.ADMIN_UNDELETE, "undelete", params, response, info);
+
         if (!params.isChecked("confirm")) {
-            ui.addMessage(VantarKey.DELETE_FAIL).finish();
+            u.ui.addMessage(VantarKey.DELETE_FAIL).finish();
             return;
         }
-        if (!DataUtil.isUp(dtoInfo.dbms, ui)) {
-            ui.finish();
+        if (!DataUtil.isUp(info.dbms, u.ui)) {
+            u.ui.finish();
             return;
         }
 
@@ -134,42 +123,36 @@ public class AdminDataUnDelete {
         for (Long id : params.getLongList("delete-check")) {
             userLog.reset();
             userLog.setId(id);
-            unDelete(ui, userLog);
+            unDelete(u.ui, userLog);
         }
 
-        ui.finish();
+        u.ui.finish();
     }
 
-    public static void undeleteOne(Params params, HttpServletResponse response, DtoDictionary.Info dtoInfo) throws FinishException {
-        WebUi ui = Admin.getUiDto(Locale.getString(VantarKey.ADMIN_UNDELETE), params, response, dtoInfo);
-        if (dtoInfo == null) {
-            return;
-        }
-        if (!DataUtil.isUp(dtoInfo.dbms, ui)) {
-            ui.finish();
-            return;
-        }
+    public static void undeleteOne(Params params, HttpServletResponse response, DtoDictionary.Info info) throws FinishException {
+        DataUtil.Ui u = DataUtil.initDto(VantarKey.ADMIN_UNDELETE, "undelete", params, response, info);
+
         UserLog userLog = new UserLog();
         userLog.setId(params.getLong("id"));
         if (userLog.getId() == null) {
-            ui.finish();
+            u.ui.finish();
             return;
         }
 
         if (params.isChecked("confirm")) {
-            unDelete(ui, userLog);
-            ui.finish();
+            unDelete(u.ui, userLog);
+            u.ui.finish();
             return;
         }
 
         try {
             userLog = ModelMongo.getById(userLog);
         } catch (VantarException e) {
-            ui.addErrorMessage(e).finish();
+            u.ui.addErrorMessage(e).finish();
             return;
         }
 
-        ui  .addHeading(3, userLog.classNameSimple + " " + userLog.objectId)
+        u.ui.addHeading(3, userLog.classNameSimple + " " + userLog.objectId)
             .addBlock("pre", Json.d.toJsonPretty(Json.d.toJson(userLog.objectX)), "view-pre")
             .addEmptyLine()
             .beginFormPost()

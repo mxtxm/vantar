@@ -242,13 +242,15 @@ public class DefaultStringsEn {
         tokens.put(VantarKey.BUSINESS_SERIAL_MAX,      "Last primary key");
 
 
-        tokens.put(VantarKey.ADMIN_ACTION_LOG, "Log");
+        tokens.put(VantarKey.ADMIN_LIST_OPTION_ACTION_LOG, "Log");
+        tokens.put(VantarKey.ADMIN_LIST_OPTION_USER_ACTIVITY, "Activity");
 
         tokens.put(VantarKey.ADMIN_PAGING, "paging");
 
 
 
-        tokens.put(VantarKey.ADMIN_USER_LOG, "User action logs");
+        tokens.put(VantarKey.ADMIN_ACTION_LOG, "Action logs");
+        tokens.put(VantarKey.ADMIN_USER_ACTIVITY, "User activity");
         tokens.put(VantarKey.ADMIN_MEMORY, "Memory");
         tokens.put(VantarKey.ADMIN_DISK_SPACE, "Disk space");
         tokens.put(VantarKey.ADMIN_PROCESSOR, "Processor");
@@ -284,6 +286,7 @@ public class DefaultStringsEn {
         tokens.put(VantarKey.ADMIN_VIEW, "View");
         tokens.put(VantarKey.ADMIN_REVERT, "Revert");
         tokens.put(VantarKey.ADMIN_LOG_DIFFERENCES, "View differences");
+        tokens.put(VantarKey.ADMIN_WEB_LOG, "Web log");
 
     }
 

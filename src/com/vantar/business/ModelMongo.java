@@ -101,12 +101,13 @@ public class ModelMongo extends ModelCommon {
                 Dto dtoX = ClassUtil.getInstance(settings.dto.getClass());
                 dtoX.setId(settings.dto.getId());
                 dtoX = getById(dtoX);
-                dtoX.set(settings.dto);
+                dtoX.set(settings.dto, settings.action);
                 settings.dto = dtoX;
             } else {
-                settings.dto = getById(settings.dto);
+                settings.dto.set(settings.params, settings.action);
             }
         }
+
         if (settings.mutex) {
             mutex(settings.dto, (Dto dto) -> {
                 updateById(settings, dto);

@@ -226,9 +226,12 @@ public enum VantarKey implements LangKey {
     ADMIN_ACTION,
 
     ADMIN_RUN_TIME,
-    ADMIN_ACTION_LOG,
+    ADMIN_LIST_OPTION_ACTION_LOG,
+    ADMIN_LIST_OPTION_USER_ACTIVITY,
     ADMIN_PAGING,
-    ADMIN_USER_LOG,
+    ADMIN_ACTION_LOG,
+    ADMIN_USER_ACTIVITY,
+
     ADMIN_MEMORY,
     ADMIN_DISK_SPACE,
     ADMIN_PROCESSOR,
@@ -265,4 +268,6 @@ public enum VantarKey implements LangKey {
 
     ADMIN_REVERT,
     ADMIN_LOG_DIFFERENCES,
+
+    ADMIN_WEB_LOG,
 }

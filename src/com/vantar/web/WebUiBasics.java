@@ -97,12 +97,12 @@ abstract class WebUiBasics <T extends WebUiBasics<T>> {
 
     public T setBreadcrumb(String title, DtoDictionary.Info dtoInfo) {
         html.append("<h1>")
+            .append(title)
+            .append(" : ")
             .append(dtoInfo.group)
             .append(" &gt; ")
             .append("<a href='").append(getLink("/admin/data/list?dto=" + dtoInfo.getDtoClassName()))
             .append("'>").append(dtoInfo.title).append("</a>")
-            .append(" &gt; ")
-            .append(title)
             .append("</h1>\n");
         return getThis();
     }
@@ -304,21 +304,28 @@ abstract class WebUiBasics <T extends WebUiBasics<T>> {
         }
         return addBlock(options);
     }
+
     public T addBlock(String... options) {
+        html.append(getBlock(options));
+        return getThis();
+    }
+
+    public String getBlock(String... options) {
+        StringBuilder sb = new StringBuilder(200);
         String tag = options.length > 0 ? options[0] : "div";
-        html.append("<").append(tag);
+        sb.append("<").append(tag);
         if (options.length > 2) {
-            html.append(" ").append(options[2].startsWith("id-") ? "id" : "class").append("=\"").append(options[2]).append("\"");
+            sb.append(" ").append(options[2].startsWith("id-") ? "id" : "class").append("=\"").append(options[2]).append("\"");
         }
-        html.append(">\n");
+        sb.append(">");
         if (options.length > 1) {
             if (!"pre".equals(tag) && !options[1].startsWith("~~~")) {
                 options[1] = escapeWithNtoBr(StringUtil.remove(options[1], "~~~"));
             }
-            html.append(StringUtil.remove(options[1], "~~~"));
+            sb.append(StringUtil.remove(options[1], "~~~"));
         }
-        html.append("</").append(tag).append(">\n");
-        return getThis();
+        sb.append("</").append(tag).append(">");
+        return sb.toString();
     }
 
     /**
@@ -329,10 +336,6 @@ abstract class WebUiBasics <T extends WebUiBasics<T>> {
             html.append(openTags.pop());
         }
         return getThis();
-    }
-
-    public String getBlock(String type, String value, boolean escape) {
-        return "<" + type + ">" + (escape ? escapeWithNtoBr(value) : value) + "</" + type + ">";
     }
 
     // BLOCK < < <

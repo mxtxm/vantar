@@ -96,12 +96,12 @@ public class DefaultStringsFa {
         tokens.put(VantarKey.BUSINESS_DUPLICATE_COUNT, "تعداد تکراری ها");
         tokens.put(VantarKey.BUSINESS_SERIAL_MAX, "آخرین مقدار شناسه");
 
-        tokens.put(VantarKey.ADMIN_ACTION_LOG, "لاگ");
+        tokens.put(VantarKey.ADMIN_LIST_OPTION_ACTION_LOG, "لاگ");
 
         tokens.put(VantarKey.ADMIN_PAGING, "صفحه بندی");
 
 
-        tokens.put(VantarKey.ADMIN_USER_LOG, "لاگ کاربران");
+        tokens.put(VantarKey.ADMIN_ACTION_LOG, "لاگ کاربران");
         tokens.put(VantarKey.ADMIN_MEMORY, "حافظه");
         tokens.put(VantarKey.ADMIN_DISK_SPACE, "دیسک");
         tokens.put(VantarKey.ADMIN_PROCESSOR, "پردازنده");

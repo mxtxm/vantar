@@ -1,6 +1,5 @@
 package com.vantar.admin.database.data.panel;
 
-import com.vantar.admin.index.Admin;
 import com.vantar.business.*;
 import com.vantar.database.dto.*;
 import com.vantar.database.nosql.elasticsearch.ElasticConnection;
@@ -16,72 +15,61 @@ import javax.servlet.http.HttpServletResponse;
 
 public class AdminDataDelete {
 
-    public static void purge(Params params, HttpServletResponse response, DtoDictionary.Info dtoInfo) throws FinishException {
-        if (dtoInfo == null) {
-            return;
-        }
-        WebUi ui = Admin.getUiDto(Locale.getString(VantarKey.ADMIN_DATA_PURGE), params, response, dtoInfo);
-        Dto dto = dtoInfo.getDtoInstance();
+    public static void purge(Params params, HttpServletResponse response, DtoDictionary.Info info) throws FinishException {
+        DataUtil.Ui u = DataUtil.initDto(VantarKey.ADMIN_DATA_PURGE, "purge", params, response, info);
 
         if (!params.isChecked("f") || !params.isChecked(WebUi.PARAM_CONFIRM)) {
-            ui  .beginFormPost()
+            u.ui.beginFormPost()
                 .addErrorMessage(VantarKey.ADMIN_DELETE)
                 .addCheckbox(VantarKey.ADMIN_DELETE_ALL_CONFIRM, WebUi.PARAM_CONFIRM)
                 .addSubmit(VantarKey.ADMIN_DELETE)
                 .blockEnd();
         } else {
             try {
-                if (dtoInfo.dbms.equals(DtoDictionary.Dbms.MONGO)) {
+                if (info.dbms.equals(DtoDictionary.Dbms.MONGO)) {
                     if (MongoConnection.isUp()) {
-                        ui.addMessage(ModelMongo.purge(dto).message);
+                        u.ui.addMessage(ModelMongo.purge(u.dto).message);
                     } else {
-                        ui.addMessage(Locale.getString(VantarKey.ADMIN_SERVICE_IS_OFF, DtoDictionary.Dbms.MONGO));
+                        u.ui.addMessage(Locale.getString(VantarKey.ADMIN_SERVICE_IS_OFF, DtoDictionary.Dbms.MONGO));
                     }
-                } else if (dtoInfo.dbms.equals(DtoDictionary.Dbms.SQL)) {
+                } else if (info.dbms.equals(DtoDictionary.Dbms.SQL)) {
                     if (SqlConnection.isUp()) {
-                        ui.addMessage(CommonModelSql.purgeData(dto.getStorage()).message);
+                        u.ui.addMessage(CommonModelSql.purgeData(u.dto.getStorage()).message);
                     } else {
-                        ui.addMessage(Locale.getString(VantarKey.ADMIN_SERVICE_IS_OFF, DtoDictionary.Dbms.SQL));
+                        u.ui.addMessage(Locale.getString(VantarKey.ADMIN_SERVICE_IS_OFF, DtoDictionary.Dbms.SQL));
                     }
-                } else if (dtoInfo.dbms.equals(DtoDictionary.Dbms.ELASTIC)) {
+                } else if (info.dbms.equals(DtoDictionary.Dbms.ELASTIC)) {
                     if (ElasticConnection.isUp()) {
-                        ui.addMessage(CommonModelElastic.purgeData(dto.getStorage()).message);
+                        u.ui.addMessage(CommonModelElastic.purgeData(u.dto.getStorage()).message);
                     } else {
-                        ui.addMessage(Locale.getString(VantarKey.ADMIN_SERVICE_IS_OFF, "ElasticSearch"));
+                        u.ui.addMessage(Locale.getString(VantarKey.ADMIN_SERVICE_IS_OFF, "ElasticSearch"));
                     }
                 }
             } catch (VantarException e) {
-                ui.addErrorMessage(e);
-                ServiceLog.log.error("! {}", dto, e);
+                u.ui.addErrorMessage(e);
+                ServiceLog.log.error("! {}", u.dto, e);
             }
 
-            if (dtoInfo.broadcastMessage != null) {
-                Services.messaging.broadcast(dtoInfo.broadcastMessage);
+            if (info.broadcastMessage != null) {
+                Services.messaging.broadcast(info.broadcastMessage);
             }
         }
 
-        ui.finish();
+        u.ui.finish();
     }
 
-    public static void deleteMany(Params params, HttpServletResponse response, DtoDictionary.Info dtoInfo) throws FinishException {
-        WebUi ui = Admin.getUiDto(VantarKey.ADMIN_DELETE, params, response, dtoInfo);
-        if (dtoInfo == null) {
-            return;
-        }
+    public static void deleteMany(Params params, HttpServletResponse response, DtoDictionary.Info info) throws FinishException {
+        DataUtil.Ui u = DataUtil.initDto(VantarKey.ADMIN_DELETE, "delete", params, response, info);
+        
         if (!params.isChecked("confirm-delete")) {
-            ui.addMessage(VantarKey.DELETE_FAIL).finish();
+            u.ui.addMessage(VantarKey.DELETE_FAIL).finish();
             return;
         }
-        if (!DataUtil.isUp(dtoInfo.dbms, ui)) {
-            ui.finish();
-            return;
-        }
-        Dto dto = dtoInfo.getDtoInstance();
         DataUtil.Event event = DataUtil.getEvent();
         if (event != null) {
-            Dto dtoX = event.dtoExchange(dto, "delete");
+            Dto dtoX = event.dtoExchange(u.dto, "delete");
             if (dtoX != null) {
-                dto = dtoX;
+                u.dto = dtoX;
             }
         }
 
@@ -89,80 +77,69 @@ public class AdminDataDelete {
         boolean cascade = params.isChecked("cascade");
 
         for (Long id : params.getLongList("delete-check")) {
-            dto.reset();
-            dto.setId(id);
+            u.dto.reset();
+            u.dto.setId(id);
             delete(
-                ui,
-                dtoInfo,
-                dto,
+                u.ui,
+                info,
+                u.dto,
                 event,
                 ignoreDependencies,
                 cascade
             );
         }
 
-        ui.finish();
+        u.ui.finish();
     }
 
-    public static void deleteOne(Params params, HttpServletResponse response, DtoDictionary.Info dtoInfo) throws FinishException {
-        WebUi ui = Admin.getUiDto(VantarKey.ADMIN_DELETE, params, response, dtoInfo);
-        if (dtoInfo == null) {
-            return;
-        }
-        long id;
-        try {
-            id = params.getLongRequired("id");
-        } catch (InputException e) {
-            ui.addErrorMessage(e).finish();
-            return;
-        }
+    public static void deleteOne(Params params, HttpServletResponse response, DtoDictionary.Info info) throws FinishException {
+        DataUtil.Ui u = DataUtil.initDtoItem(VantarKey.ADMIN_DELETE, "delete", params, response, info);
 
         if (!params.contains("f")) {
-            ui  .addEmptyLine()
+            u.ui.addEmptyLine()
                 .beginFormPost()
                 .addCheckbox(VantarKey.ADMIN_DELETE_CASCADE, "cascade")
                 .addCheckbox(VantarKey.ADMIN_IGNORE_DEPENDENCIES, "ignore-dependencies")
                 .addCheckbox(VantarKey.ADMIN_CONFIRM, "confirm")
-                .addHidden("dto", dtoInfo.dtoClass.getSimpleName())
-                .addHidden("id", id)
+                .addHidden("dto", info.dtoClass.getSimpleName())
+                .addHidden("id", u.dto.getId())
                 .addSubmit()
                 .finish();
             return;
         }
 
         if (!params.isChecked("confirm-delete")) {
-            ui.addMessage(VantarKey.DELETE_FAIL).finish();
+            u.ui.addMessage(VantarKey.DELETE_FAIL).finish();
             return;
         }
-        if (!DataUtil.isUp(dtoInfo.dbms, ui)) {
-            ui.finish();
+        if (!DataUtil.isUp(info.dbms, u.ui)) {
+            u.ui.finish();
             return;
         }
-        Dto dto = dtoInfo.getDtoInstance();
         DataUtil.Event event = DataUtil.getEvent();
         if (event != null) {
-            Dto dtoX = event.dtoExchange(dto, "delete");
+            Dto dtoX = event.dtoExchange(u.dto, "delete");
             if (dtoX != null) {
-                dto = dtoX;
+                u.dto = dtoX;
             }
         }
 
         boolean ignoreDependencies = params.isChecked("ignore-dependencies");
         boolean cascade = params.isChecked("cascade");
         delete(
-            ui,
-            dtoInfo,
-            dto,
+            u.ui,
+            info,
+            u.dto,
             event,
             ignoreDependencies,
             cascade
         );
-        ui.finish();
+        u.ui.finish();
     }
 
     private static void delete(
         WebUi ui,
-        DtoDictionary.Info dtoInfo,
+        DtoDictionary.Info info,
         Dto dto,
         DataUtil.Event event,
         boolean force,
@@ -179,16 +156,16 @@ public class AdminDataDelete {
             .mutex(true);
 
         try {
-            if (dtoInfo.dbms.equals(DtoDictionary.Dbms.MONGO)) {
+            if (info.dbms.equals(DtoDictionary.Dbms.MONGO)) {
                 // > > > MONGO
                 ResponseMessage resp = ModelMongo.delete(settings);
                 ui.addMessage(resp.message);
                 ui.addMessage("Deleted: " + resp.value + "records");
                 // > > > SQL
-            } else if (dtoInfo.dbms.equals(DtoDictionary.Dbms.SQL)) {
+            } else if (info.dbms.equals(DtoDictionary.Dbms.SQL)) {
                 //ui.addMessage(CommonModelSql.deleteBatch(params, dto.getClass()).message);
                 // > > > ELASTIC
-            } else if (dtoInfo.dbms.equals(DtoDictionary.Dbms.ELASTIC)) {
+            } else if (info.dbms.equals(DtoDictionary.Dbms.ELASTIC)) {
                 //ui.addMessage(CommonModelElastic.deleteBatch(params, dto.getClass()).message);
             }
 
@@ -199,8 +176,8 @@ public class AdminDataDelete {
             ui.addErrorMessage(e);
         }
 
-        if (dtoInfo.broadcastMessage != null) {
-            Services.messaging.broadcast(dtoInfo.broadcastMessage);
+        if (info.broadcastMessage != null) {
+            Services.messaging.broadcast(info.broadcastMessage);
         }
     }
 }

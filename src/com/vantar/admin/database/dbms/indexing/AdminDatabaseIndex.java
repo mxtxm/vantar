@@ -47,7 +47,7 @@ public class AdminDatabaseIndex {
 
                 ui.addKeyValue(
                     info.getDtoClassName(),
-                    ui.getBlock("pre", CollectionUtil.join(indexes, '\n'), false),
+                    ui.getBlock("pre", CollectionUtil.join(indexes, '\n')),
                     null,
                     false
                 ).write();

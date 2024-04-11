@@ -2,7 +2,7 @@ package com.vantar.admin.database.cache;
 
 import com.vantar.admin.index.Admin;
 import com.vantar.admin.service.AdminService;
-import com.vantar.database.dto.Dto;
+import com.vantar.database.dto.*;
 import com.vantar.exception.*;
 import com.vantar.locale.*;
 import com.vantar.service.Services;
@@ -40,8 +40,8 @@ public class AdminDtoCache {
             Map<Long, ? extends Dto> values = cache.getMap((Class<? extends Dto>) c);
             sum += ObjectUtil.sizeOf(values);
             ui.addKeyValue(
-                ui.getHref(c.getSimpleName(), "/admin/database/cache/view?c=" + c.getName(), true, false, null),
-                ui.getHref(VantarKey.ADMIN_REFRESH, "/admin/database/cache/refresh?c=" + c.getName(), true, false, null) + " "
+                ui.getHref(c.getSimpleName(), "/admin/database/cache/view?dto=" + c.getSimpleName(), true, false, null),
+                ui.getHref(VantarKey.ADMIN_REFRESH, "/admin/database/cache/refresh?dto=" + c.getSimpleName(), true, false, null) + " "
                     + ObjectUtil.sizeOfReadable(values),
                 null,
                 false
@@ -58,24 +58,23 @@ public class AdminDtoCache {
     public static void view(Params params, HttpServletResponse response) throws FinishException, InputException {
         WebUi ui = Admin.getUi(VantarKey.ADMIN_CACHE, params, response, true);
 
-        String className = params.getStringRequired("c");
-
-        ui.addHeading(2, className);
-
-        Object object = ClassUtil.getInstance(className);
-        ServiceDtoCache serviceDtoCache;
+        ServiceDtoCache cache;
         try {
-            serviceDtoCache = Services.getService(ServiceDtoCache.class);
+            cache = Services.getService(ServiceDtoCache.class);
         } catch (ServiceException e) {
             ui.addErrorMessage(e).finish();
             return;
         }
+
+        String dtoClass = params.getStringRequired("dto");
+        ui.addHeading(2, dtoClass);
+        DtoDictionary.Info object = DtoDictionary.get(dtoClass);
         if (object == null) {
             ui.addErrorMessage(VantarKey.NO_CONTENT).finish();
             return;
         }
 
-        Map<Long, ? extends Dto> values = serviceDtoCache.getMap((Class<? extends Dto>) object.getClass());
+        Map<Long, ? extends Dto> values = cache.getMap(object.dtoClass);
         if (values == null) {
             ui.addErrorMessage(VantarKey.NO_CONTENT).finish();
             return;
@@ -94,13 +93,19 @@ public class AdminDtoCache {
     public static void refresh(Params params, HttpServletResponse response) throws FinishException, InputException {
         WebUi ui = Admin.getUi(VantarKey.ADMIN_CACHE, params, response, true);
 
-        String dtoClass = params.getStringRequired("c");
-
         ServiceDtoCache cache;
         try {
             cache = Services.getService(ServiceDtoCache.class);
         } catch (ServiceException e) {
             ui.addErrorMessage(e).finish();
+            return;
+        }
+
+        String dtoClass = params.getStringRequired("dto");
+        ui.addHeading(2, dtoClass);
+        DtoDictionary.Info object = DtoDictionary.get(dtoClass);
+        if (object == null) {
+            ui.addErrorMessage(VantarKey.NO_CONTENT).finish();
             return;
         }
 

@@ -1,6 +1,5 @@
 package com.vantar.admin.database.data.panel;
 
-import com.vantar.admin.index.Admin;
 import com.vantar.business.*;
 import com.vantar.database.dto.*;
 import com.vantar.exception.*;
@@ -15,41 +14,34 @@ import javax.servlet.http.HttpServletResponse;
 
 public class AdminDataInsert {
 
-    public static void insert(Params params, HttpServletResponse response, DtoDictionary.Info dtoInfo) throws FinishException {
-        WebUi ui = Admin.getUiDto(VantarKey.ADMIN_INSERT, params, response, dtoInfo);
-        if (dtoInfo == null) {
-            return;
-        }
-        if (!DataUtil.isUp(dtoInfo.dbms, ui)) {
-            ui.finish();
-            return;
-        }
-        Dto dto = dtoInfo.getDtoInstance();
+    public static void insert(Params params, HttpServletResponse response, DtoDictionary.Info info) throws FinishException {
+        DataUtil.Ui u = DataUtil.initDto(VantarKey.ADMIN_INSERT, "insert", params, response, info);
+
         DataUtil.Event event = DataUtil.getEvent();
         if (event != null) {
-            Dto dtoX = event.dtoExchange(dto, "insert");
+            Dto dtoX = event.dtoExchange(u.dto, "insert");
             if (dtoX != null) {
-                dto = dtoX;
+                u.dto = dtoX;
             }
         }
 
         if (!params.isChecked("f")) {
-            ui.addDtoAddForm(dto, dto.getProperties());
-            ui.finish();
+            u.ui.addDtoAddForm(u.dto, u.dto.getProperties());
+            u.ui.finish();
             return;
         }
 
-        if (NumberUtil.isIdInvalid(dto.getId())) {
-            dto.setClearIdOnInsert(false);
+        if (NumberUtil.isIdInvalid(u.dto.getId())) {
+            u.dto.setClearIdOnInsert(false);
         }
         if (event != null) {
-            event.beforeInsert(dto);
+            event.beforeInsert(u.dto);
         }
         try {
-            if (dtoInfo.dbms.equals(DtoDictionary.Dbms.MONGO)) {
+            if (info.dbms.equals(DtoDictionary.Dbms.MONGO)) {
                 ModelMongo.insert(new ModelCommon.Settings(
                     params,
-                    dto,
+                    u.dto,
                     new ModelCommon.WriteEvent() {
                         @Override
                         public void beforeWrite(Dto dto) {
@@ -68,24 +60,24 @@ public class AdminDataInsert {
                     }
                 ).isJson("asjson"));
 
-            } else if (dtoInfo.dbms.equals(DtoDictionary.Dbms.SQL)) {
-                CommonModelSql.insert(params, dto);
-            } else if (dtoInfo.dbms.equals(DtoDictionary.Dbms.ELASTIC)) {
-                CommonModelElastic.insert(params, dto);
+            } else if (info.dbms.equals(DtoDictionary.Dbms.SQL)) {
+                CommonModelSql.insert(params, u.dto);
+            } else if (info.dbms.equals(DtoDictionary.Dbms.ELASTIC)) {
+                CommonModelElastic.insert(params, u.dto);
             }
             if (event != null) {
-                event.afterInsert(dto);
+                event.afterInsert(u.dto);
             }
-            ui.addMessage(VantarKey.INSERT_SUCCESS);
+            u.ui.addMessage(VantarKey.INSERT_SUCCESS);
 
         } catch (VantarException e) {
-            ui.addErrorMessage(e);
+            u.ui.addErrorMessage(e);
         }
 
-        if (dtoInfo.broadcastMessage != null) {
-            Services.messaging.broadcast(dtoInfo.broadcastMessage);
+        if (info.broadcastMessage != null) {
+            Services.messaging.broadcast(info.broadcastMessage);
         }
 
-        ui.finish();
+        u.ui.finish();
     }
 }
