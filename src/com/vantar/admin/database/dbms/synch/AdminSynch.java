@@ -25,7 +25,7 @@ public class AdminSynch {
         ui  .addHeading(2, dbms)
             .addEmptyLine(2).write();
 
-        if (!params.isChecked("f") || !params.isChecked("confirm")) {
+        if (!params.contains("f") || !params.isChecked("confirm")) {
             ui  .beginFormPost()
                 .addCheckbox(VantarKey.ADMIN_CONFIRM, "confirm")
                 .addSubmit(VantarKey.ADMIN_DATABASE_SYNCH)

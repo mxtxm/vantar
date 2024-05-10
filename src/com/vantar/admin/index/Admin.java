@@ -192,6 +192,7 @@ public class Admin {
             menu.put(Locale.getString(VantarKey.ADMIN_MENU_PATCH), "/admin/patch");
             menu.put(Locale.getString(VantarKey.ADMIN_MENU_QUERY), "/admin/query/index");
         }
+        menu.put(Locale.getString(VantarKey.ADMIN_MENU_TEST), "/admin/test/index");
         menu.put(Locale.getString(VantarKey.ADMIN_MENU_DOCUMENTS), "/admin/documentation/index");
         menu.put(Locale.getString(VantarKey.ADMIN_MENU_BUGGER), "/admin/bugger/index");
 

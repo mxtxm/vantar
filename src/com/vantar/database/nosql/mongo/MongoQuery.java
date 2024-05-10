@@ -26,14 +26,14 @@ public class MongoQuery {
 
     public MongoQuery(Dto dto) {
         storage = dto.getStorage();
-        columns = dto.getFieldNames();
+        columns = dto.getFieldNamesForQuery();
         this.dto = dto;
     }
 
     public MongoQuery(QueryBuilder q) {
         dto = q.getDto();
         storage = dto.getStorage();
-        columns = dto.getFieldNames();
+        columns = dto.getFieldNamesForQuery();
         MongoMapping.queryBuilderToMongoQuery(q, this);
     }
 
@@ -81,6 +81,7 @@ public class MongoQuery {
             if (sort != null) {
                 find.sort(sort);
             }
+            find.allowDiskUse(true);
             if (skip != null) {
                 find.skip(skip);
             }
@@ -114,6 +115,7 @@ public class MongoQuery {
             if (sort != null) {
                 find.sort(sort);
             }
+            find.allowDiskUse(true);
             if (skip != null) {
                 find.skip(skip);
             }
@@ -207,14 +209,15 @@ public class MongoQuery {
             condition.append(Mongo.ID, new Document("$ne", id));
         }
         try {
-            return  !MongoConnection.getDatabase().getCollection(dto.getStorage())
+            return !MongoConnection.getDatabase().getCollection(dto.getStorage())
                 .find(condition)
+                .allowDiskUse(true)
                 .projection(Projections.include(Mongo.ID))
                 .limit(1)
                 .iterator()
                 .hasNext();
         } catch (Exception e) {
-            Mongo.log.error("! isUnique({})", dto, e);
+            Mongo.log.error("! isUnique({}, {})", dto.getClass().getSimpleName(), dto.getId(), e);
             throw new DatabaseException(e);
         }
     }
@@ -277,7 +280,7 @@ public class MongoQuery {
         }
         try {
             MongoQueryResult result = new MongoQueryResult(
-                MongoConnection.getDatabase().getCollection(dto.getStorage()).find(new Document(Mongo.ID, id)),
+                MongoConnection.getDatabase().getCollection(dto.getStorage()).find(new Document(Mongo.ID, id)).allowDiskUse(true),
                 dto
             );
             if (locales != null && locales.length > 0) {
@@ -296,11 +299,11 @@ public class MongoQuery {
     public static QueryResult getAllData(Dto dto, String... sort) throws DatabaseException {
         try {
             return new MongoQueryResult(
-                MongoConnection.getDatabase().getCollection(dto.getStorage()).find().sort(MongoMapping.sort(sort)),
+                MongoConnection.getDatabase().getCollection(dto.getStorage()).find().sort(MongoMapping.sort(sort)).allowDiskUse(true),
                 dto
             );
         } catch (Exception e) {
-            Mongo.log.error("! query {}", dto.getStorage(), e);
+            Mongo.log.error("! query {}", dto.getClass().getSimpleName(), e);
             throw new DatabaseException(e);
         }
     }

@@ -39,7 +39,7 @@ public class AdminBackup {
             return;
         }
 
-        if (!params.isChecked("f")) {
+        if (!params.contains("f")) {
             List<DtoDictionary.Info> dtoList = DtoDictionary.getAll();
             Collection<Object> dtos = new TreeSet<>();
             for (DtoDictionary.Info i : dtoList) {
@@ -97,7 +97,7 @@ public class AdminBackup {
             return;
         }
 
-        if (!params.isChecked("f")) {
+        if (!params.contains("f")) {
             List<DtoDictionary.Info> dtoList = DtoDictionary.getAll();
             Map<String, String> dtos = new HashMap<>(dtoList.size(), 1);
             for (DtoDictionary.Info i : dtoList) {
@@ -173,7 +173,7 @@ public class AdminBackup {
             return;
         }
 
-        if (!params.isChecked("f")) {
+        if (!params.contains("f")) {
             List<DtoDictionary.Info> dtoList = DtoDictionary.getAll();
             Collection<Object> dtos = new TreeSet<>();
             for (DtoDictionary.Info i : dtoList) {
@@ -242,9 +242,9 @@ public class AdminBackup {
                 String filename = parts[parts.length - 1];
                 File file = new File(path);
                 if (file.delete()) {
-                    ui.addMessage(Locale.getString(VantarKey.DELETE_SUCCESS) + ": " + filename);
+                    ui.addMessage(Locale.getString(VantarKey.SUCCESS_DELETE) + ": " + filename);
                 } else {
-                    ui.addErrorMessage(Locale.getString(VantarKey.DELETE_FAIL) + ": " + filename);
+                    ui.addErrorMessage(Locale.getString(VantarKey.FAIL_DELETE) + ": " + filename);
                 }
             }
             ui.finish();
@@ -265,7 +265,7 @@ public class AdminBackup {
                 "div",
                 ui.getCheckbox("d", false, path)
                     + ui.getHref("download", "/admin/data/backup/download?" + "file" + "=" + filename, false, false, "")
-                    + filename + " (" + FileUtil.getSizeReadable(path) + "Mb)",
+                    + filename + " " + FileUtil.getSizeReadable(path),
                 "box-content"
             ).write();
         }
@@ -279,7 +279,7 @@ public class AdminBackup {
     public static void upload(Params params, HttpServletResponse response) throws FinishException {
         WebUi ui = Admin.getUi(VantarKey.ADMIN_BACKUP_UPLOAD, params, response, true);
 
-        if (!params.isChecked("f")) {
+        if (!params.contains("f")) {
             ui  .addEmptyLine(2)
                 .beginUploadForm()
                 .addFile(VantarKey.ADMIN_BACKUP_UPLOAD_FILE, "file")
@@ -302,12 +302,12 @@ public class AdminBackup {
                 return;
             }
             if (!uploaded.moveTo(backup.getPath(), uploaded.getOriginalFilename())) {
-                ui.addMessage(VantarKey.UPLOAD_FAIL).finish();
+                ui.addMessage(VantarKey.FAIL_UPLOAD).finish();
                 return;
             }
         }
 
-        ui.addMessage(VantarKey.UPLOAD_SUCCESS).finish();
+        ui.addMessage(VantarKey.SUCCESS_UPLOAD).finish();
     }
 
     public static void logs(Params params, HttpServletResponse response) throws FinishException {

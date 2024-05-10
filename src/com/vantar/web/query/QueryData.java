@@ -393,6 +393,9 @@ public class QueryData {
             q.addError(item.col, VantarKey.SEARCH_VALUE_MISSING);
             return null;
         }
+        if (v instanceof String && ((String) v).startsWith("(string)")) {
+            v = StringUtil.remove((String) v, "(string)");
+        }
         return v;
     }
 

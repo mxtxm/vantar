@@ -192,7 +192,7 @@ public class ServiceLog implements Services.Service  {
     public static void addAction(String action, Object object) {
         UserLog userLog = new UserLog();
         userLog.action = action;
-        userLog.threadId = Thread.currentThread().getId();
+        userLog.threadId = Thread.currentThread().getId() + Params.serverUpCount;
         Params params = Params.getThreadParams();
         if (params != null) {
             userLog.url = params.request.getRequestURI();
@@ -248,7 +248,7 @@ public class ServiceLog implements Services.Service  {
         userLog.url = params.request.getRequestURI();
         userLog.action = "REQUEST";
         userLog.classNameSimple = "Params";
-        userLog.threadId = Thread.currentThread().getId();
+        userLog.threadId = Thread.currentThread().getId() + Params.serverUpCount;
         userLog.ip = params.getIp();
         userLog.requestType = params.getMethod() + ": " +  params.type.name();
         userLog.headers = params.getHeaders();
@@ -299,7 +299,7 @@ public class ServiceLog implements Services.Service  {
         }
         userLog.action = "RESPONSE";
         userLog.status = response.getStatus();
-        userLog.threadId = Thread.currentThread().getId();
+        userLog.threadId = Thread.currentThread().getId() + Params.serverUpCount;
         userLog.headers = Response.getHeaders(response);
         if (object != null) {
             if (object instanceof Dto) {
@@ -436,6 +436,7 @@ public class ServiceLog implements Services.Service  {
                     logItem.createT.toString() + "  " + logItem.level + "\n"
                         + logItem.message + (logItem.objects == null ? "" : Json.d.toJsonPretty(logItem.objects))
                 );
+                return true;
             });
         } catch (Exception e) {
             log.error(" !", e);

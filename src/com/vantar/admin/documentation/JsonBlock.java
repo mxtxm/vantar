@@ -2,6 +2,7 @@ package com.vantar.admin.documentation;
 
 import com.vantar.database.datatype.Location;
 import com.vantar.database.dto.*;
+import com.vantar.database.query.PageData;
 import com.vantar.util.collection.CollectionUtil;
 import com.vantar.util.json.Json;
 import com.vantar.util.object.*;
@@ -37,6 +38,102 @@ public class JsonBlock {
         this.enums = enums;
     }
 
+    public Object getData() {
+        // > > > ENUM
+        if (enumClass != null) {
+            Class<?> c = enums.get(enumClass);
+            if (c == null || c.getEnumConstants() == null) {
+                return "!!!ERROR IN DOCUMENT!!!";
+            }
+            if (format.equalsIgnoreCase("list")) {
+                Object[] enumsConstants = c.getEnumConstants();
+                List<String> items = new ArrayList<>(enumsConstants.length);
+                for (Object item : enumsConstants) {
+                    items.add(item.toString());
+                }
+                return items;
+            }
+            StringBuilder sb = new StringBuilder(1000);
+            for (Object item : c.getEnumConstants()) {
+                sb.append("\"").append(item).append("\" or ");
+            }
+            if (sb.length() > 5) {
+                sb.setLength(sb.length() - 4);
+            }
+            return sb.toString();
+        }
+
+        // > > > SEARCH PARAMS
+        if (searchParams != null) {
+            Map<String, Object> p = new HashMap<>(30, 1);
+            p.put("page", 1);
+            p.put("length", 11);
+            p.put("pagination", true);
+            List<String> sort = new ArrayList<>(2);
+            sort.add("id:asc");
+            p.put("sort", sort);
+            Map<String, Object> condition = new HashMap<>(5, 1);
+            condition.put("operator", "AND");
+            List<Map<String, Object>> items = new ArrayList<>(2);
+            Map<String, Object> conditionItem = new HashMap<>(2, 1);
+            conditionItem.put("col", "id");
+            conditionItem.put("type", "EQUAL");
+            conditionItem.put("value", 787);
+            items.add(conditionItem);
+            condition.put("items", items);
+            p.put("condition", condition);
+
+            return p;
+        }
+        // > > > SEARCH RESULT
+        Dto obj;
+        if (searchResult != null) {
+            PageData pageData = new PageData();
+            pageData.page = 2;
+            pageData.length = 10;
+            pageData.recordCount = 9;
+            pageData.total = 19;
+            pageData.errors = "ERROR MESSAGES";
+            return pageData;
+        }
+
+        // > > > DTO
+        DtoDictionary.Info info = DtoDictionary.get(dto);
+        if (info == null) {
+            return "!!!DTO NOT FOUND " + dto + "!!!";
+        }
+        obj = info.getDtoInstance();
+
+        // > > > delete / byid
+        if ("delete".equalsIgnoreCase(action) || "byid".equalsIgnoreCase(action)) {
+            Map<String, Object> p = new HashMap<>(2, 1);
+            p.put("id", 7);
+            return p;
+        }
+
+        // > > > DTO fields
+        Map<String, Object> map = DummyValue.getDummyDto(obj);
+        map.entrySet().removeIf(e -> {
+            String k = e.getKey();
+            if (CollectionUtil.contains(exclude, k)) {
+                return true;
+            }
+            return include != null && !CollectionUtil.contains(include, k);
+        });
+        if (other != null) {
+            other.forEach((k, v) -> {
+                String[] typeName = StringUtil.split(StringUtil.remove(k, '*', ':').trim(), " ");
+                map.put(typeName[1].trim(), DummyValue.getDummyObjectValue(typeName[0].trim()));
+            });
+        }
+        if ("list".equalsIgnoreCase(format)) {
+            List<Map<String, Object>> x = new ArrayList<>(1);
+            x.add(map);
+            return x;
+        }
+        return map;
+    }
+
     public String get() {
         // > > > ENUM
         if (enumClass != null) {
@@ -55,13 +152,18 @@ public class JsonBlock {
         // > > > DTO
         DtoDictionary.Info info = DtoDictionary.get(dto);
         if (info == null) {
-            return "!!!DOCUMENT CREATION ERROR " + dto + "!!!\n";
+            return "!!!ERROR IN DOCUMENT " + dto + "!!!\n";
         }
         obj = info.getDtoInstance();
 
         // > > > delete
         if ("delete".equalsIgnoreCase(action)) {
-            return "* <strong class='key'>id</strong>: " + obj.getClass().getSimpleName() + ".id (primary key)\n";
+            return "* <strong class='key'>id:</strong> " + obj.getClass().getSimpleName() + ".id (primary key)\n";
+        }
+
+        // > > > by id
+        if ("byid".equalsIgnoreCase(action)) {
+            return "* **id:** " + obj.getClass().getSimpleName() + ".id (primary key)\n";
         }
 
         // > > > DTO fields
@@ -212,7 +314,7 @@ public class JsonBlock {
     private String getEnumDox() {
         Class<?> c = enums.get(enumClass);
         if (c == null || c.getEnumConstants() == null) {
-            return "!!!DOCUMENT CREATION ERROR!!!\n";
+            return "!!!ERROR IN DOCUMENT!!!\n";
         }
         StringBuilder sb = new StringBuilder(1000);
         if (format.equalsIgnoreCase("list")) {
@@ -239,14 +341,14 @@ public class JsonBlock {
         searchParams = StringUtil.replace(searchParams, '.', '$');
         sb  .append("* <a target='_blank' href='/admin/documentation/show/dtos#").append(StringUtil.replace(searchParams, '$', '-'))
             .append("'>searchable fields: {").append(StringUtil.replace(searchParams, '$', '.')).append("}</a>\n")
-            .append("* <a target='_blank' href='/admin/documentation/show?document=document--vantar--search.md'>search tutorial</a>\n");
+            .append("* <a target='_blank' href='/admin/documentation/show?document=document--api--vantar--search.md'>search tutorial</a>\n");
         return sb.toString();
     }
 
     private String getSearchResult() {
         DtoDictionary.Info info = DtoDictionary.get(searchResult);
         if (info == null) {
-            return "!!!DOCUMENT CREATION ERROR " + searchResult + "!!!\n";
+            return "!!!ERROR IN DOCUMENT " + searchResult + "!!!\n";
         }
         Dto obj = info.getDtoInstance();
         NameHash nameHash = getNameHash(searchResult);
@@ -254,8 +356,8 @@ public class JsonBlock {
         return
             "<pre>" +
                 "JSON\n" +
-                "\"pagination\"=false: " + link +
-                "\"pagination\"=true: {\n" +
+                "if pagination is false then output is:" + link +
+                "if pagination is true  then output is: {\n" +
                 "    \"data\": " + link +
                 "    \"page\": page number,\n" +
                 "    \"length\": records per page,\n" +

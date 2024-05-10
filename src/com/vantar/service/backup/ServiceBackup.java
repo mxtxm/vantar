@@ -110,8 +110,8 @@ public class ServiceBackup implements Services.Service {
         String tail = "-" + (lastRun.formatter().getDateTimeSimple()) + ".dump";
         setLogs("begin: " + lastRun.formatter().getDateTime());
 
-        Set<String> excludeDtos = StringUtil.splitToSet(exclude, ',');
-        Set<String> includeDtos = StringUtil.splitToSet(this.include, ',');
+        Set<String> excludeDtos = StringUtil.splitToSetTrim(exclude, ',');
+        Set<String> includeDtos = StringUtil.splitToSetTrim(include, ',');
         try {
             if (StringUtil.contains(dbms, DtoDictionary.Dbms.MONGO.toString())) {
                 Beat.set(this.getClass(), "Mongo backup start...");

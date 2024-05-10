@@ -18,7 +18,7 @@ public class AdminDataDelete {
     public static void purge(Params params, HttpServletResponse response, DtoDictionary.Info info) throws FinishException {
         DataUtil.Ui u = DataUtil.initDto(VantarKey.ADMIN_DATA_PURGE, "purge", params, response, info);
 
-        if (!params.isChecked("f") || !params.isChecked(WebUi.PARAM_CONFIRM)) {
+        if (!params.contains("f") || !params.isChecked(WebUi.PARAM_CONFIRM)) {
             u.ui.beginFormPost()
                 .addErrorMessage(VantarKey.ADMIN_DELETE)
                 .addCheckbox(VantarKey.ADMIN_DELETE_ALL_CONFIRM, WebUi.PARAM_CONFIRM)
@@ -62,7 +62,7 @@ public class AdminDataDelete {
         DataUtil.Ui u = DataUtil.initDto(VantarKey.ADMIN_DELETE, "delete", params, response, info);
         
         if (!params.isChecked("confirm-delete")) {
-            u.ui.addMessage(VantarKey.DELETE_FAIL).finish();
+            u.ui.addMessage(VantarKey.FAIL_DELETE).finish();
             return;
         }
         DataUtil.Event event = DataUtil.getEvent();
@@ -109,7 +109,7 @@ public class AdminDataDelete {
         }
 
         if (!params.isChecked("confirm-delete")) {
-            u.ui.addMessage(VantarKey.DELETE_FAIL).finish();
+            u.ui.addMessage(VantarKey.FAIL_DELETE).finish();
             return;
         }
         if (!DataUtil.isUp(info.dbms, u.ui)) {

@@ -51,7 +51,7 @@ public class Locale {
         if (threadLangs == null) {
             return null;
         }
-        return threadLangs.get(Thread.currentThread().getId());
+        return threadLangs.get(Thread.currentThread().getId() + Params.serverUpCount);
     }
 
     public static void setSelectedLocale(Params params) {
@@ -61,25 +61,25 @@ public class Locale {
 
         String locale = params.getHeader(VantarParam.HEADER_LANG);
         if (locale != null) {
-            threadLangs.put(Thread.currentThread().getId(), locale);
+            threadLangs.put(Thread.currentThread().getId() + Params.serverUpCount, locale);
             return;
         }
 
         String contentType = params.getHeader("content-type");
         if (contentType == null || !StringUtil.contains(contentType, "json")) {
-            threadLangs.put(Thread.currentThread().getId(), params.getString(VantarParam.LANG, defaultLocale));
+            threadLangs.put(Thread.currentThread().getId() + Params.serverUpCount, params.getString(VantarParam.LANG, defaultLocale));
             return;
         }
 
         try {
             String langJson = params.extractFromJson(VantarParam.LANG, String.class);
-            threadLangs.put(Thread.currentThread().getId(), langJson == null ? defaultLocale : langJson);
+            threadLangs.put(Thread.currentThread().getId() + Params.serverUpCount, langJson == null ? defaultLocale : langJson);
             return;
         } catch (Exception ignore) {
 
         }
 
-        threadLangs.put(Thread.currentThread().getId(), defaultLocale);
+        threadLangs.put(Thread.currentThread().getId() + Params.serverUpCount, defaultLocale);
     }
 
     public static Set<String> getLangs() {
@@ -90,7 +90,8 @@ public class Locale {
     }
 
     public static String getString(LangKey key, Object... messageParams) {
-        return getString(threadLangs == null ? null : threadLangs.get(Thread.currentThread().getId()), key, messageParams);
+        return getString(threadLangs == null ? null
+            : threadLangs.get(Thread.currentThread().getId() + Params.serverUpCount), key, messageParams);
     }
 
     public static String getString(String lang, LangKey key, Object... messageParams) {
@@ -122,7 +123,7 @@ public class Locale {
     }
 
     public static String getString(String key, Object... messageParams) {
-        return getString(threadLangs.get(Thread.currentThread().getId()), key, messageParams);
+        return getString(threadLangs.get(Thread.currentThread().getId() + Params.serverUpCount), key, messageParams);
     }
 
     public static String getString(String lang, String key, Object... messageParams) {

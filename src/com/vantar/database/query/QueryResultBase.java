@@ -138,12 +138,14 @@ abstract public class QueryResultBase {
     public void forEach(EventForeach event) throws VantarException {
         try {
             while (next()) {
-                event.afterSetData(dto);
+                if (!event.afterSetData(dto)) {
+                    return;
+                }
                 dto = dto.getClass().getConstructor().newInstance();
            }
         } catch (DatabaseException e) {
             log.error("! data > dto({})", dto, e);
-            throw new ServerException(VantarKey.FETCH_FAIL);
+            throw new ServerException(VantarKey.FAIL_FETCH);
         } catch (NoSuchMethodException | IllegalAccessException | InstantiationException | InvocationTargetException e) {
             log.error("! data > dto({})", dto, e);
         } finally {
@@ -168,6 +170,6 @@ abstract public class QueryResultBase {
 
     public interface EventForeach {
 
-        void afterSetData(Dto dto) throws VantarException;
+        boolean afterSetData(Dto dto) throws VantarException;
     }
 }

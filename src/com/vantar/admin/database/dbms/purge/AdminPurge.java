@@ -10,6 +10,7 @@ import com.vantar.database.sql.SqlConnection;
 import com.vantar.exception.*;
 import com.vantar.locale.*;
 import com.vantar.locale.Locale;
+import com.vantar.util.object.ObjectUtil;
 import com.vantar.util.string.StringUtil;
 import com.vantar.web.*;
 import javax.servlet.http.HttpServletResponse;
@@ -30,7 +31,7 @@ public class AdminPurge {
         ui  .addHeading(2, dbms)
             .addEmptyLine(2).write();
 
-        if (!params.isChecked("f") || !params.isChecked("confirm")) {
+        if (!params.contains("f") || !params.isChecked("confirm")) {
             List<DtoDictionary.Info> dtoList = DtoDictionary.getAll();
             Collection<Object> dtos = new TreeSet<>();
             for (DtoDictionary.Info i : dtoList) {
@@ -67,10 +68,10 @@ public class AdminPurge {
     public static void purgeMongo(WebUi ui, Set<String> excludes, Set<String> includes) {
         for (DtoDictionary.Info info : DtoDictionary.getAll(DtoDictionary.Dbms.MONGO)) {
             Dto dto = info.getDtoInstance();
-            if (excludes != null && excludes.contains(info.getDtoClassName())) {
+            if (ObjectUtil.isNotEmpty(excludes) && excludes.contains(info.getDtoClassName())) {
                 continue;
             }
-            if (includes != null && !includes.contains(info.getDtoClassName())) {
+            if (ObjectUtil.isNotEmpty(includes) && !includes.contains(info.getDtoClassName())) {
                 continue;
             }
 
@@ -85,7 +86,7 @@ public class AdminPurge {
 
                 ui  .addKeyValue(
                         info.getDtoClassName(),
-                        Locale.getString(count == 0 ? VantarKey.DELETE_SUCCESS : VantarKey.DELETE_FAIL)
+                        Locale.getString(count == 0 ? VantarKey.SUCCESS_DELETE : VantarKey.FAIL_DELETE)
                             + ": " + total + " > " + count
                     )
                     .write();
@@ -103,10 +104,10 @@ public class AdminPurge {
 
             for (DtoDictionary.Info info : DtoDictionary.getAll(DtoDictionary.Dbms.SQL)) {
                 Dto dto = info.getDtoInstance();
-                if (excludes != null && excludes.contains(info.getDtoClassName())) {
+                if (ObjectUtil.isNotEmpty(excludes) && excludes.contains(info.getDtoClassName())) {
                     continue;
                 }
-                if (includes != null && !includes.contains(info.getDtoClassName())) {
+                if (ObjectUtil.isNotEmpty(includes) && !includes.contains(info.getDtoClassName())) {
                     continue;
                 }
 
@@ -121,7 +122,7 @@ public class AdminPurge {
                     }
                     ui  .addKeyValue(
                             info.getDtoClassName(),
-                            Locale.getString(VantarKey.DELETE_SUCCESS) + ": " + total + " > " + count
+                            Locale.getString(VantarKey.SUCCESS_DELETE) + ": " + total + " > " + count
                         )
                         .write();
 
@@ -146,7 +147,7 @@ public class AdminPurge {
 
                             ui  .addKeyValue(
                                     info.getDtoClassName(),
-                                    Locale.getString(VantarKey.DELETE_SUCCESS) + ": " + total + " > " + count
+                                    Locale.getString(VantarKey.SUCCESS_DELETE) + ": " + total + " > " + count
                                 )
                                 .write();
                         } catch (DatabaseException e) {
@@ -164,10 +165,10 @@ public class AdminPurge {
     public static void purgeElastic(WebUi ui, Set<String> excludes, Set<String> includes, boolean dropCollection) {
         for (DtoDictionary.Info info : DtoDictionary.getAll(DtoDictionary.Dbms.ELASTIC)) {
             Dto dto = info.getDtoInstance();
-            if (excludes != null && excludes.contains(info.getDtoClassName())) {
+            if (ObjectUtil.isNotEmpty(excludes) && excludes.contains(info.getDtoClassName())) {
                 continue;
             }
-            if (includes != null && !includes.contains(info.getDtoClassName())) {
+            if (ObjectUtil.isNotEmpty(includes) && !includes.contains(info.getDtoClassName())) {
                 continue;
             }
 
@@ -184,7 +185,7 @@ public class AdminPurge {
 
                 ui  .addKeyValue(
                         info.getDtoClassName(),
-                        Locale.getString(count == 0 ? VantarKey.DELETE_SUCCESS : VantarKey.DELETE_FAIL)
+                        Locale.getString(count == 0 ? VantarKey.SUCCESS_DELETE : VantarKey.FAIL_DELETE)
                             + ": " + total + " > " + count
                     )
                     .write();

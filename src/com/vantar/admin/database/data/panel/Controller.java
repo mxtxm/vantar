@@ -19,6 +19,7 @@ import javax.servlet.http.HttpServletResponse;
 
     "/admin/data/insert",
     "/admin/data/update",
+    "/admin/data/update/property",
 
     "/admin/data/import",
     "/admin/data/export",
@@ -80,6 +81,10 @@ public class Controller extends RouteToMethod {
 
     public void dataUpdate(Params params, HttpServletResponse response) throws FinishException {
         AdminDataUpdate.update(params, response, DtoDictionary.get(params.getString("dto")));
+    }
+
+    public void dataUpdateProperty(Params params, HttpServletResponse response) throws FinishException {
+        AdminDataUpdateProperty.update(params, response, DtoDictionary.get(params.getString("dto")));
     }
 
     public void dataImport(Params params, HttpServletResponse response) throws FinishException {

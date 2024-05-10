@@ -32,7 +32,7 @@ public abstract class ImportCommon {
                 }
             }
 
-            ModelCommon.afterDataChange(dto);
+            ModelCommon.updateDtoCache(dto);
 
         } catch (Exception e) {
             if (ui == null) {

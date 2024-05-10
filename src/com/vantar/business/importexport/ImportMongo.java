@@ -36,7 +36,7 @@ public class ImportMongo extends ImportCommon {
                 return;
             }
             if (ui != null) {
-                ui.addMessage(VantarKey.DELETE_SUCCESS).write();
+                ui.addMessage(VantarKey.SUCCESS_DELETE).write();
             }
         }
 
@@ -58,7 +58,7 @@ public class ImportMongo extends ImportCommon {
                 success.getAndIncrement();
             } catch (VantarException e) {
                 if (ui != null) {
-                    ui.addErrorMessage(presentValue + " " + Locale.getString(VantarKey.IMPORT_FAIL));
+                    ui.addErrorMessage(presentValue + " " + Locale.getString(VantarKey.FAIL_IMPORT));
                 }
                 failed.getAndIncrement();
             }

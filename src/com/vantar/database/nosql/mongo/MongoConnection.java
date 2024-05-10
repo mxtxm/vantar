@@ -3,7 +3,6 @@ package com.vantar.database.nosql.mongo;
 import com.mongodb.MongoClient;
 import com.mongodb.*;
 import com.mongodb.client.*;
-import com.mongodb.event.*;
 import com.vantar.exception.DatabaseException;
 import com.vantar.util.string.StringUtil;
 import java.util.*;
@@ -34,13 +33,6 @@ public class MongoConnection {
         MongoClientOptions.Builder o = MongoClientOptions.builder()
             .connectTimeout(config.getMongoConnectTimeout())
             .socketTimeout(config.getMongoSocketTimeout())
-            .addConnectionPoolListener(new ConnectionPoolListenerAdapter() {
-                @Override
-                public void connectionPoolClosed(ConnectionPoolClosedEvent event) {
-                    super.connectionPoolClosed(event);
-                    connect(config);
-                }
-            })
             .cursorFinalizerEnabled(false)
             .connectionsPerHost(2000)
             .serverSelectionTimeout(config.getMongoServerSelectionTimeout());
@@ -53,7 +45,10 @@ public class MongoConnection {
             servers.add(new ServerAddress(parts[0], StringUtil.toInteger(parts[1])));
         }
 
+
         String user = config.getMongoUser();
+
+
         if (user == null || user.isEmpty()) {
             mongoClient = new MongoClient(servers, options);
         } else {
@@ -62,7 +57,6 @@ public class MongoConnection {
                 config.getMongoDatabase(),
                 config.getMongoPassword().toCharArray()
             );
-
             mongoClient = new MongoClient(servers, credential, options);
         }
 

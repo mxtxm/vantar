@@ -11,7 +11,7 @@ import com.vantar.database.sql.*;
 import com.vantar.exception.*;
 import com.vantar.locale.VantarKey;
 import com.vantar.service.Services;
-import com.vantar.service.auth.CommonUser;
+import com.vantar.service.auth.*;
 import com.vantar.service.log.ServiceLog;
 import com.vantar.service.log.dto.*;
 import com.vantar.util.object.ClassUtil;
@@ -35,18 +35,21 @@ public class AdminDataList {
         if (newSerial != null) {
             try {
                 Mongo.Sequence.set(u.dto.getStorage(), newSerial);
-                u.ui.addMessage(VantarKey.UPDATE_SUCCESS);
+                u.ui.addMessage(VantarKey.SUCCESS_UPDATE);
             } catch (DatabaseException e) {
                 u.ui.addErrorMessage(e);
             }
         }
 
         QueryBuilder q = params.getQueryBuilder("jsonsearch", u.dto);
+        boolean qIsNull;
         if (q == null) {
+            qIsNull = true;
             q = new QueryBuilder(u.dto)
                 .page(params.getInteger("page", 1), params.getInteger("page-length", DataUtil.N_PER_PAGE))
                 .sort(params.getString("sort", VantarParam.ID) + ":" + params.getString("sortpos", "desc"));
         } else {
+            qIsNull = false;
             q.setDto(u.dto);
             List<ValidationError> errors = q.getErrors();
             if (errors != null) {
@@ -55,36 +58,40 @@ public class AdminDataList {
             }
         }
 
+        boolean isLog = DataUtil.isDtoLog(u.dto);
         long lastSerialId = 0;
         PageData data = null;
-        try {
-            // > > > MONGO
-            if (info.dbms.equals(DtoDictionary.Dbms.MONGO)) {
-                data = MongoQuery.getPage(q, null);
-                lastSerialId = Mongo.Sequence.getCurrentValue(u.dto.getStorage());
-            // > > > SQL
-            } else if (info.dbms.equals(DtoDictionary.Dbms.SQL)) {
-                try (SqlConnection connection = new SqlConnection()) {
-                    SqlSearch search = new SqlSearch(connection);
-                    data = search.getPage(q);
+
+        if (!(isLog && qIsNull)) {
+            ((DtoBase) u.dto).setIsForList(true);
+            try {
+                // > > > MONGO
+                if (info.dbms.equals(DtoDictionary.Dbms.MONGO)) {
+                    data = MongoQuery.getPage(q, null);
+                    lastSerialId = Mongo.Sequence.getCurrentValue(u.dto.getStorage());
+                    // > > > SQL
+                } else if (info.dbms.equals(DtoDictionary.Dbms.SQL)) {
+                    try (SqlConnection connection = new SqlConnection()) {
+                        SqlSearch search = new SqlSearch(connection);
+                        data = search.getPage(q);
+                    }
+                    // > > > ELASTIC
+                } else if (info.dbms.equals(DtoDictionary.Dbms.ELASTIC)) {
+                    data = ElasticSearch.getPage(q);
                 }
-            // > > > ELASTIC
-            } else if (info.dbms.equals(DtoDictionary.Dbms.ELASTIC)) {
-                data = ElasticSearch.getPage(q);
+
+            } catch (NoContentException ignore) {
+
+            } catch (DatabaseException e) {
+                u.ui.addErrorMessage(e);
             }
-
-        } catch (NoContentException ignore) {
-
-        } catch (DatabaseException e) {
-            u.ui.addErrorMessage(e);
         }
 
+        boolean isLogWeb = UserWebLog.class.equals(info.dtoClass);
+        boolean isLogAction = UserLog.class.equals(info.dtoClass);
+        boolean isNotLog = Services.isUp(ServiceLog.class) && !Log.class.equals(info.dtoClass) && !isLogWeb && !isLogAction;
         boolean isUser = ClassUtil.implementsInterface(info.dtoClass, CommonUser.class);
         String dtoName = info.dtoClass.getSimpleName();
-        boolean showLog = Services.isUp(ServiceLog.class)
-            && !Log.class.equals(info.dtoClass)
-            && !UserWebLog.class.equals(info.dtoClass)
-            && !UserLog.class.equals(info.dtoClass);
 
         WebUi.DtoListOptions options = new WebUi.DtoListOptions();
         options.archive = true;
@@ -93,8 +100,11 @@ public class AdminDataList {
         options.lastSerialId = lastSerialId;
         options.fields = q.getDto().getProperties();
         options.checkListFormUrl = "/admin/data/delete/many";
-        options.colOptionCount = showLog ? 3 : 2;
+        options.colOptionCount = isNotLog ? 3 : 2;
         if (isUser) {
+            ++options.colOptionCount;
+        }
+        if (isLogWeb || isLogAction) {
             ++options.colOptionCount;
         }
         options.event = new WebUi.DtoListOptions.Event() {
@@ -125,7 +135,7 @@ public class AdminDataList {
 
                 WebUi.DtoListOptions.ColOption deleteCheckBox = new WebUi.DtoListOptions.ColOption();
                 deleteCheckBox.containerClass = "delete-option";
-                deleteCheckBox.content = u.ui.getCheckbox("delete-check", false, dtoX.getId() + userParams, "delete-check", false);
+                deleteCheckBox.content = u.ui.getCheckbox("delete-check", false, dtoX.getId(), "delete-check", false);
                 colOptions.add(deleteCheckBox);
 
                 WebUi.DtoListOptions.ColOption update = new WebUi.DtoListOptions.ColOption();
@@ -144,13 +154,32 @@ public class AdminDataList {
                     colOptions.add(actionLog);
                 }
 
-                if (showLog) {
+                if (isNotLog) {
                     WebUi.DtoListOptions.ColOption actionLog = new WebUi.DtoListOptions.ColOption();
                     actionLog.content = u.ui.getHref(
                         VantarKey.ADMIN_LIST_OPTION_ACTION_LOG,
                         "/admin/data/log/action/search?type=b&dto=" + dtoName + "&id=" + dtoX.getId() + userParams, true, false, null
                     );
                     colOptions.add(actionLog);
+
+                } else if (isLogAction) {
+                    WebUi.DtoListOptions.ColOption logWeb = new WebUi.DtoListOptions.ColOption();
+                    logWeb.content = u.ui.getHref(
+                        VantarKey.ADMIN_WEB,
+                        "/admin/data/log/web/search?type=b&dto=UserLog&id=" + dtoX.getId()
+                            + "&un=WebLog&ufn=" + dtoX.getId(),
+                        true, false, null
+                    );
+                    colOptions.add(logWeb);
+
+                } else if (isLogWeb) {
+                    WebUi.DtoListOptions.ColOption action = new WebUi.DtoListOptions.ColOption();
+                    action.content = u.ui.getHref(
+                        VantarKey.ADMIN_LIST_OPTION_USER_ACTIVITY,
+                        "/admin/data/log/action/search?type=d&dto=UserLog&id=" + dtoX.getId() + "&un=UserLog&ufn=" + dtoX.getId(),
+                        true, false, null
+                    );
+                    colOptions.add(action);
                 }
 
                 return colOptions;

@@ -257,7 +257,7 @@ public class ServiceAuth extends Permit implements Services.Service {
             ServiceLog.log.warn(" ! failed to get signinBundle\n", e);
             lastSuccess = false;
             setLog(e.getMessage());
-            throw new ServerException(VantarKey.FETCH_FAIL);
+            throw new ServerException(VantarKey.FAIL_FETCH);
         }
 
         if (signinBundle.commonUser.getAccessStatus().equals(AccessStatus.DISABLED)) {
@@ -287,6 +287,44 @@ public class ServiceAuth extends Permit implements Services.Service {
             tokenData.extraData = extraData;
         }
 
+        makeUserOnline(tokenData);
+        signinFail.remove(signinBundle.commonUser.getId());
+        return signinBundle.commonUser;
+    }
+
+    public synchronized CommonUser forceSignin(String username) throws ServerException, AuthException {
+        if (StringUtil.isEmpty(username)) {
+            throw new AuthException(VantarKey.USER_OR_PASSWORD_EMPTY);
+        }
+
+        if (event == null) {
+            throw new AuthException(VantarKey.USER_REPO_NOT_SET);
+        }
+        SigninBundle signinBundle;
+        try {
+            signinBundle = event.getUserPassword(username);
+        } catch (NoContentException e) {
+            throw new AuthException(VantarKey.USER_NOT_EXISTS);
+        } catch (Exception e) {
+            ServiceLog.log.warn(" ! failed to get signinBundle\n", e);
+            lastSuccess = false;
+            setLog(e.getMessage());
+            throw new ServerException(VantarKey.FAIL_FETCH);
+        }
+
+        if (signinBundle.commonUser.getAccessStatus().equals(AccessStatus.DISABLED)) {
+            throw new AuthException(VantarKey.USER_DISABLED);
+        }
+        if (signinBundle.commonUser.getAccessStatus().equals(AccessStatus.UNSUBSCRIBED)) {
+            throw new AuthException(VantarKey.USER_NOT_EXISTS);
+        }
+
+        Integer c = signinFail.get(signinBundle.commonUser.getId());
+        if (c != null && c > maxSigninFail) {
+            throw new AuthException(VantarKey.USER_DISABLED_MAX_FAILED);
+        }
+
+        TokenData tokenData = new TokenData(signinBundle.commonUser);
         makeUserOnline(tokenData);
         signinFail.remove(signinBundle.commonUser.getId());
         return signinBundle.commonUser;

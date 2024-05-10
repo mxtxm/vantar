@@ -8,10 +8,13 @@ import com.vantar.database.nosql.mongo.*;
 import com.vantar.database.sql.*;
 import com.vantar.exception.*;
 import com.vantar.locale.*;
+import com.vantar.locale.Locale;
 import com.vantar.util.collection.CollectionUtil;
+import com.vantar.util.object.ObjectUtil;
+import com.vantar.util.string.StringUtil;
 import com.vantar.web.*;
 import javax.servlet.http.HttpServletResponse;
-import java.util.List;
+import java.util.*;
 
 
 public class AdminDatabaseIndex {
@@ -73,19 +76,34 @@ public class AdminDatabaseIndex {
             )
             .addEmptyLine(2).write();
 
-        if (!params.isChecked("f")) {
+        if (!params.contains("f")) {
+            List<DtoDictionary.Info> dtoList = DtoDictionary.getAll();
+            Collection<Object> dtos = new TreeSet<>();
+            for (DtoDictionary.Info i : dtoList) {
+                dtos.add(i.getDtoClassName());
+            }
             ui  .beginFormPost()
                 .addCheckbox(VantarKey.ADMIN_DATABASE_INDEX_REMOVE, "deleteindex")
+                .addInputSelectable(VantarKey.ADMIN_EXCLUDE, "ex", dtos)
+                .addInputSelectable(VantarKey.ADMIN_INCLUDE, "in", dtos)
                 .addSubmit(VantarKey.ADMIN_DATABASE_INDEX_CREATE_START)
                 .finish();
             return;
         }
 
+        boolean deleteindex = params.isChecked("deleteindex");
+        String excludes = params.getString("ex");
+        String includes = params.getString("in");
         ui.beginBox(VantarKey.ADMIN_DATABASE_INDEX_CREATE).write();
         if (DtoDictionary.Dbms.MONGO.equals(dbms)) {
-            createIndexMongo(ui, params.isChecked("deleteindex"));
+            createIndexMongo(
+                ui,
+                deleteindex,
+                excludes == null ? null : StringUtil.splitToSet(StringUtil.trim(excludes, ','), ','),
+                includes == null ? null : StringUtil.splitToSet(StringUtil.trim(includes, ','), ',')
+            );
         } else {
-            createIndexSql(ui, params.isChecked("deleteindex"));
+            createIndexSql(ui, deleteindex);
         }
         ui.finish();
     }
@@ -135,7 +153,7 @@ public class AdminDatabaseIndex {
         ui.finish();
     }
 
-    public static void createIndexMongo(WebUi ui, boolean deleteIfExists) {
+    public static void createIndexMongo(WebUi ui, boolean deleteIfExists, Collection<String> excludes, Collection<String> includes) {
         if (!MongoConnection.isUp()) {
             ui.addMessage(Locale.getString(VantarKey.ADMIN_SERVICE_IS_OFF, DtoDictionary.Dbms.MONGO)).finish();
             return;
@@ -143,6 +161,12 @@ public class AdminDatabaseIndex {
         String dtoName = ui.params.getString("dto");
         for (DtoDictionary.Info info : DtoDictionary.getAll(DtoDictionary.Dbms.MONGO)) {
             if (dtoName != null && !dtoName.equalsIgnoreCase(info.dtoClass.getSimpleName())) {
+                continue;
+            }
+            if (ObjectUtil.isNotEmpty(excludes) && excludes.contains(info.dtoClass.getSimpleName())) {
+                continue;
+            }
+            if (ObjectUtil.isNotEmpty(includes) && !includes.contains(info.dtoClass.getSimpleName())) {
                 continue;
             }
 

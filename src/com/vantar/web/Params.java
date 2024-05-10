@@ -1,21 +1,21 @@
 package com.vantar.web;
 
-import com.vantar.common.VantarParam;
+import com.vantar.common.*;
 import com.vantar.database.datatype.Location;
 import com.vantar.database.dto.Dto;
 import com.vantar.database.query.QueryBuilder;
-import com.vantar.web.query.QueryData;
 import com.vantar.exception.*;
 import com.vantar.locale.Locale;
 import com.vantar.locale.*;
 import com.vantar.service.auth.*;
+import com.vantar.service.log.ServiceLog;
 import com.vantar.util.collection.CollectionUtil;
 import com.vantar.util.datetime.*;
 import com.vantar.util.file.*;
 import com.vantar.util.json.*;
 import com.vantar.util.object.*;
 import com.vantar.util.string.StringUtil;
-import org.slf4j.*;
+import com.vantar.web.query.QueryData;
 import javax.servlet.ServletException;
 import javax.servlet.http.*;
 import java.io.*;
@@ -27,9 +27,18 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class Params {
 
-    private static final Logger log = LoggerFactory.getLogger(Params.class);
-    public static final Map<Long, Params> threadParams = new ConcurrentHashMap<>(100, 1);
+    public static Long serverUpCount = 0L;
+    private static final Map<Long, Params> threadParams = new ConcurrentHashMap<>(100, 1);
 
+
+    public static void start() {
+        String path = Settings.config.getProperty("server.up.count.path") + "server.up.count";
+        serverUpCount = StringUtil.toLong(FileUtil.getFileContent(path));
+        if (serverUpCount == null) {
+            serverUpCount = 0L;
+        }
+        FileUtil.write(path, Long.toString(serverUpCount + 1L));
+    }
 
     public synchronized static void setThreadParams(Params params) {
         threadParams.put(Thread.currentThread().getId(), params);
@@ -45,10 +54,6 @@ public class Params {
 
 
 
-    public HttpServletRequest request;
-    public Type type;
-
-
     public enum Type {
         FORM_DATA,
         JSON,
@@ -56,11 +61,13 @@ public class Params {
         MAP,
     }
 
+    public HttpServletRequest request;
+    public Type type;
 
     private Map<String, Object> map;
-    private boolean typeMisMatch;
     private String json;
     private Set<String> ignoreParams;
+    private boolean typeMisMatch;
 
 
     public Params() {
@@ -69,7 +76,6 @@ public class Params {
 
     public Params(HttpServletRequest request) {
         this.request = request;
-
         String contentType = getHeader("content-type");
         if (contentType == null) {
             type = Type.FORM_DATA;
@@ -92,7 +98,6 @@ public class Params {
         request = null;
         type = Type.MAP;
         map = new HashMap<>(20, 1);
-
         Enumeration<String> parameterNames = params.request.getParameterNames();
         while (parameterNames.hasMoreElements()) {
             String k = parameterNames.nextElement();
@@ -101,6 +106,7 @@ public class Params {
     }
 
     public void removeParams(String... params) {
+        Arrays.asList(params);
         ignoreParams = new HashSet<>(Arrays.asList(params));
     }
 
@@ -124,21 +130,20 @@ public class Params {
             try {
                 return InetAddress.getLocalHost().getHostAddress();
             } catch (UnknownHostException e) {
-                log.error(" !! getIp failed\n", e);
+                ServiceLog.error(Params.class, "! getIp failed", e);
             }
         }
         return ip;
     }
 
     public String getBaseUrl() {
-        return request.getScheme() + "://" + request.getServerName();
+        return request.getScheme() + "://" + request.getServerName() +
+            ("http".equals(request.getScheme()) && request.getServerPort() == 80 || "https".equals(request.getScheme())
+            && request.getServerPort() == 443 ? "" : ":" + request.getServerPort());
     }
 
     public String getCurrentUrl() {
-        return request.getScheme() + "://" + request.getServerName() +
-            ("http".equals(request.getScheme()) && request.getServerPort() == 80 || "https".equals(request.getScheme())
-                && request.getServerPort() == 443 ? "" : ":" + request.getServerPort() ) +
-            request.getRequestURI() + (request.getQueryString() != null ? "?" + request.getQueryString() : "");
+        return getBaseUrl() + request.getRequestURI() + (request.getQueryString() != null ? "?" + request.getQueryString() : "");
     }
 
     public String getHeader(String key) {
@@ -211,18 +216,6 @@ public class Params {
         return null;
     }
 
-    public boolean contains(String key) {
-        String v = request == null ? null : request.getParameter(key);
-        if (v != null) {
-            return true;
-        }
-        return map != null && map.containsKey(key);
-    }
-
-    public boolean isChecked(String key) {
-        return request != null && request.getParameter(key) != null;
-    }
-
     public Map<String, Object> getAll() {
         Map<String, Object> params = map == null ? new HashMap<>(50, 1) : map;
         if (request == null) {
@@ -260,22 +253,47 @@ public class Params {
         return params;
     }
 
+    public boolean contains(String key) {
+        String v = request == null ? null : request.getParameter(key);
+        return (v != null) || (map != null && map.containsKey(key));
+    }
+
+    public boolean isChecked(String key) {
+        return request != null && request.getParameter(key) != null;
+    }
+
     public boolean getTypeMissMatch() {
         return typeMisMatch;
     }
 
+    public CommonUser getCurrentUser() throws AuthException {
+        CommonUser user = ServiceAuth.getCurrentSignedInUser(this);
+        if (user == null) {
+            throw new AuthException(VantarKey.EXPIRED_AUTH_TOKEN);
+        }
+        return user;
+    }
+
+    public CommonUser getCurrentUserIfExists() {
+        return ServiceAuth.getCurrentSignedInUser(this);
+    }
 
 
     // > > > GET
 
 
-
+    /**
+     * Get non request params
+     */
     @SuppressWarnings("unchecked")
     public <T> T getX(String key) {
         T obj = map == null ? null : (T) map.get(key);
         return ObjectUtil.isEmpty(obj) ? null : obj;
     }
 
+    /**
+     * Get non request params
+     */
     @SuppressWarnings("unchecked")
     public <T> T getX(String key, T defaultValue) {
         T obj = map == null ? defaultValue : (T) map.get(key);
@@ -291,7 +309,9 @@ public class Params {
             Object obj = map.get(key);
             if (obj != null) {
                 String x = obj.toString();
-                return StringUtil.isEmpty(x) ? null : x;
+                if (StringUtil.isNotEmpty(x)) {
+                    return x;
+                }
             }
         }
 
@@ -300,7 +320,7 @@ public class Params {
         return StringUtil.isEmpty(v) ? null : v;
     }
 
-    public Object getParameters(String key) {
+    public Object getParameterAsObject(String key) {
         if (ignoreParams != null && ignoreParams.contains(key)) {
             return null;
         }
@@ -317,7 +337,7 @@ public class Params {
     }
 
     public Object getObjectRequired(String key, Class<?> typeClass) throws InputException {
-        Object v = getObject(key, typeClass);
+        Object v = getObject(key, typeClass, null);
         if (ObjectUtil.isEmpty(v)) {
             throw new InputException(VantarKey.REQUIRED, key);
         }
@@ -325,29 +345,33 @@ public class Params {
     }
 
     public Object getObject(String key, Class<?> typeClass) {
+        return getObject(key, typeClass, null);
+    }
+
+    public Object getObject(String key, Class<?> typeClass, Object defaultValue) {
         if (typeClass.equals(String.class)) {
-            return getString(key);
+            return getString(key, (String) defaultValue);
         }
         if (typeClass.equals(Long.class)) {
-            return getLong(key);
+            return getLong(key, (Long) defaultValue);
         }
         if (typeClass.equals(Integer.class)) {
-            return getInteger(key);
+            return getInteger(key, (Integer) defaultValue);
         }
         if (typeClass.equals(Double.class)) {
-            return getDouble(key);
+            return getDouble(key, (Double) defaultValue);
         }
         if (typeClass.equals(Float.class)) {
-            return getFloat(key);
+            return getFloat(key, (Float) defaultValue);
         }
         if (typeClass.equals(Boolean.class)) {
-            return getBoolean(key);
+            return getBoolean(key, (Boolean) defaultValue);
         }
         if (typeClass.equals(Character.class)) {
-            return getCharacter(key);
+            return getCharacter(key, (Character) defaultValue);
         }
         if (typeClass.equals(DateTime.class)) {
-            return getDateTime(key);
+            return getDateTime(key, (DateTime) defaultValue);
         }
         if (typeClass.isEnum()) {
             return EnumUtil.getEnumValue(getString(key), typeClass);
@@ -370,7 +394,11 @@ public class Params {
     public String getString(String key, String defaultValue) {
         typeMisMatch = false;
         String value = getParameter(key);
-        return value == null || value.isEmpty() ? defaultValue : value.trim();
+        if (value == null) {
+            return defaultValue;
+        }
+        value = value.trim();
+        return value.isEmpty() ? defaultValue : value;
     }
 
     public char getCharacterRequired(String key) throws InputException {
@@ -387,7 +415,10 @@ public class Params {
 
     public Character getCharacter(String key, Character defaultValue) {
         String value = getParameter(key);
-        typeMisMatch = StringUtil.isNotEmpty(value) && value.length() > 1;
+        if (StringUtil.isNotEmpty(value)) {
+            return defaultValue;
+        }
+        typeMisMatch = value.length() > 1;
         Character c = StringUtil.toCharacter(value);
         return c == null ? defaultValue : c;
     }
@@ -549,7 +580,7 @@ public class Params {
 
 
     public <T> List<T> getListRequired(String key, Class<T> type) throws InputException {
-        List<T> v = getList(key, type);
+        List<T> v = getList(key, type, null);
         if (v == null) {
             throw new InputException(VantarKey.REQUIRED, key);
         }
@@ -557,25 +588,34 @@ public class Params {
     }
 
     public <T> List<T> getList(String key, Class<T> type) {
+        return getList(key, type, null);
+    }
+
+    public <T> List<T> getList(String key, Class<T> type, List<T> defaultValue) {
         typeMisMatch = false;
         if (ignoreParams != null && ignoreParams.contains(key)) {
-            return null;
+            return defaultValue;
         }
-        Object object = request == null ? null : getParameters(key);
+        Object object = request == null ? null : getParameterAsObject(key);
         if (ObjectUtil.isEmpty(object)) {
-            return null;
+            return defaultValue;
         }
-        //log.info(">>>>>>{}", object);
+        if (object.getClass().isArray()) {
+            if (((String[]) object).length == 1) {
+                object = getParameter(key);
+            }
+        }
+
         List<T> list = CollectionUtil.toList(object, type);
-        if (list.isEmpty()) {
+        if (ObjectUtil.isEmpty(list)) {
             list = null;
         }
         typeMisMatch = list == null;
-        return list;
+        return list == null ? defaultValue : list;
     }
 
     public <T> Set<T> getSetRequired(String key, Class<T> type) throws InputException {
-        Set<T> v = getSet(key, type);
+        Set<T> v = getSet(key, type, null);
         if (v == null) {
             throw new InputException(VantarKey.REQUIRED, key);
         }
@@ -583,12 +623,34 @@ public class Params {
     }
 
     public <T> Set<T> getSet(String key, Class<T> type) {
-        List<T> list = getList(key, type);
-        return list == null ? null : new HashSet<>(list);
+        return getSet(key, type, null);
+    }
+
+    public <T> Set<T> getSet(String key, Class<T> type, Set<T> defaultValue) {
+        typeMisMatch = false;
+        if (ignoreParams != null && ignoreParams.contains(key)) {
+            return defaultValue;
+        }
+        Object object = request == null ? null : getParameterAsObject(key);
+        if (ObjectUtil.isEmpty(object)) {
+            return defaultValue;
+        }
+        if (object.getClass().isArray()) {
+            if (((String[]) object).length == 1) {
+                object = getParameter(key);
+            }
+        }
+
+        Set<T> list = CollectionUtil.toSet(object, type);
+        if (ObjectUtil.isEmpty(list)) {
+            list = null;
+        }
+        typeMisMatch = list == null;
+        return list == null ? defaultValue : list;
     }
 
     public List<Integer> getIntegerListRequired(String key) throws InputException {
-        List<Integer> v = getIntegerList(key);
+        List<Integer> v = getList(key, Integer.class);
         if (v == null) {
             throw new InputException(VantarKey.REQUIRED, key);
         }
@@ -600,7 +662,7 @@ public class Params {
     }
 
     public Set<Integer> getIntegerSetRequired(String key) throws InputException {
-        Set<Integer> v = getIntegerSet(key);
+        Set<Integer> v = getSet(key, Integer.class);
         if (v == null) {
             throw new InputException(VantarKey.REQUIRED, key);
         }
@@ -612,7 +674,7 @@ public class Params {
     }
 
     public List<Long> getLongListRequired(String key) throws InputException {
-        List<Long> v = getLongList(key);
+        List<Long> v = getList(key, Long.class);
         if (v == null) {
             throw new InputException(VantarKey.REQUIRED, key);
         }
@@ -624,7 +686,7 @@ public class Params {
     }
 
     public Set<Long> getLongSetRequired(String key) throws InputException {
-        Set<Long> v = getLongSet(key);
+        Set<Long> v = getSet(key, Long.class);
         if (v == null) {
             throw new InputException(VantarKey.REQUIRED, key);
         }
@@ -636,7 +698,7 @@ public class Params {
     }
 
     public List<Double> getDoubleListRequired(String key) throws InputException {
-        List<Double> v = getDoubleList(key);
+        List<Double> v = getList(key, Double.class);
         if (v == null) {
             throw new InputException(VantarKey.REQUIRED, key);
         }
@@ -648,7 +710,7 @@ public class Params {
     }
 
     public Set<Double> getDoubleSetRequired(String key) throws InputException {
-        Set<Double> v = getDoubleSet(key);
+        Set<Double> v = getSet(key, Double.class);
         if (v == null) {
             throw new InputException(VantarKey.REQUIRED, key);
         }
@@ -660,7 +722,7 @@ public class Params {
     }
 
     public List<Float> getFloatListRequired(String key) throws InputException {
-        List<Float> v = getFloatList(key);
+        List<Float> v = getList(key, Float.class);
         if (v == null) {
             throw new InputException(VantarKey.REQUIRED, key);
         }
@@ -672,7 +734,7 @@ public class Params {
     }
 
     public Set<Float> getFloatSetRequired(String key) throws InputException {
-        Set<Float> v = getFloatSet(key);
+        Set<Float> v = getSet(key, Float.class);
         if (v == null) {
             throw new InputException(VantarKey.REQUIRED, key);
         }
@@ -684,7 +746,7 @@ public class Params {
     }
 
     public List<String> getStringListRequired(String key) throws InputException {
-        List<String> v = getStringList(key);
+        List<String> v = getList(key, String.class);
         if (v == null) {
             throw new InputException(VantarKey.REQUIRED, key);
         }
@@ -696,7 +758,7 @@ public class Params {
     }
 
     public Set<String> getStringSetRequired(String key) throws InputException {
-        Set<String> v = getStringSet(key);
+        Set<String> v = getSet(key, String.class);
         if (v == null) {
             throw new InputException(VantarKey.REQUIRED, key);
         }
@@ -763,10 +825,9 @@ public class Params {
         } catch (IllegalStateException ignore) {
             return "";
         } catch (Exception e) {
-            log.error(" !! JSON input\n", e);
+            ServiceLog.error(Params.class, "! JSON input", e);
             return "";
         }
-
         json = buffer.toString();
         request.setAttribute("__json__", json);
         return json;
@@ -786,11 +847,11 @@ public class Params {
 
     public <T> List<T> getJsonListRequired(Class<T> typeClass) throws InputException {
         if (request == null) {
-            throw new InputException(VantarKey.REQUIRED, "-");
+            throw new InputException(VantarKey.REQUIRED, "JSON");
         }
         List<T> v = Json.d.listFromJson(getJson(), typeClass);
         if (ObjectUtil.isEmpty(v)) {
-            throw new InputException(VantarKey.REQUIRED, "-");
+            throw new InputException(VantarKey.REQUIRED, "JSON");
         }
         return v;
     }
@@ -805,11 +866,11 @@ public class Params {
 
     public <K, V> Map<K,V> getJsonMapRequired(Class<K> typeClassKey, Class<V> typeClassValue) throws InputException {
         if (request == null) {
-            throw new InputException(VantarKey.REQUIRED, "-");
+            throw new InputException(VantarKey.REQUIRED, "JSON");
         }
         Map<K, V> v = Json.d.mapFromJson(getJson(), typeClassKey, typeClassValue);
         if (ObjectUtil.isEmpty(v)) {
-            throw new InputException(VantarKey.REQUIRED, "-");
+            throw new InputException(VantarKey.REQUIRED, "JSON");
         }
         return v;
     }
@@ -1059,16 +1120,16 @@ public class Params {
 
     public Uploaded upload(String name) {
         if (request == null) {
-            log.error("! bad upload request request=null");
+            ServiceLog.error(Params.class, "! bad upload request request=null");
             return new Uploaded(VantarKey.REQUIRED);
         }
         String contentType = request.getContentType();
         if (!"post".equalsIgnoreCase(request.getMethod())) {
-            log.error("! bad upload request method={} content-type={}", request.getMethod(), contentType);
+            ServiceLog.error(Params.class, "! bad upload request method={} content-type={}", request.getMethod(), contentType);
             return new Uploaded(VantarKey.HTTP_POST_MULTIPART);
         }
         if (contentType == null || !contentType.toLowerCase().contains("multipart")) {
-            log.error("! bad upload request method={} content-type={}", request.getMethod(), contentType);
+            ServiceLog.error(Params.class, "! bad upload request method={} content-type={}", request.getMethod(), contentType);
             return new Uploaded(VantarKey.HTTP_POST_MULTIPART);
         }
 
@@ -1085,7 +1146,7 @@ public class Params {
             uploadFiles.add(upload.getOriginalFilename());
             return upload;
         } catch (IOException | ServletException e) {
-            log.error("! bad upload request key={} method={} content-type={}", name, request.getMethod(), contentType, e);
+            ServiceLog.error(Params.class, "! bad upload request key={} method={} content-type={}", name, request.getMethod(), contentType, e);
             return new Uploaded(VantarKey.IO_ERROR);
         }
     }
@@ -1199,7 +1260,7 @@ public class Params {
                 Files.copy(filePart.getInputStream(), p);
                 return true;
             } catch (Exception e) {
-                log.error(" !! upload inputStream > ({}/{})\n", path, filename, e);
+                ServiceLog.error(Params.class, "! upload inputStream > ({}/{})\n", path, filename, e);
                 error = VantarKey.IO_ERROR;
                 return false;
             }
@@ -1216,17 +1277,5 @@ public class Params {
 
             }
         }
-    }
-
-    public CommonUser getCurrentUser() throws AuthException {
-        CommonUser user = ServiceAuth.getCurrentSignedInUser(this);
-        if (user == null) {
-            throw new AuthException(VantarKey.EXPIRED_AUTH_TOKEN);
-        }
-        return user;
-    }
-
-    public CommonUser getCurrentUserIfExists() {
-        return ServiceAuth.getCurrentSignedInUser(this);
     }
 }

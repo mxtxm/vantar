@@ -46,20 +46,20 @@ public class CommonModelSql extends ModelCommon {
     }
 
     private static ResponseMessage insertX(Object params, Dto dto, WriteEvent event) throws VantarException {
-        List<ValidationError> errors;
+        List<ValidationError> errors = new ArrayList<>();
         if (params instanceof String) {
-            errors = dto.set((String) params, Dto.Action.INSERT);
+             dto.set((String) params, Dto.Action.INSERT);
         } else {
-            errors = dto.set((Params) params, Dto.Action.INSERT);
+            dto.set((Params) params, Dto.Action.INSERT);
         }
 
-        if (event != null) {
-            try {
-                event.beforeWrite(dto);
-            } catch (InputException e) {
-                errors.addAll(e.getErrors());
-            }
-        }
+//        if (event != null) {
+//            try {
+//                event.beforeWrite(dto);
+//            } catch (InputException e) {
+//                errors.addAll(e.getErrors());
+//            }
+//        }
 
         if (!errors.isEmpty()) {
             throw new InputException(errors);
@@ -74,13 +74,13 @@ public class CommonModelSql extends ModelCommon {
             }
 
             long id = repo.insert(dto);
-            if (event != null) {
-                event.afterWrite(dto);
-            }
-            return ResponseMessage.success(VantarKey.INSERT_SUCCESS, id);
+//            if (event != null) {
+//                event.afterWrite(dto);
+//            }
+            return ResponseMessage.success(VantarKey.SUCCESS_INSERT, id);
         } catch (DatabaseException e) {
             log.error("! {}", e.getMessage());
-            throw new ServerException(VantarKey.INSERT_FAIL);
+            throw new ServerException(VantarKey.FAIL_INSERT);
         }
     }
 
@@ -102,7 +102,7 @@ public class CommonModelSql extends ModelCommon {
 
             for (Dto dto : dtos) {
                 if (event != null) {
-                    event.beforeWrite(dto);
+                    //event.beforeWrite(dto);
                 }
 
                 List<ValidationError> errors = dto.validate(Dto.Action.INSERT);
@@ -121,16 +121,16 @@ public class CommonModelSql extends ModelCommon {
 
         } catch (DatabaseException e) {
             log.error("! {}", e.getMessage());
-            throw new ServerException(VantarKey.INSERT_FAIL);
+            throw new ServerException(VantarKey.FAIL_INSERT);
         }
 
-        if (event != null) {
-            for (Dto dto : dtos) {
-                event.afterWrite(dto);
-            }
-        }
+//        if (event != null) {
+//            for (Dto dto : dtos) {
+//                event.afterWrite(dto);
+//            }
+//        }
 
-        return ResponseMessage.success(VantarKey.INSERT_SUCCESS, dtos.size());
+        return ResponseMessage.success(VantarKey.SUCCESS_INSERT, dtos.size());
     }
 
     public static ResponseMessage update(Params params, Dto dto) throws VantarException {
@@ -158,19 +158,19 @@ public class CommonModelSql extends ModelCommon {
     }
 
     private static ResponseMessage updateX(Object params, Dto dto, WriteEvent event) throws VantarException {
-        List<ValidationError> errors;
+        List<ValidationError> errors = new ArrayList<>();
         if (params instanceof String) {
-            errors = dto.set((String) params, Dto.Action.UPDATE_ALL_COLS);
+             dto.set((String) params, Dto.Action.UPDATE_ALL_COLS);
         } else {
-            errors = dto.set((Params) params, Dto.Action.UPDATE_ALL_COLS);
+             dto.set((Params) params, Dto.Action.UPDATE_ALL_COLS);
         }
 
         if (event != null) {
-            try {
-                event.beforeWrite(dto);
-            } catch (InputException e) {
-                errors.addAll(e.getErrors());
-            }
+//            try {
+//                event.beforeWrite(dto);
+//            } catch (InputException e) {
+//                errors.addAll(e.getErrors());
+//            }
         }
         if (!errors.isEmpty()) {
             throw new InputException(errors);
@@ -188,13 +188,13 @@ public class CommonModelSql extends ModelCommon {
 
         } catch (DatabaseException e) {
             log.error("! {}", e.getMessage());
-            throw new ServerException(VantarKey.UPDATE_FAIL);
+            throw new ServerException(VantarKey.FAIL_UPDATE);
         }
 
-        if (event != null) {
-            event.afterWrite(dto);
-        }
-        return ResponseMessage.success(VantarKey.UPDATE_SUCCESS);
+//        if (event != null) {
+//            event.afterWrite(dto);
+//        }
+        return ResponseMessage.success(VantarKey.SUCCESS_UPDATE);
     }
 
     public static <T extends Dto> ResponseMessage updateBatch(Params params, Class<T> tClass) throws VantarException {
@@ -214,9 +214,9 @@ public class CommonModelSql extends ModelCommon {
             SqlExecute execute = new SqlExecute(connection);
 
             for (Dto dto : dtos) {
-                if (event != null) {
-                    event.beforeWrite(dto);
-                }
+//                if (event != null) {
+//                    event.beforeWrite(dto);
+//                }
 
                 List<ValidationError> errors = dto.validate(Dto.Action.UPDATE_ALL_COLS);
                 if (!errors.isEmpty()) {
@@ -225,39 +225,39 @@ public class CommonModelSql extends ModelCommon {
 
                 execute.update(dto);
 
-                if (event != null) {
-                    event.afterWrite(dto);
-                }
+//                if (event != null) {
+//                    event.afterWrite(dto);
+//                }
             }
 
             connection.commit();
 
         } catch (DatabaseException e) {
             log.error("! {}", e.getMessage());
-            throw new ServerException(VantarKey.UPDATE_FAIL);
+            throw new ServerException(VantarKey.FAIL_UPDATE);
         }
 
-        if (!dtos.isEmpty()) {
-            afterDataChange(dtos.get(0));
-        }
+//        if (!dtos.isEmpty()) {
+//            afterDataChange(dtos.get(0));
+//        }
 
-        return ResponseMessage.success(VantarKey.UPDATE_SUCCESS, dtos.size());
+        return ResponseMessage.success(VantarKey.SUCCESS_UPDATE, dtos.size());
     }
 
     public static ResponseMessage delete(Params params, Dto dto) throws VantarException {
-        List<ValidationError> errors = dto.set(params, Dto.Action.DELETE);
-        if (!errors.isEmpty()) {
-            throw new InputException(errors);
-        }
+         dto.set(params, Dto.Action.DELETE);
+//        if (!errors.isEmpty()) {
+//            throw new InputException(errors);
+//        }
 
         try (SqlConnection connection = new SqlConnection()) {
             CommonRepoSql repo = new CommonRepoSql(connection);
             repo.delete(dto);
 
-            return ResponseMessage.success(VantarKey.DELETE_SUCCESS);
+            return ResponseMessage.success(VantarKey.SUCCESS_DELETE);
         } catch (DatabaseException e) {
             log.error("! {}", e.getMessage());
-            throw new ServerException(VantarKey.DELETE_FAIL);
+            throw new ServerException(VantarKey.FAIL_DELETE);
         }
     }
 
@@ -287,9 +287,9 @@ public class CommonModelSql extends ModelCommon {
 
             for (Long id : ids) {
                 dto.setId(id);
-                if (event != null) {
-                    event.beforeWrite(dto);
-                }
+//                if (event != null) {
+//                    event.beforeWrite(dto);
+//                }
 
                 repo.delete(dto);
             }
@@ -298,132 +298,132 @@ public class CommonModelSql extends ModelCommon {
 
         } catch (DatabaseException e) {
             log.error("! {}", e.getMessage());
-            throw new ServerException(VantarKey.DELETE_FAIL);
+            throw new ServerException(VantarKey.FAIL_DELETE);
         }
 
-        if (!ids.isEmpty()) {
-            afterDataChange(dto);
-        }
+//        if (!ids.isEmpty()) {
+//            afterDataChange(dto);
+//        }
 
-        return ResponseMessage.success(VantarKey.DELETE_SUCCESS, ids.size());
+        return ResponseMessage.success(VantarKey.SUCCESS_DELETE, ids.size());
     }
 
-    public static ResponseMessage batch(Params params, Dto dto) throws VantarException {
-        return batch(params, dto, null);
-    }
-
-    public static ResponseMessage batch(Params params, Dto dto, BatchEvent event) throws VantarException {
-        Batch update = params.getJson(Batch.class);
-        try (SqlConnection connection = new SqlConnection()) {
-            connection.startTransaction();
-
-            CommonRepoSql repo = new CommonRepoSql(connection);
-            SqlExecute sqlExecute = new SqlExecute(connection);
-            String msg =
-                deleteMany(repo, update.delete, dto, event) + "\n\n" +
-                insertMany(repo, sqlExecute, update.insert, dto, event) + "\n\n" +
-                updateMany(repo, sqlExecute, update.update, dto, event) + "\n\n";
-
-            connection.commit();
-            afterDataChange(dto);
-            return ResponseMessage.success(msg);
-
-        } catch (DatabaseException e) {
-            log.error("! {}", e.getMessage());
-            throw new ServerException(VantarKey.UPDATE_FAIL);
-        }
-    }
-
-    private static String insertMany(
-        CommonRepoSql repo, SqlExecute execute, List<Map<String, Object>> records, Dto dto, BatchEvent event)
-        throws VantarException {
-
-        for (Map<String, Object> record : records) {
-            if (event != null) {
-                event.beforeInsert(dto);
-            }
-
-            List<ValidationError> errors = dto.set(record, Dto.Action.INSERT);
-            if (!errors.isEmpty()) {
-                throw new InputException(errors);
-            }
-
-            try {
-                errors = repo.getUniqueViolation(dto);
-                if (errors != null) {
-                    throw new InputException(errors);
-                }
-
-                execute.insert(dto);
-            } catch (DatabaseException e) {
-                log.error("! {}", e.getMessage());
-                throw new ServerException(VantarKey.INSERT_FAIL);
-            }
-        }
-
-        return Locale.getString(VantarKey.INSERT_MANY_SUCCESS, records.size());
-    }
-
-    private static String updateMany(
-        CommonRepoSql repo, SqlExecute execute, List<Map<String, Object>> records, Dto dto, BatchEvent event)
-        throws VantarException {
-
-        for (Map<String, Object> record : records) {
-            if (event != null && event.beforeUpdate(dto)) {
-                throw new ServerException(VantarKey.UPDATE_FAIL);
-            }
-
-            List<ValidationError> errors = dto.set(record, Dto.Action.UPDATE_ALL_COLS);
-            if (!errors.isEmpty()) {
-                throw new InputException(errors);
-            }
-
-            try {
-                errors = repo.getUniqueViolation(dto);
-                if (errors != null) {
-                    throw new InputException(errors);
-                }
-
-                execute.update(dto);
-            } catch (DatabaseException e) {
-                log.error("! {}", e.getMessage());
-                throw new ServerException(VantarKey.UPDATE_FAIL);
-            }
-        }
-
-        return Locale.getString(VantarKey.UPDATE_MANY_SUCCESS, records.size());
-    }
-
-    private static String deleteMany(SqlExecute execute, List<Long> ids, Dto dto, BatchEvent event) throws VantarException {
-        for (Long id : ids) {
-            dto.setId(id);
-
-            if (event != null && event.beforeDelete(dto)) {
-                throw new ServerException(VantarKey.DELETE_FAIL);
-            }
-
-            if (NumberUtil.isIdInvalid(id)) {
-                throw new InputException(new ValidationError(VantarParam.ID, VantarKey.INVALID_ID));
-            }
-
-            try {
-                execute.delete(dto);
-            } catch (DatabaseException e) {
-                log.error("! {}", e.getMessage());
-                throw new ServerException(VantarKey.DELETE_FAIL);
-            }
-        }
-
-        return Locale.getString(VantarKey.DELETE_MANY_SUCCESS, ids.size());
-    }
+//    public static ResponseMessage batch(Params params, Dto dto) throws VantarException {
+//        return batch(params, dto, null);
+//    }
+//
+//    public static ResponseMessage batch(Params params, Dto dto, BatchEvent event) throws VantarException {
+//        Batch update = params.getJson(Batch.class);
+//        try (SqlConnection connection = new SqlConnection()) {
+//            connection.startTransaction();
+//
+//            CommonRepoSql repo = new CommonRepoSql(connection);
+//            SqlExecute sqlExecute = new SqlExecute(connection);
+//            String msg =
+//                deleteMany(repo, update.delete, dto, event) + "\n\n" +
+//                insertMany(repo, sqlExecute, update.insert, dto, event) + "\n\n" +
+//                updateMany(repo, sqlExecute, update.update, dto, event) + "\n\n";
+//
+//            connection.commit();
+//            afterDataChange(dto);
+//            return ResponseMessage.success(msg);
+//
+//        } catch (DatabaseException e) {
+//            log.error("! {}", e.getMessage());
+//            throw new ServerException(VantarKey.FAIL_UPDATE);
+//        }
+//    }
+//
+//    private static String insertMany(
+//        CommonRepoSql repo, SqlExecute execute, List<Map<String, Object>> records, Dto dto, BatchEvent event)
+//        throws VantarException {
+//
+//        for (Map<String, Object> record : records) {
+//            if (event != null) {
+//                event.beforeInsert(dto);
+//            }
+//
+//            List<ValidationError> errors = dto.set(record, Dto.Action.INSERT);
+//            if (!errors.isEmpty()) {
+//                throw new InputException(errors);
+//            }
+//
+//            try {
+//                errors = repo.getUniqueViolation(dto);
+//                if (errors != null) {
+//                    throw new InputException(errors);
+//                }
+//
+//                execute.insert(dto);
+//            } catch (DatabaseException e) {
+//                log.error("! {}", e.getMessage());
+//                throw new ServerException(VantarKey.FAIL_INSERT);
+//            }
+//        }
+//
+//        return Locale.getString(VantarKey.SUCCESS_INSERT, records.size());
+//    }
+//
+//    private static String updateMany(
+//        CommonRepoSql repo, SqlExecute execute, List<Map<String, Object>> records, Dto dto, BatchEvent event)
+//        throws VantarException {
+//
+//        for (Map<String, Object> record : records) {
+//            if (event != null && event.beforeUpdate(dto)) {
+//                throw new ServerException(VantarKey.FAIL_UPDATE);
+//            }
+//
+//            List<ValidationError> errors = dto.set(record, Dto.Action.UPDATE_ALL_COLS);
+//            if (!errors.isEmpty()) {
+//                throw new InputException(errors);
+//            }
+//
+//            try {
+//                errors = repo.getUniqueViolation(dto);
+//                if (errors != null) {
+//                    throw new InputException(errors);
+//                }
+//
+//                execute.update(dto);
+//            } catch (DatabaseException e) {
+//                log.error("! {}", e.getMessage());
+//                throw new ServerException(VantarKey.FAIL_UPDATE);
+//            }
+//        }
+//
+//        return Locale.getString(VantarKey.SUCCESS_UPDATE, records.size());
+//    }
+//
+//    private static String deleteMany(SqlExecute execute, List<Long> ids, Dto dto, BatchEvent event) throws VantarException {
+//        for (Long id : ids) {
+//            dto.setId(id);
+//
+//            if (event != null && event.beforeDelete(dto)) {
+//                throw new ServerException(VantarKey.FAIL_DELETE);
+//            }
+//
+//            if (NumberUtil.isIdInvalid(id)) {
+//                throw new InputException(new ValidationError(VantarParam.ID, VantarKey.INVALID_ID));
+//            }
+//
+//            try {
+//                execute.delete(dto);
+//            } catch (DatabaseException e) {
+//                log.error("! {}", e.getMessage());
+//                throw new ServerException(VantarKey.FAIL_DELETE);
+//            }
+//        }
+//
+//        return Locale.getString(VantarKey.SUCCESS_DELETE, ids.size());
+//    }
 
     public static ResponseMessage purge(String table) throws VantarException {
         try (SqlConnection connection = new SqlConnection()) {
             CommonRepoSql repo = new CommonRepoSql(connection);
             repo.purge(table);
-            return ResponseMessage.success(VantarKey.DELETE_SUCCESS);
+            return ResponseMessage.success(VantarKey.SUCCESS_DELETE);
         } catch (DatabaseException e) {
-            throw new ServerException(VantarKey.DELETE_FAIL);
+            throw new ServerException(VantarKey.FAIL_DELETE);
         }
     }
 
@@ -431,10 +431,10 @@ public class CommonModelSql extends ModelCommon {
         try (SqlConnection connection = new SqlConnection()) {
             CommonRepoSql repo = new CommonRepoSql(connection);
             repo.purgeData(table);
-            return ResponseMessage.success(VantarKey.DELETE_SUCCESS);
+            return ResponseMessage.success(VantarKey.SUCCESS_DELETE);
         } catch (DatabaseException e) {
             log.error("! {}", e.getMessage());
-            throw new ServerException(VantarKey.DELETE_FAIL);
+            throw new ServerException(VantarKey.FAIL_DELETE);
         }
     }
 
@@ -451,7 +451,7 @@ public class CommonModelSql extends ModelCommon {
             if (deleteAll) {
                 repo.purgeData(dto.getStorage());
                 if (ui != null) {
-                    ui.addMessage(VantarKey.DELETE_SUCCESS).write();
+                    ui.addMessage(VantarKey.SUCCESS_DELETE).write();
                 }
             }
 
@@ -470,7 +470,7 @@ public class CommonModelSql extends ModelCommon {
                     success.getAndIncrement();
                 } catch (DatabaseException e) {
                     if (ui != null) {
-                        ui.addErrorMessage(presentValue + " " + Locale.getString(VantarKey.IMPORT_FAIL));
+                        ui.addErrorMessage(presentValue + " " + Locale.getString(VantarKey.FAIL_IMPORT));
                     }
                     failed.getAndIncrement();
                 }

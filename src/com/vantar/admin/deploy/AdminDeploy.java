@@ -19,7 +19,7 @@ public class AdminDeploy {
     public static void upload(Params params, HttpServletResponse response) throws FinishException {
         WebUi ui = Admin.getUi("DEPLOY - upload", params, response, true);
 
-        if (!params.isChecked("f")) {
+        if (!params.contains("f")) {
             ui  .beginUploadForm()
                 .addFile("WAR", "file")
                 .addSubmit(VantarKey.ADMIN_SUBMIT)
@@ -39,7 +39,7 @@ public class AdminDeploy {
                 DirUtil.giveAllPermissions(Settings.config.getProperty("deploy.path"));
                 ui.addMessage("done!");
             } else {
-                ui.addMessage(VantarKey.UPLOAD_FAIL);
+                ui.addMessage(VantarKey.FAIL_UPLOAD);
             }
         }
 

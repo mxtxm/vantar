@@ -220,16 +220,6 @@ public class Mongo {
     public static class Index {
 
         public static void create(Dto dto) throws DatabaseException {
-//            CreateCollectionOptions options = new CreateCollectionOptions();
-//            options.collation(getCollation());
-//
-//            try {
-//                MongoConnection.getDatabase().createCollection(dto.getStorage(), options);
-//            } catch (MongoCommandException e) {
-//                log.error("! index error {} {}", dto.getClass(), dto, e);
-//                throw new DatabaseException(e);
-//            }
-//https://www.mongodb.com/docs/manual/core/index-case-insensitive/
             for (String item : dto.getIndexes()) {
                 Document indexes = new Document();
                 for (String item2 : StringUtil.splitTrim(item, VantarParam.SEPARATOR_COMMON)) {
@@ -243,8 +233,6 @@ public class Mongo {
                     }
                 }
                 try {
-//                    IndexOptions option = new IndexOptions();
-//                    option.collation(Collation.builder().locale("en_US").collationStrength(CollationStrength.SECONDARY).build());
                     MongoConnection.getDatabase().getCollection(dto.getStorage()).createIndex(indexes);
                 } catch (Exception e) {
                     log.error("! create index error {} {}", dto.getClass(), dto, e);
@@ -280,7 +268,7 @@ public class Mongo {
         dto.setCreateTime(true);
         dto.setUpdateTime(true);
 
-        if (dto.getClearIdOnInsert() || dto.getId() == null) {
+        if (dto.isAutoIncrementOnInsert() || dto.getId() == null) {
             dto.setId(Sequence.getNext(dto));
         }
 
@@ -289,7 +277,7 @@ public class Mongo {
             throw new ServerException(VantarKey.CUSTOM_EVENT_ERROR);
         }
 
-        Document doc = MongoMapping.getFieldValuesAsDocument(dto, Dto.Action.INSERT);
+        Document doc = MongoMapping.asDocument(dto, Dto.Action.INSERT);
         try {
             if (dto.getId() == null) {
                 throw new ServerException("DTO id is missing!");
@@ -335,7 +323,7 @@ public class Mongo {
             dto.setCreateTime(true);
             dto.setUpdateTime(true);
 
-            if (dto.getClearIdOnInsert() || dto.getId() == null) {
+            if (dto.isAutoIncrementOnInsert() || dto.getId() == null) {
                 dto.setId(Sequence.getNext(dto));
             }
 
@@ -343,7 +331,7 @@ public class Mongo {
             if (!dto.beforeInsert()) {
                 throw new DatabaseException(VantarKey.CUSTOM_EVENT_ERROR);
             }
-            documents.add(MongoMapping.getFieldValuesAsDocument(dto, Dto.Action.INSERT));
+            documents.add(MongoMapping.asDocument(dto, Dto.Action.INSERT));
         }
 
         try {
@@ -472,7 +460,7 @@ public class Mongo {
     }
 
     public static void update(Dto dto, Dto condition) throws VantarException {
-        update(MongoMapping.getFieldValuesAsDocument(condition, Dto.Action.GET), dto, true);
+        update(MongoMapping.asDocument(condition, Dto.Action.GET), dto, true);
     }
 
     public static void update(Dto dto) throws VantarException {
@@ -491,11 +479,12 @@ public class Mongo {
         if (!dto.beforeUpdate()) {
             throw new ServerException(VantarKey.CUSTOM_EVENT_ERROR);
         }
+
         MongoCollection<Document> collection = MongoConnection.getDatabase().getCollection(dto.getStorage());
         try {
             Document toUpdate = new Document(
                 "$set",
-                MongoMapping.getFieldValuesAsDocument(dto, dto.getAction(Dto.Action.UPDATE_FEW_COLS))
+                MongoMapping.asDocument(dto, dto.getAction(Dto.Action.UPDATE_FEW_COLS))
             );
             if (all) {
                 collection.updateMany(condition, toUpdate);
@@ -616,7 +605,7 @@ public class Mongo {
 
         Object id = condition.getId();
         Document conditionDocument = id == null ?
-            MongoMapping.getFieldValuesAsDocument(condition, Dto.Action.GET) :
+            MongoMapping.asDocument(condition, Dto.Action.GET) :
             new Document(ID, id);
 
         try {
@@ -706,7 +695,7 @@ public class Mongo {
                 if (list.get(0) instanceof Dto) {
                     List<Document> documents = new ArrayList<>(20);
                     for (Object obj : list) {
-                        documents.add(MongoMapping.getFieldValuesAsDocument((Dto) obj, Dto.Action.UPDATE_FEW_COLS));
+                        documents.add(MongoMapping.asDocument((Dto) obj, Dto.Action.UPDATE_FEW_COLS));
                     }
                     value = new Document("$each", documents);
                 } else {
@@ -714,7 +703,7 @@ public class Mongo {
                 }
             }
         } else if (item instanceof Dto) {
-            value = MongoMapping.getFieldValuesAsDocument((Dto) item, Dto.Action.UPDATE_FEW_COLS);
+            value = MongoMapping.asDocument((Dto) item, Dto.Action.UPDATE_FEW_COLS);
         }
 
         Document update = new Document(isArray ? "$push" : "$addToSet", new Document(fieldName, value));
@@ -727,7 +716,7 @@ public class Mongo {
             }
         } catch (Exception e) {
             log.error("! {} ({}) : ({} --add item--> {})", collectionName, condition, fieldName, value, e);
-            throw new ServerException(VantarKey.UPDATE_FAIL);
+            throw new ServerException(VantarKey.FAIL_UPDATE);
         }
     }
 
@@ -748,7 +737,7 @@ public class Mongo {
             }
         } catch (Exception e) {
             log.error("! {} ({}) : ({} --remove item--> {})", collectionName, condition, fieldName, value, e);
-            throw new ServerException(VantarKey.UPDATE_FAIL);
+            throw new ServerException(VantarKey.FAIL_UPDATE);
         }
     }
 
@@ -776,7 +765,7 @@ public class Mongo {
 
         x.append(
             key,
-            value instanceof Dto ? MongoMapping.getFieldValuesAsDocument((Dto) value, Dto.Action.UPDATE_FEW_COLS) : value
+            value instanceof Dto ? MongoMapping.asDocument((Dto) value, Dto.Action.UPDATE_FEW_COLS) : value
         );
         try {
             if (updateMany) {
@@ -786,7 +775,7 @@ public class Mongo {
             }
         } catch (Exception e) {
             log.error("! {} ({}) : ({} --add k,v--> {},{})", collectionName, condition, fieldName, key, value, e);
-            throw new ServerException(VantarKey.UPDATE_FAIL);
+            throw new ServerException(VantarKey.FAIL_UPDATE);
         }
     }
 
@@ -809,7 +798,7 @@ public class Mongo {
             }
         } catch (Exception e) {
             log.error("! {} ({}) : (--remove k,v--> {})", collectionName, condition, fieldNameKey, e);
-            throw new ServerException(VantarKey.UPDATE_FAIL);
+            throw new ServerException(VantarKey.FAIL_UPDATE);
         }
     }
 
@@ -963,6 +952,7 @@ public class Mongo {
         try {
             return MongoConnection.getDatabase().getCollection(collection)
                 .find(document)
+                .allowDiskUse(true)
                 .projection(Projections.include(ID))
                 .limit(1)
                 .iterator()

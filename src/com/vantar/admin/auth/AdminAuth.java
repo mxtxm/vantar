@@ -131,6 +131,7 @@ public class AdminAuth {
 
     public static boolean isRoot(WebUi ui) throws FinishException {
         try {
+            ServiceAuth s = Services.getService(ServiceAuth.class);
             return Services.getService(ServiceAuth.class).isRoot(ui.params);
         } catch (ServiceException | AuthException e) {
             ui.addErrorMessage(e).finish();

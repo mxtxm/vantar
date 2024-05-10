@@ -21,7 +21,7 @@ import java.util.*;
 public class AdminQuery {
 
     public static void index(Params params, HttpServletResponse response) throws FinishException {
-        WebUi ui = Admin.getUi(VantarKey.ADMIN_MENU_QUERY_TITLE, params, response, true);
+        WebUi ui = Admin.getUi(VantarKey.ADMIN_MENU_QUERY, params, response, true);
 
         // if query is selected
         StoredQuery storedQuery = new StoredQuery();
@@ -68,10 +68,10 @@ public class AdminQuery {
             try {
                 if (storedQuery.id == null) {
                     ModelMongo.insert(new ModelCommon.Settings(storedQuery).logEvent(false).mutex(false));
-                    ui.addMessage(VantarKey.INSERT_SUCCESS);
+                    ui.addMessage(VantarKey.SUCCESS_INSERT);
                 } else {
                     ModelMongo.update(new ModelCommon.Settings(storedQuery).logEvent(false).mutex(false));
-                    ui.addMessage(VantarKey.UPDATE_SUCCESS);
+                    ui.addMessage(VantarKey.SUCCESS_UPDATE);
                 }
             } catch (VantarException e) {
                 ui.addErrorMessage(e);
@@ -82,7 +82,7 @@ public class AdminQuery {
         if (params.getString("delete-q") != null && storedQuery.id != null) {
             try {
                 ModelMongo.delete(new ModelCommon.Settings(storedQuery).force(true).logEvent(false).mutex(false));
-                ui.addMessage(VantarKey.DELETE_SUCCESS);
+                ui.addMessage(VantarKey.SUCCESS_DELETE);
             } catch (VantarException e) {
                 ui.addErrorMessage(e);
             }
@@ -121,6 +121,7 @@ public class AdminQuery {
             ModelMongo.forEach(q, dto -> {
                 StoredQuery query = (StoredQuery) dto;
                 ui.addHrefBlock(query.title, "/admin/query/index?id=" + query.id);
+                return true;
             });
         } catch (NoContentException e) {
             ui.addMessage(Locale.getString(VantarKey.NO_CONTENT));

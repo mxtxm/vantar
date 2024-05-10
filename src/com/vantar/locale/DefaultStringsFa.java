@@ -9,6 +9,7 @@ public class DefaultStringsFa {
 
     static {
         tokens = new HashMap<>(300, 1);
+
         // auth
         tokens.put(VantarKey.USERNAME, "نام کاربری");
         tokens.put(VantarKey.PASSWORD, "رمز");
@@ -66,28 +67,26 @@ public class DefaultStringsFa {
         tokens.put(VantarKey.CAN_NOT_CREATE_DTO, "خطای سروی: ابجکت dto ساخته نشد");
         tokens.put(VantarKey.ARTA_FILE_CREATE_ERROR, "خطای سروی: Arta SQL database synch failed.");
 
+        // data
+        tokens.put(VantarKey.FAIL_FETCH, "خطا در خواندن داده ها");
+        tokens.put(VantarKey.NO_CONTENT, "هیچ داده ای پیدانشد");
+        tokens.put(VantarKey.SUCCESS_INSERT, "داده ها با موفقیت نوشته شدند");
+        tokens.put(VantarKey.FAIL_INSERT, "خظا در نوشتن داده ها");
+        tokens.put(VantarKey.SUCCESS_UPDATE, "داده ها با موفقیت بروز شدند");
+        tokens.put(VantarKey.FAIL_UPDATE, "خطا در ویرایش داده ها");
+        tokens.put(VantarKey.SUCCESS_DELETE, "داده ها با موفقیت پاک شدند");
+        tokens.put(VantarKey.FAIL_DELETE, "حطا در پاک شدن داده ها");
+        tokens.put(VantarKey.INVALID_JSON_DATA, "ساختار داده های جیسون درست نیست");
+        tokens.put(VantarKey.FAIL_IMPORT, "خظا در ایمپورت داده ها");
+        tokens.put(VantarKey.SUCCESS_UPLOAD, "\"{0}\" فایل با موفقیت آپلود شذ");
+        tokens.put(VantarKey.FAIL_UPLOAD, "\"{0}\" فایل با خطا آپلود نشذ");
 
 
 
 
-        // data fetch
-        tokens.put(VantarKey.FETCH_FAIL, "خطا هنگام خواندن داده ها");
-        tokens.put(VantarKey.NO_CONTENT, "داده پیدانشد");
 
-        // data write
-        tokens.put(VantarKey.UPLOAD_SUCCESS, "\"{0}\" فایل با موفقیت آپلود شذ");
-        tokens.put(VantarKey.UPLOAD_FAIL, "\"{0}\" فایل با موفقیت آپلود نشذ");
-        tokens.put(VantarKey.INSERT_SUCCESS, "داده ها با موفقیت وارد گردید");
-        tokens.put(VantarKey.INSERT_MANY_SUCCESS, "\"{0}\" رکورد با موفقیت وارد گردید");
-        tokens.put(VantarKey.INSERT_FAIL, "ورود اطلاعات دچار خطا شد");
-        tokens.put(VantarKey.UPDATE_SUCCESS, "data updated successfully");
-        tokens.put(VantarKey.UPDATE_MANY_SUCCESS, "(\"{0}\") items updated successfully");
-        tokens.put(VantarKey.UPDATE_FAIL, "ویرایش اطلاعات دچار خطا شد");
-        tokens.put(VantarKey.DELETE_SUCCESS, "data deleted successfully");
-        tokens.put(VantarKey.DELETE_MANY_SUCCESS, "(\"{0}\") items deleted successfully");
-        tokens.put(VantarKey.DELETE_FAIL, "پاک کردن اطلاعات دچار خطا شد");
-        tokens.put(VantarKey.IMPORT_FAIL, "data import failed");
-        tokens.put(VantarKey.INVALID_JSON_DATA, "ساختار ج ی س و ن نادرست است");
+
+
 
 
         // business
@@ -194,7 +193,6 @@ public class DefaultStringsFa {
         tokens.put(VantarKey.ADMIN_DATABASE_INDEX, "ایندکس های داده ها");
         tokens.put(VantarKey.ADMIN_DATABASE_SEQUENCE, "سریال های داده ها");
         tokens.put(VantarKey.ADMIN_DELAY, "مکث به ثانیه");
-        tokens.put(VantarKey.ADMIN_IMPORT_TITLE, "ایمپورت داده ها");
         tokens.put(VantarKey.ADMIN_ELASTIC_INDEX_DEF, "تعاریف ایندکس های ELASTIC ...");
         tokens.put(VantarKey.ADMIN_ELASTIC_SETTINGS, "عمل گر های قابل اجرا بروی ایندکس ها ELASTIC ...");
         tokens.put(VantarKey.ADMIN_ELASTIC_SETTINGS_MSG1, "می توانید ایندکس مبدا را clone, shrink و یا refresh کنید.");
@@ -214,7 +212,6 @@ public class DefaultStringsFa {
         tokens.put(VantarKey.ADMIN_RECOVER_TOKEN_TEMP, "کدهای موقت بازیابی و شناسایی");
 
         tokens.put(VantarKey.ADMIN_SERVICE, "سرویس");
-        tokens.put(VantarKey.ADMIN_MENU_QUERY_TITLE, "جستارها (queries)");
         tokens.put(VantarKey.ADMIN_QUERY_NEW, "جستار جدید");
         tokens.put(VantarKey.ADMIN_TITLE, "عنوان");
         tokens.put(VantarKey.ADMIN_CONFIRM, "از انجام کار اطمینان دارم");

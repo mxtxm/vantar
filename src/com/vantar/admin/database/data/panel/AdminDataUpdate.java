@@ -54,26 +54,17 @@ public class AdminDataUpdate {
         }
         try {
             if (info.dbms.equals(DtoDictionary.Dbms.MONGO)) {
-                ModelMongo.update(new ModelCommon.Settings(
-                    params,
-                    u.dto,
-                    new ModelCommon.WriteEvent() {
-                        @Override
-                        public void beforeWrite(Dto dto) {
-
+                ModelMongo.update(new ModelCommon.Settings(params, u.dto)
+                    .isJson("asjson")
+                    .setEventAfterWrite(dto -> {
+                        if (dto instanceof CommonUser) {
+                            ModelCommon.insertPassword(
+                                dto,
+                                Json.d.extract(params.getString("asjson"), "password", String.class)
+                            );
                         }
-
-                        @Override
-                        public void afterWrite(Dto dto) throws ServerException {
-                            if (dto instanceof CommonUser) {
-                                ModelCommon.insertPassword(
-                                    dto,
-                                    Json.d.extract(params.getString("asjson"), "password", String.class)
-                                );
-                            }
-                        }
-                    }
-                ).isJson("asjson"));
+                    })
+                );
 
             } else if (info.dbms.equals(DtoDictionary.Dbms.SQL)) {
                 CommonModelSql.updateJson(params.getString("asjson"), u.dto);
@@ -83,7 +74,7 @@ public class AdminDataUpdate {
             if (event != null) {
                 event.afterUpdate(u.dto);
             }
-            u.ui.addMessage(VantarKey.UPDATE_SUCCESS);
+            u.ui.addMessage(VantarKey.SUCCESS_UPDATE);
 
         } catch (VantarException e) {
             u.ui.addErrorMessage(e);

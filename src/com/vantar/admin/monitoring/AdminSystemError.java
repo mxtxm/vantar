@@ -52,9 +52,9 @@ public class AdminSystemError {
         q.condition().equal("tag", tag);
         try {
             ModelMongo.delete(new ModelCommon.Settings(q).force(true).logEvent(false).mutex(false));
-            ui.addMessage(VantarKey.DELETE_SUCCESS);
+            ui.addMessage(VantarKey.SUCCESS_DELETE);
         } catch (VantarException e) {
-            ui.addErrorMessage(VantarKey.DELETE_FAIL);
+            ui.addErrorMessage(VantarKey.FAIL_DELETE);
             ui.addErrorMessage(e);
         }
 

@@ -140,41 +140,44 @@ public class WebServiceDocument {
             return StringUtil.replace(
                 md,
                 "<<<insert>>>",
-                "    JSON\n" +
-                "    {\n" +
-                "        \"code\": (int) status code 200/4xx/5xx,\n" +
-                "        \"message\": (String) \"message, i.e. success or user validation errors\",\n" +
-                "        \"dto\": (Object) { inserted-object },\n" +
-                "        \"value\": (long) inserted-id,\n" +
-                "        \"successful\": (boolean) true/false\n" +
-                "    }\n"
+                "<pre>" +
+                "JSON\n" +
+                "{\n" +
+                "    \"code\": (int) status code 200/4xx/5xx,\n" +
+                "    \"message\": (String) \"message, i.e. success or user validation errors\",\n" +
+                "    \"dto\": (Object) { inserted-object },\n" +
+                "    \"value\": (long) inserted-id,\n" +
+                "    \"successful\": (boolean) true/false\n" +
+                "}</pre>\n"
             );
         } else if (md.contains("<<<update>>>")) {
             return StringUtil.replace(
                 md,
                 "<<<update>>>",
-                "    JSON\n" +
-                "    {\n" +
-                "        \"code\": (int) status code 200/4xx/5xx,\n" +
-                "        \"message\": (String) \"message, i.e. success or user validation errors\",\n" +
-                "        \"dto\": (Object) { updated-object },\n" +
-                "        \"successful\": (boolean) true/false\n" +
-                "    }\n"
+                "<pre>" +
+                "JSON\n" +
+                "{\n" +
+                "    \"code\": (int) status code 200/4xx/5xx,\n" +
+                "    \"message\": (String) \"message, i.e. success or user validation errors\",\n" +
+                "    \"dto\": (Object) { updated-object },\n" +
+                "    \"successful\": (boolean) true/false\n" +
+                "}</pre>\n"
             );
         } else if (md.contains("<<<delete>>>")) {
             return StringUtil.replace(
                 md,
                 "<<<delete>>>",
-                "    JSON\n" +
-                "    {\n" +
-                "        \"code\": (int) status code 200/4xx/5xx,\n" +
-                "        \"message\": (String) \"message, i.e. success or user validation errors\",\n" +
-                "        \"successful\": (boolean) true/false,\n" +
-                "        // if successful:\n" +
-                "        \"value\": (long) deleted record count\n" +
-                "        // if failed because of dependencies:\n" +
-                "        \"value\": [{\"name\":\"dto.class\", [{data}, {data},...]}, {}, ...]\n" +
-                "    }\n"
+                "<pre>" +
+                "JSON\n" +
+                "{\n" +
+                "    \"code\": (int) status code 200/4xx/5xx,\n" +
+                "    \"message\": (String) \"message, i.e. success or user validation errors\",\n" +
+                "    \"successful\": (boolean) true/false,\n" +
+                "    // if successful:\n" +
+                "    \"value\": (long) deleted record count\n" +
+                "    // if failed because of dependencies:\n" +
+                "    \"value\": [{\"name\":\"dto.class\", [{data}, {data},...]}, {}, ...]\n" +
+                "}</pre>\n"
             );
         }
         return md;

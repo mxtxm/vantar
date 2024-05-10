@@ -11,9 +11,8 @@ import com.vantar.locale.Locale;
 import com.vantar.locale.*;
 import com.vantar.service.auth.*;
 import com.vantar.service.log.ServiceLog;
-import com.vantar.service.log.dto.*;
 import com.vantar.util.collection.CollectionUtil;
-import com.vantar.util.datetime.DateTime;
+import com.vantar.util.datetime.*;
 import com.vantar.util.json.Json;
 import com.vantar.util.object.*;
 import com.vantar.util.string.StringUtil;
@@ -21,6 +20,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.util.*;
+
 
 @SuppressWarnings("unchecked")
 public class WebUi extends WebUiBasics<WebUi> {
@@ -178,8 +178,10 @@ public class WebUi extends WebUiBasics<WebUi> {
                     break;
                 // only for User
                 case "log-web":
-                    addSubMenuLink(isFirst, VantarKey.ADMIN_WEB_LOG, "log/web/search?" + qString, isSelected, false);
-                break;
+                    addSubMenuLink(isFirst, VantarKey.ADMIN_LOG_WEB, "log/web/search?type=a&" + qString, isSelected, false);
+                    break;
+                case "update-property":
+                    addSubMenuLink(isFirst, VantarKey.ADMIN_UPDATE_PROPERTY, "update/property?" + qString, isSelected, true);
                 default:
                     continue;
             }
@@ -193,7 +195,7 @@ public class WebUi extends WebUiBasics<WebUi> {
         if (!isFirst) {
             html.append(" | ");
         }
-        html.append("<a href=\"").append(getLink("/admin/data/" + url)).append("\"");
+        html.append("<a href=\"").append(url.startsWith("/") ? getLink(url) : getLink("/admin/data/" + url)).append("\"");
         if (isSelected) {
             html.append(" class=\"item-selected\"");
         }
@@ -420,7 +422,7 @@ public class WebUi extends WebUiBasics<WebUi> {
                 );
                 continue;
             }
-            // data looks like JSON
+            // > > > data looks like JSON
             if (Json.isJsonShallow(value)) {
                 addTextArea(
                     col,
@@ -430,13 +432,24 @@ public class WebUi extends WebUiBasics<WebUi> {
                 );
                 continue;
             }
-            // > > > STRING/TEXT
+            // > > > DateRange
+            if (value instanceof DateTimeRange) {
+                addTextArea(
+                    col,
+                    col,
+                    Json.getWithNulls().toJsonPretty(value),
+                    "small json" + (inputClass == null ? "" : (" " + inputClass))
+                );
+                continue;
+            }
+            // > > > Location
             if (value instanceof Location) {
                 Location location = (Location) value;
                 setWidgetComment("<a target='_blank' href='https://www.google.com/maps/search/?api=1&query="
                     + location.latitude + "," + location.longitude + "'>map</a>");
             }
 
+            // > > > STRING/TEXT
             if (field.isAnnotationPresent(Text.class)) {
                 addTextArea(col, col, value, "small" + (inputClass == null ? "" : (" " + inputClass)));
             } else if (col.contains("password")) {
@@ -450,10 +463,7 @@ public class WebUi extends WebUiBasics<WebUi> {
             addPassword("password", "password", null, "password");
         }
 
-        boolean isLog = Log.class.equals(dto.getClass())
-            || UserWebLog.class.equals(dto.getClass())
-            || UserLog.class.equals(dto.getClass());
-        if (!isLog) {
+        if (!DataUtil.isDtoLog(dto)) {
             addSubmit(VantarKey.ADMIN_SUBMIT);
         }
 
@@ -673,7 +683,7 @@ public class WebUi extends WebUiBasics<WebUi> {
                 continue;
             }
             Field f = dtoSample.getField(name);
-            if (f.isAnnotationPresent(ExcludeList.class)) {
+            if (f.isAnnotationPresent(NoList.class)) {
                 exclude.add(name);
                 continue;
             }

@@ -83,7 +83,7 @@ public class AdminElastic {
             .blockEnd()
             .write();
 
-        if (params.isChecked("f")) {
+        if (params.contains("f")) {
             if (StringUtil.isEmpty(target)) {
                 ui.addErrorMessage(VantarKey.ADMIN_ELASTIC_SETTINGS_ERR1).finish();
                 return;

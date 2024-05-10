@@ -394,11 +394,13 @@ public class CollectionUtil {
      * (Set<genericType> one item : convert object to genericType)
      */
     public static <T> Set<T> toSet(Object object, Class<T> genericType) {
-        return new HashSet<>(toList(object, genericType, null));
+        List<T> l = toList(object, genericType, null);
+        return l == null ? null : new HashSet<>(l);
     }
 
     public static <T> Set<T> toSet(Object object, Class<T> genericType, Class<?> innerGenericTypes) {
-        return new HashSet<>(toList(object, genericType, innerGenericTypes));
+        List<T> l = toList(object, genericType, innerGenericTypes);
+        return l == null ? null : new HashSet<>(toList(object, genericType, innerGenericTypes));
     }
 
     public static <T> List<T> toList(Object object, Class<T> genericType) {

@@ -11,7 +11,6 @@ import com.vantar.database.sql.*;
 import com.vantar.exception.*;
 import com.vantar.locale.Locale;
 import com.vantar.locale.*;
-import com.vantar.service.log.ServiceLog;
 import com.vantar.service.log.dto.*;
 import com.vantar.util.json.Json;
 import com.vantar.util.object.ClassUtil;
@@ -69,12 +68,14 @@ public class AdminLogAction {
                 u.ui.addErrorMessage(e).finish();
                 return;
             }
-            q.condition()
-                .equal("timeDay", webLog.timeDay)
-                .equal("threadId", webLog.threadId)
-                .equal("userId", webLog.userId)
-                .equal("url", webLog.url)
-                .equal("objectId", webLog.objectId);
+            q.condition().equal("threadId", webLog.threadId);
+            if (params.getBoolean("old", false)) {
+                q.condition()
+                    .equal("timeDay", webLog.timeDay)
+                    .equal("userId", webLog.userId)
+                    .equal("url", webLog.url)
+                    .equal("objectId", webLog.objectId);
+            }
 
         } else {
             q.condition().equal("classNameSimple", dtoName);
@@ -113,7 +114,7 @@ public class AdminLogAction {
         options.fields = isTypeC || isTypeD ?
             new String[] {"id", "action", "time", "classNameSimple", "objectId", "url", "threadId"} :
             new String[] {"id", "action", "time", "userName", "userId", "objectId", "url", "threadId"};
-        options.colOptionCount = 3;
+        options.colOptionCount = 4;
         if (isTypeC || isTypeD) {
             --options.colOptionCount;
         } else {
@@ -164,6 +165,15 @@ public class AdminLogAction {
                     "/admin/data/view?dto=UserLog&id=" + dtoX.getId(), true, false, null
                 );
                 colOptions.add(view);
+
+                WebUi.DtoListOptions.ColOption logWeb = new WebUi.DtoListOptions.ColOption();
+                logWeb.content = u.ui.getHref(
+                    VantarKey.ADMIN_WEB,
+                    "/admin/data/log/web/search?type=b&dto=UserLog&id=" + dtoX.getId()
+                        + "&un=" + params.getString("un") + "&ufn=" + params.getString("ufn"),
+                    true, false, null
+                );
+                colOptions.add(logWeb);
 
                 return colOptions;
             }

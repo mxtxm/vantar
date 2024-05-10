@@ -2,7 +2,6 @@ package com.vantar.business;
 
 import com.vantar.common.VantarParam;
 import com.vantar.database.dto.*;
-import com.vantar.database.nosql.mongo.Mongo;
 import com.vantar.database.nosql.mongo.*;
 import com.vantar.database.query.*;
 import com.vantar.exception.*;
@@ -26,28 +25,24 @@ public abstract class ModelCommon {
     private static final Map<String, Object> locks = new ConcurrentHashMap<>(500, 1);
 
 
-    public static void afterDataChange(Dto dto) throws VantarException {
-        afterDataChange(dto, null, false, null);
-    }
-
-    public static void afterDataChange(Dto dto, WriteEvent event, boolean logEvent, Dto.Action action) throws VantarException {
+    public static void afterDataChange(Dto dto, Settings s) throws VantarException {
         Class<? extends Dto> dtoClass = dto.getClass();
-        updateCache(dtoClass);
-        if (event != null) {
-            try {
-                event.afterWrite(dto);
-            } catch (NoContentException e) {
-                throw new InputException(VantarKey.NO_CONTENT);
-            }
+        updateDtoCache(dtoClass);
+        if (s.eventAfterWrite != null) {
+            s.eventAfterWrite.write(dto);
         }
-        if (logEvent && action != null && Services.isUp(ServiceLog.class)
+        if (s.logEvent && s.action != null && Services.isUp(ServiceLog.class)
             && !dtoClass.equals(Log.class) && !dtoClass.equals(UserWebLog.class) && !dtoClass.equals(UserLog.class)) {
 
-            ServiceLog.addAction(action, dto);
+            ServiceLog.addAction(s.action, dto);
         }
     }
 
-    public static void updateCache(Class<? extends Dto> dtoClass) {
+    public static void updateDtoCache(Dto dto) {
+        updateDtoCache(dto.getClass());
+    }
+
+    public static void updateDtoCache(Class<? extends Dto> dtoClass) {
         if (dtoClass.isAnnotationPresent(Cache.class)) {
             String dtoName = dtoClass.getSimpleName();
             if (disabledDtoClasses != null && disabledDtoClasses.contains(dtoName)) {
@@ -64,6 +59,10 @@ public abstract class ModelCommon {
         }
     }
 
+    public static void disableDtoCache(Dto dto) {
+        disableDtoCache(dto.getClass());
+    }
+
     public static void disableDtoCache(Class<? extends Dto> dtoClass) {
         String dtoName = dtoClass.getSimpleName();
         if (disabledDtoClasses == null) {
@@ -76,15 +75,6 @@ public abstract class ModelCommon {
         if (disabledDtoClasses != null) {
             disabledDtoClasses.remove(dtoClass.getSimpleName());
         }
-    }
-
-    public static void disableDtoCache(Dto dto) {
-        disableDtoCache(dto.getClass());
-    }
-
-    public static void enableDtoCache(Dto dto, WriteEvent event) throws VantarException {
-        enableDtoCache(dto);
-        afterDataChange(dto, event, false, null);
     }
 
     public static void enableDtoCache(Dto dto) {
@@ -105,17 +95,17 @@ public abstract class ModelCommon {
                     break;
                 }
                 CommonUserPassword userPassword = (CommonUserPassword) info.getDtoInstance();
-                userPassword.setClearIdOnInsert(false);
+                userPassword.autoIncrementOnInsert(false);
                 userPassword.setId(user.getId());
                 userPassword.setPassword(password);
                 try {
                     if (MongoQuery.existsById(userPassword)) {
-                        Mongo.update(userPassword);
+                        ModelMongo.update(new Settings(userPassword).logEvent(false).mutex(false));
                     } else {
-                        Mongo.insert(userPassword);
+                        ModelMongo.insert(new Settings(userPassword).logEvent(false).mutex(false));
                     }
                 } catch (VantarException e) {
-                    throw new ServerException(VantarKey.FETCH_FAIL);
+                    throw new ServerException(VantarKey.FAIL_FETCH);
                 }
                 break;
             }
@@ -264,6 +254,7 @@ public abstract class ModelCommon {
         Object block() throws VantarException;
     }
 
+
     public interface MutexDto {
 
         Object block(Dto dto) throws VantarException;
@@ -278,30 +269,25 @@ public abstract class ModelCommon {
 
     public interface WriteEvent {
 
-        void beforeWrite(Dto dto) throws VantarException;
-        void afterWrite(Dto dto) throws VantarException;
+        void write(Dto dto) throws VantarException;
+    }
+
+
+    public interface ReadEvent {
+
+        void read(Dto dto) throws VantarException;
     }
 
 
     public interface QueryEvent extends QueryResultBase.Event {
 
         void beforeQuery(QueryBuilder q) throws VantarException;
-
     }
 
 
     public interface QueryEventForeach extends QueryResultBase.EventForeach {
 
         void beforeQuery(QueryBuilder q) throws VantarException;
-
-    }
-
-
-    public interface BatchEvent {
-
-        boolean beforeInsert(Dto dto);
-        boolean beforeUpdate(Dto dto);
-        boolean beforeDelete(Dto dto);
     }
 
 
@@ -315,8 +301,14 @@ public abstract class ModelCommon {
         public Dto dto;
         // update delete
         public QueryBuilder q;
-        // insert update delete
-        public WriteEvent event;
+        // insert update --> after set before validation
+        public WriteEvent eventBeforeValidation;
+        // insert update delete --> before db write
+        public WriteEvent eventBeforeWrite;
+        // insert update delete --> after db write
+        public WriteEvent eventAfterWrite;
+        // update delete --> after getting full data / before validation
+        public ReadEvent eventAfterRead;
         // update delete
         public boolean dtoHasFullData;
         // insert update delete
@@ -338,29 +330,13 @@ public abstract class ModelCommon {
             this.dto = dto;
         }
 
-        public Settings(Dto dto, WriteEvent event) {
-            this.dto = dto;
-            this.event = event;
-        }
-
         public Settings(Params params, Dto dto) {
             this.params = params;
             this.dto = dto;
         }
 
-        public Settings(Params params, Dto dto, WriteEvent event) {
-            this.params = params;
-            this.dto = dto;
-            this.event = event;
-        }
-
         public Settings(QueryBuilder q) {
             this.q = q;
-        }
-
-        public Settings(QueryBuilder q, WriteEvent event) {
-            this.q = q;
-            this.event = event;
         }
 
         public Settings dtoHasFullData(boolean s) {
@@ -390,6 +366,22 @@ public abstract class ModelCommon {
         public Settings isJson(String key) {
             isJson = true;
             this.key = key;
+            return this;
+        }
+        public Settings setEventBeforeValidation(WriteEvent event) {
+            this.eventBeforeValidation = event;
+            return this;
+        }
+        public Settings setEventBeforeWrite(WriteEvent event) {
+            this.eventBeforeWrite = event;
+            return this;
+        }
+        public Settings setEventAfterWrite(WriteEvent event) {
+            this.eventAfterWrite = event;
+            return this;
+        }
+        public Settings setEventAfterRead(ReadEvent event) {
+            this.eventAfterRead = event;
             return this;
         }
 

@@ -395,7 +395,11 @@ abstract class WebUiBasics <T extends WebUiBasics<T>> {
     // > > > INPUTS
 
     public T addHidden(String name, Object value) {
-        html.append("<input type=\"hidden\" name=\"").append(name).append("\" value=\"").append(value).append("\"/>");
+        html.append("<input type=\"hidden\" name=\"").append(name).append("\"");
+        if (value != null) {
+            html.append(" value=\"").append(value).append("\"");
+        }
+        html.append("/>");
         return getThis();
     }
 
@@ -803,7 +807,7 @@ abstract class WebUiBasics <T extends WebUiBasics<T>> {
                 "    <meta charset=\"UTF-8\">\n" +
                 "    <meta name=\"description\" content=\"Vantar admin dashboard\">\n" +
                 "    <meta name=\"author\" content=\"Mehdi Torabi\">\n" +
-                "    <link rel='stylesheet' type='text/css' href='/css/index.css?v=" +
+                "    <link rel='stylesheet' type='text/css' href='/css/vantar.css?v=" +
                 VantarParam.VERSION + "'>\n</head>\n<body class="
                 + direction + ">\n\n"
                 + html.toString();

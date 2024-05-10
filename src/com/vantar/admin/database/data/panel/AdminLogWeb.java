@@ -10,7 +10,6 @@ import com.vantar.database.query.*;
 import com.vantar.database.sql.*;
 import com.vantar.exception.*;
 import com.vantar.locale.VantarKey;
-import com.vantar.service.log.ServiceLog;
 import com.vantar.service.log.dto.*;
 import com.vantar.web.*;
 import javax.servlet.http.HttpServletResponse;
@@ -20,10 +19,14 @@ import java.util.*;
 public class AdminLogWeb {
 
     /**
-     * filter by user.id
+     * type a filter by user.id
+     * type b filter by log-action.id
      */
     public static void search(Params params, HttpServletResponse response, DtoDictionary.Info info) throws FinishException {
-        DataUtil.Ui u = DataUtil.initDtoItem(VantarKey.ADMIN_WEB_LOG, "log-web-search", params, response, info);
+        String type = params.getString("type", "a");
+        boolean isTypeA = "a".equals(type);
+        boolean isTypeB = "b".equals(type);
+        DataUtil.Ui u = DataUtil.initDtoItem(VantarKey.ADMIN_LOG_WEB, "log-web", params, response, info);
 
         QueryBuilder q = params.getQueryBuilder("jsonsearch", new UserWebLog.Mini());
         if (q == null) {
@@ -37,7 +40,28 @@ public class AdminLogWeb {
                 return;
             }
         }
-        q.condition().equal("userId", u.dto.getId());
+        if (isTypeA) {
+            q.condition().equal("userId", u.dto.getId());
+        } else {
+            UserLog.Mini userLog;
+            try {
+                userLog = ModelMongo.getById(params, new UserLog.Mini());
+            } catch (VantarException e) {
+                u.ui.addErrorMessage(e).finish();
+                return;
+            }
+
+            q.condition()
+                .equal("threadId", userLog.threadId)
+                .equal("action", "REQUEST");
+            if (params.getBoolean("old", false)) {
+                q.condition()
+                    .equal("timeDay", userLog.timeDay)
+                    .equal("userId", userLog.userId)
+                    .equal("url", userLog.url)
+                    .equal("objectId", userLog.objectId);
+            }
+        }
 
         PageData data = null;
         try {
@@ -77,18 +101,27 @@ public class AdminLogWeb {
             @Override
             public List<WebUi.DtoListOptions.ColOption> getColOptions(Dto dtoX) {
                 UserWebLog.Mini log = (UserWebLog.Mini) dtoX;
+
                 List<WebUi.DtoListOptions.ColOption> colOptions = new ArrayList<>(3);
                 if ("REQUEST".equalsIgnoreCase(log.action)) {
                     WebUi.DtoListOptions.ColOption action = new WebUi.DtoListOptions.ColOption();
                     action.content = u.ui.getHref(
                         VantarKey.ADMIN_LIST_OPTION_USER_ACTIVITY,
-                        "/admin/data/log/action/search?type=d&dto=UserLog&id=" + dtoX.getId() + "&un=" + params.getString("un") + "&ufn=" + params.getString("unf"),
+                        "/admin/data/log/action/search?type=d&dto=UserLog&id=" + dtoX.getId()
+                            + "&un=" + params.getString("un") + "&ufn=" + params.getString("ufn"),
                         true,
                         false,
                         null
                     );
                     colOptions.add(action);
                 }
+
+                WebUi.DtoListOptions.ColOption view = new WebUi.DtoListOptions.ColOption();
+                view.content = u.ui.getHref(
+                    VantarKey.ADMIN_VIEW,
+                    "/admin/data/view?dto=UserWebLog&id=" + dtoX.getId(), true, false, null
+                );
+                colOptions.add(view);
 
                 return colOptions;
             }
@@ -103,13 +136,17 @@ public class AdminLogWeb {
         UserLog.Mini userLog = ModelMongo.getById(params, new UserLog.Mini());
 
         QueryBuilder q = new QueryBuilder(new UserWebLog());
+
         q.condition()
-            .equal("timeDay", userLog.timeDay)
-            .equal("threadId", userLog.threadId)
-            .equal("userId", userLog.userId)
-            .equal("url", userLog.url)
-            .equal("objectId", userLog.objectId)
-            .equal("action", "REQUEST");
+            .equal("action", "REQUEST")
+            .equal("threadId", userLog.threadId);
+        if (params.getBoolean("old", false)) {
+            q.condition()
+                .equal("timeDay", userLog.timeDay)
+                .equal("userId", userLog.userId)
+                .equal("url", userLog.url)
+                .equal("objectId", userLog.objectId);
+        }
 
         List<UserWebLog> data = ModelMongo.getData(q);
         if (data.size() == 1) {

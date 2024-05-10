@@ -12,7 +12,6 @@ import com.vantar.locale.*;
 import com.vantar.service.Services;
 import com.vantar.service.cache.ServiceDtoCache;
 import com.vantar.service.log.ServiceLog;
-import com.vantar.service.log.dto.UserLog;
 import com.vantar.util.number.NumberUtil;
 import com.vantar.util.object.*;
 import com.vantar.util.string.*;
@@ -31,7 +30,7 @@ public class ModelMongo extends ModelCommon {
         try {
             return Mongo.Sequence.getNext(dto);
         } catch (DatabaseException e) {
-            throw new ServerException(VantarKey.FETCH_FAIL);
+            throw new ServerException(VantarKey.FAIL_FETCH);
         }
     }
 
@@ -46,33 +45,33 @@ public class ModelMongo extends ModelCommon {
 
     private static ResponseMessage insertX(Settings s, Dto dto) throws VantarException {
         s.action = Dto.Action.INSERT;
-        List<ValidationError> errors;
-        if (s.params == null) {
-            errors = dto.validate(s.action);
-        } else {
-            errors = s.isJson ?
-                dto.set(s.key == null ? s.params.getJson() : s.params.getString(s.key), s.action) :
-                dto.set(s.params, s.action);
-        }
-        if (ObjectUtil.isNotEmpty(errors)) {
-            throw new InputException(errors);
-        }
 
-        if (s.event != null) {
-            try {
-                s.event.beforeWrite(dto);
-            } catch (NoContentException e) {
-                throw new InputException(VantarKey.NO_CONTENT);
+        if (s.params != null) {
+            if (s.isJson) {
+                dto.set(s.key == null ? s.params.getJson() : s.params.getString(s.key), s.action);
+            } else {
+                dto.set(s.params, s.action);
             }
         }
 
+        if (s.eventBeforeValidation != null) {
+            s.eventBeforeValidation.write(dto);
+        }
+        List<ValidationError> errors = dto.validate(s.action);
+        if (ObjectUtil.isNotEmpty(errors)) {
+            throw new InputException(errors);
+        }
         dto.removeNullPropertiesNatural();
         ModelMongoChecking.throwUniqueViolation(dto);
         ModelMongoChecking.throwDependencyViolations(dto);
-        Mongo.insert(dto);
-        ModelCommon.afterDataChange(dto, s.event, s.logEvent, Dto.Action.INSERT);
 
-        return ResponseMessage.success(VantarKey.INSERT_SUCCESS, dto.getId(), dto);
+        if (s.eventBeforeWrite != null) {
+            s.eventBeforeWrite.write(dto);
+        }
+        Mongo.insert(dto);
+        ModelCommon.afterDataChange(dto, s);
+
+        return ResponseMessage.success(VantarKey.SUCCESS_INSERT, dto.getId(), dto);
     }
 
     // < < < INSERT
@@ -82,8 +81,9 @@ public class ModelMongo extends ModelCommon {
 
     public static ResponseMessage update(Settings settings) throws VantarException {
         if (settings.q != null) {
+            settings.dto = settings.q.getDto();
             return ResponseMessage.success(
-                VantarKey.UPDATE_SUCCESS,
+                VantarKey.SUCCESS_UPDATE,
                 settings.mutex ? mutex(settings.dto, (Dto dto) -> updateByQuery(settings)) : updateByQuery(settings)
             );
         }
@@ -96,16 +96,19 @@ public class ModelMongo extends ModelCommon {
         if (NumberUtil.isIdInvalid(settings.dto.getId())) {
             throw new InputException(VantarKey.INVALID_ID, VantarParam.ID);
         }
+
         if (!settings.dtoHasFullData) {
-            if (settings.params == null) {
-                Dto dtoX = ClassUtil.getInstance(settings.dto.getClass());
-                dtoX.setId(settings.dto.getId());
-                dtoX = getById(dtoX);
-                dtoX.set(settings.dto, settings.action);
-                settings.dto = dtoX;
-            } else {
-                settings.dto.set(settings.params, settings.action);
+            Dto dtoX = ClassUtil.getInstance(settings.dto.getClass());
+            if (dtoX == null) {
+                return null;
             }
+            dtoX.setId(settings.dto.getId());
+            dtoX = getById(dtoX);
+            dtoX.set(settings.dto, settings.action);
+            settings.dto = dtoX;
+        }
+        if (settings.eventAfterRead != null) {
+            settings.eventAfterRead.read(settings.dto.getClone());
         }
 
         if (settings.mutex) {
@@ -116,23 +119,27 @@ public class ModelMongo extends ModelCommon {
         } else {
             updateById(settings, settings.dto);
         }
-        return ResponseMessage.success(VantarKey.UPDATE_SUCCESS, settings.dto);
+        return ResponseMessage.success(VantarKey.SUCCESS_UPDATE, settings.dto);
     }
 
     private static List<Dto> updateByQuery(Settings s) throws VantarException {
+        Dto updatedDto = s.dto.getClone();
+        updatedDto.setId(null);
         s.dtoHasFullData = true;
         List<Dto> dtos = new ArrayList<>(100);
         try {
             disableDtoCache(s.q.getDto());
             forEach(s.q, dto -> {
-                dto.set(s.dto);
+                dto.set(updatedDto, s.action);
                 updateById(s, dto);
                 dtos.add(dto);
+                return true;
             });
         } catch (NoContentException ignore) {
 
         } finally {
-            enableDtoCache(s.q.getDto(), s.event);
+            enableDtoCache(s.q.getDto());
+            updateDtoCache(s.q.getDto());
         }
         return dtos;
     }
@@ -141,32 +148,32 @@ public class ModelMongo extends ModelCommon {
         if (s.action == null) {
             s.action = Dto.Action.UPDATE_FEW_COLS;
         }
-        List<ValidationError> errors;
-        if (s.params == null) {
-            errors = dto.validate(s.action);
-        } else {
+
+        if (s.params != null) {
             s.action = s.params.getX("action", s.action);
-            errors = s.isJson ?
-                dto.set(s.key == null ? s.params.getJson() : s.params.getString(s.key), s.action) :
+            if (s.isJson) {
+                dto.set(s.key == null ? s.params.getJson() : s.params.getString(s.key), s.action);
+            } else {
                 dto.set(s.params, s.action);
+            }
         }
+        if (s.eventBeforeValidation != null) {
+            s.eventBeforeValidation.write(dto);
+        }
+        List<ValidationError> errors = dto.validate(s.action);
         if (ObjectUtil.isNotEmpty(errors)) {
             throw new InputException(errors);
         }
 
-        if (s.event != null) {
-            try {
-                s.event.beforeWrite(dto);
-            } catch (NoContentException e) {
-                throw new InputException(VantarKey.NO_CONTENT);
-            }
-        }
-
-        dto.removeNullPropertiesNatural();
         ModelMongoChecking.throwUniqueViolation(dto);
         ModelMongoChecking.throwDependencyViolations(dto);
+
+        if (s.eventBeforeWrite != null) {
+            s.eventBeforeWrite.write(dto);
+        }
+
         Mongo.update(dto);
-        ModelCommon.afterDataChange(dto, s.event, s.logEvent, s.action);
+        ModelCommon.afterDataChange(dto, s);
     }
 
     /**
@@ -191,6 +198,7 @@ public class ModelMongo extends ModelCommon {
 
     public static ResponseMessage delete(Settings settings) throws VantarException {
         if (settings.q != null) {
+            settings.dto = settings.q.getDto();
             if (settings.mutex) {
                 mutex(settings.dto, (Dto dto) -> {
                     deleteByQuery(settings);
@@ -211,6 +219,10 @@ public class ModelMongo extends ModelCommon {
             if (settings.logEvent && !settings.dtoHasFullData) {
                 settings.dto = getById(settings.dto);
             }
+            if (settings.eventAfterRead != null) {
+                settings.eventAfterRead.read(settings.dto.getClone());
+            }
+
             if (settings.mutex) {
                 mutex(settings.dto, (Dto dto) -> {
                     deleteById(settings, dto);
@@ -220,25 +232,32 @@ public class ModelMongo extends ModelCommon {
                 deleteById(settings, settings.dto);
             }
         }
-        return ResponseMessage.success(VantarKey.DELETE_SUCCESS, settings.getDeletedCount());
+        return ResponseMessage.success(VantarKey.SUCCESS_DELETE, settings.getDeletedCount());
     }
 
     private static void deleteByQuery(Settings s) throws VantarException {
         s.dtoHasFullData = true;
         try {
             disableDtoCache(s.q.getDto());
-            forEach(s.q, dto -> deleteById(s, dto));
+            forEach(s.q, dto -> {
+                deleteById(s, dto);
+                return true;
+            });
         } catch (NoContentException ignore) {
 
         } finally {
-            enableDtoCache(s.q.getDto(), s.event);
+            enableDtoCache(s.q.getDto());
+            updateDtoCache(s.q.getDto());
         }
     }
 
     private static void deleteById(Settings s, Dto dto) throws VantarException {
-        if (s.event != null) {
+        if (s.action == null) {
+            s.action = Dto.Action.DELETE;
+        }
+        if (s.eventBeforeWrite != null) {
             try {
-                s.event.beforeWrite(dto);
+                s.eventBeforeWrite.write(dto);
             } catch (NoContentException e) {
                 throw new InputException(VantarKey.NO_CONTENT);
             }
@@ -247,37 +266,16 @@ public class ModelMongo extends ModelCommon {
             DataDependencyMongo dep = new DataDependencyMongo(dto);
             dep.deleteCascade(dtoX -> {
                 s.addDeletedCount(Mongo.delete(dtoX));
-                ModelCommon.afterDataChange(dtoX, s.event, s.logEvent, Dto.Action.DELETE);
+                ModelCommon.afterDataChange(dtoX, s);
             });
         } else if (s.force) {
             s.addDeletedCount(Mongo.delete(dto));
-            ModelCommon.afterDataChange(dto, s.event, s.logEvent, Dto.Action.DELETE);
+            ModelCommon.afterDataChange(dto, s);
         } else {
             new DataDependencyMongo(dto).throwOnFirstDependency();
             s.addDeletedCount(Mongo.delete(dto));
-            ModelCommon.afterDataChange(dto, s.event, s.logEvent, Dto.Action.DELETE);
+            ModelCommon.afterDataChange(dto, s);
         }
-    }
-
-
-
-
-
-
-
-
-    public static ResponseMessage retrieveFromLog(long id) throws VantarException {
-        UserLog userLog = new UserLog();
-        userLog.id = id;
-        userLog = getById(userLog);
-
-        Dto dto = DtoDictionary.getInstance(userLog.classNameSimple);
-        if (dto == null) {
-            throw new InputException(VantarKey.INVALID_VALUE, "classNameSimple");
-        }
-
-        dto.set(userLog.object, Dto.Action.SET);
-        return new ResponseMessage();
     }
 
     // < < < DELETE
@@ -291,14 +289,13 @@ public class ModelMongo extends ModelCommon {
             Mongo.deleteAll(collection);
             Mongo.Sequence.remove(collection);
             Mongo.Index.remove(collection);
-            afterDataChange(dto);
             if (Services.isUp(ServiceLog.class)) {
                 ServiceLog.addAction(Dto.Action.PURGE, dto);
             }
-            return ResponseMessage.success(VantarKey.DELETE_SUCCESS);
+            return ResponseMessage.success(VantarKey.SUCCESS_DELETE);
         } catch (DatabaseException e) {
             ServiceLog.log.error(" !! {} : {}\n", dto.getClass().getSimpleName(), dto, e);
-            throw new ServerException(VantarKey.DELETE_FAIL);
+            throw new ServerException(VantarKey.FAIL_DELETE);
         }
     }
 
@@ -360,7 +357,7 @@ public class ModelMongo extends ModelCommon {
             );
         }
 
-        return ResponseMessage.success(VantarKey.UPDATE_SUCCESS, dto);
+        return ResponseMessage.success(VantarKey.SUCCESS_UPDATE, dto);
     }
 
     public static ResponseMessage removeFromCollection(Dto dto, String fieldName, Object item) throws VantarException {
@@ -399,7 +396,7 @@ public class ModelMongo extends ModelCommon {
             );
         }
 
-        return ResponseMessage.success(VantarKey.UPDATE_SUCCESS, dto);
+        return ResponseMessage.success(VantarKey.SUCCESS_UPDATE, dto);
     }
 
     public static ResponseMessage addToMap(Dto dto, String fieldName, String key, Object item) throws VantarException {
@@ -439,7 +436,7 @@ public class ModelMongo extends ModelCommon {
             );
         }
 
-        return ResponseMessage.success(VantarKey.UPDATE_SUCCESS, dto);
+        return ResponseMessage.success(VantarKey.SUCCESS_UPDATE, dto);
     }
 
     public static ResponseMessage removeFromMap(Dto dto, String fieldName, String key) throws VantarException {
@@ -477,7 +474,7 @@ public class ModelMongo extends ModelCommon {
             );
         }
 
-        return ResponseMessage.success(VantarKey.UPDATE_SUCCESS, dto);
+        return ResponseMessage.success(VantarKey.SUCCESS_UPDATE, dto);
     }
 
     // ITEM WORKS < < <
@@ -489,7 +486,7 @@ public class ModelMongo extends ModelCommon {
         try {
             MongoQuery.getAllData(dto).forEach(event);
         } catch (DatabaseException e) {
-            throw new ServerException(VantarKey.FETCH_FAIL);
+            throw new ServerException(VantarKey.FAIL_FETCH);
         }
     }
 
@@ -499,7 +496,7 @@ public class ModelMongo extends ModelCommon {
             result.setLocale(q.getLocale());
             result.forEach(event);
         } catch (DatabaseException e) {
-            throw new ServerException(VantarKey.FETCH_FAIL);
+            throw new ServerException(VantarKey.FAIL_FETCH);
         }
     }
 
@@ -545,14 +542,14 @@ public class ModelMongo extends ModelCommon {
             try {
                 return MongoQuery.getPage(q, event, locales);
             } catch (DatabaseException e) {
-                throw new ServerException(VantarKey.FETCH_FAIL);
+                throw new ServerException(VantarKey.FAIL_FETCH);
             }
         } else {
             QueryResult result;
             try {
                 result = MongoQuery.getData(q);
             } catch (DatabaseException e) {
-                throw new ServerException(VantarKey.FETCH_FAIL);
+                throw new ServerException(VantarKey.FAIL_FETCH);
             }
             if (event != null) {
                 result.setEvent(event);
@@ -564,7 +561,7 @@ public class ModelMongo extends ModelCommon {
             try {
                 data = new PageData(result.asList());
             } catch (DatabaseException e) {
-                throw new ServerException(VantarKey.FETCH_FAIL);
+                throw new ServerException(VantarKey.FAIL_FETCH);
             }
             List<ValidationError> errors = q.getErrors();
             if (errors != null) {
@@ -579,7 +576,7 @@ public class ModelMongo extends ModelCommon {
         try {
             data = MongoQuery.getPageForeach(q, event, locales);
         } catch (DatabaseException e) {
-            throw new ServerException(VantarKey.FETCH_FAIL);
+            throw new ServerException(VantarKey.FAIL_FETCH);
         }
         List<ValidationError> errors = q.getErrors();
         if (errors != null) {
@@ -611,7 +608,7 @@ public class ModelMongo extends ModelCommon {
             }
             return result.asList();
         } catch (DatabaseException e) {
-            throw new ServerException(VantarKey.FETCH_FAIL);
+            throw new ServerException(VantarKey.FAIL_FETCH);
         }
     }
 
@@ -646,7 +643,7 @@ public class ModelMongo extends ModelCommon {
             }
             return result.asMap(keyProperty);
         } catch (DatabaseException e) {
-            throw new ServerException(VantarKey.FETCH_FAIL);
+            throw new ServerException(VantarKey.FAIL_FETCH);
         }
     }
 
@@ -658,7 +655,7 @@ public class ModelMongo extends ModelCommon {
             }
             return result.asMap(keyProperty);
         } catch (DatabaseException e) {
-            throw new ServerException(VantarKey.FETCH_FAIL);
+            throw new ServerException(VantarKey.FAIL_FETCH);
         }
     }
 
@@ -670,7 +667,7 @@ public class ModelMongo extends ModelCommon {
             }
             return result.asPropertyList(property);
         } catch (DatabaseException e) {
-            throw new ServerException(VantarKey.FETCH_FAIL);
+            throw new ServerException(VantarKey.FAIL_FETCH);
         }
     }
 
@@ -682,7 +679,7 @@ public class ModelMongo extends ModelCommon {
             }
             return result.asPropertyList(property);
         } catch (DatabaseException e) {
-            throw new ServerException(VantarKey.FETCH_FAIL);
+            throw new ServerException(VantarKey.FAIL_FETCH);
         }
     }
 
@@ -694,7 +691,7 @@ public class ModelMongo extends ModelCommon {
             }
             return result.asPropertyMap(property);
         } catch (DatabaseException e) {
-            throw new ServerException(VantarKey.FETCH_FAIL);
+            throw new ServerException(VantarKey.FAIL_FETCH);
         }
     }
 
@@ -706,7 +703,7 @@ public class ModelMongo extends ModelCommon {
             }
             return result.asPropertyMap(property);
         } catch (DatabaseException e) {
-            throw new ServerException(VantarKey.FETCH_FAIL);
+            throw new ServerException(VantarKey.FAIL_FETCH);
         }
     }
 
@@ -718,7 +715,7 @@ public class ModelMongo extends ModelCommon {
             }
             return result.first();
         } catch (DatabaseException e) {
-            throw new ServerException(VantarKey.FETCH_FAIL);
+            throw new ServerException(VantarKey.FAIL_FETCH);
         }
     }
 
@@ -731,7 +728,7 @@ public class ModelMongo extends ModelCommon {
             }
             return result.first();
         } catch (DatabaseException e) {
-            throw new ServerException(VantarKey.FETCH_FAIL);
+            throw new ServerException(VantarKey.FAIL_FETCH);
         }
     }
 
@@ -805,7 +802,7 @@ public class ModelMongo extends ModelCommon {
             return result.first();
         } catch (DatabaseException e) {
             ServiceLog.log.error(" !! {} : {}\n", dto.getClass().getSimpleName(), dto, e);
-            throw new ServerException(VantarKey.FETCH_FAIL);
+            throw new ServerException(VantarKey.FAIL_FETCH);
         }
     }
 
@@ -859,7 +856,7 @@ public class ModelMongo extends ModelCommon {
             }
             return result.asList();
         } catch (DatabaseException e) {
-            throw new ServerException(VantarKey.FETCH_FAIL);
+            throw new ServerException(VantarKey.FAIL_FETCH);
         }
     }
 
@@ -929,7 +926,7 @@ public class ModelMongo extends ModelCommon {
                 }
                 return result.asKeyValue(keyProperty, valueProperty);
             } catch (DatabaseException e) {
-                throw new ServerException(VantarKey.FETCH_FAIL);
+                throw new ServerException(VantarKey.FAIL_FETCH);
             }
         }
     }
@@ -942,7 +939,7 @@ public class ModelMongo extends ModelCommon {
             result.setLocale(locales);
             return result.asKeyValue(keyProperty, valueProperty);
         } catch (DatabaseException e) {
-            throw new ServerException(VantarKey.FETCH_FAIL);
+            throw new ServerException(VantarKey.FAIL_FETCH);
         }
     }
 
@@ -954,7 +951,7 @@ public class ModelMongo extends ModelCommon {
         try {
             return MongoQuery.count(q);
         } catch (DatabaseException e) {
-            throw new ServerException(VantarKey.FETCH_FAIL);
+            throw new ServerException(VantarKey.FAIL_FETCH);
         }
     }
 
@@ -962,7 +959,7 @@ public class ModelMongo extends ModelCommon {
         try {
             return MongoQuery.count(collectionName);
         } catch (DatabaseException e) {
-            throw new ServerException(VantarKey.FETCH_FAIL);
+            throw new ServerException(VantarKey.FAIL_FETCH);
         }
     }
 
@@ -970,7 +967,7 @@ public class ModelMongo extends ModelCommon {
         try {
             return MongoQuery.exists(q);
         } catch (DatabaseException e) {
-            throw new ServerException(VantarKey.FETCH_FAIL);
+            throw new ServerException(VantarKey.FAIL_FETCH);
         }
     }
 
@@ -978,7 +975,7 @@ public class ModelMongo extends ModelCommon {
         try {
             return MongoQuery.exists(dto, property);
         } catch (DatabaseException e) {
-            throw new ServerException(VantarKey.FETCH_FAIL);
+            throw new ServerException(VantarKey.FAIL_FETCH);
         }
     }
 
@@ -986,7 +983,7 @@ public class ModelMongo extends ModelCommon {
         try {
             return MongoQuery.existsById(dto);
         } catch (DatabaseException e) {
-            throw new ServerException(VantarKey.FETCH_FAIL);
+            throw new ServerException(VantarKey.FAIL_FETCH);
         }
     }
 
@@ -994,7 +991,7 @@ public class ModelMongo extends ModelCommon {
         try {
             return MongoQuery.existsByDto(dto);
         } catch (DatabaseException e) {
-            throw new ServerException(VantarKey.FETCH_FAIL);
+            throw new ServerException(VantarKey.FAIL_FETCH);
         }
     }
 }

@@ -13,9 +13,9 @@ public class Log extends DtoBase {
     public Long id;
     public String tag;
     public String level;
-    @ExcludeList
+    @NoList
     public String message;
-    @ExcludeList
+    @NoList
     public List<String> objects;
     @Timestamp
     public DateTime createT;

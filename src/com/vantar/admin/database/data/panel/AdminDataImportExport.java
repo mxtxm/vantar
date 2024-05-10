@@ -58,7 +58,7 @@ public class AdminDataImportExport {
             u.dto = event.dtoExchange(u.dto, "import");
         }
 
-        if (!params.isChecked("f")) {
+        if (!params.contains("f")) {
             u.ui.beginFormPost()
                 .addEmptyLine(2)
                 .addTextArea(VantarKey.ADMIN_MENU_DATA, "imd", info.getImportData(), "large ltr")

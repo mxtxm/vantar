@@ -111,7 +111,7 @@ public class AdminDataUnDelete {
         DataUtil.Ui u = DataUtil.initDto(VantarKey.ADMIN_UNDELETE, "undelete", params, response, info);
 
         if (!params.isChecked("confirm")) {
-            u.ui.addMessage(VantarKey.DELETE_FAIL).finish();
+            u.ui.addMessage(VantarKey.FAIL_DELETE).finish();
             return;
         }
         if (!DataUtil.isUp(info.dbms, u.ui)) {
@@ -167,7 +167,7 @@ public class AdminDataUnDelete {
             UserLog userLog = ModelMongo.getById(dto);
             Class<? extends Dto> dtoClass = (Class<? extends Dto>) ClassUtil.getClass(userLog.className);
             Dto dtoUndelete = Json.d.fromJson(Json.d.toJson(userLog.objectX), dtoClass);
-            dtoUndelete.setClearIdOnInsert(false);
+            dtoUndelete.autoIncrementOnInsert(false);
 
             ModelMongo.insert(new ModelCommon.Settings(dtoUndelete));
             ModelMongo.delete(new ModelCommon.Settings(dto));

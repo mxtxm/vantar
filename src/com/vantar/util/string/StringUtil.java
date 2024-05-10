@@ -693,7 +693,7 @@ public class StringUtil {
         }
         int len = string.length();
         if (len == 0 || separator == null || separator.length() == 0) {
-            return new String[]{string};
+            return new String[] {string};
         }
 
         int separatorLen = separator.length();
@@ -826,7 +826,7 @@ public class StringUtil {
      * @return splatted parts (null if string == null, [string] if string == "")
      */
     public static String[] split(String string, char separator, int max, boolean trim) {
-        if (string == null) {
+        if (isEmpty(string)) {
             return null;
         }
         int len = string.length();
@@ -894,7 +894,7 @@ public class StringUtil {
      * @return splatted parts (null if string == null, [string] if string == "")
      */
     public static <T> List<T> splitToType(String string, String separator, int max, Class<T> type) {
-        if (string == null) {
+        if (isEmpty(string)) {
             return null;
         }
         int len = string.length();
@@ -952,7 +952,7 @@ public class StringUtil {
      * @return splatted parts (null if string == null, [string] if string == "")
      */
     public static <T> List<T> splitToType(String string, char separator, int max, Class<T> type) {
-        if (string == null) {
+        if (isEmpty(string)) {
             return null;
         }
         int len = string.length();
@@ -1031,7 +1031,7 @@ public class StringUtil {
      * @return splatted parts (null if string == null, [string] if string == "")
      */
     public static String[] splits(String string, char[] separator, int max, boolean trim) {
-        if (string == null) {
+        if (isEmpty(string)) {
             return null;
         }
         int len = string.length();

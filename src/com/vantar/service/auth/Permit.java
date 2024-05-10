@@ -1,12 +1,10 @@
 package com.vantar.service.auth;
 
 import com.vantar.common.VantarParam;
-import com.vantar.exception.*;
+import com.vantar.exception.AuthException;
 import com.vantar.locale.VantarKey;
 import com.vantar.service.Services;
 import com.vantar.service.cache.ServiceDtoCache;
-import com.vantar.service.log.ServiceLog;
-import com.vantar.util.collection.CollectionUtil;
 import com.vantar.util.object.ObjectUtil;
 import com.vantar.util.string.StringUtil;
 import com.vantar.web.Params;
@@ -289,6 +287,7 @@ public class Permit {
         if (StringUtil.isEmpty(token)) {
             token = params.getString(VantarParam.AUTH_TOKEN);
         }
+
         if (StringUtil.isEmpty(token)) {
             try {
                 token = params.extractFromJson(VantarParam.AUTH_TOKEN, String.class);

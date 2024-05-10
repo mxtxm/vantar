@@ -1,5 +1,6 @@
 package com.vantar.admin.documentation;
 
+import com.vantar.admin.documentation.get.WebServiceGet;
 import com.vantar.exception.*;
 import com.vantar.web.*;
 import javax.servlet.annotation.WebServlet;
@@ -11,6 +12,8 @@ import javax.servlet.http.HttpServletResponse;
     "/admin/documentation/show/dtos",
     "/admin/documentation/show/dtos/json",
     "/admin/documentation/webservices/xlsx",
+
+    "/admin/documentation/webservice/get",
 })
 public class Controller extends RouteToMethod {
 
@@ -32,5 +35,9 @@ public class Controller extends RouteToMethod {
 
     public void documentationWebservicesXlsx(Params params, HttpServletResponse response) throws VantarException {
         WebServiceManifest.downloadXlsx(response);
+    }
+
+    public void documentationWebserviceGet(Params params, HttpServletResponse response) throws VantarException {
+        Response.writeJson(response, WebServiceGet.get(params));
     }
 }

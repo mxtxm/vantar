@@ -60,7 +60,7 @@ public abstract class RouteAllToOneMethod extends RouteBase {
                     Response.serverError(response, Locale.getString(VantarKey.UNEXPECTED_ERROR));
                 }
             } finally {
-                Locale.removeThreadLocale(Thread.currentThread().getId());
+                Locale.removeThreadLocale(Thread.currentThread().getId() + Params.serverUpCount);
                 Params.removeThreadParams();
             }
         }

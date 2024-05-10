@@ -46,19 +46,19 @@ public class CommonModelElastic extends ModelCommon {
     }
 
     private static ResponseMessage insertX(Object params, Dto dto, WriteEvent event) throws VantarException {
-        List<ValidationError> errors;
+        List<ValidationError> errors = new ArrayList<>();
         if (params instanceof String) {
-            errors = dto.set((String) params, Dto.Action.INSERT);
+             dto.set((String) params, Dto.Action.INSERT);
         } else {
-            errors = dto.set((Params) params, Dto.Action.INSERT);
+             dto.set((Params) params, Dto.Action.INSERT);
         }
 
         if (event != null) {
-            try {
-                event.beforeWrite(dto);
-            } catch (InputException e) {
-                errors.addAll(e.getErrors());
-            }
+//            try {
+//                event.beforeWrite(dto);
+//            } catch (InputException e) {
+//                errors.addAll(e.getErrors());
+//            }
         }
 
         if (!errors.isEmpty()) {
@@ -72,13 +72,13 @@ public class CommonModelElastic extends ModelCommon {
             }
 
             long id = ElasticWrite.insertOne(dto);
-            if (event != null) {
-                event.afterWrite(dto);
-            }
-            return ResponseMessage.success(VantarKey.INSERT_SUCCESS, id);
+//            if (event != null) {
+//                event.afterWrite(dto);
+//            }
+            return ResponseMessage.success(VantarKey.SUCCESS_INSERT, id);
         } catch (DatabaseException e) {
             log.error("! {}", e.getMessage());
-            throw new ServerException(VantarKey.INSERT_FAIL);
+            throw new ServerException(VantarKey.FAIL_INSERT);
         }
     }
 
@@ -94,9 +94,9 @@ public class CommonModelElastic extends ModelCommon {
 
         try (ElasticWrite write = new ElasticWrite()) {
             for (Dto dto : dtos) {
-                if (event != null) {
-                    event.beforeWrite(dto);
-                }
+//                if (event != null) {
+//                    event.beforeWrite(dto);
+//                }
 
                 List<ValidationError> errors = dto.validate(Dto.Action.INSERT);
                 if (!errors.isEmpty()) {
@@ -114,20 +114,20 @@ public class CommonModelElastic extends ModelCommon {
             write.commit();
         } catch (DatabaseException e) {
             log.error("! {}", e.getMessage());
-            throw new ServerException(VantarKey.INSERT_FAIL);
+            throw new ServerException(VantarKey.FAIL_INSERT);
         }
 
-        if (!dtos.isEmpty()) {
-            afterDataChange(dtos.get(0));
-        }
+//        if (!dtos.isEmpty()) {
+//            afterDataChange(dtos.get(0));
+//        }
 
-        if (event != null) {
-            for (Dto dto : dtos) {
-                event.afterWrite(dto);
-            }
-        }
+//        if (event != null) {
+//            for (Dto dto : dtos) {
+//                event.afterWrite(dto);
+//            }
+//        }
 
-        return ResponseMessage.success(VantarKey.INSERT_SUCCESS, dtos.size());
+        return ResponseMessage.success(VantarKey.SUCCESS_INSERT, dtos.size());
     }
 
     public static ResponseMessage update(Params params, Dto dto) throws VantarException {
@@ -155,20 +155,20 @@ public class CommonModelElastic extends ModelCommon {
     }
 
     private static ResponseMessage updateX(Object params, Dto dto, WriteEvent event) throws VantarException {
-        List<ValidationError> errors;
+        List<ValidationError> errors = new ArrayList<>();
         if (params instanceof String) {
-            errors = dto.set((String) params, Dto.Action.UPDATE_ALL_COLS);
+             dto.set((String) params, Dto.Action.UPDATE_ALL_COLS);
         } else {
-            errors = dto.set((Params) params, Dto.Action.UPDATE_ALL_COLS);
+             dto.set((Params) params, Dto.Action.UPDATE_ALL_COLS);
         }
 
-        if (event != null) {
-            try {
-                event.beforeWrite(dto);
-            } catch (InputException e) {
-                errors.addAll(e.getErrors());
-            }
-        }
+//        if (event != null) {
+//            try {
+//                event.beforeWrite(dto);
+//            } catch (InputException e) {
+//                errors.addAll(e.getErrors());
+//            }
+//        }
         if (!errors.isEmpty()) {
             throw new InputException(errors);
         }
@@ -183,13 +183,13 @@ public class CommonModelElastic extends ModelCommon {
 
         } catch (DatabaseException e) {
             log.error("! {}", e.getMessage());
-            throw new ServerException(VantarKey.UPDATE_FAIL);
+            throw new ServerException(VantarKey.FAIL_UPDATE);
         }
 
-        if (event != null) {
-            event.afterWrite(dto);
-        }
-        return ResponseMessage.success(VantarKey.UPDATE_SUCCESS);
+//        if (event != null) {
+//            event.afterWrite(dto);
+//        }
+        return ResponseMessage.success(VantarKey.SUCCESS_UPDATE);
     }
 
     public static <T extends Dto> ResponseMessage updateBatch(Params params, Class<T> tClass) throws VantarException {
@@ -206,9 +206,9 @@ public class CommonModelElastic extends ModelCommon {
             write.startTransaction();
 
             for (Dto dto : dtos) {
-                if (event != null) {
-                    event.beforeWrite(dto);
-                }
+//                if (event != null) {
+//                    event.beforeWrite(dto);
+//                }
 
                 List<ValidationError> errors = dto.validate(Dto.Action.UPDATE_ALL_COLS);
                 if (!errors.isEmpty()) {
@@ -217,39 +217,39 @@ public class CommonModelElastic extends ModelCommon {
 
                 write.update(dto);
 
-                if (event != null) {
-                    event.afterWrite(dto);
-                }
+//                if (event != null) {
+//                    event.afterWrite(dto);
+//                }
             }
 
             write.commit();
 
         } catch (DatabaseException e) {
             log.error("! {}", e.getMessage());
-            throw new ServerException(VantarKey.UPDATE_FAIL);
+            throw new ServerException(VantarKey.FAIL_UPDATE);
         }
 
-        if (!dtos.isEmpty()) {
-            afterDataChange(dtos.get(0));
-        }
+//        if (!dtos.isEmpty()) {
+//            afterDataChange(dtos.get(0));
+//        }
 
-        return ResponseMessage.success(VantarKey.UPDATE_SUCCESS, dtos.size());
+        return ResponseMessage.success(VantarKey.SUCCESS_UPDATE, dtos.size());
     }
 
     public static ResponseMessage delete(Params params, Dto dto) throws VantarException {
-        List<ValidationError> errors = dto.set(params, Dto.Action.DELETE);
-        if (!errors.isEmpty()) {
-            throw new InputException(errors);
-        }
+//        List<ValidationError> errors = dto.set(params, Dto.Action.DELETE);
+//        if (!errors.isEmpty()) {
+//            throw new InputException(errors);
+//        }
 
         try {
             ElasticWrite.deleteOne(dto);
         } catch (DatabaseException e) {
             log.error("! {}", e.getMessage());
-            throw new ServerException(VantarKey.DELETE_FAIL);
+            throw new ServerException(VantarKey.FAIL_DELETE);
         }
 
-        return ResponseMessage.success(VantarKey.DELETE_SUCCESS);
+        return ResponseMessage.success(VantarKey.SUCCESS_DELETE);
     }
 
     public static <T extends Dto> ResponseMessage deleteBatch(Params params, Class<T> tClass) throws VantarException {
@@ -275,9 +275,9 @@ public class CommonModelElastic extends ModelCommon {
 
             for (Long id : ids) {
                 dto.setId(id);
-                if (event != null) {
-                    event.beforeWrite(dto);
-                }
+//                if (event != null) {
+//                    event.beforeWrite(dto);
+//                }
 
                 write.delete(dto);
             }
@@ -286,142 +286,142 @@ public class CommonModelElastic extends ModelCommon {
 
         } catch (DatabaseException e) {
             log.error("! {}", e.getMessage());
-            throw new ServerException(VantarKey.DELETE_FAIL);
+            throw new ServerException(VantarKey.FAIL_DELETE);
         }
 
-        if (!ids.isEmpty()) {
-            afterDataChange(dto);
-        }
+//        if (!ids.isEmpty()) {
+//            afterDataChange(dto);
+//        }
 
-        return ResponseMessage.success(VantarKey.DELETE_SUCCESS, ids.size());
+        return ResponseMessage.success(VantarKey.SUCCESS_DELETE, ids.size());
     }
 
-    public static ResponseMessage batch(Params params, Dto dto) throws VantarException {
-        return batch(params, dto, null);
-    }
+//    public static ResponseMessage batch(Params params, Dto dto) throws VantarException {
+//        return batch(params, dto, null);
+//    }
+//
+//    public static ResponseMessage batch(Params params, Dto dto, BatchEvent event) throws VantarException {
+//        Batch update = params.getJson(Batch.class);
+//        ElasticWrite write = new ElasticWrite();
+//        write.startTransaction();
+//        try {
+//            String msg =
+//                deleteMany(write, update.delete, dto, event) + "\n\n" +
+//                insertMany(write, update.insert, dto.getClass(), event) + "\n\n" +
+//                updateMany(write, update.update, dto, event) + "\n\n";
+//
+//            write.commit();
+//            afterDataChange(dto);
+//            return ResponseMessage.success(msg);
+//
+//        } catch (DatabaseException e) {
+//            log.error("! {}", e.getMessage());
+//            throw new ServerException(VantarKey.FAIL_UPDATE);
+//        }
+//    }
 
-    public static ResponseMessage batch(Params params, Dto dto, BatchEvent event) throws VantarException {
-        Batch update = params.getJson(Batch.class);
-        ElasticWrite write = new ElasticWrite();
-        write.startTransaction();
-        try {
-            String msg =
-                deleteMany(write, update.delete, dto, event) + "\n\n" +
-                insertMany(write, update.insert, dto.getClass(), event) + "\n\n" +
-                updateMany(write, update.update, dto, event) + "\n\n";
-
-            write.commit();
-            afterDataChange(dto);
-            return ResponseMessage.success(msg);
-
-        } catch (DatabaseException e) {
-            log.error("! {}", e.getMessage());
-            throw new ServerException(VantarKey.UPDATE_FAIL);
-        }
-    }
-
-    private static String insertMany(ElasticWrite write, List<Map<String, Object>> records, Class<? extends Dto> tClass,
-        BatchEvent event) throws VantarException {
-
-        for (Map<String, Object> record : records) {
-            Dto dto = ClassUtil.getInstance(tClass);
-            if (dto == null) {
-                throw new ServerException(VantarKey.CAN_NOT_CREATE_DTO);
-            }
-
-            if (event != null && event.beforeInsert(dto)) {
-                throw new ServerException(VantarKey.INSERT_FAIL);
-            }
-
-            List<ValidationError> errors = dto.set(record, Dto.Action.INSERT);
-            if (!errors.isEmpty()) {
-                throw new InputException(errors);
-            }
-
-            try {
-                errors = CommonRepoElastic.getUniqueViolation(dto);
-                if (errors != null) {
-                    throw new InputException(errors);
-                }
-
-                write.insert(dto);
-            } catch (DatabaseException e) {
-                log.error("! {}", e.getMessage());
-                throw new ServerException(VantarKey.INSERT_FAIL);
-            }
-        }
-
-        return Locale.getString(VantarKey.INSERT_MANY_SUCCESS, records.size());
-    }
-
-    private static String updateMany(ElasticWrite write, List<Map<String, Object>> records, Dto dto, BatchEvent event)
-        throws VantarException {
-
-        for (Map<String, Object> record : records) {
-            if (event != null && event.beforeUpdate(dto)) {
-                throw new ServerException(VantarKey.UPDATE_FAIL);
-            }
-
-            List<ValidationError> errors = dto.set(record, Dto.Action.UPDATE_ALL_COLS);
-            if (!errors.isEmpty()) {
-                throw new InputException(errors);
-            }
-
-            try {
-                errors = CommonRepoElastic.getUniqueViolation(dto);
-                if (errors != null) {
-                    throw new InputException(errors);
-                }
-
-                write.update(dto);
-            } catch (DatabaseException e) {
-                log.error("! {}", e.getMessage());
-                throw new ServerException(VantarKey.UPDATE_FAIL);
-            }
-        }
-
-        return Locale.getString(VantarKey.UPDATE_MANY_SUCCESS, records.size());
-    }
-
-    private static String deleteMany(ElasticWrite write, List<Long> ids, Dto dto, BatchEvent event) throws VantarException {
-        for (Long id : ids) {
-            dto.setId(id);
-            if (event != null && event.beforeDelete(dto)) {
-                throw new ServerException(VantarKey.DELETE_FAIL);
-            }
-
-            if (NumberUtil.isIdInvalid(id)) {
-                throw new InputException(new ValidationError(VantarParam.ID, VantarKey.INVALID_ID));
-            }
-
-            try {
-                write.delete(dto);
-            } catch (Exception e) {
-                log.error("! {}", e.getMessage());
-                throw new ServerException(VantarKey.DELETE_FAIL);
-            }
-        }
-
-        return Locale.getString(VantarKey.DELETE_MANY_SUCCESS, ids.size());
-    }
+//    private static String insertMany(ElasticWrite write, List<Map<String, Object>> records, Class<? extends Dto> tClass,
+//        BatchEvent event) throws VantarException {
+//
+//        for (Map<String, Object> record : records) {
+//            Dto dto = ClassUtil.getInstance(tClass);
+//            if (dto == null) {
+//                throw new ServerException(VantarKey.CAN_NOT_CREATE_DTO);
+//            }
+//
+//            if (event != null && event.beforeInsert(dto)) {
+//                throw new ServerException(VantarKey.FAIL_INSERT);
+//            }
+//
+//            List<ValidationError> errors = dto.set(record, Dto.Action.INSERT);
+//            if (!errors.isEmpty()) {
+//                throw new InputException(errors);
+//            }
+//
+//            try {
+//                errors = CommonRepoElastic.getUniqueViolation(dto);
+//                if (errors != null) {
+//                    throw new InputException(errors);
+//                }
+//
+//                write.insert(dto);
+//            } catch (DatabaseException e) {
+//                log.error("! {}", e.getMessage());
+//                throw new ServerException(VantarKey.FAIL_INSERT);
+//            }
+//        }
+//
+//        return Locale.getString(VantarKey.SUCCESS_INSERT, records.size());
+//    }
+//
+//    private static String updateMany(ElasticWrite write, List<Map<String, Object>> records, Dto dto, BatchEvent event)
+//        throws VantarException {
+//
+//        for (Map<String, Object> record : records) {
+//            if (event != null && event.beforeUpdate(dto)) {
+//                throw new ServerException(VantarKey.FAIL_UPDATE);
+//            }
+//
+//            List<ValidationError> errors = dto.set(record, Dto.Action.UPDATE_ALL_COLS);
+//            if (!errors.isEmpty()) {
+//                throw new InputException(errors);
+//            }
+//
+//            try {
+//                errors = CommonRepoElastic.getUniqueViolation(dto);
+//                if (errors != null) {
+//                    throw new InputException(errors);
+//                }
+//
+//                write.update(dto);
+//            } catch (DatabaseException e) {
+//                log.error("! {}", e.getMessage());
+//                throw new ServerException(VantarKey.FAIL_UPDATE);
+//            }
+//        }
+//
+//        return Locale.getString(VantarKey.SUCCESS_UPDATE, records.size());
+//    }
+//
+//    private static String deleteMany(ElasticWrite write, List<Long> ids, Dto dto, BatchEvent event) throws VantarException {
+//        for (Long id : ids) {
+//            dto.setId(id);
+//            if (event != null && event.beforeDelete(dto)) {
+//                throw new ServerException(VantarKey.FAIL_DELETE);
+//            }
+//
+//            if (NumberUtil.isIdInvalid(id)) {
+//                throw new InputException(new ValidationError(VantarParam.ID, VantarKey.INVALID_ID));
+//            }
+//
+//            try {
+//                write.delete(dto);
+//            } catch (Exception e) {
+//                log.error("! {}", e.getMessage());
+//                throw new ServerException(VantarKey.FAIL_DELETE);
+//            }
+//        }
+//
+//        return Locale.getString(VantarKey.SUCCESS_DELETE, ids.size());
+//    }
 
     public static ResponseMessage purge(String collection) throws ServerException {
         try {
             CommonRepoElastic.purge(collection);
-            return ResponseMessage.success(VantarKey.DELETE_SUCCESS);
+            return ResponseMessage.success(VantarKey.SUCCESS_DELETE);
         } catch (DatabaseException e) {
             log.error("! {}", e.getMessage());
-            throw new ServerException(VantarKey.DELETE_FAIL);
+            throw new ServerException(VantarKey.FAIL_DELETE);
         }
     }
 
     public static ResponseMessage purgeData(String collection) throws ServerException {
         try {
             CommonRepoElastic.purgeData(collection);
-            return ResponseMessage.success(VantarKey.DELETE_SUCCESS);
+            return ResponseMessage.success(VantarKey.SUCCESS_DELETE);
         } catch (DatabaseException e) {
             log.error("! {}", e.getMessage());
-            throw new ServerException(VantarKey.DELETE_FAIL);
+            throw new ServerException(VantarKey.FAIL_DELETE);
         }
     }
 
@@ -440,7 +440,7 @@ public class CommonModelElastic extends ModelCommon {
                 return;
             }
             if (ui != null) {
-                ui.addMessage(VantarKey.DELETE_SUCCESS).write();
+                ui.addMessage(VantarKey.SUCCESS_DELETE).write();
             }
         }
 
@@ -461,7 +461,7 @@ public class CommonModelElastic extends ModelCommon {
                 write.insert(dto);
                 success.getAndIncrement();
             } catch (DatabaseException e) {
-                ui.addErrorMessage(presentValue + " " + Locale.getString(VantarKey.IMPORT_FAIL));
+                ui.addErrorMessage(presentValue + " " + Locale.getString(VantarKey.FAIL_IMPORT));
                 failed.getAndIncrement();
             }
         };

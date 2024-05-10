@@ -53,7 +53,7 @@ public class AdminQueue {
             return;
         }
 
-        if (!params.isChecked("f")) {
+        if (!params.contains("f")) {
             ui  .beginFormPost()
                 .addInput(VantarKey.ADMIN_DELAY, "delay", 1, null, "ltr")
                 .addInput(VantarKey.ADMIN_ATTEMPTS, "tries", 100, null, "ltr")
@@ -73,7 +73,7 @@ public class AdminQueue {
             return;
         }
 
-        if (!params.isChecked("f")) {
+        if (!params.contains("f")) {
             ui  .beginFormPost()
                 .addInput(VantarKey.ADMIN_DELAY, "delay", 1, null, "ltr")
                 .addInput(VantarKey.ADMIN_ATTEMPTS, "tries", 100, null, "ltr")
@@ -122,7 +122,7 @@ public class AdminQueue {
             int tryCount = 1;
             String msg = "";
             while (count > 0 && tryCount++ <= maxTries) {
-                msg = Queue.delete(queueName) ? Locale.getString(VantarKey.DELETE_SUCCESS) : Locale.getString(VantarKey.DELETE_FAIL);
+                msg = Queue.delete(queueName) ? Locale.getString(VantarKey.SUCCESS_DELETE) : Locale.getString(VantarKey.FAIL_DELETE);
                 ui.sleepMs(delay * 1000);
                 count = Queue.count(queueName);
             }
@@ -145,7 +145,7 @@ public class AdminQueue {
             String msg = "";
             while (count > 0 && tryCount++ <= maxTries) {
                 msg = Queue.delete(queueName) ?
-                    Locale.getString(VantarKey.DELETE_SUCCESS) : Locale.getString(VantarKey.DELETE_FAIL);
+                    Locale.getString(VantarKey.SUCCESS_DELETE) : Locale.getString(VantarKey.FAIL_DELETE);
                 ui.sleepMs(delay * 1000);
                 count = Queue.count(queueName);
             }

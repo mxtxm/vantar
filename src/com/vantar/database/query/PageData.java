@@ -10,8 +10,11 @@ public class PageData {
     public List<String> columns;
     public List<? extends Dto> data;
     public int page;
+    // page length
     public int length;
+    // result record count for this page ---> recordCount =< length
     public int recordCount;
+    // total record count
     public long total;
     public String errors;
 

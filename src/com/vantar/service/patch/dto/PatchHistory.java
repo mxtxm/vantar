@@ -11,9 +11,9 @@ public class PatchHistory extends DtoBase {
     public String patchClass;
     @CreateTime
     public DateTime executedTime;
-    @ExcludeList
+    @NoList
     public List<String> success;
-    @ExcludeList
+    @NoList
     public List<String> fail;
     public Integer successCount;
     public Integer failCount;

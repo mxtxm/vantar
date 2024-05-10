@@ -19,7 +19,7 @@ public class Permission extends DtoBase {
     public String method;
     // for info only
     public String path;
-    @ExcludeList
+    @NoList
     public Set<String> allowedRoles;
     public String allowedFeature;
     public String extraData;

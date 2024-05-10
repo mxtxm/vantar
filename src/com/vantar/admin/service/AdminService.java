@@ -32,7 +32,7 @@ public class AdminService {
 
         String service = params.getString("s");
         String action = params.getString("a");
-        if (!params.isChecked("f") || StringUtil.isEmpty(service) || StringUtil.isEmpty(action)
+        if (!params.contains("f") || StringUtil.isEmpty(service) || StringUtil.isEmpty(action)
             || !params.isChecked(WebUi.PARAM_CONFIRM)) {
             ui.beginFormPost()
                 .addSelect(VantarKey.ADMIN_SERVICE, "s", getServiceNames())
@@ -73,7 +73,7 @@ public class AdminService {
     public static void factoryReset(Params params, HttpServletResponse response) throws FinishException {
         WebUi ui = Admin.getUi(VantarKey.ADMIN_FACTORY_RESET, params, response, true);
 
-        if (!params.isChecked("f") || !params.isChecked(WebUi.PARAM_CONFIRM)) {
+        if (!params.contains("f") || !params.isChecked(WebUi.PARAM_CONFIRM)) {
             ui  .beginFormPost()
                 .addInput(VantarKey.ADMIN_DELAY, "delay", 1, null, "ltr")
                 .addInput(VantarKey.ADMIN_ATTEMPTS, "tries", 20, null, "ltr")
@@ -127,7 +127,7 @@ public class AdminService {
         ui.sleepMs(delay);
 
         ui.beginBox("Database index").write();
-        AdminDatabaseIndex.createIndexMongo(ui, true);
+        AdminDatabaseIndex.createIndexMongo(ui, true, exclude, null);
         AdminDatabaseIndex.createIndexSql(ui, true);
         ui.blockEnd().write();
         ui.sleepMs(delay);

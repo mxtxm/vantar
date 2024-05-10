@@ -76,7 +76,7 @@ public class AdminSettings {
         ui  .addEmptyLine()
             .addHeading(3, filename);
 
-        if (params.isChecked("f")) {
+        if (params.contains("f")) {
             Map<String, String> settings = new HashMap<>(20, 1);
             for (String item : properties.propertyNames()) {
                 ((org.aeonbits.owner.Mutable) properties).setProperty(item, params.getString(item));

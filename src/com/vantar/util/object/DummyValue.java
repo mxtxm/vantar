@@ -6,11 +6,12 @@ import com.vantar.util.bool.BoolUtil;
 import com.vantar.util.collection.CollectionUtil;
 import com.vantar.util.datetime.*;
 import com.vantar.util.number.NumberUtil;
+import com.vantar.util.string.StringUtil;
 import java.lang.reflect.Field;
 import java.util.*;
 
 /**
- * Set dummy value
+ * Get dummy value
  */
 public class DummyValue {
 
@@ -54,56 +55,49 @@ public class DummyValue {
     }
 
     public static Object getDummyObjectValue(String type) {
-        Class<?> t;
         type = type.toLowerCase();
-        switch (type) {
-            case "long":
-                t = Long.class;
-                break;
-            case "integer":
-                t = Integer.class;
-                break;
-            case "double":
-                t = Double.class;
-                break;
-            case "float":
-                t = Float.class;
-                break;
-            case "number":
-                t = Number.class;
-                break;
-            case "string":
-                t = String.class;
-                break;
-            case "datetime":
-                t = DateTime.class;
-                break;
-            case "location":
-                t = Location.class;
-                break;
-            case "boolean":
-                t = BoolUtil.class;
-                break;
-            case "character":
-                t = Character.class;
-                break;
-            case "datetimerange":
-                t = DateTimeRange.class;
-                break;
-            default:
-                if (type.startsWith("list")) {
-                    return "[ ]";
-                }
-                if (type.startsWith("set")) {
-                    return "[ ]";
-                }
-                return "{ }";
+        Class<?> t = getType(type);
+        if (t != null) {
+            return getDummyObjectValue(t, null, null);
         }
-        return getDummyObjectValue(t, null, null);
+        if ("file".equals(type)) {
+            return "FILE/UPLOAD";
+        }
+        if (type.startsWith("list")) {
+            Class<?> g = getType(StringUtil.remove(type, "list", "<", ">").trim());
+            return g == null ? "[ ]" : getDummyObjectValue(List.class, null, new Class[] {g});
+        }
+        if (type.startsWith("set")) {
+            Class<?> g = getType(StringUtil.remove(type, "set", "<", ">").trim());
+            return g == null ? "[ ]" : getDummyObjectValue(Set.class, null, new Class[] {g});
+        }
+        if (type.startsWith("map")) {
+            String[] parts = StringUtil.split(StringUtil.remove(type, "map", "<", ">"), ",");
+            if (parts == null || parts.length != 2) {
+                return "{ }";
+            }
+            Class<?> g1 = getType(parts[0].trim());
+            Class<?> g2 = getType(parts[1].trim());
+            return g1 == null || g2 == null ? "{ }" : getDummyObjectValue(Map.class, null, new Class<?>[] {g1, g2});
+        }
+        return null;
     }
 
     public static Object getDummyObjectValue(Class<?> type) {
         return getDummyObjectValue(type, null, null);
+    }
+
+    public static Object getDummyObjectValue(Class<?> type, Class<?>... g) {
+        if (List.class.equals(type)) {
+            return getDummyObjectValue(List.class, null, g);
+        }
+        if (Set.class.equals(type)) {
+            return getDummyObjectValue(Set.class, null, g);
+        }
+        if (Map.class.equals(type)) {
+            return getDummyObjectValue(Map.class, null, g);
+        }
+        return null;
     }
 
     @SuppressWarnings({"unchecked"})
@@ -166,5 +160,35 @@ public class DummyValue {
             return map;
         }
         return "{" + type.getSimpleName() + "}";
+    }
+
+
+    private static Class<?> getType(String type) {
+        type = type.toLowerCase();
+        switch (type) {
+            case "long":
+                return Long.class;
+            case "integer":
+                return Integer.class;
+            case "double":
+                return Double.class;
+            case "float":
+                return Float.class;
+            case "number":
+                return Number.class;
+            case "string":
+                return String.class;
+            case "datetime":
+                return DateTime.class;
+            case "location":
+                return Location.class;
+            case "boolean":
+                return BoolUtil.class;
+            case "character":
+                return Character.class;
+            case "datetimerange":
+                return DateTimeRange.class;
+        }
+        return null;
     }
 }

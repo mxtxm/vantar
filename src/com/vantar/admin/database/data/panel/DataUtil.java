@@ -67,9 +67,7 @@ public class DataUtil {
         }
         u.dto = info.getDtoInstance();
 
-        boolean isLog = Log.class.equals(u.dto.getClass())
-            || UserWebLog.class.equals(u.dto.getClass())
-            || UserLog.class.equals(u.dto.getClass());
+        boolean isLog = isDtoLog(u.dto);
 
         List<String> menuItems = new ArrayList<>(10);
         menuItems.add("list");
@@ -120,11 +118,9 @@ public class DataUtil {
             throw new FinishException();
         }
 
-        boolean isLog = Log.class.equals(u.dto.getClass())
-            || UserWebLog.class.equals(u.dto.getClass())
-            || UserLog.class.equals(u.dto.getClass());
+        boolean isLog = isDtoLog(u.dto);
 
-        List<String> menuItems = new ArrayList<>(10);
+        List<String> menuItems = new ArrayList<>(11);
         if (userName == null) {
             menuItems.add("view");
             menuItems.add("update");
@@ -148,11 +144,22 @@ public class DataUtil {
                 }
             }
         }
+        menuItems.add("update-property");
 
         u.ui.addDtoItemLinks(u.dto.getClass().getSimpleName(), u.dto.getId(), menuItems, exclude)
             .addEmptyLine();
 
         return u;
+    }
+
+    public static boolean isDtoLog(Dto dto) {
+        return
+            Log.class.equals(dto.getClass())
+                || Log.Mini.class.equals(dto.getClass())
+                || UserWebLog.class.equals(dto.getClass())
+                || UserWebLog.Mini.class.equals(dto.getClass())
+                || UserLog.class.equals(dto.getClass())
+                || UserLog.Mini.class.equals(dto.getClass());
     }
 
     public interface Event {

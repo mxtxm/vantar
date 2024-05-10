@@ -86,7 +86,7 @@ public class Xlsx {
                 config.filename = filename;
 
                 if (!uploaded.moveTo(config.uploadDir, filename)) {
-                    throw new ServerException(VantarKey.UPLOAD_FAIL);
+                    throw new ServerException(VantarKey.FAIL_UPLOAD);
                 }
                 filepath = config.uploadDir + filename;
             }

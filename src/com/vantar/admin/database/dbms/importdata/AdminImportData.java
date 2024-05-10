@@ -10,6 +10,7 @@ import com.vantar.database.sql.SqlConnection;
 import com.vantar.exception.FinishException;
 import com.vantar.locale.*;
 import com.vantar.locale.Locale;
+import com.vantar.util.object.ObjectUtil;
 import com.vantar.util.string.StringUtil;
 import com.vantar.web.*;
 import javax.servlet.http.HttpServletResponse;
@@ -22,7 +23,7 @@ import java.util.*;
 public class AdminImportData {
 
     public static void importData(Params params, HttpServletResponse response, DtoDictionary.Dbms dbms) throws FinishException {
-        WebUi ui = Admin.getUi(VantarKey.ADMIN_IMPORT_TITLE, params, response, true);
+        WebUi ui = Admin.getUi(VantarKey.ADMIN_IMPORT, params, response, true);
         if (!(DtoDictionary.Dbms.MONGO.equals(dbms) ? MongoConnection.isUp()
             : (DtoDictionary.Dbms.SQL.equals(dbms) ? SqlConnection.isUp() : ElasticConnection.isUp()))) {
             ui.addMessage(Locale.getString(VantarKey.ADMIN_SERVICE_IS_OFF, dbms)).finish();
@@ -32,7 +33,7 @@ public class AdminImportData {
         ui  .addHeading(2, dbms)
             .addEmptyLine(2).write();
 
-        if (!params.isChecked("f") || !params.isChecked("confirm")) {
+        if (!params.contains("f") || !params.isChecked("confirm")) {
             List<DtoDictionary.Info> dtoList = DtoDictionary.getAll();
             Collection<Object> dtos = new TreeSet<>();
             for (DtoDictionary.Info i : dtoList) {
@@ -73,10 +74,10 @@ public class AdminImportData {
 
         for (DtoDictionary.Info info : DtoDictionary.getAll(DtoDictionary.Dbms.MONGO)) {
             Dto dto = info.getDtoInstance();
-            if (excludes != null && excludes.contains(info.getDtoClassName())) {
+            if (ObjectUtil.isNotEmpty(excludes) && excludes.contains(info.getDtoClassName())) {
                 continue;
             }
-            if (includes != null && !includes.contains(info.getDtoClassName())) {
+            if (ObjectUtil.isNotEmpty(includes) && !includes.contains(info.getDtoClassName())) {
                 continue;
             }
 
@@ -102,10 +103,10 @@ public class AdminImportData {
 
         for (DtoDictionary.Info info : DtoDictionary.getAll(DtoDictionary.Dbms.SQL)) {
             Dto dto = info.getDtoInstance();
-            if (excludes != null && excludes.contains(info.getDtoClassName())) {
+            if (ObjectUtil.isNotEmpty(excludes) && excludes.contains(info.getDtoClassName())) {
                 continue;
             }
-            if (includes != null && !includes.contains(info.getDtoClassName())) {
+            if (ObjectUtil.isNotEmpty(includes) && !includes.contains(info.getDtoClassName())) {
                 continue;
             }
 
@@ -131,10 +132,10 @@ public class AdminImportData {
 
         for (DtoDictionary.Info info : DtoDictionary.getAll(DtoDictionary.Dbms.ELASTIC)) {
             Dto dto = info.getDtoInstance();
-            if (excludes != null && excludes.contains(info.getDtoClassName())) {
+            if (ObjectUtil.isNotEmpty(excludes) && excludes.contains(info.getDtoClassName())) {
                 continue;
             }
-            if (includes != null && !includes.contains(info.getDtoClassName())) {
+            if (ObjectUtil.isNotEmpty(includes) && !includes.contains(info.getDtoClassName())) {
                 continue;
             }
 

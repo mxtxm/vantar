@@ -25,40 +25,31 @@ public class AdminDataInsert {
             }
         }
 
-        if (!params.isChecked("f")) {
+        if (!params.contains("f")) {
             u.ui.addDtoAddForm(u.dto, u.dto.getProperties());
             u.ui.finish();
             return;
         }
 
         if (NumberUtil.isIdInvalid(u.dto.getId())) {
-            u.dto.setClearIdOnInsert(false);
+            u.dto.autoIncrementOnInsert(false);
         }
         if (event != null) {
             event.beforeInsert(u.dto);
         }
         try {
             if (info.dbms.equals(DtoDictionary.Dbms.MONGO)) {
-                ModelMongo.insert(new ModelCommon.Settings(
-                    params,
-                    u.dto,
-                    new ModelCommon.WriteEvent() {
-                        @Override
-                        public void beforeWrite(Dto dto) {
-
+                ModelMongo.insert(new ModelCommon.Settings(params, u.dto)
+                    .isJson("asjson")
+                    .setEventAfterWrite(dto -> {
+                        if (dto instanceof CommonUser) {
+                            ModelCommon.insertPassword(
+                                dto,
+                                Json.d.extract(params.getString("asjson"), "password", String.class)
+                            );
                         }
-
-                        @Override
-                        public void afterWrite(Dto dto) throws ServerException {
-                            if (dto instanceof CommonUser) {
-                                ModelCommon.insertPassword(
-                                    dto,
-                                    Json.d.extract(params.getString("asjson"), "password", String.class)
-                                );
-                            }
-                        }
-                    }
-                ).isJson("asjson"));
+                    })
+                );
 
             } else if (info.dbms.equals(DtoDictionary.Dbms.SQL)) {
                 CommonModelSql.insert(params, u.dto);
@@ -68,7 +59,7 @@ public class AdminDataInsert {
             if (event != null) {
                 event.afterInsert(u.dto);
             }
-            u.ui.addMessage(VantarKey.INSERT_SUCCESS);
+            u.ui.addMessage(VantarKey.SUCCESS_INSERT);
 
         } catch (VantarException e) {
             u.ui.addErrorMessage(e);

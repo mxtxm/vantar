@@ -220,7 +220,7 @@ public class ImportGeneric {
         log.info("import end ({}) <---\n\n", elapsed);
         ServiceLog.addAction("IMPORT", title);
 
-        return ResponseMessage.success(VantarKey.UPLOAD_SUCCESS, result);
+        return ResponseMessage.success(VantarKey.SUCCESS_UPLOAD, result);
     }
 
 

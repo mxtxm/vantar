@@ -9,3 +9,4 @@ Iman Heydari
 * logs
 * dto diff
 * log diff
+* DateTime exception removed, like locatoin isvalid...

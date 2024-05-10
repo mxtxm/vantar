@@ -36,7 +36,7 @@ public class MongoMapping {
         return document;
     }
 
-    public static Document getFieldValuesAsDocument(Dto dto, Dto.Action action) {
+    public static Document asDocument(Dto dto, Dto.Action action) {
         Document document = new Document();
         for (StorableData info : dto.getStorableData()) {
             if (info.name.equals(VantarParam.ID)) {
@@ -129,7 +129,7 @@ public class MongoMapping {
 
         } else if (info.value instanceof Dto) {
             ((Dto) info.value).setToDefaultsWhenNull();
-            return getFieldValuesAsDocument((Dto) info.value, action);
+            return asDocument((Dto) info.value, action);
 
         } else {
             if (!info.type.getPackage().getName().startsWith("java.")) {
@@ -265,34 +265,10 @@ public class MongoMapping {
         }
     }
 
-    public static Document getMongoMatches(QueryCondition qCondition, Dto dto/*, boolean logicalDeletedAdded*/) {
-        //if (!dto.isDeleteLogicalEnabled() && (qCondition == null || qCondition.q.size() == 0)) {
+    public static Document getMongoMatches(QueryCondition qCondition, Dto dto) {
         if (qCondition == null || qCondition.q.size() == 0) {
             return null;
         }
-
-//        QueryCondition condition;
-//        if (!logicalDeletedAdded && dto.isDeleteLogicalEnabled() && dto.getDeletedQueryPolicy() != Dto.QueryDeleted.SHOW_ALL) {
-//            if (qCondition == null) {
-//                condition = new QueryCondition(dto.getStorage());
-//            } else if (qCondition.operator.equals(AND)) {
-//                condition = qCondition;
-//            } else {
-//                condition = new QueryCondition(dto.getStorage());
-//                condition.addCondition(qCondition);
-//            }
-
-//            switch (dto.getDeletedQueryPolicy()) {
-//                case SHOW_NOT_DELETED:
-//                    condition.notEqual(Mongo.LOGICAL_DELETE_FIELD, Mongo.LOGICAL_DELETE_VALUE);
-//                    break;
-//                case SHOW_DELETED:
-//                    condition.equal(Mongo.LOGICAL_DELETE_FIELD, Mongo.LOGICAL_DELETE_VALUE);
-//                    break;
-//            }
-//        } else {
-//            condition = qCondition;
-//        }
 
         List<Bson> matches = new ArrayList<>(10);
         for (QueryMatchItem item : qCondition.q) {
@@ -308,6 +284,9 @@ public class MongoMapping {
                     fieldName = Mongo.ID;
                 } else if (fieldName.endsWith(".id")) {
                     fieldName = StringUtil.replace(fieldName, ".id", "." + Mongo.ID);
+                    // todo: is this correct?
+                } else if (fieldName.endsWith(".+id")) {
+                    fieldName = StringUtil.replace(fieldName, ".+id", ".id");
                 } else if (fieldName.endsWith(".-1")) {
                     fieldName = StringUtil.remove(fieldName, ".-1");
                     searchInLastListItem = true;
@@ -552,7 +531,7 @@ public class MongoMapping {
         }
 
         Document document = matches.isEmpty() ? new Document() : new Document(op, matches);
-        if (qCondition != null && qCondition.inspect) {
+        if (qCondition.inspect) {
             Mongo.log.info(" > mongo condition dump: {} --> {}", dto.getClass().getSimpleName(), document);
         }
 

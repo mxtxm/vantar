@@ -41,13 +41,14 @@ public interface Dto {
     void addNullProperties(String... nullProperties);
     void removeNullProperties(String... nullProperties);
     void removeNullPropertiesNatural();
+    void addNullPropertiesNatural();
     void setNullProperties(String... nullProperties);
     Set<String> getNullProperties();
     boolean isNull(String name);
 
     Field getField(String name);
     Field[] getFields();
-    String[] getFieldNames();
+    String[] getFieldNamesForQuery();
 
     Class<?> getPropertyType(String name);
     Class<?> getPropertyType(Field field);
@@ -64,35 +65,38 @@ public interface Dto {
     Map<String, Object> getPropertyValuesIncludeNulls(String... include);
     Map<String, Object> getPropertyValues(boolean includeNulls, boolean snakeCase, Map<String, String> propertyNameMap, String... include);
 
-    void setToDefaults();
-    void setToDefaultsWhenNull();
     Object getDefaultValue(String name);
-
     List<String> getPresentationPropertyNames();
     String getPresentationValue();
     String getPresentationValue(String separator);
-
-    void setClearIdOnInsert(boolean clearIdOnInsert);
-    boolean getClearIdOnInsert();
-
-    void simpleSet(Dto dto, String... include);
-    List<ValidationError> setPropertyValue(String name, Object value);
-    List<ValidationError> setPropertyValue(String name, Object value, Action action);
-    List<ValidationError> set(Dto dto, String... locales);
-    List<ValidationError> set(Dto dto, Action action, String... locales);
-    List<ValidationError> set(String json, Dto.Action action);
-    List<ValidationError> set(Map<String, Object> params, Action action);
-    List<ValidationError> set(Params params, Action action);
-    List<ValidationError> set(Params params, Action action, String prefix, String suffix);
-    List<ValidationError> validate(Action action);
-
-    void setColPrefix(String colPrefix);
-
     Dto.Action getAction(Dto.Action defaultAction);
     String[] getIndexes();
+    List<StorableData> getStorableData();
+
+    void autoIncrementOnInsert(boolean autoIncrement);
+    boolean isAutoIncrementOnInsert();
+
+    void setToDefaults();
+    void setToDefaultsWhenNull();
+    void simpleSet(Dto dto, String... include);
+    boolean set(Dto dto, String... locales);
+    boolean set(Dto dto, Action action, String... locales);
+    boolean set(String json, Dto.Action action);
+    boolean set(String json, Dto.Action action, String prefix, String suffix);
+    boolean set(Map<String, Object> params, Action action);
+    boolean set(Map<String, Object> map, Action action, String prefix, String suffix);
+    boolean set(Params params, Action action);
+    boolean set(Params params, Action action, String prefix, String suffix);
+    boolean setPropertyValue(String name, Object value);
+    boolean setPropertyValue(String name, Object value, Action action);
+
+    List<ValidationError> validate(Action action);
+    List<ValidationError> validateProperty(String name, Action action);
+
+    void setColPrefix(String colPrefix);
     void setCreateTime(boolean setCreateTime);
     void setUpdateTime(boolean setUpdateTime);
-    List<StorableData> getStorableData();
+
     List<ManyToManyDefinition> getManyToManyFieldValues(long id);
 
     void beforeJson();
@@ -105,7 +109,6 @@ public interface Dto {
     void afterSetData();
     void afterFetchData(long i);
     void afterFetchData();
-
 
 
     enum Action {
@@ -128,12 +131,5 @@ public interface Dto {
         PURGE,
 
         UPLOAD,
-    }
-
-
-    enum QueryDeleted {
-        SHOW_DELETED,
-        SHOW_NOT_DELETED,
-        SHOW_ALL,
     }
 }

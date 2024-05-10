@@ -9,6 +9,7 @@ public class DefaultStringsEn {
 
     static {
         tokens = new HashMap<>(300, 1);
+
         // auth
         tokens.put(VantarKey.USERNAME, "Username");
         tokens.put(VantarKey.PASSWORD, "Password");
@@ -66,31 +67,19 @@ public class DefaultStringsEn {
         tokens.put(VantarKey.CAN_NOT_CREATE_DTO, "Server error: failed to create DTO data object.");
         tokens.put(VantarKey.ARTA_FILE_CREATE_ERROR, "Server error: Arta SQL database synch failed.");
 
-
-
-
-
-
-
-
-        // data fetch
-        tokens.put(VantarKey.FETCH_FAIL, "Data fetch failed");
-        tokens.put(VantarKey.NO_CONTENT, "No content");
-
-        // data write
-        tokens.put(VantarKey.UPLOAD_SUCCESS, "File uploaded successfully \"{0}\"");
-        tokens.put(VantarKey.UPLOAD_FAIL, "File uploaded failed \"{0}\"");
-        tokens.put(VantarKey.INSERT_SUCCESS, "Data inserted successfully");
-        tokens.put(VantarKey.INSERT_MANY_SUCCESS, "\"{0}\" items inserted successfully");
-        tokens.put(VantarKey.INSERT_FAIL, "Insert failed");
-        tokens.put(VantarKey.UPDATE_SUCCESS, "Data updated successfully");
-        tokens.put(VantarKey.UPDATE_MANY_SUCCESS, "(\"{0}\") items updated successfully");
-        tokens.put(VantarKey.UPDATE_FAIL, "Update failed");
-        tokens.put(VantarKey.DELETE_SUCCESS, "Data deleted successfully");
-        tokens.put(VantarKey.DELETE_MANY_SUCCESS, "(\"{0}\") items deleted successfully");
-        tokens.put(VantarKey.DELETE_FAIL, "Delete failed");
-        tokens.put(VantarKey.IMPORT_FAIL, "Data import failed");
-        tokens.put(VantarKey.INVALID_JSON_DATA, "Invalid json data");
+        // data
+        tokens.put(VantarKey.NO_CONTENT, "No content.");
+        tokens.put(VantarKey.FAIL_FETCH, "Data fetch failed!");
+        tokens.put(VantarKey.SUCCESS_INSERT, "Data inserted successfully.");
+        tokens.put(VantarKey.FAIL_INSERT, "Data insert failed!");
+        tokens.put(VantarKey.SUCCESS_UPDATE, "Data updated successfully.");
+        tokens.put(VantarKey.FAIL_UPDATE, "Update failed!");
+        tokens.put(VantarKey.SUCCESS_DELETE, "Data deleted successfully.");
+        tokens.put(VantarKey.FAIL_DELETE, "Delete failed!");
+        tokens.put(VantarKey.INVALID_JSON_DATA, "Invalid json data!");
+        tokens.put(VantarKey.FAIL_IMPORT, "Data import failed!");
+        tokens.put(VantarKey.SUCCESS_UPLOAD, "File uploaded successfully ({0})");
+        tokens.put(VantarKey.FAIL_UPLOAD, "File uploaded failed ({0})!");
 
         // admin
         tokens.put(VantarKey.ADMIN_MENU_HOME, "Home");
@@ -102,6 +91,8 @@ public class DefaultStringsEn {
         tokens.put(VantarKey.ADMIN_MENU_QUERY, "Queries");
         tokens.put(VantarKey.ADMIN_MENU_DOCUMENTS, "Documents");
         tokens.put(VantarKey.ADMIN_MENU_BUGGER, "Bug report");
+
+
 
         tokens.put(VantarKey.ADMIN_USERS, "Users");
         tokens.put(VantarKey.ADMIN_SYSTEM_ERRORS, "System errors");
@@ -167,7 +158,6 @@ public class DefaultStringsEn {
         tokens.put(VantarKey.ADMIN_DATABASE_INDEX, "Database indexes");
         tokens.put(VantarKey.ADMIN_DATABASE_SEQUENCE, "Database sequences");
         tokens.put(VantarKey.ADMIN_DELAY, "Delay in seconds");
-        tokens.put(VantarKey.ADMIN_IMPORT_TITLE, "Import data");
         tokens.put(VantarKey.ADMIN_ELASTIC_INDEX_DEF, "ELASTIC index definition ...");
         tokens.put(VantarKey.ADMIN_ELASTIC_SETTINGS, "ELASTIC index settings ...");
         tokens.put(VantarKey.ADMIN_ELASTIC_SETTINGS_MSG1, "You may shrink, clone or refresh target indexes");
@@ -187,7 +177,6 @@ public class DefaultStringsEn {
         tokens.put(VantarKey.ADMIN_RECOVER_TOKEN_TEMP, "Temp recovery tokens");
 
         tokens.put(VantarKey.ADMIN_SERVICE, "Service");
-        tokens.put(VantarKey.ADMIN_MENU_QUERY_TITLE, "Queries");
         tokens.put(VantarKey.ADMIN_QUERY_NEW, "New query");
         tokens.put(VantarKey.ADMIN_TITLE, "Title");
         tokens.put(VantarKey.ADMIN_CONFIRM, "I'm sure");
@@ -286,7 +275,10 @@ public class DefaultStringsEn {
         tokens.put(VantarKey.ADMIN_VIEW, "View");
         tokens.put(VantarKey.ADMIN_REVERT, "Revert");
         tokens.put(VantarKey.ADMIN_LOG_DIFFERENCES, "View differences");
-        tokens.put(VantarKey.ADMIN_WEB_LOG, "Web log");
+        tokens.put(VantarKey.ADMIN_LOG_WEB, "Log web");
+        tokens.put(VantarKey.ADMIN_WEB, "Web");
+        tokens.put(VantarKey.ADMIN_MENU_TEST, "Test");
+        tokens.put(VantarKey.ADMIN_UPDATE_PROPERTY, "Update property");
 
     }
 

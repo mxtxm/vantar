@@ -111,6 +111,6 @@ public class AdminDtoCache {
 
         cache.update(dtoClass);
 
-        ui.addMessage(VantarKey.UPDATE_SUCCESS).finish();
+        ui.addMessage(VantarKey.SUCCESS_UPDATE).finish();
     }
 }

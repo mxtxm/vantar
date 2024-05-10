@@ -14,14 +14,14 @@ public class AdminBugger {
         WebUi ui = Admin.getUi("Bug report", params, response, false);
 
         Bugger bugger = new Bugger();
-        if (params.isChecked("f")) {
+        if (params.contains("f")) {
             try {
                 bugger.environment = params.getStringRequired("e");
                 bugger.url = params.getStringRequired("u");
                 bugger.data = params.getString("d");
                 bugger.description = params.getStringRequired("m");
                 ModelMongo.insert(new ModelCommon.Settings(bugger).mutex(false).logEvent(false));
-                ui.addMessage(VantarKey.INSERT_SUCCESS);
+                ui.addMessage(VantarKey.SUCCESS_INSERT);
             } catch (VantarException e) {
                 ui.addErrorMessage(e);
             }

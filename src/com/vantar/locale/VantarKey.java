@@ -2,6 +2,7 @@ package com.vantar.locale;
 
 
 public enum VantarKey implements LangKey {
+
     // auth
     USERNAME,
     PASSWORD,
@@ -59,31 +60,19 @@ public enum VantarKey implements LangKey {
     CAN_NOT_CREATE_DTO,
     ARTA_FILE_CREATE_ERROR,
 
-
-    //cleaned till here
-
-
-
-
-
-    // data fetch
-    FETCH_FAIL,
+    // data
+    FAIL_FETCH,
     NO_CONTENT,
-
-    // data write
-    UPLOAD_SUCCESS,
-    UPLOAD_FAIL,
-    INSERT_SUCCESS,
-    INSERT_MANY_SUCCESS,
-    INSERT_FAIL,
-    UPDATE_SUCCESS,
-    UPDATE_MANY_SUCCESS,
-    UPDATE_FAIL,
-    DELETE_SUCCESS,
-    DELETE_MANY_SUCCESS,
-    DELETE_FAIL,
-    IMPORT_FAIL,
+    SUCCESS_INSERT,
+    FAIL_INSERT,
+    SUCCESS_UPDATE,
+    FAIL_UPDATE,
+    SUCCESS_DELETE,
+    FAIL_DELETE,
     INVALID_JSON_DATA,
+    FAIL_IMPORT,
+    SUCCESS_UPLOAD,
+    FAIL_UPLOAD,
 
     // admin
     ADMIN_MENU_HOME,
@@ -95,6 +84,12 @@ public enum VantarKey implements LangKey {
     ADMIN_MENU_QUERY,
     ADMIN_MENU_DOCUMENTS,
     ADMIN_MENU_BUGGER,
+
+
+    //cleaned till here
+
+
+
     ADMIN_USERS,
     ADMIN_SYSTEM_ERRORS,
     ADMIN_SERVICES_BEAT,
@@ -157,7 +152,6 @@ public enum VantarKey implements LangKey {
     ADMIN_DATABASE_SEQUENCE,
     ADMIN_DELAY,
 
-    ADMIN_IMPORT_TITLE,
 
     ADMIN_ELASTIC_INDEX_DEF,
     ADMIN_ELASTIC_SETTINGS,
@@ -172,7 +166,6 @@ public enum VantarKey implements LangKey {
     ADMIN_SERVICES,
     ADMIN_ONLINE_USERS,
     ADMIN_SERVICE,
-    ADMIN_MENU_QUERY_TITLE,
     ADMIN_QUERY_NEW,
     ADMIN_TITLE,
     ADMIN_CONFIRM,
@@ -269,5 +262,9 @@ public enum VantarKey implements LangKey {
     ADMIN_REVERT,
     ADMIN_LOG_DIFFERENCES,
 
-    ADMIN_WEB_LOG,
+    ADMIN_LOG_WEB,
+    ADMIN_WEB,
+    ADMIN_MENU_TEST,
+
+    ADMIN_UPDATE_PROPERTY,
 }

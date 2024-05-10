@@ -140,24 +140,6 @@ public class DirUtil {
         }
         return directoryToBeDeleted.delete();
     }
-//    public static boolean removeDirectory(String path) {
-//        try {
-//            Files.walk(Paths.get(path))
-//                .sorted(Comparator.reverseOrder())
-//                .map(Path::toFile)
-//                .filter(item -> !item.getPath().equals(path))
-//                .forEach(File::delete);
-//            return true;
-//        } catch (NoSuchFileException ignore) {
-//
-//        } catch (IOException e) {
-//            FileUtil.log.error(" !! {}", path, e);
-//        }
-//        return false;
-//    }
-
-
-
 
     public static String getTempDirectory() {
         return StringUtil.rtrim(System.getProperty("java.io.tmpdir"), '/') + '/';
@@ -269,4 +251,34 @@ public class DirUtil {
 
         void found(File file);
     }
+
+
+
+
+
+
+
+    public interface Event {
+
+        boolean found(File file);
+    }
+
+    public static boolean browseFile(String path, Event event) {
+        File[] files = new File(path).listFiles();
+        if (files != null) {
+            for (File file : files) {
+                if (file.isDirectory()) {
+                    if (browseFile(file.getAbsolutePath(), event)) {
+                        return true;
+                    }
+                } else {
+                    if (event.found(file)) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
 }

@@ -11,9 +11,11 @@ import com.vantar.service.Services;
 import com.vantar.service.log.ServiceLog;
 import com.vantar.util.datetime.*;
 import com.vantar.util.file.FileUtil;
+import com.vantar.util.object.ObjectUtil;
 import com.vantar.util.string.StringUtil;
 import com.vantar.web.WebUi;
 import org.bson.Document;
+import org.bson.json.*;
 import java.io.*;
 import java.util.*;
 import java.util.zip.*;
@@ -45,10 +47,10 @@ public class MongoBackup {
         long startTime = System.currentTimeMillis();
         try (ZipOutputStream zip = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(dumpPath)))) {
             for (String collection : MongoConnection.getCollections()) {
-                if (excludes != null && excludes.contains(collection)) {
+                if (ObjectUtil.isNotEmpty(excludes) && excludes.contains(collection)) {
                     continue;
                 }
-                if (includes != null && !includes.contains(collection)) {
+                if (ObjectUtil.isNotEmpty(includes) && !includes.contains(collection)) {
                     continue;
                 }
 
@@ -88,9 +90,10 @@ public class MongoBackup {
                         );
                     }
                 }
+                q.allowDiskUse(true);
 
                 for (Document document : q) {
-                    zip.write((document.toJson() + "\n").getBytes());
+                    zip.write((document.toJson(JsonWriterSettings.builder().outputMode(JsonMode.EXTENDED).build()) + "\n").getBytes());
                     ++l;
                 }
                 long elapsed = (System.currentTimeMillis() - startCollectionTime) / 1000;
@@ -135,7 +138,7 @@ public class MongoBackup {
             zip.putNextEntry(new ZipEntry(q.getDto().getStorage() + ".dump"));
             MongoQuery mongoQuery = new MongoQuery(q);
             for (Document document : mongoQuery.getResult()) {
-                zip.write((document.toJson() + "\n").getBytes());
+                zip.write((document.toJson(JsonWriterSettings.builder().outputMode(JsonMode.EXTENDED).build()) + "\n").getBytes());
                 ++r;
             }
             zip.closeEntry();
@@ -179,10 +182,10 @@ public class MongoBackup {
             ui.addHeading(3, VantarKey.ADMIN_DATA_PURGE).write();
             try {
                 for (String collection : MongoConnection.getCollections()) {
-                    if (excludes != null && excludes.contains(collection)) {
+                    if (ObjectUtil.isNotEmpty(excludes) && excludes.contains(collection)) {
                         continue;
                     }
-                    if (includes != null && !includes.contains(collection)) {
+                    if (ObjectUtil.isNotEmpty(includes) && !includes.contains(collection)) {
                         continue;
                     }
                     try {
@@ -262,7 +265,7 @@ public class MongoBackup {
 
         try {
             ui.addHeading(3, Locale.getString(VantarKey.ADMIN_DATABASE_INDEX_CREATE, DtoDictionary.Dbms.MONGO)).write();
-            AdminDatabaseIndex.createIndexMongo(ui, true);
+            AdminDatabaseIndex.createIndexMongo(ui, true, excludes, includes);
         } catch (Exception e) {
             ServiceLog.log.error("! restore failed to create database indexes.", e);
             ui.addErrorMessage(e);
