@@ -1,10 +1,9 @@
 package com.vantar.admin.database.data.panel;
 
 import com.vantar.business.*;
+import com.vantar.database.common.Db;
 import com.vantar.database.dto.*;
-import com.vantar.database.nosql.elasticsearch.ElasticConnection;
-import com.vantar.database.nosql.mongo.MongoConnection;
-import com.vantar.database.sql.SqlConnection;
+
 import com.vantar.exception.*;
 import com.vantar.locale.*;
 import com.vantar.service.Services;
@@ -26,20 +25,20 @@ public class AdminDataDelete {
                 .blockEnd();
         } else {
             try {
-                if (info.dbms.equals(DtoDictionary.Dbms.MONGO)) {
-                    if (MongoConnection.isUp()) {
-                        u.ui.addMessage(ModelMongo.purge(u.dto).message);
+                if (info.dbms.equals(Db.Dbms.MONGO)) {
+                    if (Services.isUp(Db.Dbms.MONGO)) {
+                        u.ui.addMessage(Db.modelMongo.purge(u.dto).message);
                     } else {
-                        u.ui.addMessage(Locale.getString(VantarKey.ADMIN_SERVICE_IS_OFF, DtoDictionary.Dbms.MONGO));
+                        u.ui.addMessage(Locale.getString(VantarKey.ADMIN_SERVICE_IS_OFF, Db.Dbms.MONGO));
                     }
-                } else if (info.dbms.equals(DtoDictionary.Dbms.SQL)) {
-                    if (SqlConnection.isUp()) {
+                } else if (info.dbms.equals(Db.Dbms.SQL)) {
+                    if (Services.isUp(Db.Dbms.SQL)) {
                         u.ui.addMessage(CommonModelSql.purgeData(u.dto.getStorage()).message);
                     } else {
-                        u.ui.addMessage(Locale.getString(VantarKey.ADMIN_SERVICE_IS_OFF, DtoDictionary.Dbms.SQL));
+                        u.ui.addMessage(Locale.getString(VantarKey.ADMIN_SERVICE_IS_OFF, Db.Dbms.SQL));
                     }
-                } else if (info.dbms.equals(DtoDictionary.Dbms.ELASTIC)) {
-                    if (ElasticConnection.isUp()) {
+                } else if (info.dbms.equals(Db.Dbms.ELASTIC)) {
+                    if (Services.isUp(Db.Dbms.ELASTIC)) {
                         u.ui.addMessage(CommonModelElastic.purgeData(u.dto.getStorage()).message);
                     } else {
                         u.ui.addMessage(Locale.getString(VantarKey.ADMIN_SERVICE_IS_OFF, "ElasticSearch"));
@@ -112,7 +111,7 @@ public class AdminDataDelete {
             u.ui.addMessage(VantarKey.FAIL_DELETE).finish();
             return;
         }
-        if (!DataUtil.isUp(info.dbms, u.ui)) {
+        if (!DataUtil.isUp(u.ui, info.dbms)) {
             u.ui.finish();
             return;
         }
@@ -156,16 +155,16 @@ public class AdminDataDelete {
             .mutex(true);
 
         try {
-            if (info.dbms.equals(DtoDictionary.Dbms.MONGO)) {
+            if (info.dbms.equals(Db.Dbms.MONGO)) {
                 // > > > MONGO
-                ResponseMessage resp = ModelMongo.delete(settings);
+                ResponseMessage resp = Db.modelMongo.delete(settings);
                 ui.addMessage(resp.message);
                 ui.addMessage("Deleted: " + resp.value + "records");
                 // > > > SQL
-            } else if (info.dbms.equals(DtoDictionary.Dbms.SQL)) {
+            } else if (info.dbms.equals(Db.Dbms.SQL)) {
                 //ui.addMessage(CommonModelSql.deleteBatch(params, dto.getClass()).message);
                 // > > > ELASTIC
-            } else if (info.dbms.equals(DtoDictionary.Dbms.ELASTIC)) {
+            } else if (info.dbms.equals(Db.Dbms.ELASTIC)) {
                 //ui.addMessage(CommonModelElastic.deleteBatch(params, dto.getClass()).message);
             }
 

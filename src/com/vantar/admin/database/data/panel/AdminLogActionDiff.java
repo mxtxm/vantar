@@ -1,6 +1,6 @@
 package com.vantar.admin.database.data.panel;
 
-import com.vantar.business.ModelMongo;
+import com.vantar.database.common.Db;
 import com.vantar.database.differences.DtoChanges;
 import com.vantar.database.dto.DtoDictionary;
 import com.vantar.database.query.QueryBuilder;
@@ -33,7 +33,7 @@ public class AdminLogActionDiff {
 
         List<UserLog> data;
         try {
-            data = ModelMongo.getData(q);
+            data = Db.modelMongo.getData(q);
         } catch (VantarException e) {
             u.ui.addErrorMessage(e).finish();
             return;

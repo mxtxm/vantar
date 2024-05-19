@@ -1,6 +1,7 @@
 package com.vantar.database.dto;
 
 import com.vantar.common.*;
+import com.vantar.database.common.Db;
 import com.vantar.database.query.QueryBuilder;
 import com.vantar.service.log.ServiceLog;
 import com.vantar.util.file.FileUtil;
@@ -11,13 +12,6 @@ import java.util.*;
 
 
 public class DtoDictionary {
-
-    public enum Dbms {
-        MONGO,
-        SQL,
-        ELASTIC,
-        NOSTORE,
-    }
 
     private static List<String> indexGroup;
     private static Map<String, Info> indexDto;
@@ -52,13 +46,13 @@ public class DtoDictionary {
     public static void add(Info info) {
         info.group = indexGroup.get(indexGroup.size() - 1);
         if (info.dtoClass.isAnnotationPresent(Mongo.class)) {
-            info.dbms = Dbms.MONGO;
+            info.dbms = Db.Dbms.MONGO;
         } else if (info.dtoClass.isAnnotationPresent(Sql.class)) {
-            info.dbms = Dbms.SQL;
+            info.dbms = Db.Dbms.SQL;
         } else if (info.dtoClass.isAnnotationPresent(Elastic.class)) {
-            info.dbms = Dbms.ELASTIC;
+            info.dbms = Db.Dbms.ELASTIC;
         } else {
-            info.dbms = Dbms.NOSTORE;
+            info.dbms = Db.Dbms.NOSTORE;
         }
         indexDto.put(info.dtoClass.getSimpleName(), info);
         for (Class<?> innerClass : info.dtoClass.getDeclaredClasses()) {
@@ -93,14 +87,14 @@ public class DtoDictionary {
     /**
      * hidden not included
      */
-    public static List<Info> getAll(Dbms... dbmses) {
+    public static List<Info> getAll(Db.Dbms... dbmses) {
         List<Info> info = new ArrayList<>(indexDto.size());
         for (Info i : indexDto.values()) {
             if (i.hidden) {
                 continue;
             }
             if (dbmses.length > 0) {
-                for (Dbms dbms : dbmses) {
+                for (Db.Dbms dbms : dbmses) {
                     if (dbms.equals(i.dbms)) {
                         info.add(i);
                         break;
@@ -116,7 +110,7 @@ public class DtoDictionary {
     /**
      * hidden not included
      */
-    public static List<String> getDtoClassNames(Dbms dbms) {
+    public static List<String> getDtoClassNames(Db.Dbms dbms) {
         List<String> names = new ArrayList<>(indexDto.size());
         for (Info i : getAll(dbms)) {
             if (i.hidden) {
@@ -184,7 +178,7 @@ public class DtoDictionary {
     public static class Info {
 
         public boolean hidden;
-        public Dbms dbms;
+        public Db.Dbms dbms;
         public String group;
         public String title;
         public Class<? extends Dto> dtoClass;

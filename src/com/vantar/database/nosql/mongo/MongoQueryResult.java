@@ -23,6 +23,7 @@ import java.util.*;
 @SuppressWarnings({"unchecked"})
 public class MongoQueryResult extends QueryResultBase implements QueryResult, AutoCloseable {
 
+    private final DbMongo db;
     private final Iterator<Document> iterator;
     private boolean newIteration;
     private Map<String, Dto> fetchByFkCache;
@@ -31,7 +32,8 @@ public class MongoQueryResult extends QueryResultBase implements QueryResult, Au
     public MongoCursor<Document> cursorA;
 
 
-    public MongoQueryResult(FindIterable<Document> cursor, Dto dto) {
+    public MongoQueryResult(FindIterable<Document> cursor, Dto dto, DbMongo db) {
+        this.db = db;
         cursor.noCursorTimeout(true);
         this.dto = dto;
         this.cursor = cursor;
@@ -40,7 +42,8 @@ public class MongoQueryResult extends QueryResultBase implements QueryResult, Au
         exclude = dto.getExclude();
     }
 
-    public MongoQueryResult(AggregateIterable<Document> cursor, Dto dto) {
+    public MongoQueryResult(AggregateIterable<Document> cursor, Dto dto, DbMongo db) {
+        this.db = db;
         this.dto = dto;
         this.cursorA = cursor.cursor();
         iterator = cursor.iterator();
@@ -91,10 +94,10 @@ public class MongoQueryResult extends QueryResultBase implements QueryResult, Au
 
     public Map<String, String> asKeyValue(String keyField, String valueField) throws NoContentException, DatabaseException {
         if (keyField.equals(VantarParam.ID)) {
-            keyField = Mongo.ID;
+            keyField = DbMongo.ID;
         }
         if (valueField.equals(VantarParam.ID)) {
-            valueField = Mongo.ID;
+            valueField = DbMongo.ID;
         }
         Map<String, String> result = new HashMap<>(1000, 1);
         String locale = getLocale();
@@ -116,14 +119,14 @@ public class MongoQueryResult extends QueryResultBase implements QueryResult, Au
         return result;
     }
 
-    public Map<String, String> asKeyValue(KeyValueData definition) throws NoContentException, DatabaseException {
+    public Map<String, String> asKeyValue(KeyValueData definition) throws NoContentException, DatabaseException, ServerException {
         String keyField = definition.getKeyField();
         String valueField = definition.getValueField();
         if (keyField.equals(VantarParam.ID)) {
-            keyField = Mongo.ID;
+            keyField = DbMongo.ID;
         }
         if (valueField.equals(VantarParam.ID)) {
-            valueField = Mongo.ID;
+            valueField = DbMongo.ID;
         }
         Map<String, String> result = new HashMap<>();
         String locale = getLocale();
@@ -137,7 +140,7 @@ public class MongoQueryResult extends QueryResultBase implements QueryResult, Au
                 result.put(DbUtil.getKv(k, locale), DbUtil.getKv(document.get(valueField), locale));
             }
         } catch (MongoException e) {
-            throw new DatabaseException(e);
+            throw new ServerException(e);
         }
         if (result.isEmpty()) {
             throw new NoContentException();
@@ -165,8 +168,8 @@ public class MongoQueryResult extends QueryResultBase implements QueryResult, Au
                 continue;
             }
 
-            if (name.equals(VantarParam.ID) && document.containsKey(Mongo.ID)) {
-                name = Mongo.ID;
+            if (name.equals(VantarParam.ID) && document.containsKey(DbMongo.ID)) {
+                name = DbMongo.ID;
             }
             Class<?> type = field.getType();
 
@@ -389,14 +392,14 @@ public class MongoQueryResult extends QueryResultBase implements QueryResult, Au
                 }
                 mapRecordToObject((Document) entry.getValue(), (Dto) vDto, ((Dto) vDto).getFields());
                 map.put(
-                    ObjectUtil.convert(Mongo.Escape.keyForView(entry.getKey()), kClass),
+                    ObjectUtil.convert(DbMongo.escapeKeyForRead(entry.getKey()), kClass),
                     vDto
                 );
                 continue;
             }
 
             map.put(
-                ObjectUtil.convert(Mongo.Escape.keyForView(entry.getKey()), kClass),
+                ObjectUtil.convert(DbMongo.escapeKeyForRead(entry.getKey()), kClass),
                 ObjectUtil.convert(entry.getValue(), vClass, innerGenerics)
             );
         }
@@ -557,10 +560,9 @@ public class MongoQueryResult extends QueryResultBase implements QueryResult, Au
 
             Collection<Object> dtos = type == List.class ? new ArrayList<>(ids.size()) : new HashSet<>(ids.size(), 1);
             for (Long id : ids) {
-                try {
-                    dtos.add(MongoQuery.getDto((Class<? extends Dto>) typeGeneric, id, getLocales()));
-                } catch (NoContentException ignore) {
-
+                Dto item = db.getDto((Class<? extends Dto>) typeGeneric, id, getLocales());
+                if (item != null) {
+                    dtos.add(item);
                 }
             }
             fieldX.set(dtoX, dtos);
@@ -572,11 +574,7 @@ public class MongoQueryResult extends QueryResultBase implements QueryResult, Au
             return;
         }
 
-        try {
-            fieldX.set(dtoX, MongoQuery.getDto((Class<? extends Dto>) fieldX.getType(), id, getLocales()));
-        } catch (NoContentException e) {
-            fieldX.set(dtoX, null);
-        }
+        fieldX.set(dtoX, db.getDto((Class<? extends Dto>) fieldX.getType(), id, getLocales()));
     }
 
     private void fetchByFk(Document document, Field field) throws IllegalAccessException {
@@ -588,10 +586,9 @@ public class MongoQueryResult extends QueryResultBase implements QueryResult, Au
                 fetchByFkCache = new HashMap<>(4);
             }
             if (id != null) {
-                try {
-                    fetchByFkCache.put(fkData.fk(), MongoQuery.getDto(fkData.dto(), id, getLocales()));
-                } catch (NoContentException ignore) {
-
+                Dto item = db.getDto(fkData.dto(), id, getLocales());
+                if (item != null) {
+                    fetchByFkCache.put(fkData.fk(), item);
                 }
             }
         }

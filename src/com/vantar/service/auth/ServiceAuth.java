@@ -28,6 +28,7 @@ public class ServiceAuth extends Permit implements Services.Service {
     protected static final boolean DEFAULT_VERIFY_TOKEN_NUMBER_ONLY = true;
     private static final String AUTH_BACKUP_FILENAME = "auth.backup";
 
+    private volatile boolean pause = false;
     private volatile boolean serviceUp = false;
     private volatile boolean lastSuccess = true;
     private List<String> logs;
@@ -60,6 +61,7 @@ public class ServiceAuth extends Permit implements Services.Service {
         schedule = Executors.newSingleThreadScheduledExecutor();
         schedule.scheduleWithFixedDelay(this::validateTokens, tokenCheckIntervalMin, tokenCheckIntervalMin, TimeUnit.MINUTES);
         serviceUp = true;
+        pause = false;
     }
 
     @Override
@@ -77,6 +79,16 @@ public class ServiceAuth extends Permit implements Services.Service {
         }
         schedule.shutdown();
         serviceUp = true;
+    }
+
+    @Override
+    public void pause() {
+        pause = true;
+    }
+
+    @Override
+    public void resume() {
+        pause = false;
     }
 
     @Override
@@ -480,6 +492,9 @@ public class ServiceAuth extends Permit implements Services.Service {
     }
 
     private void validateTokens() {
+        if (pause) {
+            return;
+        }
         startupAuthToken = null;
         onlineUsers.forEach((key, value) -> {
             if (-value.lastInteraction.secondsFromNow() > (tokenExpireMin * 60)) {

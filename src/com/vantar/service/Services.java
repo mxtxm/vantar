@@ -1,9 +1,9 @@
 package com.vantar.service;
 
+import com.vantar.business.ModelMongo;
 import com.vantar.common.*;
-import com.vantar.database.nosql.elasticsearch.ElasticConnection;
-import com.vantar.database.nosql.mongo.MongoConnection;
-import com.vantar.database.sql.SqlConnection;
+import com.vantar.database.common.Db;
+import com.vantar.database.nosql.mongo.DbMongo;
 import com.vantar.exception.ServiceException;
 import com.vantar.queue.Queue;
 import com.vantar.service.log.*;
@@ -18,10 +18,10 @@ public class Services {
 
     public static final String ID = UUID.randomUUID().toString();
 
-    private static Event event;
     public static ServiceMessaging messaging;
+    public static Object queue;
 
-    private static Set<Class<?>> enabledDataSources;
+    private static Event event;
     private static Map<Class<?>, Service> upServicesMe;
     // <serverID, List<service>>
     private static Map<String, List<String>> upServicesOther;
@@ -63,17 +63,7 @@ public class Services {
     }
 
     public static void startServices() {
-        enabledDataSources = new HashSet<>(5, 1);
-        String values = Settings.getValue("service.data.sources");
-        if (values != null) {
-            for (String className : StringUtil.splitTrim(values, VantarParam.SEPARATOR_COMMON)) {
-                try {
-                    enabledDataSources.add(Class.forName(className));
-                } catch (ClassNotFoundException e) {
-                    ServiceLog.log.error(" ! dependency({}) not found", className);
-                }
-            }
-        }
+        startDataSources();
 
         Map<Integer, Service> orderedServices = new TreeMap<>();
         Set<String> setParams = new HashSet<>(100, 1);
@@ -109,10 +99,8 @@ public class Services {
             orderedServices.put(priority, service);
         }
 
-        startDataSources();
-
         if (event != null) {
-            event.beforeStart(enabledDataSources);
+            event.beforeStart();
         }
 
         messaging = new ServiceMessaging();
@@ -206,14 +194,49 @@ public class Services {
         }
     }
 
-    public static boolean isDataSourceEnabled(Class<?> serviceClass) {
-        return enabledDataSources != null && enabledDataSources.contains(serviceClass);
+    public static void pauseServices() {
+        upServicesMe.forEach((key, value) -> value.pause());
+    }
+
+    public static void resumeServices() {
+        upServicesMe.forEach((key, value) -> value.resume());
+    }
+
+    public static boolean isEnabled(DataSources source) {
+        if (Queue.Engine.QUEUE.equals(source)) {
+            return queue != null;
+        }
+        if (Db.Dbms.MONGO.equals(source)) {
+            return Db.mongo != null;
+        }
+        if (Db.Dbms.SQL.equals(source)) {
+            return Db.sql != null;
+        }
+        if (Db.Dbms.ELASTIC.equals(source)) {
+            return Db.elastic != null;
+        }
+        return false;
+    }
+
+    public static boolean isUp(DataSources source) {
+        if (Queue.Engine.QUEUE.equals(source)) {
+            return queue != null;
+        }
+        if (Db.Dbms.MONGO.equals(source)) {
+            return Db.mongo != null && Db.mongo.isUp();
+        }
+        if (Db.Dbms.SQL.equals(source)) {
+            ServiceLog.log.info(">>>>{}", Db.sql != null);
+
+            return Db.sql != null;
+        }
+        if (Db.Dbms.ELASTIC.equals(source)) {
+            return Db.elastic != null;
+        }
+        return false;
     }
 
     public static boolean isUp(Class<?> serviceClass) {
-        if (enabledDataSources != null && enabledDataSources.contains(serviceClass)) {
-            return true;
-        }
         return upServicesMe != null && upServicesMe.containsKey(serviceClass);
     }
 
@@ -254,33 +277,38 @@ public class Services {
      * database and queues
      */
     public static void startDataSources() {
-        if (enabledDataSources.contains(Queue.class)) {
-            Queue.connect(Settings.queue());
-        }
-        if (enabledDataSources.contains(MongoConnection.class)) {
-            MongoConnection.isShutdown = false;
-            MongoConnection.connect(Settings.mongo());
-        }
-        if (enabledDataSources.contains(SqlConnection.class)) {
-            SqlConnection.start(Settings.sql());
-        }
-        if (enabledDataSources.contains(ElasticConnection.class)) {
-            ElasticConnection.connect(Settings.elastic());
+        String dataSources = Settings.getValue("service.data.sources");
+        if (dataSources != null) {
+            dataSources = dataSources.toLowerCase();
+            if (dataSources.contains("queue")) {
+                Queue.connect(Settings.queue());
+                queue = "A";
+            }
+            if (dataSources.contains("mongo")) {
+                Db.mongo = new DbMongo(Settings.mongo());
+                Db.modelMongo = new ModelMongo(Db.mongo);
+            }
+            if (dataSources.contains("sql")) {
+
+            }
+            if (dataSources.contains("elastic")) {
+
+            }
         }
     }
 
     public static void stopDataSources() {
-        if (enabledDataSources.contains(Queue.class)) {
+        if (queue != null) {
             Queue.shutdown();
         }
-        if (enabledDataSources.contains(MongoConnection.class)) {
-            MongoConnection.shutdown();
+        if (Db.mongo != null) {
+            Db.mongo.shutdown();
         }
-        if (enabledDataSources.contains(SqlConnection.class)) {
-            SqlConnection.shutdown();
+        if (Db.sql != null) {
+
         }
-        if (enabledDataSources.contains(ElasticConnection.class)) {
-            ElasticConnection.shutdown();
+        if (Db.elastic != null) {
+
         }
     }
 
@@ -289,6 +317,8 @@ public class Services {
 
         void start();
         void stop();
+        void pause();
+        void resume();
         boolean isUp();
         boolean isOk();
         List<String> getLogs();
@@ -297,9 +327,13 @@ public class Services {
 
     public interface Event {
 
-        void beforeStart(Set<Class<?>> dataSources);
+        void beforeStart();
         void beforeStop();
         void afterStart();
         void afterStop();
+    }
+
+    public interface DataSources {
+
     }
 }

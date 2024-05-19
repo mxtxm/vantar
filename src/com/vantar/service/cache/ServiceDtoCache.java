@@ -1,20 +1,20 @@
 package com.vantar.service.cache;
 
 import com.vantar.business.*;
+import com.vantar.database.common.Db;
 import com.vantar.database.dto.*;
-import com.vantar.database.nosql.mongo.MongoQuery;
 import com.vantar.database.sql.SqlConnection;
-import com.vantar.exception.*;
+import com.vantar.exception.NoContentException;
 import com.vantar.service.Services;
 import com.vantar.service.log.ServiceLog;
-import com.vantar.util.object.*;
+import com.vantar.util.object.ClassUtil;
 import java.util.*;
 
 
 public class ServiceDtoCache implements Services.Service {
 
     private Map<Class<?>, Map<Long, ? extends Dto>> cache;
-
+    private volatile boolean pause = false;
     private volatile boolean serviceUp = false;
     private volatile boolean lastSuccess = true;
     private List<String> logs;
@@ -32,12 +32,23 @@ public class ServiceDtoCache implements Services.Service {
             update(info);
         }
         serviceUp = true;
+        pause = false;
     }
 
     @Override
     public void stop() {
         cache = null;
         serviceUp = false;
+    }
+
+    @Override
+    public void pause() {
+        pause = true;
+    }
+
+    @Override
+    public void resume() {
+        pause = false;
     }
 
     @Override
@@ -73,6 +84,9 @@ public class ServiceDtoCache implements Services.Service {
     }
 
     private void update(DtoDictionary.Info info) {
+        if (pause) {
+            return;
+        }
         lastSuccess = true;
         if (info == null || !info.dtoClass.isAnnotationPresent(Cache.class)) {
             return;
@@ -83,7 +97,9 @@ public class ServiceDtoCache implements Services.Service {
 
         if (info.dtoClass.isAnnotationPresent(Mongo.class)) {
             try {
-                dtos = info.queryCache == null ? MongoQuery.getAllData(dto).asList() : MongoQuery.getData(info.queryCache).asList();
+                dtos = info.queryCache == null ?
+                    Db.mongo.getAllData(dto).asList() :
+                    Db.mongo.getData(info.queryCache).asList();
             } catch (NoContentException ignore) {
 
             } catch (Exception e) {

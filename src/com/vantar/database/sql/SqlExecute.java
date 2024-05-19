@@ -50,11 +50,11 @@ public class SqlExecute extends SqlQueryHelper {
         }
     }
 
-    public void execute(String sql, Dto data) throws DatabaseException {
+    public void execute(String sql, Dto data) throws VantarException {
         execute(sql, data.getStorableData());
     }
 
-    public void execute(String sql, Object... params) throws DatabaseException {
+    public void execute(String sql, Object... params) throws VantarException {
         try (PreparedStatement statement = connection.getDatabase().prepareStatement(sql)) {
             statement.setEscapeProcessing(true);
 
@@ -70,7 +70,7 @@ public class SqlExecute extends SqlQueryHelper {
         }
     }
 
-    public long insert(Dto dto) throws DatabaseException, VantarException {
+    public long insert(Dto dto) throws VantarException {
         dto.setCreateTime(true);
         long id = insert(dto.getStorage(), StorableData.toMap(dto.getStorableData()));
 
@@ -220,7 +220,7 @@ public class SqlExecute extends SqlQueryHelper {
         );
     }
 
-    public void update(Dto dto, String fieldName) throws DatabaseException {
+    public void update(Dto dto, String fieldName) throws VantarException {
         if (!dto.beforeUpdate()) {
             throw new DatabaseException(VantarKey.CUSTOM_EVENT_ERROR);
         }
@@ -247,11 +247,11 @@ public class SqlExecute extends SqlQueryHelper {
         );
     }
 
-    public void updateBySql(Dto data, String condition) throws DatabaseException {
+    public void updateBySql(Dto data, String condition) throws VantarException {
         updateBySql(data.getStorage(), condition, StorableData.toMap(data.getStorableData()));
     }
 
-    public void updateBySql(String table, String condition, Map<String, Object> params) throws DatabaseException {
+    public void updateBySql(String table, String condition, Map<String, Object> params) throws VantarException {
         SqlParams sqlParams = new SqlParams(params, ",");
         execute("UPDATE " + table + " SET " + sqlParams.getTemplate() + " WHERE " + condition + ";", sqlParams.getValues());
     }
@@ -265,12 +265,12 @@ public class SqlExecute extends SqlQueryHelper {
         execute("DELETE FROM " + dto.getStorage() + " WHERE id=" + id + ";");
     }
 
-    public void delete(QueryBuilder q) throws DatabaseException {
+    public void delete(QueryBuilder q) throws VantarException {
         SqlParams condition = SqlMapping.getSqlMatches(q.condition(), q.getDto());
         execute("DELETE FROM " + q.getDto().getStorage() + " WHERE " + condition.getTemplate() + ";", condition.getValues());
     }
 
-    public void delete(String table, Map<String, Object> params) throws DatabaseException {
+    public void delete(String table, Map<String, Object> params) throws VantarException {
         SqlParams sqlParams = new SqlParams(params);
         execute("DELETE FROM " + table + " WHERE " + sqlParams.getTemplate() + ";", sqlParams.getValues());
     }
@@ -291,7 +291,7 @@ public class SqlExecute extends SqlQueryHelper {
     }
 
     // orderId:1;orderId;userId:user_idx;userId,commentId
-    public void createIndex(Dto dto, boolean deleteIfExists) throws DatabaseException {
+    public void createIndex(Dto dto, boolean deleteIfExists) throws VantarException {
         for (String item : dto.getIndexes()) {
             String[] parts = StringUtil.split(item, VantarParam.SEPARATOR_KEY_VAL);
             String cols = parts[0];
@@ -326,7 +326,7 @@ public class SqlExecute extends SqlQueryHelper {
         }
     }
 
-    public List<String> getIndexes(Dto dto) throws DatabaseException {
+    public List<String> getIndexes(Dto dto) throws VantarException {
         List<String> indexes = new ArrayList<>();
         String sql = "SELECT indexname, indexdef FROM pg_indexes WHERE tablename='" + dto.getStorage() + "';";
         PreparedStatement statement = null;

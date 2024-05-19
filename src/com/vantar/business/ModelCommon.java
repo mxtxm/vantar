@@ -2,7 +2,7 @@ package com.vantar.business;
 
 import com.vantar.common.VantarParam;
 import com.vantar.database.dto.*;
-import com.vantar.database.nosql.mongo.*;
+import com.vantar.database.nosql.mongo.DbMongo;
 import com.vantar.database.query.*;
 import com.vantar.exception.*;
 import com.vantar.locale.VantarKey;
@@ -21,6 +21,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public abstract class ModelCommon {
 
+    protected DbMongo db;
     private static Set<String> disabledDtoClasses;
     private static final Map<String, Object> locks = new ConcurrentHashMap<>(500, 1);
 
@@ -85,7 +86,7 @@ public abstract class ModelCommon {
         }
     }
 
-    public static void insertPassword(Dto user, String password) throws ServerException {
+    public void insertPassword(Dto user, String password) throws ServerException {
         if (StringUtil.isEmpty(password)) {
             return;
         }
@@ -99,10 +100,10 @@ public abstract class ModelCommon {
                 userPassword.setId(user.getId());
                 userPassword.setPassword(password);
                 try {
-                    if (MongoQuery.existsById(userPassword)) {
-                        ModelMongo.update(new Settings(userPassword).logEvent(false).mutex(false));
+                    if (db.existsById(userPassword)) {
+                        db.update(userPassword);
                     } else {
-                        ModelMongo.insert(new Settings(userPassword).logEvent(false).mutex(false));
+                        db.insert(userPassword);
                     }
                 } catch (VantarException e) {
                     throw new ServerException(VantarKey.FAIL_FETCH);

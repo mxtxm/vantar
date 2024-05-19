@@ -2,6 +2,7 @@ package com.vantar.admin.bugger;
 
 import com.vantar.admin.index.Admin;
 import com.vantar.business.*;
+import com.vantar.database.common.Db;
 import com.vantar.exception.*;
 import com.vantar.locale.VantarKey;
 import com.vantar.web.*;
@@ -20,7 +21,7 @@ public class AdminBugger {
                 bugger.url = params.getStringRequired("u");
                 bugger.data = params.getString("d");
                 bugger.description = params.getStringRequired("m");
-                ModelMongo.insert(new ModelCommon.Settings(bugger).mutex(false).logEvent(false));
+                Db.modelMongo.insert(new ModelCommon.Settings(bugger).mutex(false).logEvent(false));
                 ui.addMessage(VantarKey.SUCCESS_INSERT);
             } catch (VantarException e) {
                 ui.addErrorMessage(e);

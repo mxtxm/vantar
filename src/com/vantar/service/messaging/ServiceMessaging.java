@@ -20,7 +20,7 @@ public class ServiceMessaging {
 
 
     public void start() {
-        if (!Services.isUp(Queue.class)) {
+        if (!Services.isUp(Queue.Engine.QUEUE)) {
             return;
         }
         serviceOn = true;
@@ -29,7 +29,7 @@ public class ServiceMessaging {
     }
 
     public void stop() {
-        if (!Services.isUp(Queue.class)) {
+        if (!Services.isUp(Queue.Engine.QUEUE)) {
             return;
         }
         serviceOn = false;
@@ -46,7 +46,7 @@ public class ServiceMessaging {
     }
 
     public void broadcast(int type, Object... message) {
-        if (!Services.isUp(Queue.class)) {
+        if (!Services.isUp(Queue.Engine.QUEUE)) {
             return;
         }
         Queue.emmit(VantarParam.QUEUE_NAME_MESSAGE_BROADCAST, new Packet(new Message(message), type));
@@ -55,7 +55,7 @@ public class ServiceMessaging {
     }
 
     private void receive() {
-        if (!Services.isUp(Queue.class)) {
+        if (!Services.isUp(Queue.Engine.QUEUE)) {
             return;
         }
 

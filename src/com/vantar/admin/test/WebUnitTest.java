@@ -2,7 +2,9 @@ package com.vantar.admin.test;
 
 import com.vantar.admin.documentation.get.WebServiceData;
 import com.vantar.admin.index.Admin;
+import com.vantar.admin.service.AdminService;
 import com.vantar.common.Settings;
+import com.vantar.database.common.Db;
 import com.vantar.exception.*;
 import com.vantar.http.*;
 import com.vantar.locale.VantarKey;
@@ -32,9 +34,16 @@ public class WebUnitTest {
                 List<WebUnitTestCaseItem> testCases = Json.d.listFromJson(params.getString("tc"), WebUnitTestCaseItem.class);
                 testCases.sort(Comparator.comparingInt(o -> o.order));
 
-                for (WebUnitTestCaseItem item : testCases) {
-                    addAssertToCase(item, ui);
+                try {
+                    Db.mongo.switchToTest();
+                    AdminService.factoryReset(null, 1, 20, null);
+                    for (WebUnitTestCaseItem item : testCases) {
+                        addAssertToCase(ui, item);
+                    }
+                } finally {
+                    Db.mongo.switchToProduction();
                 }
+
                 ui  .beginFormPost()
                     .addInput("Tag", "tag")
                     .addInput("Order", "o")
@@ -129,7 +138,7 @@ public class WebUnitTest {
         return serviceData.get(content[0], url);
     }
 
-    private static void addAssertToCase(WebUnitTestCaseItem item, WebUi ui) {
+    private static void addAssertToCase(WebUi ui, WebUnitTestCaseItem item) {
         String url = ui.params.getBaseUrl() + item.url;
         HttpConfig config = new HttpConfig();
         if (item.headers != null) {

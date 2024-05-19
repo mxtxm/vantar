@@ -7,8 +7,8 @@ import com.vantar.admin.database.dbms.synch.AdminSynch;
 import com.vantar.admin.index.Admin;
 import com.vantar.admin.queue.AdminQueue;
 import com.vantar.common.*;
-import com.vantar.database.dto.DtoDictionary;
 import com.vantar.exception.*;
+import com.vantar.database.dto.DtoDictionary;
 import com.vantar.locale.*;
 import com.vantar.locale.Locale;
 import com.vantar.queue.Queue;
@@ -86,10 +86,16 @@ public class AdminService {
             return;
         }
 
-        int delay = params.getInteger("delay", 1);
-        int tries = params.getInteger("tries", 20);
-        Set<String> exclude = params.getStringSet("exclude");
+        factoryReset(
+            ui,
+            params.getInteger("delay", 1),
+            params.getInteger("tries", 20),
+            params.getStringSet("exclude")
+        );
+        ui.finish();
+    }
 
+    public static void factoryReset(WebUi ui, int delay, int tries, Set<String> exclude) {
         String adminApp = Settings.getAdminApp();
         if (StringUtil.isNotEmpty(adminApp)) {
             try {
@@ -101,55 +107,74 @@ public class AdminService {
             }
         }
 
-        ui.beginBox("Service restart").write();
+        if (ui != null) {
+            ui.beginBox("Service pause").write();
+        }
         serviceAction(
             ui,
-            "restart",
+            "pause",
             "A",
             delay,
             tries
         );
-        ui.blockEnd().write();
-        ui.sleepMs(delay);
-
-        ui.beginBox("Data purge").write();
+        if (ui != null) {
+            ui  .blockEnd()
+                .write()
+                .sleepMs(delay)
+                .beginBox("Data purge")
+                .write();
+        }
         AdminQueue.purge(ui, delay, tries, exclude);
         AdminPurge.purgeMongo(ui, exclude, null);
         AdminPurge.purgeSql(ui, exclude, null, false);
         AdminPurge.purgeElastic(ui, exclude, null, false);
-        ui.blockEnd().write();
-        ui.sleepMs(delay);
-
-        ui.beginBox("Data synch").write();
+        if (ui != null) {
+            ui.blockEnd()
+                .write()
+                .sleepMs(delay)
+                .beginBox("Data synch")
+                .write();
+        }
         AdminSynch.synchSql(ui);
         AdminSynch.synchElastic(ui);
-        ui.blockEnd().write();
-        ui.sleepMs(delay);
-
-        ui.beginBox("Database index").write();
+        if (ui != null) {
+            ui  .blockEnd()
+                .write()
+                .sleepMs(delay)
+                .beginBox("Database index")
+                .write();
+        }
         AdminDatabaseIndex.createIndexMongo(ui, true, exclude, null);
         AdminDatabaseIndex.createIndexSql(ui, true);
-        ui.blockEnd().write();
-        ui.sleepMs(delay);
-
-        ui.beginBox("Data import").write();
+        if (ui != null) {
+            ui  .blockEnd()
+                .write()
+                .sleepMs(delay)
+                .beginBox("Data import")
+                .write();
+        }
         AdminImportData.importMongo(ui, true, exclude, null);
         AdminImportData.importSql(ui, true, exclude, null);
         AdminImportData.importElastic(ui, true, exclude, null);
-        ui.blockEnd().write();
-        ui.sleepMs(delay);
-
-        ui.beginBox("Service restart").write();
+        if (ui != null) {
+            ui  .blockEnd()
+                .write()
+                .sleepMs(delay)
+                .beginBox("Service start")
+                .write();
+        }
         serviceAction(
             ui,
-            "restart",
+            "start",
             "A",
             delay,
             tries
         );
-        ui.blockEnd().write();
-        ui.sleepMs(delay);
-
+        if (ui != null) {
+            ui  .blockEnd()
+                .write()
+                .sleepMs(delay);
+        }
         if (StringUtil.isNotEmpty(adminApp)) {
             try {
                 Class<?> tClass = Class.forName(adminApp);
@@ -159,8 +184,6 @@ public class AdminService {
 
             }
         }
-
-        ui.finish();
     }
 
     public static void gc(Params params, HttpServletResponse response) throws FinishException {
@@ -179,6 +202,10 @@ public class AdminService {
         ui.finish();
     }
 
+    /**
+     * action= stop/start/restart/pause/resume
+     * service name or "A"=all services
+     */
     public static void serviceAction(
         WebUi ui,
         String action,
@@ -196,11 +223,23 @@ public class AdminService {
                         s.stop();
                         sleep(delay);
                         if (!s.isUp()) {
-                            addMessage(ui, false, true, VantarKey.ADMIN_SERVICE_STOPPED);
+                            addMessage(ui, false, VantarKey.ADMIN_SERVICE_STOPPED);
                             return;
                         }
-                        addMessage(ui, false, false, (i + 1) + " of " + tries + " try...");
+                        addMessage(ui, false, (i + 1) + " of " + tries + " try...");
                     }
+
+                // > > > STAND BY
+                } else if (action.equalsIgnoreCase("pause")) {
+                    s.pause();
+                    sleep(delay);
+                    return;
+
+                // > > > RESUME
+                } else if (action.equalsIgnoreCase("resume")) {
+                    s.resume();
+                    sleep(delay);
+                    return;
 
                 // > > > START
                 } else if (action.equalsIgnoreCase("start")) {
@@ -208,10 +247,10 @@ public class AdminService {
                         s.start();
                         sleep(delay);
                         if (s.isUp()) {
-                            addMessage(ui, false, true, VantarKey.ADMIN_SERVICE_STARTED);
+                            addMessage(ui, false, VantarKey.ADMIN_SERVICE_STARTED);
                             return;
                         }
-                        addMessage(ui, false, false, (i + 1) + " of " + tries + " try...");
+                        addMessage(ui, false, (i + 1) + " of " + tries + " try...");
                     }
 
                 // > > > RESTART
@@ -221,36 +260,36 @@ public class AdminService {
                         s.stop();
                         sleep(delay);
                         if (!s.isUp()) {
-                            addMessage(ui, false, false, VantarKey.ADMIN_SERVICE_STOPPED);
+                            addMessage(ui, false, VantarKey.ADMIN_SERVICE_STOPPED);
                             stopped = true;
                             break;
                         }
-                        addMessage(ui, false, false, (i + 1) + " of " + tries + " try...");
+                        addMessage(ui, false, (i + 1) + " of " + tries + " try...");
                     }
                     if (stopped) {
                         for (int i = 0; i < tries; ++i) {
                             s.start();
                             sleep(delay);
                             if (s.isUp()) {
-                                addMessage(ui, false, true, VantarKey.ADMIN_SERVICE_STARTED);
+                                addMessage(ui, false, VantarKey.ADMIN_SERVICE_STARTED);
                                 return;
                             }
-                            addMessage(ui, false, false, (i + 1) + " of " + tries + " try...");
+                            addMessage(ui, false, (i + 1) + " of " + tries + " try...");
                         }
                     }
                 }
 
-                addMessage(ui, true, true, VantarKey.ADMIN_FAILED);
+                addMessage(ui, true, VantarKey.ADMIN_FAILED);
             } catch (Exception e) {
-                addMessage(ui, true, true, e);
+                addMessage(ui, true, e);
             }
             return;
         }
         // on one service < < <
 
         // > > > on all services
-        // > > > STOP
         try {
+            // > > > STOP
             if (action.equalsIgnoreCase("stop")) {
                 for (int i = 0; i < tries; ++i) {
                     Services.stopServices();
@@ -258,16 +297,28 @@ public class AdminService {
                     Collection<Services.Service> up = Services.getServices();
                     if (ObjectUtil.isEmpty(up)) {
                         for (String enabledService : Services.getEnabledServices()) {
-                            addMessage(ui, false, false, "  > stopped: " + enabledService);
+                            addMessage(ui, false, "  > stopped: " + enabledService);
                         }
-                        addMessage(ui, false, true, VantarKey.ADMIN_SERVICE_STOPPED);
+                        addMessage(ui, false, VantarKey.ADMIN_SERVICE_STOPPED);
                         return;
                     }
-                    addMessage(ui, false, false, (i + 1) + " of " + tries + " try...");
+                    addMessage(ui, false, (i + 1) + " of " + tries + " try...");
                     for (Services.Service s : up) {
-                        addMessage(ui, false, false, "  ... pending to stop: " + s.getClass().getSimpleName());
+                        addMessage(ui, false, "  ... pending to stop: " + s.getClass().getSimpleName());
                     }
                 }
+
+            // > > > STAND BY
+            } else if (action.equalsIgnoreCase("pause")) {
+                Services.pauseServices();
+                sleep(delay);
+                return;
+
+            // > > > STAND BY
+            } else if (action.equalsIgnoreCase("resume")) {
+                Services.resumeServices();
+                sleep(delay);
+                return;
 
             // > > > START
             } else if (action.equalsIgnoreCase("start")) {
@@ -277,17 +328,17 @@ public class AdminService {
                     boolean allAreUp = true;
                     for (Class<?> enabledService : Services.getEnabledServiceClasses()) {
                         if (Services.isUp(enabledService)) {
-                            addMessage(ui, false, false, "  > running: " + enabledService);
+                            addMessage(ui, false, "  > running: " + enabledService);
                         } else {
-                            addMessage(ui, false, false, "  ... pending to start: " + enabledService);
+                            addMessage(ui, false, "  ... pending to start: " + enabledService);
                             allAreUp = false;
                         }
                     }
                     if (allAreUp) {
-                        addMessage(ui, false, true, VantarKey.ADMIN_SERVICE_STARTED);
+                        addMessage(ui, false, VantarKey.ADMIN_SERVICE_STARTED);
                         return;
                     }
-                    addMessage(ui, false, false, (i + 1) + " of " + tries + " try...");
+                    addMessage(ui, false, (i + 1) + " of " + tries + " try...");
                 }
 
             // > > > RESTART
@@ -299,15 +350,15 @@ public class AdminService {
                     Collection<Services.Service> up = Services.getServices();
                     if (ObjectUtil.isEmpty(up)) {
                         for (String enabledService : Services.getEnabledServices()) {
-                            addMessage(ui, false, false, "  > stopped: " + enabledService);
+                            addMessage(ui, false, "  > stopped: " + enabledService);
                         }
-                        addMessage(ui, false, false, VantarKey.ADMIN_SERVICE_STOPPED);
+                        addMessage(ui, false, VantarKey.ADMIN_SERVICE_STOPPED);
                         stopped = true;
                         break;
                     }
-                    addMessage(ui, false, false, (i + 1) + " of " + tries + " try...");
+                    addMessage(ui, false, (i + 1) + " of " + tries + " try...");
                     for (Services.Service s : up) {
-                        addMessage(ui, false, false, "  ... pending to stop: " + s.getClass().getSimpleName());
+                        addMessage(ui, false, "  ... pending to stop: " + s.getClass().getSimpleName());
                     }
                 }
                 if (stopped) {
@@ -317,29 +368,29 @@ public class AdminService {
                         boolean allAreUp = true;
                         for (Class<?> enabledService : Services.getEnabledServiceClasses()) {
                             if (Services.isUp(enabledService)) {
-                                addMessage(ui, false, false, "  > running: " + enabledService);
+                                addMessage(ui, false, "  > running: " + enabledService);
                             } else {
-                                addMessage(ui, false, false, "  ... pending to start: " + enabledService);
+                                addMessage(ui, false, "  ... pending to start: " + enabledService);
                                 allAreUp = false;
                             }
                         }
                         if (allAreUp) {
-                            addMessage(ui, false, true, VantarKey.ADMIN_SERVICE_STARTED);
+                            addMessage(ui, false, VantarKey.ADMIN_SERVICE_STARTED);
                             return;
                         }
-                        addMessage(ui, false, false, (i + 1) + " of " + tries + " try...");
+                        addMessage(ui, false, (i + 1) + " of " + tries + " try...");
                     }
                 }
             }
 
-            addMessage(ui, true, true, VantarKey.ADMIN_FAILED);
+            addMessage(ui, true, VantarKey.ADMIN_FAILED);
         } catch (Exception e) {
-            addMessage(ui, true, true, e);
+            addMessage(ui, true, e);
         }
         // on all services < < <
     }
 
-    private static void addMessage(WebUi ui, boolean error, boolean finish, Object msg) {
+    private static void addMessage(WebUi ui, boolean error, Object msg) {
         if (ui == null) {
             if (msg instanceof Exception) {
                 ServiceLog.error(AdminService.class, "failed ", msg);
@@ -355,9 +406,6 @@ public class AdminService {
                 ui.addMessage(msg).write();
             }
             ui.write();
-            //if (finish) {
-            //    ui.finish();
-            //}
         }
     }
 

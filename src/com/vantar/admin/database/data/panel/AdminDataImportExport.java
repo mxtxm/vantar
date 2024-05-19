@@ -1,11 +1,9 @@
 package com.vantar.admin.database.data.panel;
 
 import com.vantar.business.*;
-import com.vantar.business.importexport.ImportMongo;
+import com.vantar.business.importexport.MongoImport;
+import com.vantar.database.common.Db;
 import com.vantar.database.dto.*;
-import com.vantar.database.nosql.elasticsearch.ElasticConnection;
-import com.vantar.database.nosql.mongo.MongoConnection;
-import com.vantar.database.sql.SqlConnection;
 import com.vantar.exception.*;
 import com.vantar.locale.VantarKey;
 import com.vantar.service.Services;
@@ -26,9 +24,9 @@ public class AdminDataImportExport {
     public static void exportData(Params params, HttpServletResponse response, DtoDictionary.Info dtoInfo) throws VantarException {
         Dto dto = dtoInfo.getDtoInstance();
 
-        if (dtoInfo.dbms.equals(DtoDictionary.Dbms.MONGO)) {
-            if (MongoConnection.isUp()) {
-                List<Dto> data = ModelMongo.getAll(dto);
+        if (dtoInfo.dbms.equals(Db.Dbms.MONGO)) {
+            if (Services.isUp(Db.Dbms.MONGO)) {
+                List<Dto> data = Db.modelMongo.getAll(dto);
                 String json = Json.d.toJson(data);
                 String filepath = FileUtil.getTempFilename();
                 FileUtil.write(filepath, json);
@@ -39,12 +37,12 @@ public class AdminDataImportExport {
                         + new DateTime().formatter().getDateTimeAsFilename() + ".json"
                 );
             }
-        } else if (dtoInfo.dbms.equals(DtoDictionary.Dbms.SQL)) {
-            if (SqlConnection.isUp()) {
+        } else if (dtoInfo.dbms.equals(Db.Dbms.SQL)) {
+            if (Services.isUp(Db.Dbms.SQL)) {
                 // todo
             }
-        } else if (dtoInfo.dbms.equals(DtoDictionary.Dbms.ELASTIC)) {
-            if (ElasticConnection.isUp()) {
+        } else if (dtoInfo.dbms.equals(Db.Dbms.ELASTIC)) {
+            if (Services.isUp(Db.Dbms.ELASTIC)) {
 
             }
         }
@@ -72,12 +70,12 @@ public class AdminDataImportExport {
         String data = params.getString("imd");
         boolean deleteAll = params.isChecked("da");
 
-        if (info.dbms.equals(DtoDictionary.Dbms.MONGO)) {
-            ImportMongo.importDtoData(data, u.dto, u.dto.getPresentationPropertyNames(), deleteAll, u.ui);
-        } else if (info.dbms.equals(DtoDictionary.Dbms.SQL)) {
-            CommonModelSql.importDataAdmin(data, u.dto, u.dto.getPresentationPropertyNames(), deleteAll, u.ui);
-        } else if (info.dbms.equals(DtoDictionary.Dbms.ELASTIC)) {
-            CommonModelElastic.importDataAdmin(data, u.dto, u.dto.getPresentationPropertyNames(), deleteAll, u.ui);
+        if (info.dbms.equals(Db.Dbms.MONGO)) {
+            MongoImport.importDtoData(u.ui, data, u.dto, u.dto.getPresentationPropertyNames(), deleteAll, Db.mongo);
+        } else if (info.dbms.equals(Db.Dbms.SQL)) {
+            CommonModelSql.importDataAdmin(u.ui, data, u.dto, u.dto.getPresentationPropertyNames(), deleteAll);
+        } else if (info.dbms.equals(Db.Dbms.ELASTIC)) {
+            CommonModelElastic.importDataAdmin(u.ui, data, u.dto, u.dto.getPresentationPropertyNames(), deleteAll);
         }
 
         if (info.broadcastMessage != null) {

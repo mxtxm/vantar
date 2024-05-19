@@ -1,8 +1,9 @@
 package com.vantar.business.importexport;
 
 import com.vantar.business.*;
-import com.vantar.database.dto.Dto;
-import com.vantar.database.nosql.mongo.Mongo;
+import com.vantar.database.common.Db;
+import com.vantar.database.dto.*;
+import com.vantar.database.nosql.mongo.DbMongo;
 import com.vantar.exception.*;
 import com.vantar.locale.Locale;
 import com.vantar.locale.*;
@@ -14,9 +15,9 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 
-public class ImportMongo extends ImportCommon {
+public class MongoImport extends ImportCommon {
 
-    public static void importDtoData(String data, Dto dto, List<String> presentField, boolean deleteAll, WebUi ui) {
+    public static void importDtoData(WebUi ui, String data, Dto dto, List<String> presentField, boolean deleteAll, DbMongo db) {
         if (Services.isUp(ServiceLog.class)) {
             ServiceLog.addAction(Dto.Action.IMPORT, dto);
         }
@@ -27,8 +28,8 @@ public class ImportMongo extends ImportCommon {
         if (deleteAll) {
             String collection = dto.getStorage();
             try {
-                Mongo.deleteAll(collection);
-                Mongo.Sequence.remove(collection);
+                db.deleteAll(collection);
+                db.autoIncrementRemove(collection);
             } catch (Exception e) {
                 if (ui != null) {
                     ui.addErrorMessage(e).write();
@@ -45,14 +46,14 @@ public class ImportMongo extends ImportCommon {
         AtomicInteger duplicate = new AtomicInteger();
         Import imp = (String presentValue, Map<String, Object> values) -> {
             try {
-                if (dto.getId() == null ? ModelMongo.existsByDto(dto) : ModelMongo.existsById(dto)) {
+                if (dto.getId() == null ? Db.modelMongo.existsByDto(dto) : Db.modelMongo.existsById(dto)) {
                     duplicate.getAndIncrement();
                     return;
                 }
-                ModelMongo.insert(new ModelCommon.Settings(dto).logEvent(false).mutex(false));
+                Db.modelMongo.insert(new ModelCommon.Settings(dto).logEvent(false).mutex(false));
 
                 if (dto instanceof CommonUser) {
-                    ModelCommon.insertPassword(dto, (String) values.get("password"));
+                    Db.modelMongo.insertPassword(dto, (String) values.get("password"));
                 }
 
                 success.getAndIncrement();
@@ -64,11 +65,11 @@ public class ImportMongo extends ImportCommon {
             }
         };
 
-        importDataX(imp, data.trim(), dto, presentField, ui);
+        importDataX(ui, imp, data.trim(), dto, presentField);
         long max;
         try {
-            max = Mongo.Sequence.setToMax(dto);
-        } catch (DatabaseException e) {
+            max = db.autoIncrementSetToMax(dto);
+        } catch (VantarException e) {
             if (ui != null) {
                 ui.addErrorMessage(e);
             }

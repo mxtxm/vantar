@@ -1,6 +1,7 @@
 package com.vantar.database.nosql.elasticsearch;
 
 import com.vantar.common.VantarParam;
+import com.vantar.database.common.Db;
 import com.vantar.database.dto.*;
 import com.vantar.exception.DatabaseException;
 import com.vantar.util.datetime.DateTime;
@@ -32,7 +33,7 @@ public class ElasticIndexes {
 
 
     public static void create() throws DatabaseException {
-        for (DtoDictionary.Info info : DtoDictionary.getAll(DtoDictionary.Dbms.ELASTIC)) {
+        for (DtoDictionary.Info info : DtoDictionary.getAll(Db.Dbms.ELASTIC)) {
             Dto dto = info.getDtoInstance();
             deleteIndex(dto);
             createIndex(dto);

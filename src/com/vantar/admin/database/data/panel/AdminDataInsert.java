@@ -1,6 +1,7 @@
 package com.vantar.admin.database.data.panel;
 
 import com.vantar.business.*;
+import com.vantar.database.common.Db;
 import com.vantar.database.dto.*;
 import com.vantar.exception.*;
 import com.vantar.locale.VantarKey;
@@ -38,12 +39,12 @@ public class AdminDataInsert {
             event.beforeInsert(u.dto);
         }
         try {
-            if (info.dbms.equals(DtoDictionary.Dbms.MONGO)) {
-                ModelMongo.insert(new ModelCommon.Settings(params, u.dto)
+            if (info.dbms.equals(Db.Dbms.MONGO)) {
+                Db.modelMongo.insert(new ModelCommon.Settings(params, u.dto)
                     .isJson("asjson")
                     .setEventAfterWrite(dto -> {
                         if (dto instanceof CommonUser) {
-                            ModelCommon.insertPassword(
+                            Db.modelMongo.insertPassword(
                                 dto,
                                 Json.d.extract(params.getString("asjson"), "password", String.class)
                             );
@@ -51,9 +52,9 @@ public class AdminDataInsert {
                     })
                 );
 
-            } else if (info.dbms.equals(DtoDictionary.Dbms.SQL)) {
+            } else if (info.dbms.equals(Db.Dbms.SQL)) {
                 CommonModelSql.insert(params, u.dto);
-            } else if (info.dbms.equals(DtoDictionary.Dbms.ELASTIC)) {
+            } else if (info.dbms.equals(Db.Dbms.ELASTIC)) {
                 CommonModelElastic.insert(params, u.dto);
             }
             if (event != null) {

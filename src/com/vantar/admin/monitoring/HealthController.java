@@ -2,6 +2,7 @@ package com.vantar.admin.monitoring;
 
 import com.vantar.admin.database.dbms.status.AdminStatus;
 import com.vantar.business.*;
+import com.vantar.database.common.Db;
 import com.vantar.database.dto.Dto;
 import com.vantar.database.query.QueryBuilder;
 import com.vantar.exception.VantarException;
@@ -55,7 +56,7 @@ public class HealthController extends RouteToMethod {
         String tag = params.extractFromJsonRequired("tag", String.class);
         Response.writeJson(
             response,
-            ModelMongo.search(params, new Log(), new ModelCommon.QueryEvent() {
+            Db.modelMongo.search(params, new Log(), new ModelCommon.QueryEvent() {
                 @Override
                 public void beforeQuery(QueryBuilder q) {
                     q.condition()

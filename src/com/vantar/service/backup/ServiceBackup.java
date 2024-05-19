@@ -1,6 +1,6 @@
 package com.vantar.service.backup;
 
-import com.vantar.database.dto.DtoDictionary;
+import com.vantar.database.common.Db;
 import com.vantar.database.nosql.elasticsearch.ElasticBackup;
 import com.vantar.database.nosql.mongo.MongoBackup;
 import com.vantar.database.sql.SqlBackup;
@@ -17,6 +17,7 @@ import java.util.concurrent.*;
 
 public class ServiceBackup implements Services.Service {
 
+    private volatile boolean pause = false;
     private volatile boolean serviceUp = false;
     private volatile boolean lastSuccess = true;
 
@@ -39,6 +40,7 @@ public class ServiceBackup implements Services.Service {
 
     @Override
     public void start() {
+        pause = false;
         schedule = Executors.newSingleThreadScheduledExecutor();
 
         DateTime now = new DateTime();
@@ -74,6 +76,16 @@ public class ServiceBackup implements Services.Service {
     }
 
     @Override
+    public void pause() {
+        pause = true;
+    }
+
+    @Override
+    public void resume() {
+        pause = false;
+    }
+
+    @Override
     public boolean isUp() {
         return serviceUp;
     }
@@ -102,6 +114,9 @@ public class ServiceBackup implements Services.Service {
     // service methods < < <
 
     private void create() {
+        if (pause) {
+            return;
+        }
         ServiceLog.log.info("  --> start creating database backup");
         lastSuccess = true;
         startDateTime = null;
@@ -113,21 +128,21 @@ public class ServiceBackup implements Services.Service {
         Set<String> excludeDtos = StringUtil.splitToSetTrim(exclude, ',');
         Set<String> includeDtos = StringUtil.splitToSetTrim(include, ',');
         try {
-            if (StringUtil.contains(dbms, DtoDictionary.Dbms.MONGO.toString())) {
+            if (StringUtil.contains(dbms, Db.Dbms.MONGO.toString())) {
                 Beat.set(this.getClass(), "Mongo backup start...");
-                MongoBackup.dump(path + "mongo" + tail, null, excludeDtos, includeDtos, null);
+                MongoBackup.dump(null, path + "mongo" + tail, null, excludeDtos, includeDtos);
                 Beat.set(this.getClass(), "Mongo backup");
                 setLogs("success: " + lastRun.formatter().getDateTime() + " mongo");
             }
-            if (StringUtil.contains(dbms, DtoDictionary.Dbms.SQL.toString())) {
+            if (StringUtil.contains(dbms, Db.Dbms.SQL.toString())) {
                 Beat.set(this.getClass(), "SQL backup start...");
-                SqlBackup.dump(path + "sql" + tail, null, null);
+                SqlBackup.dump(null, path + "sql" + tail, null);
                 Beat.set(this.getClass(), "SQL backup");
                 setLogs("success: " + lastRun.formatter().getDateTime() + " sql");
             }
-            if (StringUtil.contains(dbms, DtoDictionary.Dbms.ELASTIC.toString())) {
+            if (StringUtil.contains(dbms, Db.Dbms.ELASTIC.toString())) {
                 Beat.set(this.getClass(), "Elastic backup start...");
-                ElasticBackup.dump(path + "elastic" + tail, null, null);
+                ElasticBackup.dump(null, path + "elastic" + tail, null);
                 Beat.set(this.getClass(), "Elastic backup");
                 setLogs("success: " + lastRun.formatter().getDateTime() + " elastic");
             }

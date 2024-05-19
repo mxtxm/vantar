@@ -1,6 +1,7 @@
 package com.vantar.service.patch;
 
 import com.vantar.business.*;
+import com.vantar.database.common.Db;
 import com.vantar.database.dto.DtoBase;
 import com.vantar.database.query.QueryBuilder;
 import com.vantar.exception.NoContentException;
@@ -37,15 +38,15 @@ public class Patcher extends DtoBase {
         QueryBuilder q = new QueryBuilder(new PatchHistory());
         q.condition().equal("patchClass", className);
         try {
-            ModelMongo.getFirst(q);
+            Db.modelMongo.getFirst(q);
         } catch (NoContentException e) {
-            execPatchManually(className, null);
+            execPatchManually(null, className);
         } catch (Exception e) {
             ServiceLog.log.error(" ! Patcher {}", className, e);
         }
     }
 
-    public static PatchHistory execPatchManually(String className, WebUi ui) {
+    public static PatchHistory execPatchManually(WebUi ui, String className) {
         PatchHistory history = new PatchHistory();
         try {
             ServiceLog.log.info("  --> running {}", className);
@@ -67,7 +68,7 @@ public class Patcher extends DtoBase {
 
             QueryBuilder q = new QueryBuilder(history);
             q.condition().equal("patchClass", className);
-            ModelMongo.delete(new ModelCommon.Settings(q).force(true).logEvent(false).mutex(false));
+            Db.modelMongo.delete(new ModelCommon.Settings(q).force(true).logEvent(false).mutex(false));
 
             history.patchClass = className;
             history.success = result.success;
@@ -75,7 +76,7 @@ public class Patcher extends DtoBase {
             history.successCount = result.successCount;
             history.failCount = result.failCount;
             ServiceLog.log.info("  <-- finished {} fail={} success={}", className, result.failCount, result.successCount);
-            ModelMongo.insert(new ModelCommon.Settings(history).logEvent(false).mutex(false));
+            Db.modelMongo.insert(new ModelCommon.Settings(history).logEvent(false).mutex(false));
         } catch (Throwable t) {
             ServiceLog.log.error(" ! Patcher {}", className, t);
         }

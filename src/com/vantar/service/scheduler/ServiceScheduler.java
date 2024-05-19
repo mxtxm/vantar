@@ -13,6 +13,7 @@ import java.util.concurrent.*;
 
 public class ServiceScheduler implements Services.Service {
 
+    private volatile boolean pause = false;
     private volatile boolean serviceUp = false;
     private volatile boolean lastSuccess = true;
     private List<String> logs;
@@ -32,6 +33,10 @@ public class ServiceScheduler implements Services.Service {
 
     @Override
     public void start() {
+        if (StringUtil.isEmpty(schedule)) {
+            ServiceLog.log.info(" >> schedule service not started because no schedules are available in the settings");
+            return;
+        }
         serviceUp = true;
         String[] parts = StringUtil.splitTrim(schedule, VantarParam.SEPARATOR_BLOCK);
         schedules = new ScheduledExecutorService[parts.length];
@@ -45,6 +50,9 @@ public class ServiceScheduler implements Services.Service {
 
     @Override
     public void stop() {
+        if (schedules == null) {
+            return;
+        }
         for (ScheduledExecutorService s : schedules) {
             s.shutdown();
             try {
@@ -54,6 +62,16 @@ public class ServiceScheduler implements Services.Service {
             }
         }
         serviceUp = false;
+    }
+
+    @Override
+    public void pause() {
+        pause = true;
+    }
+
+    @Override
+    public void resume() {
+        pause = false;
     }
 
     @Override
@@ -203,6 +221,9 @@ public class ServiceScheduler implements Services.Service {
 
     private Runnable getRunnable(String classNameMethodName) {
         return () -> {
+            if (pause) {
+                return;
+            }
             String[] cm = StringUtil.split(classNameMethodName, '.');
             try {
                 Class<?> tClass = Class.forName(ExtraUtils.join(cm, '.', cm.length-1));

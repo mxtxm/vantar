@@ -1,6 +1,6 @@
 package com.vantar.admin.database.data.panel;
 
-import com.vantar.business.ModelMongo;
+import com.vantar.database.common.Db;
 import com.vantar.database.dto.*;
 import com.vantar.database.sql.*;
 import com.vantar.exception.*;
@@ -19,16 +19,16 @@ public class AdminDataView {
 
         try {
             // > > > MONGO
-            if (info.dbms.equals(DtoDictionary.Dbms.MONGO)) {
-                u.dto = ModelMongo.getById(u.dto);
+            if (info.dbms.equals(Db.Dbms.MONGO)) {
+                u.dto = Db.modelMongo.getById(u.dto);
                 // > > > SQL
-            } else if (info.dbms.equals(DtoDictionary.Dbms.SQL)) {
+            } else if (info.dbms.equals(Db.Dbms.SQL)) {
                 try (SqlConnection connection = new SqlConnection()) {
                     SqlSearch search = new SqlSearch(connection);
                 }
                 //todo
                 // > > > ELASTIC
-            } else if (info.dbms.equals(DtoDictionary.Dbms.ELASTIC)) {
+            } else if (info.dbms.equals(Db.Dbms.ELASTIC)) {
                 //todo
             }
 

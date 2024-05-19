@@ -1,10 +1,7 @@
 package com.vantar.service.healthmonitor;
 
 import com.sun.management.OperatingSystemMXBean;
-import com.vantar.database.dto.DtoDictionary;
-import com.vantar.database.nosql.elasticsearch.ElasticConnection;
-import com.vantar.database.nosql.mongo.MongoConnection;
-import com.vantar.database.sql.SqlConnection;
+import com.vantar.database.common.Db;
 import com.vantar.queue.Queue;
 import com.vantar.service.Services;
 import com.vantar.service.log.*;
@@ -24,6 +21,7 @@ public class ServiceHealthMonitor implements Services.Service {
     private ScheduledExecutorService schedule;
     private Event event;
 
+    private volatile boolean pause = false;
     private List<String> lastMessages;
     private boolean lastWasOk = true;
 
@@ -45,15 +43,26 @@ public class ServiceHealthMonitor implements Services.Service {
 
     @Override
     public void start() {
-        serviceUp = true;
         schedule = Executors.newSingleThreadScheduledExecutor();
         schedule.scheduleWithFixedDelay(this::monitor, intervalMin, intervalMin, TimeUnit.MINUTES);
+        serviceUp = true;
+        pause = false;
     }
 
     @Override
     public void stop() {
         schedule.shutdown();
         serviceUp = false;
+    }
+
+    @Override
+    public void pause() {
+        pause = true;
+    }
+
+    @Override
+    public void resume() {
+        pause = false;
     }
 
     @Override
@@ -82,6 +91,10 @@ public class ServiceHealthMonitor implements Services.Service {
     // service methods < < <
 
     private void monitor() {
+        if (pause) {
+            return;
+        }
+
         lastWasOk = true;
         lastMessages = new ArrayList<>(10);
 
@@ -128,48 +141,51 @@ public class ServiceHealthMonitor implements Services.Service {
         }
 
         // > > > services
-        if (Services.isDataSourceEnabled(MongoConnection.class) && !Services.isUp(MongoConnection.class)) {
-            String msg = "SERVICE OFF: Mongo";
-            event.warnServiceFail(msg);
-            ServiceLog.error(ServiceHealthMonitor.class, msg);
-            lastWasOk = false;
-            lastMessages.add(msg);
-        }
-        if (Services.isDataSourceEnabled(ElasticConnection.class) && !Services.isUp(ElasticConnection.class)) {
-            String msg = "SERVICE OFF: Elastic";
-            event.warnServiceFail(msg);
-            ServiceLog.error(ServiceHealthMonitor.class, msg);
-            lastWasOk = false;
-            lastMessages.add(msg);
-        }
-        if (Services.isDataSourceEnabled(SqlConnection.class) && !Services.isUp(SqlConnection.class)) {
-            String msg = "SERVICE OFF: SQL";
-            event.warnServiceFail(msg);
-            ServiceLog.error(ServiceHealthMonitor.class, msg);
-            lastWasOk = false;
-            lastMessages.add(msg);
-        }
-        if (Services.isDataSourceEnabled(Queue.class) && !Services.isUp(Queue.class)) {
+        if (Services.isEnabled(Queue.Engine.QUEUE) && !Services.isUp(Queue.Engine.QUEUE)) {
             String msg = "SERVICE OFF: Queue";
             event.warnServiceFail(msg);
             ServiceLog.error(ServiceHealthMonitor.class, msg);
             lastWasOk = false;
             lastMessages.add(msg);
         }
+        if (Services.isEnabled(Db.Dbms.MONGO) && !Services.isUp(Db.Dbms.MONGO)) {
+            String msg = "SERVICE OFF: Mongo";
+            event.warnServiceFail(msg);
+            ServiceLog.error(ServiceHealthMonitor.class, msg);
+            lastWasOk = false;
+            lastMessages.add(msg);
+        }
+        if (Services.isEnabled(Db.Dbms.SQL) && !Services.isUp(Db.Dbms.SQL)) {
+            String msg = "SERVICE OFF: SQL";
+            event.warnServiceFail(msg);
+            ServiceLog.error(ServiceHealthMonitor.class, msg);
+            lastWasOk = false;
+            lastMessages.add(msg);
+        }
+        if (Services.isEnabled(Db.Dbms.ELASTIC) && !Services.isUp(Db.Dbms.ELASTIC)) {
+            String msg = "SERVICE OFF: Elastic";
+            event.warnServiceFail(msg);
+            ServiceLog.error(ServiceHealthMonitor.class, msg);
+            lastWasOk = false;
+            lastMessages.add(msg);
+        }
 
-        for (Services.Service service : Services.getServices()) {
-            if (!service.isUp()) {
-                String msg = "SERVICE OFF: " + service.getClass().getSimpleName();
-                event.warnServiceFail(msg);
-                ServiceLog.error(ServiceHealthMonitor.class, msg);
-                lastWasOk = false;
-                lastMessages.add(msg);
-            } else if (!service.isOk()) {
-                String msg = "SERVICE FAIL: " + service.getClass().getSimpleName();
-                event.warnServiceFail(msg);
-                ServiceLog.error(ServiceHealthMonitor.class, msg);
-                lastWasOk = false;
-                lastMessages.add(msg);
+        Collection<Services.Service> services = Services.getServices();
+        if (services != null) {
+            for (Services.Service service : services) {
+                if (!service.isUp()) {
+                    String msg = "SERVICE OFF: " + service.getClass().getSimpleName();
+                    event.warnServiceFail(msg);
+                    ServiceLog.error(ServiceHealthMonitor.class, msg);
+                    lastWasOk = false;
+                    lastMessages.add(msg);
+                } else if (!service.isOk()) {
+                    String msg = "SERVICE FAIL: " + service.getClass().getSimpleName();
+                    event.warnServiceFail(msg);
+                    ServiceLog.error(ServiceHealthMonitor.class, msg);
+                    lastWasOk = false;
+                    lastMessages.add(msg);
+                }
             }
         }
     }
@@ -270,24 +286,24 @@ public class ServiceHealthMonitor implements Services.Service {
         Map<String, Map<String, Boolean>> dataSources = new HashMap<>(5, 1);
         // >
         Map<String, Boolean> queue = new HashMap<>(2, 1);
-        queue.put("Enabled", Services.isDataSourceEnabled(Queue.class));
-        queue.put("Up", Services.isUp(Queue.class));
+        queue.put("Enabled", Services.isEnabled(Queue.Engine.QUEUE));
+        queue.put("Up", Services.isUp(Queue.Engine.QUEUE));
         dataSources.put("Queue", queue);
         // >
         Map<String, Boolean> mongo = new HashMap<>(2, 1);
-        mongo.put("Enabled", Services.isDataSourceEnabled(MongoConnection.class));
-        mongo.put("Up", Services.isUp(MongoConnection.class));
-        dataSources.put(DtoDictionary.Dbms.MONGO.name(), mongo);
+        mongo.put("Enabled", Services.isEnabled(Db.Dbms.MONGO));
+        mongo.put("Up", Services.isUp(Db.Dbms.MONGO));
+        dataSources.put(Db.Dbms.MONGO.name(), mongo);
         // >
         Map<String, Boolean> sql = new HashMap<>(2, 1);
-        sql.put("Enabled", Services.isDataSourceEnabled(SqlConnection.class));
-        sql.put("Up", Services.isUp(SqlConnection.class));
-        dataSources.put(DtoDictionary.Dbms.SQL.name(), sql);
+        sql.put("Enabled", Services.isEnabled(Db.Dbms.SQL));
+        sql.put("Up", Services.isUp(Db.Dbms.SQL));
+        dataSources.put(Db.Dbms.SQL.name(), sql);
         // >
         Map<String, Boolean> elastic = new HashMap<>(2, 1);
-        elastic.put("Enabled", Services.isDataSourceEnabled(ElasticConnection.class));
-        elastic.put("Up", Services.isUp(ElasticConnection.class));
-        dataSources.put(DtoDictionary.Dbms.ELASTIC.name(), elastic);
+        elastic.put("Enabled", Services.isEnabled(Db.Dbms.ELASTIC));
+        elastic.put("Up", Services.isUp(Db.Dbms.ELASTIC));
+        dataSources.put(Db.Dbms.ELASTIC.name(), elastic);
         // >
         report.put("Data sources (connections)", dataSources);
 

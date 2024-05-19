@@ -1,10 +1,9 @@
 package com.vantar.service.dbarchive;
 
-import com.vantar.business.ModelMongo;
 import com.vantar.common.Settings;
+import com.vantar.database.common.Db;
 import com.vantar.database.dto.*;
 import com.vantar.database.nosql.mongo.*;
-import com.vantar.database.nosql.mongo.Mongo;
 import com.vantar.database.query.QueryBuilder;
 import com.vantar.exception.*;
 import com.vantar.service.Services;
@@ -76,6 +75,16 @@ public class ServiceDbArchive implements Services.Service {
     }
 
     @Override
+    public void pause() {
+
+    }
+
+    @Override
+    public void resume() {
+
+    }
+
+    @Override
     public boolean isUp() {
         return serviceUp;
     }
@@ -113,7 +122,7 @@ public class ServiceDbArchive implements Services.Service {
         Map<String, ArchiveInfo> archives = getArchives();
 
         DateTime now = new DateTime();
-        for (DtoDictionary.Info info : DtoDictionary.getAll(DtoDictionary.Dbms.MONGO)) {
+        for (DtoDictionary.Info info : DtoDictionary.getAll(Db.Dbms.MONGO)) {
             Archive archive = info.dtoClass.getAnnotation(Archive.class);
             if (archive == null) {
                 continue;
@@ -148,11 +157,11 @@ public class ServiceDbArchive implements Services.Service {
         String newClassName = className + archiveInfo.collections.size();
         ServiceLog.log.info("  --> creating archive {} > {}", className, newClassName);
         try {
-            Mongo.renameCollection(className, newClassName);
+            Db.mongo.renameCollection(className, newClassName);
             archiveInfo.lastCreateDateTime = now;
             archiveInfo.collections.put(newClassName, now.formatter().getDateHm());
             ServiceLog.log.info("  <-- creating archive");
-        } catch (DatabaseException e) {
+        } catch (VantarException e) {
             ServiceLog.log.error(" ! archive {} > {}", className, newClassName, e);
             lastSuccess = true;
             setLog(e.getMessage());
@@ -165,7 +174,7 @@ public class ServiceDbArchive implements Services.Service {
             return;
         }
         try {
-            if (maxRecords * 2 >= ModelMongo.count(className)) {
+            if (maxRecords * 2 >= Db.modelMongo.count(className)) {
                 return;
             }
         } catch (VantarException ignore) {
@@ -180,15 +189,14 @@ public class ServiceDbArchive implements Services.Service {
         QueryBuilder q = new QueryBuilder(dto);
         q.sort("id:asc").page(1, maxRecords);
         try {
-            MongoQuery mongoQuery = new MongoQuery(q);
-            for (Document document : mongoQuery.getResult()) {
+            for (Document document : Db.mongo.getResult(new MongoQuery(q))) {
                 if (i++ % BULK_ACTION_RECORD_COUNT == 0) {
-                    Mongo.insert(newClassName, documents);
+                    Db.mongo.insert(newClassName, documents);
                     documents = new ArrayList<>(BULK_ACTION_RECORD_COUNT);
                 }
                 documents.add(document);
             }
-            Mongo.insert(newClassName, documents);
+            Db.mongo.insert(newClassName, documents);
 
             archiveInfo.lastCreateDateTime = now;
             archiveInfo.collections.put(newClassName, now.formatter().getDateHm());
@@ -242,7 +250,7 @@ public class ServiceDbArchive implements Services.Service {
     private static synchronized void loadDtoStorage() {
         Map<String, ArchiveInfo> archives = getArchives();
         classToStorage = new HashMap<>(MAX_ARCHIVED_DTO_COUNT, 1);
-        for (DtoDictionary.Info info : DtoDictionary.getAll(DtoDictionary.Dbms.MONGO)) {
+        for (DtoDictionary.Info info : DtoDictionary.getAll(Db.Dbms.MONGO)) {
             Archive archive = info.dtoClass.getAnnotation(Archive.class);
             if (archive == null) {
                 continue;

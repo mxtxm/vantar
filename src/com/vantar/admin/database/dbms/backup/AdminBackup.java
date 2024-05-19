@@ -1,7 +1,7 @@
 package com.vantar.admin.database.dbms.backup;
 
 import com.vantar.admin.index.Admin;
-import com.vantar.database.common.ValidationError;
+import com.vantar.database.common.*;
 import com.vantar.database.dto.*;
 import com.vantar.database.nosql.elasticsearch.ElasticBackup;
 import com.vantar.database.nosql.mongo.MongoBackup;
@@ -27,7 +27,7 @@ public class AdminBackup {
     private static final String DUMP_FILE_EXT = ".dump";
 
 
-    public static void backup(Params params, HttpServletResponse response, DtoDictionary.Dbms dbms) throws FinishException {
+    public static void backup(Params params, HttpServletResponse response, Db.Dbms dbms) throws FinishException {
         WebUi ui = Admin.getUi(VantarKey.ADMIN_BACKUP_CREATE, params, response, true);
         ui.addHeading(2, dbms);
 
@@ -69,23 +69,23 @@ public class AdminBackup {
         if (dateRange == null || !dateRange.isValid()) {
             dateRange = null;
         }
-        if (dbms.equals(DtoDictionary.Dbms.MONGO)) {
+        if (dbms.equals(Db.Dbms.MONGO)) {
             MongoBackup.dump(
+                ui,
                 dbDumpFilename,
                 dateRange,
                 excludes == null ? null : StringUtil.splitToSet(StringUtil.trim(excludes, ','), ','),
-                includes == null ? null : StringUtil.splitToSet(StringUtil.trim(includes, ','), ','),
-                ui
+                includes == null ? null : StringUtil.splitToSet(StringUtil.trim(includes, ','), ',')
             );
-        } else if (dbms.equals(DtoDictionary.Dbms.SQL)) {
-            SqlBackup.dump(dbDumpFilename, dateRange, ui);
-        } else if (dbms.equals(DtoDictionary.Dbms.ELASTIC)) {
-            ElasticBackup.dump(dbDumpFilename, dateRange, ui);
+        } else if (dbms.equals(Db.Dbms.SQL)) {
+            SqlBackup.dump(ui, dbDumpFilename, dateRange);
+        } else if (dbms.equals(Db.Dbms.ELASTIC)) {
+            ElasticBackup.dump(ui, dbDumpFilename, dateRange);
         }
         ui.finish();
     }
 
-    public static void backupQuery(Params params, HttpServletResponse response, DtoDictionary.Dbms dbms) throws FinishException {
+    public static void backupQuery(Params params, HttpServletResponse response, Db.Dbms dbms) throws FinishException {
         WebUi ui = Admin.getUi(VantarKey.ADMIN_BACKUP_CREATE, params, response, true);
         ui.addHeading(2, dbms);
 
@@ -156,12 +156,12 @@ public class AdminBackup {
             return;
         }
 
-        MongoBackup.dumpQuery(dbDumpFilename, q, ui);
+        MongoBackup.dumpQuery(ui, dbDumpFilename, q);
 
         ui.finish();
     }
 
-    public static void restore(Params params, HttpServletResponse response, DtoDictionary.Dbms dbms) throws FinishException {
+    public static void restore(Params params, HttpServletResponse response, Db.Dbms dbms) throws FinishException {
         WebUi ui = Admin.getUi(VantarKey.ADMIN_RESTORE, params, response, true);
         ui.addHeading(2, dbms);
 
@@ -205,24 +205,24 @@ public class AdminBackup {
         String includes = params.getString("in");
         boolean deleteData = params.isChecked("da");
         boolean camelCaseProperties = params.isChecked("cc");
-        if (dbms.equals(DtoDictionary.Dbms.MONGO)) {
+        if (dbms.equals(Db.Dbms.MONGO)) {
             MongoBackup.restore(
+                ui,
                 dbDumpFilename,
                 deleteData,
                 camelCaseProperties,
                 excludes == null ? null : StringUtil.splitToSet(StringUtil.trim(excludes, ','), ','),
-                includes == null ? null : StringUtil.splitToSet(StringUtil.trim(includes, ','), ','),
-                ui
+                includes == null ? null : StringUtil.splitToSet(StringUtil.trim(includes, ','), ',')
             );
-        } else if (dbms.equals(DtoDictionary.Dbms.SQL)) {
-            SqlBackup.restore(dbDumpFilename, deleteData, ui);
-        } else if (dbms.equals(DtoDictionary.Dbms.ELASTIC)) {
-            ElasticBackup.restore(dbDumpFilename, deleteData, ui);
+        } else if (dbms.equals(Db.Dbms.SQL)) {
+            SqlBackup.restore(ui, dbDumpFilename, deleteData);
+        } else if (dbms.equals(Db.Dbms.ELASTIC)) {
+            ElasticBackup.restore(ui, dbDumpFilename, deleteData);
         }
         ui.finish();
     }
 
-    public static void backupFiles(Params params, HttpServletResponse response, DtoDictionary.Dbms dbms) throws FinishException {
+    public static void backupFiles(Params params, HttpServletResponse response, Db.Dbms dbms) throws FinishException {
         WebUi ui = Admin.getUi(VantarKey.ADMIN_BACKUP_FILES, params, response, true);
 
         ServiceBackup backup;

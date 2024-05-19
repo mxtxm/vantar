@@ -1,6 +1,6 @@
 package com.vantar.admin.database.dbms.indexing;
 
-import com.vantar.database.dto.DtoDictionary;
+import com.vantar.database.common.Db;
 import com.vantar.exception.FinishException;
 import com.vantar.web.*;
 import javax.servlet.annotation.WebServlet;
@@ -17,22 +17,22 @@ import javax.servlet.http.HttpServletResponse;
 public class Controller extends RouteToMethod {
 
     public void databaseMongoIndex(Params params, HttpServletResponse response) throws FinishException {
-        AdminDatabaseIndex.listIndexes(params, response, DtoDictionary.Dbms.MONGO);
+        AdminDatabaseIndex.listIndexes(params, response, Db.Dbms.MONGO);
     }
 
     public void databaseMongoIndexCreate(Params params, HttpServletResponse response) throws FinishException {
-        AdminDatabaseIndex.createIndex(params, response, DtoDictionary.Dbms.MONGO);
+        AdminDatabaseIndex.createIndex(params, response, Db.Dbms.MONGO);
     }
 
     public void databaseMongoIndexGet(Params params, HttpServletResponse response) throws FinishException {
-        AdminDatabaseIndex.getIndexes(params, response, DtoDictionary.Dbms.MONGO);
+        AdminDatabaseIndex.getIndexes(params, response, Db.Dbms.MONGO);
     }
 
     public void databaseSqlIndex(Params params, HttpServletResponse response) throws FinishException {
-        AdminDatabaseIndex.listIndexes(params, response, DtoDictionary.Dbms.SQL);
+        AdminDatabaseIndex.listIndexes(params, response, Db.Dbms.SQL);
     }
 
     public void databaseSqlIndexCreate(Params params, HttpServletResponse response) throws FinishException {
-        AdminDatabaseIndex.createIndex(params, response, DtoDictionary.Dbms.SQL);
+        AdminDatabaseIndex.createIndex(params, response, Db.Dbms.SQL);
     }
 }

@@ -1,5 +1,6 @@
 package com.vantar.database.dependency;
 
+import com.vantar.database.common.Db;
 import com.vantar.database.dto.*;
 import com.vantar.service.log.ServiceLog;
 import com.vantar.util.json.Json;
@@ -40,7 +41,7 @@ public class RelationMap {
         List<DtoDictionary.Info> dtos = DtoDictionary.getAll();
         relations = new HashMap<>(dtos.size(), 1);
         for (DtoDictionary.Info dtoInfo : DtoDictionary.getAll()) {
-            if (dtoInfo.hidden || DtoDictionary.Dbms.NOSTORE.equals(dtoInfo.dbms)) {
+            if (dtoInfo.hidden || Db.Dbms.NOSTORE.equals(dtoInfo.dbms)) {
                 continue;
             }
             deepSeekDto(dtoInfo.dtoClass);
@@ -49,7 +50,7 @@ public class RelationMap {
         // cleanup un-wanted items
         relations.entrySet().removeIf(entry -> {
             DtoDictionary.Info info = DtoDictionary.get(entry.getKey());
-            return info == null || info.hidden || DtoDictionary.Dbms.NOSTORE.equals(info.dbms);
+            return info == null || info.hidden || Db.Dbms.NOSTORE.equals(info.dbms);
         });
 
         ServiceLog.log.trace(" > relation map creation: {}ms", System.currentTimeMillis() - t1);

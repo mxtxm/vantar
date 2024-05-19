@@ -14,6 +14,7 @@ import javax.servlet.http.HttpServletResponse;
     "/admin/documentation/webservices/xlsx",
 
     "/admin/documentation/webservice/get",
+    "/admin/documentation/webservice/get/json",
 })
 public class Controller extends RouteToMethod {
 
@@ -39,5 +40,9 @@ public class Controller extends RouteToMethod {
 
     public void documentationWebserviceGet(Params params, HttpServletResponse response) throws VantarException {
         Response.writeJson(response, WebServiceGet.get(params));
+    }
+
+    public void documentationWebserviceGetJson(Params params, HttpServletResponse response) throws VantarException {
+        Response.writeJson(response, WebServiceGet.getJson(params));
     }
 }

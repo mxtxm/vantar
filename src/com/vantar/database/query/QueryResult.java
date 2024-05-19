@@ -12,15 +12,15 @@ public interface QueryResult {
 
     <T extends QueryResult> T setLocale(String... locales);
 
-    <T extends Dto> T first() throws NoContentException, DatabaseException;
+    <T extends Dto> T first() throws VantarException;
 
-    <T extends Dto> T getNext() throws DatabaseException, NoContentException;
+    <T extends Dto> T getNext() throws VantarException;
 
     <T extends Dto> T get();
 
-    boolean next() throws DatabaseException;
+    boolean next() throws VantarException;
 
-    <T extends Dto> List<T> asList() throws NoContentException, DatabaseException;
+    <T extends Dto> List<T> asList() throws VantarException;
 
     Collection<Object> asPropertyList(String property) throws VantarException;
 
@@ -28,13 +28,13 @@ public interface QueryResult {
 
     void forEach(QueryResultBase.EventForeach event) throws VantarException;
 
-    <T extends Dto> Map<Object, T> asMap(String keyField) throws NoContentException, DatabaseException;
+    <T extends Dto> Map<Object, T> asMap(String keyField) throws VantarException;
 
-    Map<String, String> asKeyValue(String keyField, String valueField) throws DatabaseException, NoContentException;
+    Map<String, String> asKeyValue(String keyField, String valueField) throws VantarException;
 
-    Map<String, String> asKeyValue(KeyValueData definition) throws DatabaseException, NoContentException;
+    Map<String, String> asKeyValue(KeyValueData definition) throws VantarException;
 
-    Object peek(String field) throws NoContentException, DatabaseException;
+    Object peek(String field) throws VantarException;
 
     void close();
 

@@ -1,6 +1,6 @@
 package com.vantar.admin.database.dbms.backup;
 
-import com.vantar.database.dto.DtoDictionary;
+import com.vantar.database.common.Db;
 import com.vantar.exception.*;
 import com.vantar.service.Services;
 import com.vantar.service.backup.ServiceBackup;
@@ -37,47 +37,47 @@ public class Controller extends RouteToMethod {
     // > > > MONGO
 
     public void dataBackupMongo(Params params, HttpServletResponse response) throws FinishException {
-        AdminBackup.backup(params, response, DtoDictionary.Dbms.MONGO);
+        AdminBackup.backup(params, response, Db.Dbms.MONGO);
     }
 
     public void dataBackupMongoQ(Params params, HttpServletResponse response) throws FinishException {
-        AdminBackup.backupQuery(params, response, DtoDictionary.Dbms.MONGO);
+        AdminBackup.backupQuery(params, response, Db.Dbms.MONGO);
     }
 
     public void dataRestoreMongo(Params params, HttpServletResponse response) throws FinishException {
-        AdminBackup.restore(params, response, DtoDictionary.Dbms.MONGO);
+        AdminBackup.restore(params, response, Db.Dbms.MONGO);
     }
 
     public void dataBackupFilesMongo(Params params, HttpServletResponse response) throws FinishException {
-        AdminBackup.backupFiles(params, response, DtoDictionary.Dbms.MONGO);
+        AdminBackup.backupFiles(params, response, Db.Dbms.MONGO);
     }
 
     // > > > SQL
 
     public void dataBackupSql(Params params, HttpServletResponse response) throws FinishException {
-        AdminBackup.backup(params, response, DtoDictionary.Dbms.SQL);
+        AdminBackup.backup(params, response, Db.Dbms.SQL);
     }
 
     public void dataRestoreSql(Params params, HttpServletResponse response) throws FinishException {
-        AdminBackup.restore(params, response, DtoDictionary.Dbms.SQL);
+        AdminBackup.restore(params, response, Db.Dbms.SQL);
     }
 
     public void dataBackupFilesSql(Params params, HttpServletResponse response) throws FinishException {
-        AdminBackup.backupFiles(params, response, DtoDictionary.Dbms.SQL);
+        AdminBackup.backupFiles(params, response, Db.Dbms.SQL);
     }
 
     // > > > ELASTIC
 
     public void dataBackupElastic(Params params, HttpServletResponse response) throws FinishException {
-        AdminBackup.backup(params, response, DtoDictionary.Dbms.ELASTIC);
+        AdminBackup.backup(params, response, Db.Dbms.ELASTIC);
     }
 
     public void dataRestoreElastic(Params params, HttpServletResponse response) throws FinishException {
-        AdminBackup.restore(params, response, DtoDictionary.Dbms.ELASTIC);
+        AdminBackup.restore(params, response, Db.Dbms.ELASTIC);
     }
 
     public void dataBackupFilesElastic(Params params, HttpServletResponse response) throws FinishException {
-        AdminBackup.backupFiles(params, response, DtoDictionary.Dbms.ELASTIC);
+        AdminBackup.backupFiles(params, response, Db.Dbms.ELASTIC);
     }
 
     // > > > all

@@ -1,10 +1,12 @@
 package com.vantar.admin.database.dbms.elastic;
 
 import com.vantar.admin.index.Admin;
+import com.vantar.database.common.Db;
 import com.vantar.database.dto.*;
 import com.vantar.database.nosql.elasticsearch.*;
 import com.vantar.exception.*;
 import com.vantar.locale.*;
+import com.vantar.service.Services;
 import com.vantar.util.string.StringUtil;
 import com.vantar.web.*;
 import javax.servlet.http.HttpServletResponse;
@@ -16,15 +18,15 @@ public class AdminElastic {
     @SuppressWarnings("unchecked")
     public static void getMappingElastic(Params params, HttpServletResponse response) throws FinishException {
         WebUi ui = Admin.getUi(VantarKey.ADMIN_ELASTIC_INDEX_DEF, params, response, true);
-        if (!ElasticConnection.isUp()) {
-            ui.addMessage(Locale.getString(VantarKey.ADMIN_SERVICE_IS_OFF, DtoDictionary.Dbms.ELASTIC)).finish();
+        if (!Services.isUp(Db.Dbms.ELASTIC)) {
+            ui.addMessage(Locale.getString(VantarKey.ADMIN_SERVICE_IS_OFF, Db.Dbms.ELASTIC)).finish();
             return;
         }
 
-        ui  .addHeading(2, DtoDictionary.Dbms.ELASTIC)
+        ui  .addHeading(2, Db.Dbms.ELASTIC)
             .addEmptyLine(2).write();
 
-        for (DtoDictionary.Info info : DtoDictionary.getAll(DtoDictionary.Dbms.ELASTIC)) {
+        for (DtoDictionary.Info info : DtoDictionary.getAll(Db.Dbms.ELASTIC)) {
             Dto dto = info.getDtoInstance();
             ui.addHeading(3, info.getDtoClassName()).write();
             try {
@@ -38,7 +40,7 @@ public class AdminElastic {
                         ui.addBlock("pre", k + ": " + v).write();
                     }
                 });
-            } catch (DatabaseException e) {
+            } catch (VantarException e) {
                 ui.addErrorMessage(e).write();
             }
         }
@@ -48,12 +50,12 @@ public class AdminElastic {
 
     public static void actionsElastic(Params params, HttpServletResponse response) throws FinishException {
         WebUi ui = Admin.getUi(VantarKey.ADMIN_ELASTIC_SETTINGS, params, response, true);
-        if (!ElasticConnection.isUp()) {
-            ui.addMessage(Locale.getString(VantarKey.ADMIN_SERVICE_IS_OFF, DtoDictionary.Dbms.ELASTIC)).finish();
+        if (!Services.isUp(Db.Dbms.ELASTIC)) {
+            ui.addMessage(Locale.getString(VantarKey.ADMIN_SERVICE_IS_OFF, Db.Dbms.ELASTIC)).finish();
             return;
         }
 
-        ui  .addHeading(2, DtoDictionary.Dbms.ELASTIC)
+        ui  .addHeading(2, Db.Dbms.ELASTIC)
             .addEmptyLine(2).write();
 
         String target = params.getString("target", "");
@@ -66,7 +68,7 @@ public class AdminElastic {
             .addSelect(
                 VantarKey.ADMIN_ELASTIC_SETTINGS_CLASS_NAME,
                 "target",
-                DtoDictionary.getDtoClassNames(DtoDictionary.Dbms.ELASTIC),
+                DtoDictionary.getDtoClassNames(Db.Dbms.ELASTIC),
                 false,
                 target
             )
@@ -98,7 +100,7 @@ public class AdminElastic {
                 try {
                     ElasticIndexes.clone(info.getDtoInstance(), destination);
                     ui.addMessage(VantarKey.ADMIN_ELASTIC_SETTINGS_ERR2).write();
-                } catch (DatabaseException e) {
+                } catch (VantarException e) {
                     ui.addErrorMessage(e).write();
                 }
             }
@@ -107,7 +109,7 @@ public class AdminElastic {
                 try {
                     ElasticIndexes.shrink(info.getDtoInstance());
                     ui.addMessage(VantarKey.ADMIN_ELASTIC_SETTINGS_ERR3).write();
-                } catch (DatabaseException e) {
+                } catch (VantarException e) {
                     ui.addErrorMessage(e).write();
                 }
             }
@@ -116,7 +118,7 @@ public class AdminElastic {
                 try {
                     ElasticIndexes.refresh(info.getDtoInstance());
                     ui.addMessage(VantarKey.ADMIN_ELASTIC_SETTINGS_ERR4).write();
-                } catch (DatabaseException e) {
+                } catch (VantarException e) {
                     ui.addErrorMessage(e).write();
                 }
             }

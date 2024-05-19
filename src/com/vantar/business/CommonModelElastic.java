@@ -427,7 +427,7 @@ public class CommonModelElastic extends ModelCommon {
 
     // > > > admin tools
 
-    public static void importDataAdmin(String data, Dto dto, List<String> presentField, boolean deleteAll, WebUi ui) {
+    public static void importDataAdmin(WebUi ui, String data, Dto dto, List<String> presentField, boolean deleteAll) {
         ui.addHeading(3, dto.getClass().getSimpleName()).write();
 
         if (deleteAll) {

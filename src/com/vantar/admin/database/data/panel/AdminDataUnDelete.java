@@ -2,10 +2,9 @@ package com.vantar.admin.database.data.panel;
 
 import com.vantar.business.*;
 import com.vantar.common.VantarParam;
-import com.vantar.database.common.ValidationError;
+import com.vantar.database.common.*;
 import com.vantar.database.dto.*;
 import com.vantar.database.nosql.elasticsearch.ElasticSearch;
-import com.vantar.database.nosql.mongo.MongoQuery;
 import com.vantar.database.query.*;
 import com.vantar.database.sql.*;
 import com.vantar.exception.*;
@@ -44,22 +43,22 @@ public class AdminDataUnDelete {
         PageData data = null;
         try {
             // > > > MONGO
-            if (info.dbms.equals(DtoDictionary.Dbms.MONGO)) {
-                data = MongoQuery.getPage(q, null);
+            if (info.dbms.equals(Db.Dbms.MONGO)) {
+                data = Db.mongo.getPage(q, null);
                 // > > > SQL
-            } else if (info.dbms.equals(DtoDictionary.Dbms.SQL)) {
+            } else if (info.dbms.equals(Db.Dbms.SQL)) {
                 try (SqlConnection connection = new SqlConnection()) {
                     SqlSearch search = new SqlSearch(connection);
                     data = search.getPage(q);
                 }
                 // > > > ELASTIC
-            } else if (info.dbms.equals(DtoDictionary.Dbms.ELASTIC)) {
+            } else if (info.dbms.equals(Db.Dbms.ELASTIC)) {
                 data = ElasticSearch.getPage(q);
             }
 
         } catch (NoContentException ignore) {
 
-        } catch (DatabaseException e) {
+        } catch (VantarException e) {
             u.ui.addErrorMessage(e);
         }
 
@@ -114,7 +113,7 @@ public class AdminDataUnDelete {
             u.ui.addMessage(VantarKey.FAIL_DELETE).finish();
             return;
         }
-        if (!DataUtil.isUp(info.dbms, u.ui)) {
+        if (!DataUtil.isUp(u.ui, info.dbms)) {
             u.ui.finish();
             return;
         }
@@ -146,7 +145,7 @@ public class AdminDataUnDelete {
         }
 
         try {
-            userLog = ModelMongo.getById(userLog);
+            userLog = Db.modelMongo.getById(userLog);
         } catch (VantarException e) {
             u.ui.addErrorMessage(e).finish();
             return;
@@ -164,13 +163,13 @@ public class AdminDataUnDelete {
     @SuppressWarnings("unchecked")
     private static void unDelete(WebUi ui, UserLog dto) {
         try {
-            UserLog userLog = ModelMongo.getById(dto);
+            UserLog userLog = Db.modelMongo.getById(dto);
             Class<? extends Dto> dtoClass = (Class<? extends Dto>) ClassUtil.getClass(userLog.className);
             Dto dtoUndelete = Json.d.fromJson(Json.d.toJson(userLog.objectX), dtoClass);
             dtoUndelete.autoIncrementOnInsert(false);
 
-            ModelMongo.insert(new ModelCommon.Settings(dtoUndelete));
-            ModelMongo.delete(new ModelCommon.Settings(dto));
+            Db.modelMongo.insert(new ModelCommon.Settings(dtoUndelete));
+            Db.modelMongo.delete(new ModelCommon.Settings(dto));
 
             ui.addMessage(Locale.getString(VantarKey.ADMIN_UNDELETED, userLog.classNameSimple, userLog.objectId));
         } catch (VantarException e) {

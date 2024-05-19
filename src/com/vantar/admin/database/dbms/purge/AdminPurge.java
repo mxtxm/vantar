@@ -3,13 +3,16 @@ package com.vantar.admin.database.dbms.purge;
 import com.vantar.admin.index.Admin;
 import com.vantar.business.*;
 import com.vantar.common.VantarParam;
+import com.vantar.database.common.Db;
 import com.vantar.database.dto.*;
 import com.vantar.database.nosql.elasticsearch.ElasticConnection;
-import com.vantar.database.nosql.mongo.*;
 import com.vantar.database.sql.SqlConnection;
 import com.vantar.exception.*;
 import com.vantar.locale.*;
 import com.vantar.locale.Locale;
+import com.vantar.queue.Queue;
+import com.vantar.service.Services;
+import com.vantar.service.log.ServiceLog;
 import com.vantar.util.object.ObjectUtil;
 import com.vantar.util.string.StringUtil;
 import com.vantar.web.*;
@@ -20,10 +23,10 @@ import java.util.*;
 
 public class AdminPurge {
 
-    public static void purge(Params params, HttpServletResponse response, DtoDictionary.Dbms dbms) throws FinishException {
+    public static void purge(Params params, HttpServletResponse response, Db.Dbms dbms) throws FinishException {
         WebUi ui = Admin.getUi(VantarKey.ADMIN_DATA_PURGE, params, response, true);
-        if (!(DtoDictionary.Dbms.MONGO.equals(dbms) ? MongoConnection.isUp()
-            : (DtoDictionary.Dbms.SQL.equals(dbms) ? SqlConnection.isUp() : ElasticConnection.isUp()))) {
+        if (!(Db.Dbms.MONGO.equals(dbms) ? Services.isUp(Db.Dbms.MONGO)
+            : (Db.Dbms.SQL.equals(dbms) ? Services.isUp(Db.Dbms.SQL) : ElasticConnection.isUp()))) {
             ui.addMessage(Locale.getString(VantarKey.ADMIN_SERVICE_IS_OFF, dbms)).finish();
             return;
         }
@@ -54,11 +57,11 @@ public class AdminPurge {
         Set<String> excludes = ex == null ? null : StringUtil.splitToSet(StringUtil.trim(ex, ','), ',');
         Set<String> includes = in == null ? null : StringUtil.splitToSet(StringUtil.trim(in, ','), ',');
 
-        if (DtoDictionary.Dbms.MONGO.equals(dbms)) {
+        if (Db.Dbms.MONGO.equals(dbms)) {
             purgeMongo(ui, includes, excludes);
-        } else if (DtoDictionary.Dbms.SQL.equals(dbms)) {
+        } else if (Db.Dbms.SQL.equals(dbms)) {
             purgeSql(ui, includes, excludes, dt);
-        } else if (DtoDictionary.Dbms.ELASTIC.equals(dbms)) {
+        } else if (Db.Dbms.ELASTIC.equals(dbms)) {
             purgeElastic(ui, includes, excludes, dt);
         }
 
@@ -66,7 +69,11 @@ public class AdminPurge {
     }
 
     public static void purgeMongo(WebUi ui, Set<String> excludes, Set<String> includes) {
-        for (DtoDictionary.Info info : DtoDictionary.getAll(DtoDictionary.Dbms.MONGO)) {
+        if (!Services.isUp(Db.Dbms.MONGO)) {
+            return;
+        }
+
+        for (DtoDictionary.Info info : DtoDictionary.getAll(Db.Dbms.MONGO)) {
             Dto dto = info.getDtoInstance();
             if (ObjectUtil.isNotEmpty(excludes) && excludes.contains(info.getDtoClassName())) {
                 continue;
@@ -77,32 +84,38 @@ public class AdminPurge {
 
             long count = 1;
             try {
-                long total = MongoQuery.count(dto.getStorage());
+                long total = Db.modelMongo.count(dto.getStorage());
                 int i = 0;
                 while (count > 0 && ++i < 20) {
-                    ModelMongo.purge(dto);
-                    count = MongoQuery.count(dto.getStorage());
+                    Db.modelMongo.purge(dto);
+                    count = Db.mongo.count(dto.getStorage());
                 }
-
-                ui  .addKeyValue(
+                if (ui != null) {
+                    ui.addKeyValue(
                         info.getDtoClassName(),
                         Locale.getString(count == 0 ? VantarKey.SUCCESS_DELETE : VantarKey.FAIL_DELETE)
                             + ": " + total + " > " + count
-                    )
-                    .write();
-
+                    ).write();
+                }
             } catch (VantarException e) {
-                ui.addErrorMessage(e).write();
+                if (ui != null) {
+                    ui.addErrorMessage(e).write();
+                }
             }
         }
     }
 
     public static void purgeSql(WebUi ui, Set<String> excludes, Set<String> includes, boolean dropTable) {
+        if (!Services.isUp(Db.Dbms.SQL)) {
+            ServiceLog.log.info(">>>>{}", Db.sql);
+            return;
+        }
+
         try (SqlConnection connection = new SqlConnection()) {
             connection.startTransaction();
             CommonRepoSql repo = new CommonRepoSql(connection);
 
-            for (DtoDictionary.Info info : DtoDictionary.getAll(DtoDictionary.Dbms.SQL)) {
+            for (DtoDictionary.Info info : DtoDictionary.getAll(Db.Dbms.SQL)) {
                 Dto dto = info.getDtoInstance();
                 if (ObjectUtil.isNotEmpty(excludes) && excludes.contains(info.getDtoClassName())) {
                     continue;
@@ -120,19 +133,24 @@ public class AdminPurge {
                         repo.purgeData(dto.getStorage());
                         count = repo.count(dto.getStorage());
                     }
-                    ui  .addKeyValue(
+                    if (ui != null) {
+                        ui.addKeyValue(
                             info.getDtoClassName(),
                             Locale.getString(VantarKey.SUCCESS_DELETE) + ": " + total + " > " + count
-                        )
-                        .write();
-
-                } catch (DatabaseException e) {
-                    ui.addErrorMessage(e);
+                        ).write();
+                    }
+                } catch (VantarException e) {
+                    if (ui != null) {
+                        ui.addErrorMessage(e);
+                    }
                 }
 
                 for (Field field : dto.getFields()) {
                     if (field.isAnnotationPresent(ManyToManyStore.class)) {
-                        String[] parts = StringUtil.splitTrim(field.getAnnotation(ManyToManyStore.class).value(), VantarParam.SEPARATOR_NEXT);
+                        String[] parts = StringUtil.splitTrim(
+                            field.getAnnotation(ManyToManyStore.class).value(),
+                            VantarParam.SEPARATOR_NEXT
+                        );
                         String table = parts[0];
 
                         try {
@@ -144,26 +162,34 @@ public class AdminPurge {
                                 repo.purgeData(table);
                                 count = repo.count(table);
                             }
-
-                            ui  .addKeyValue(
+                            if (ui != null) {
+                                ui.addKeyValue(
                                     info.getDtoClassName(),
                                     Locale.getString(VantarKey.SUCCESS_DELETE) + ": " + total + " > " + count
-                                )
-                                .write();
-                        } catch (DatabaseException e) {
-                            ui.addErrorMessage(e);
+                                ).write();
+                            }
+                        } catch (VantarException e) {
+                            if (ui != null) {
+                                ui.addErrorMessage(e);
+                            }
                         }
                     }
                 }
             }
             connection.commit();
-        } catch (DatabaseException e) {
-            ui.addErrorMessage(e);
+        } catch (VantarException e) {
+            if (ui != null) {
+                ui.addErrorMessage(e);
+            }
         }
     }
 
     public static void purgeElastic(WebUi ui, Set<String> excludes, Set<String> includes, boolean dropCollection) {
-        for (DtoDictionary.Info info : DtoDictionary.getAll(DtoDictionary.Dbms.ELASTIC)) {
+        if (!Services.isUp(Db.Dbms.ELASTIC)) {
+            return;
+        }
+
+        for (DtoDictionary.Info info : DtoDictionary.getAll(Db.Dbms.ELASTIC)) {
             Dto dto = info.getDtoInstance();
             if (ObjectUtil.isNotEmpty(excludes) && excludes.contains(info.getDtoClassName())) {
                 continue;
@@ -182,15 +208,17 @@ public class AdminPurge {
                 } else {
                     CommonModelElastic.purgeData(dto.getStorage());
                 }
-
-                ui  .addKeyValue(
+                if (ui != null) {
+                    ui.addKeyValue(
                         info.getDtoClassName(),
                         Locale.getString(count == 0 ? VantarKey.SUCCESS_DELETE : VantarKey.FAIL_DELETE)
                             + ": " + total + " > " + count
-                    )
-                    .write();
-            } catch (DatabaseException | ServerException e) {
-                ui.addErrorMessage(e);
+                    ).write();
+                }
+            } catch (VantarException e) {
+                if (ui != null) {
+                    ui.addErrorMessage(e);
+                }
             }
         }
     }

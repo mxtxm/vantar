@@ -89,6 +89,20 @@ public class WebServiceData {
             if (line.startsWith("### ") && line.contains("params")) {
                 ++j;
                 setInput(getBlock(j, lineLen, lines).trim());
+                if (data.inputSample instanceof Map) {
+                    for (Map.Entry<?, ?> e : ((Map<?, ?>) data.inputSample).entrySet()) {
+                        Object v = e.getValue();
+                        if (!(v instanceof String)) {
+                            continue;
+                        }
+                        if ("FILE/UPLOAD".equalsIgnoreCase((String) v)) {
+                            if (data.files == null) {
+                                data.files = new HashSet<>(5, 1);
+                            }
+                            data.files.add(e.getKey().toString());
+                        }
+                    }
+                }
                 --j;
                 continue;
             }
@@ -327,12 +341,15 @@ public class WebServiceData {
 
 
     public static class Data {
+
         public String url;
         public String documentUrl;
         public String httpMethod;
         public String access;
         public Map<String, String> headers;
+        public Set<String> files;
         public Object inputSample;
+        public String inputSampleJson;
         public Object outputSample;
         public Set<Integer> exceptions;
     }

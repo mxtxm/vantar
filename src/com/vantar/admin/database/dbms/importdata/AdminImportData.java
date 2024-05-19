@@ -2,14 +2,14 @@ package com.vantar.admin.database.dbms.importdata;
 
 import com.vantar.admin.index.Admin;
 import com.vantar.business.*;
-import com.vantar.business.importexport.ImportMongo;
+import com.vantar.business.importexport.MongoImport;
+import com.vantar.database.common.Db;
 import com.vantar.database.dto.*;
 import com.vantar.database.nosql.elasticsearch.ElasticConnection;
-import com.vantar.database.nosql.mongo.MongoConnection;
-import com.vantar.database.sql.SqlConnection;
 import com.vantar.exception.FinishException;
 import com.vantar.locale.*;
 import com.vantar.locale.Locale;
+import com.vantar.service.Services;
 import com.vantar.util.object.ObjectUtil;
 import com.vantar.util.string.StringUtil;
 import com.vantar.web.*;
@@ -22,10 +22,10 @@ import java.util.*;
  */
 public class AdminImportData {
 
-    public static void importData(Params params, HttpServletResponse response, DtoDictionary.Dbms dbms) throws FinishException {
+    public static void importData(Params params, HttpServletResponse response, Db.Dbms dbms) throws FinishException {
         WebUi ui = Admin.getUi(VantarKey.ADMIN_IMPORT, params, response, true);
-        if (!(DtoDictionary.Dbms.MONGO.equals(dbms) ? MongoConnection.isUp()
-            : (DtoDictionary.Dbms.SQL.equals(dbms) ? SqlConnection.isUp() : ElasticConnection.isUp()))) {
+        if (!(Db.Dbms.MONGO.equals(dbms) ? Services.isUp(Db.Dbms.MONGO)
+            : (Db.Dbms.SQL.equals(dbms) ? Services.isUp(Db.Dbms.SQL) : ElasticConnection.isUp()))) {
             ui.addMessage(Locale.getString(VantarKey.ADMIN_SERVICE_IS_OFF, dbms)).finish();
             return;
         }
@@ -56,11 +56,11 @@ public class AdminImportData {
         Set<String> excludes = ex == null ? null : StringUtil.splitToSet(StringUtil.trim(ex, ','), ',');
         Set<String> includes = in == null ? null : StringUtil.splitToSet(StringUtil.trim(in, ','), ',');
 
-        if (DtoDictionary.Dbms.MONGO.equals(dbms)) {
+        if (Db.Dbms.MONGO.equals(dbms)) {
             importMongo(ui, remove, excludes, includes);
-        } else if (DtoDictionary.Dbms.SQL.equals(dbms)) {
+        } else if (Db.Dbms.SQL.equals(dbms)) {
             importSql(ui, remove, excludes, includes);
-        } else if (DtoDictionary.Dbms.ELASTIC.equals(dbms)) {
+        } else if (Db.Dbms.ELASTIC.equals(dbms)) {
             importElastic(ui, remove, excludes, includes);
         }
 
@@ -68,11 +68,11 @@ public class AdminImportData {
     }
 
     public static void importMongo(WebUi ui, boolean deleteAll, Set<String> excludes, Set<String> includes) {
-        if (!MongoConnection.isUp()) {
+        if (!Services.isUp(Db.Dbms.MONGO)) {
             return;
         }
 
-        for (DtoDictionary.Info info : DtoDictionary.getAll(DtoDictionary.Dbms.MONGO)) {
+        for (DtoDictionary.Info info : DtoDictionary.getAll(Db.Dbms.MONGO)) {
             Dto dto = info.getDtoInstance();
             if (ObjectUtil.isNotEmpty(excludes) && excludes.contains(info.getDtoClassName())) {
                 continue;
@@ -86,22 +86,23 @@ public class AdminImportData {
                 continue;
             }
 
-            ImportMongo.importDtoData(
+            MongoImport.importDtoData(
+                ui,
                 data,
                 dto,
                 dto.getPresentationPropertyNames(),
                 deleteAll,
-                ui
+                Db.mongo
             );
         }
     }
 
     public static void importSql(WebUi ui, boolean deleteAll, Set<String> excludes, Set<String> includes) {
-        if (!SqlConnection.isUp()) {
+        if (!Services.isUp(Db.Dbms.SQL)) {
             return;
         }
 
-        for (DtoDictionary.Info info : DtoDictionary.getAll(DtoDictionary.Dbms.SQL)) {
+        for (DtoDictionary.Info info : DtoDictionary.getAll(Db.Dbms.SQL)) {
             Dto dto = info.getDtoInstance();
             if (ObjectUtil.isNotEmpty(excludes) && excludes.contains(info.getDtoClassName())) {
                 continue;
@@ -116,21 +117,21 @@ public class AdminImportData {
             }
 
             CommonModelSql.importDataAdmin(
+                ui,
                 data,
                 dto,
                 dto.getPresentationPropertyNames(),
-                deleteAll,
-                ui
+                deleteAll
             );
         }
     }
 
     public static void importElastic(WebUi ui, boolean deleteAll, Set<String> excludes, Set<String> includes) {
-        if (!ElasticConnection.isUp()) {
+        if (!Services.isUp(Db.Dbms.ELASTIC)) {
             return;
         }
 
-        for (DtoDictionary.Info info : DtoDictionary.getAll(DtoDictionary.Dbms.ELASTIC)) {
+        for (DtoDictionary.Info info : DtoDictionary.getAll(Db.Dbms.ELASTIC)) {
             Dto dto = info.getDtoInstance();
             if (ObjectUtil.isNotEmpty(excludes) && excludes.contains(info.getDtoClassName())) {
                 continue;
@@ -145,13 +146,12 @@ public class AdminImportData {
             }
 
             CommonModelElastic.importDataAdmin(
+                ui,
                 data,
                 dto,
                 dto.getPresentationPropertyNames(),
-                deleteAll,
-                ui
+                deleteAll
             );
         }
     }
-
 }

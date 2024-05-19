@@ -17,7 +17,7 @@ public class AdminDataArchive {
         if (dtoInfo == null) {
             return;
         }
-        if (!DataUtil.isUp(dtoInfo.dbms, ui)) {
+        if (!DataUtil.isUp(ui, dtoInfo.dbms)) {
             ui.finish();
             return;
         }

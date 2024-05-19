@@ -12,10 +12,10 @@ import java.util.*;
 
 public abstract class ImportCommon {
 
-    protected static void importDataX(Import importCallback, String data, Dto dto, List<String> presentField, WebUi ui) {
+    protected static void importDataX(WebUi ui, Import importCallback, String data, Dto dto, List<String> presentField) {
         try {
             if (data.startsWith("[") && data.endsWith("]")) {
-                importJsonList(importCallback, data, dto, presentField, ui);
+                importJsonList(ui, importCallback, data, dto, presentField);
             } else {
                 String[] dataArray = StringUtil.split(data, '\n');
                 if (dataArray.length < 1) {
@@ -26,9 +26,9 @@ public abstract class ImportCommon {
                 }
 
                 if (data.contains("----------")) {
-                    importHumanReadable(importCallback, data, dto, presentField, ui);
+                    importHumanReadable(ui, importCallback, data, dto, presentField);
                 } else {
-                    importCsv(importCallback, dataArray, dto, presentField, ui);
+                    importCsv(ui, importCallback, dataArray, dto, presentField);
                 }
             }
 
@@ -43,7 +43,7 @@ public abstract class ImportCommon {
         }
     }
 
-    private static void importHumanReadable(Import importCallback, String data, Dto dto, List<String> presentField, WebUi ui) {
+    private static void importHumanReadable(WebUi ui, Import importCallback, String data, Dto dto, List<String> presentField) {
         String[] dataArray = data.split("-{10,}");
 
         for (String row : dataArray) {
@@ -96,7 +96,7 @@ public abstract class ImportCommon {
         }
     }
 
-    private static void importCsv(Import importCallback, String[] dataArray, Dto dto, List<String> presentField, WebUi ui) {
+    private static void importCsv(WebUi ui, Import importCallback, String[] dataArray, Dto dto, List<String> presentField) {
         String presentValue = "";
         String[] fields = StringUtil.split(dataArray[0], ',');
         int fieldCount = fields.length;
@@ -142,7 +142,7 @@ public abstract class ImportCommon {
         }
     }
 
-    private static void importJsonList(Import importCallback, String data, Dto dto, List<String> presentField, WebUi ui) {
+    private static void importJsonList(WebUi ui, Import importCallback, String data, Dto dto, List<String> presentField) {
         List<? extends Dto> list = Json.d.listFromJson(data, dto.getClass());
         if (list == null) {
             return;

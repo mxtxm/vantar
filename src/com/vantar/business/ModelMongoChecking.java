@@ -2,7 +2,6 @@ package com.vantar.business;
 
 import com.vantar.common.VantarParam;
 import com.vantar.database.dto.*;
-import com.vantar.database.nosql.mongo.Mongo;
 import com.vantar.database.nosql.mongo.*;
 import com.vantar.exception.*;
 import com.vantar.locale.VantarKey;
@@ -15,14 +14,14 @@ import java.util.*;
 
 public class ModelMongoChecking extends ModelCommon {
 
-    public static void throwUniqueViolation(Dto dto) throws InputException, DatabaseException {
+    public static void throwUniqueViolation(Dto dto, DbMongo db) throws VantarException {
         for (Field field : dto.getClass().getFields()) {
             if (field.isAnnotationPresent(Unique.class)) {
                 try {
-                    if (!MongoQuery.isUnique(dto, field.getName())) {
+                    if (!db.isUnique(dto, field.getName())) {
                         throw new InputException(VantarKey.UNIQUE, field.getName());
                     }
-                } catch (DatabaseException e) {
+                } catch (VantarException e) {
                     ServiceLog.error(ModelMongoChecking.class, " !! unique dto={} field={}", dto, field.getName(), e);
                     throw e;
                 }
@@ -31,10 +30,10 @@ public class ModelMongoChecking extends ModelCommon {
 
             if (field.isAnnotationPresent(UniqueCi.class)) {
                 try {
-                    if (!MongoQuery.isUnique(dto, field.getName())) {
+                    if (!db.isUnique(dto, field.getName())) {
                         throw new InputException(VantarKey.UNIQUE, field.getName());
                     }
-                } catch (DatabaseException e) {
+                } catch (VantarException e) {
                     ServiceLog.error(ModelMongoChecking.class, " !! unique dto={} field={}", dto, field.getName(), e);
                     throw e;
                 }
@@ -44,10 +43,10 @@ public class ModelMongoChecking extends ModelCommon {
         if (dto.getClass().isAnnotationPresent(UniqueGroup.class)) {
             for (String group : dto.getClass().getAnnotation(UniqueGroup.class).value()) {
                 try {
-                    if (!MongoQuery.isUnique(dto, StringUtil.split(group, VantarParam.SEPARATOR_COMMON))) {
+                    if (!db.isUnique(dto, StringUtil.split(group, VantarParam.SEPARATOR_COMMON))) {
                         throw new InputException(VantarKey.UNIQUE, "(" + group + ")");
                     }
-                } catch (DatabaseException e) {
+                } catch (VantarException e) {
                     ServiceLog.error(ModelMongoChecking.class, " !! unique dto={} field={}", dto, "(" + group + ")", e);
                     throw e;
                 }
@@ -59,7 +58,7 @@ public class ModelMongoChecking extends ModelCommon {
      * relation: fk does not have reference ---> throw error
      * parent/child relation: parent.id=child.id ---> throw error
      */
-    public static void throwDependencyViolations(Dto dto) throws InputException, DatabaseException {
+    public static void throwDependencyViolations(Dto dto, DbMongo db) throws VantarException {
         Long id = dto.getId();
         for (Field field : dto.getClass().getFields()) {
             Object value;
@@ -74,18 +73,18 @@ public class ModelMongoChecking extends ModelCommon {
 
             Depends annotationDepends = field.getAnnotation(Depends.class);
             if (annotationDepends != null) {
-                throwRelationViolations(dto, annotationDepends, field, value, id);
+                throwRelationViolations(dto, annotationDepends, field, value, id, db);
             }
 
             DependsValue annotationDependsValue = field.getAnnotation(DependsValue.class);
             if (annotationDependsValue != null) {
-                throwValueDependencyViolations(annotationDependsValue, field, value);
+                throwValueDependencyViolations(annotationDependsValue, field, value, db);
             }
         }
     }
 
-    private static void throwRelationViolations(Dto dto, Depends annotation, Field field, Object value, Long id)
-        throws InputException, DatabaseException {
+    private static void throwRelationViolations(Dto dto, Depends annotation, Field field, Object value, Long id, DbMongo db)
+        throws VantarException {
 
         Class<? extends Dto>[] dependencies = annotation.value();
 
@@ -101,7 +100,7 @@ public class ModelMongoChecking extends ModelCommon {
                 throwParentChildViolation(id, value, field.getName());
             }
             // fk dependency
-            throwRelationViolation(dto, dependencies[0], value, field.getName());
+            throwRelationViolation(dto, dependencies[0], value, field.getName(), db);
             return;
         }
         // < < <
@@ -121,7 +120,7 @@ public class ModelMongoChecking extends ModelCommon {
             }
             // fk dependency
             for (Object item : (Collection<?>) value) {
-                throwRelationViolation(dto, dependencies[0], item, field.getName());
+                throwRelationViolation(dto, dependencies[0], item, field.getName(), db);
             }
             return;
         }
@@ -155,20 +154,20 @@ public class ModelMongoChecking extends ModelCommon {
             // fk dependency
             if (!dependencies[0].equals(Dto.class)) {
                 for (Object item : ((Map<?, ?>) value).keySet()) {
-                    throwRelationViolation(dto, dependencies[0], item, field.getName());
+                    throwRelationViolation(dto, dependencies[0], item, field.getName(), db);
                 }
             }
             if (!dependencies[1].equals(Dto.class)) {
                 for (Object item : ((Map<?, ?>) value).values()) {
-                    throwRelationViolation(dto, dependencies[1], item, field.getName());
+                    throwRelationViolation(dto, dependencies[1], item, field.getName(), db);
                 }
             }
         }
         // < < <
     }
 
-    private static void throwRelationViolation(Dto dto, Class<? extends Dto> fkClass, Object value, String name)
-        throws InputException, DatabaseException {
+    private static void throwRelationViolation(Dto dto, Class<? extends Dto> fkClass, Object value, String name, DbMongo db)
+        throws VantarException {
 
         if (value == null) {
             return;
@@ -178,10 +177,10 @@ public class ModelMongoChecking extends ModelCommon {
             return;
         }
         try {
-            if (!Mongo.exists(DtoBase.getStorage(fkClass), new Document(Mongo.ID, fkValue))) {
+            if (!db.exists(DtoBase.getStorage(fkClass), new Document(DbMongo.ID, fkValue))) {
                 throw new InputException(VantarKey.MISSING_REFERENCE, name, value);
             }
-        } catch (DatabaseException e) {
+        } catch (VantarException e) {
             ServiceLog.error(ModelMongoChecking.class, " !! could not check reference dto={} field={} value={}"
                 , dto, name, fkValue, e);
             throw e;
@@ -194,15 +193,15 @@ public class ModelMongoChecking extends ModelCommon {
         }
     }
 
-    private static void throwValueDependencyViolations(DependsValue annotation, Field field, Object value)
-        throws InputException, DatabaseException {
+    private static void throwValueDependencyViolations(DependsValue annotation, Field field, Object value, DbMongo db)
+        throws VantarException {
 
         /* > > >
          * @DependsValue(dto = Frequency.class, field = "name")
          * public Number/String frequency;
          */
         if (value instanceof String || value instanceof Number) {
-            throwValueRelation(annotation.dto(), annotation.field(), value, field.getName());
+            throwValueRelation(annotation.dto(), annotation.field(), value, field.getName(), db);
             return;
         }
         // < < <
@@ -213,7 +212,7 @@ public class ModelMongoChecking extends ModelCommon {
          */
         if (value instanceof Collection) {
             for (Object item : (Collection<?>) value) {
-                throwValueRelation(annotation.dto(), annotation.field(), item, field.getName());
+                throwValueRelation(annotation.dto(), annotation.field(), item, field.getName(), db);
             }
             return;
         }
@@ -234,26 +233,26 @@ public class ModelMongoChecking extends ModelCommon {
             // fk dependency
             if (!annotation.isKey()) {
                 for (Object item : ((Map<?, ?>) value).keySet()) {
-                    throwValueRelation(annotation.dto(), annotation.field(), item, field.getName());
+                    throwValueRelation(annotation.dto(), annotation.field(), item, field.getName(), db);
                 }
             }
             if (!annotation.isValue()) {
                 for (Object item : ((Map<?, ?>) value).values()) {
-                    throwValueRelation(annotation.dto(), annotation.field(), item, field.getName());
+                    throwValueRelation(annotation.dto(), annotation.field(), item, field.getName(), db);
                 }
             }
         }
         // < < <
     }
 
-    private static void throwValueRelation(Class<? extends Dto> fClass, String fField, Object value, String name)
-        throws InputException, DatabaseException {
+    private static void throwValueRelation(Class<? extends Dto> fClass, String fField, Object value, String name, DbMongo db)
+        throws VantarException {
 
         try {
-            if (!Mongo.exists(DtoBase.getStorage(fClass), new Document(fField, value))) {
+            if (!db.exists(DtoBase.getStorage(fClass), new Document(fField, value))) {
                 throw new InputException(VantarKey.MISSING_REFERENCE, name, value);
             }
-        } catch (DatabaseException e) {
+        } catch (VantarException e) {
             ServiceLog.error(ModelMongoChecking.class, " !! could not check reference dto={} field={} value={}"
                 , fClass, name, value, e);
             throw e;

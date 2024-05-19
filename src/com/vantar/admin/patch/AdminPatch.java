@@ -1,8 +1,8 @@
 package com.vantar.admin.patch;
 
 import com.vantar.admin.index.Admin;
-import com.vantar.business.ModelMongo;
 import com.vantar.common.Settings;
+import com.vantar.database.common.Db;
 import com.vantar.exception.*;
 import com.vantar.locale.VantarKey;
 import com.vantar.service.patch.*;
@@ -25,7 +25,7 @@ public class AdminPatch {
         }
 
         try {
-            List<PatchHistory> patches = ModelMongo.getAll(new PatchHistory());
+            List<PatchHistory> patches = Db.modelMongo.getAll(new PatchHistory());
             for (PatchHistory patch : patches) {
                 ui  .beginBox(patch.patchClass)
                     .addHrefNewPage(VantarKey.ADMIN_SCHEDULE_RUN, "/admin/patch/run?c=" + patch.patchClass)
@@ -59,7 +59,7 @@ public class AdminPatch {
         ui  .beginBox(classNameMethodName).write()
             .addMessage("running...").write();
 
-        PatchHistory patch = Patcher.execPatchManually(classNameMethodName, ui);
+        PatchHistory patch = Patcher.execPatchManually(ui, classNameMethodName);
         ui.addMessage("finished!").write();
 
         ui  .addKeyValue(VantarKey.ADMIN_RUN_TIME, new DateTime())

@@ -148,7 +148,7 @@ public class SqlSearch extends SqlQueryHelper {
         return getData(dto, "SELECT * FROM " + dto.getStorage() + (sort.length == 0 ? "" : " ORDER BY " + CollectionUtil.join(sort, VantarParam.SEPARATOR_COMMON)) + ";");
     }
 
-    public PageData getPage(QueryBuilder q, String... locales) throws NoContentException, DatabaseException {
+    public PageData getPage(QueryBuilder q, String... locales) throws VantarException {
         long total = q.getTotal();
         boolean getFullCount = total == 0;
 

@@ -2,13 +2,13 @@ package com.vantar.admin.database.dbms.indexing;
 
 import com.vantar.admin.index.Admin;
 import com.vantar.business.CommonRepoSql;
+import com.vantar.database.common.Db;
 import com.vantar.database.dto.*;
-import com.vantar.database.nosql.mongo.Mongo;
-import com.vantar.database.nosql.mongo.*;
 import com.vantar.database.sql.*;
 import com.vantar.exception.*;
 import com.vantar.locale.*;
 import com.vantar.locale.Locale;
+import com.vantar.service.Services;
 import com.vantar.util.collection.CollectionUtil;
 import com.vantar.util.object.ObjectUtil;
 import com.vantar.util.string.StringUtil;
@@ -19,9 +19,9 @@ import java.util.*;
 
 public class AdminDatabaseIndex {
 
-    public static void listIndexes(Params params, HttpServletResponse response, DtoDictionary.Dbms dbms) throws FinishException {
+    public static void listIndexes(Params params, HttpServletResponse response, Db.Dbms dbms) throws FinishException {
         WebUi ui = Admin.getUi(VantarKey.ADMIN_DATABASE_INDEX, params, response, true);
-        if (!(DtoDictionary.Dbms.MONGO.equals(dbms) ? MongoConnection.isUp() : SqlConnection.isUp())) {
+        if (!(Db.Dbms.MONGO.equals(dbms) ? Services.isUp(Db.Dbms.MONGO) : Services.isUp(Db.Dbms.SQL))) {
             ui.addMessage(Locale.getString(VantarKey.ADMIN_SERVICE_IS_OFF, dbms)).finish();
             return;
         }
@@ -36,13 +36,13 @@ public class AdminDatabaseIndex {
         try {
             for (DtoDictionary.Info info : DtoDictionary.getAll(dbms)) {
                 List<String> indexes;
-                if (DtoDictionary.Dbms.MONGO.equals(dbms)) {
-                    indexes = Mongo.Index.getIndexes(info.getDtoInstance());
+                if (Db.Dbms.MONGO.equals(dbms)) {
+                    indexes = Db.mongo.indexGetAll(info.getDtoInstance());
                 } else {
                     try (SqlConnection connection = new SqlConnection()) {
                         SqlExecute exe = new SqlExecute(connection);
                         indexes = exe.getIndexes(info.getDtoInstance());
-                    } catch (DatabaseException e) {
+                    } catch (VantarException e) {
                         ui.addErrorMessage(e).write();
                         continue;
                     }
@@ -55,16 +55,16 @@ public class AdminDatabaseIndex {
                     false
                 ).write();
             }
-        } catch (DatabaseException e) {
+        } catch (VantarException e) {
             ui.addErrorMessage(e);
         }
 
         ui.finish();
     }
 
-    public static void createIndex(Params params, HttpServletResponse response, DtoDictionary.Dbms dbms) throws FinishException {
+    public static void createIndex(Params params, HttpServletResponse response, Db.Dbms dbms) throws FinishException {
         WebUi ui = Admin.getUi(VantarKey.ADMIN_DATABASE_INDEX_CREATE, params, response, true);
-        if (!(DtoDictionary.Dbms.MONGO.equals(dbms) ? MongoConnection.isUp() : SqlConnection.isUp())) {
+        if (!(Db.Dbms.MONGO.equals(dbms) ? Services.isUp(Db.Dbms.MONGO) : Services.isUp(Db.Dbms.SQL))) {
             ui.addMessage(Locale.getString(VantarKey.ADMIN_SERVICE_IS_OFF, dbms)).finish();
             return;
         }
@@ -95,7 +95,7 @@ public class AdminDatabaseIndex {
         String excludes = params.getString("ex");
         String includes = params.getString("in");
         ui.beginBox(VantarKey.ADMIN_DATABASE_INDEX_CREATE).write();
-        if (DtoDictionary.Dbms.MONGO.equals(dbms)) {
+        if (Db.Dbms.MONGO.equals(dbms)) {
             createIndexMongo(
                 ui,
                 deleteindex,
@@ -108,9 +108,9 @@ public class AdminDatabaseIndex {
         ui.finish();
     }
 
-    public static void getIndexes(Params params, HttpServletResponse response, DtoDictionary.Dbms dbms) throws FinishException {
+    public static void getIndexes(Params params, HttpServletResponse response, Db.Dbms dbms) throws FinishException {
         WebUi ui = Admin.getUi(VantarKey.ADMIN_DATABASE_INDEX, params, response, true);
-        if (!(DtoDictionary.Dbms.MONGO.equals(dbms) ? MongoConnection.isUp() : SqlConnection.isUp())) {
+        if (!(Db.Dbms.MONGO.equals(dbms) ? Services.isUp(Db.Dbms.MONGO) : Services.isUp(Db.Dbms.SQL))) {
             ui.addMessage(Locale.getString(VantarKey.ADMIN_SERVICE_IS_OFF, dbms)).finish();
             return;
         }
@@ -134,19 +134,19 @@ public class AdminDatabaseIndex {
 
         try {
             List<String> indexes = null;
-            if (DtoDictionary.Dbms.MONGO.equals(dbms)) {
-                indexes = Mongo.Index.getIndexes(info.getDtoInstance());
+            if (Db.Dbms.MONGO.equals(dbms)) {
+                indexes = Db.mongo.indexGetAll(info.getDtoInstance());
             } else {
                 try (SqlConnection connection = new SqlConnection()) {
                     SqlExecute exe = new SqlExecute(connection);
                     indexes = exe.getIndexes(info.getDtoInstance());
-                } catch (DatabaseException e) {
+                } catch (VantarException e) {
                     ui.addErrorMessage(e).write();
                 }
             }
 
             ui.addBlock("pre", CollectionUtil.join(indexes, '\n'));
-        } catch (DatabaseException e) {
+        } catch (VantarException e) {
             ui.addErrorMessage(e);
         }
 
@@ -154,12 +154,14 @@ public class AdminDatabaseIndex {
     }
 
     public static void createIndexMongo(WebUi ui, boolean deleteIfExists, Collection<String> excludes, Collection<String> includes) {
-        if (!MongoConnection.isUp()) {
-            ui.addMessage(Locale.getString(VantarKey.ADMIN_SERVICE_IS_OFF, DtoDictionary.Dbms.MONGO)).finish();
+        if (!Services.isUp(Db.Dbms.MONGO)) {
+            if (ui != null) {
+                ui.addMessage(Locale.getString(VantarKey.ADMIN_SERVICE_IS_OFF, Db.Dbms.MONGO)).finish();
+            }
             return;
         }
-        String dtoName = ui.params.getString("dto");
-        for (DtoDictionary.Info info : DtoDictionary.getAll(DtoDictionary.Dbms.MONGO)) {
+        String dtoName = ui == null ? null : ui.params.getString("dto");
+        for (DtoDictionary.Info info : DtoDictionary.getAll(Db.Dbms.MONGO)) {
             if (dtoName != null && !dtoName.equalsIgnoreCase(info.dtoClass.getSimpleName())) {
                 continue;
             }
@@ -173,32 +175,46 @@ public class AdminDatabaseIndex {
             Dto dto = info.getDtoInstance();
             if (deleteIfExists) {
                 try {
-                    Mongo.Index.remove(dto);
-                    ui.addMessage(" > deleted: " + dto.getClass().getSimpleName()).write();
-                } catch (DatabaseException e) {
-                    ui.addErrorMessage(e).write();
+                    Db.mongo.indexRemove(dto);
+                    if (ui != null) {
+                        ui.addMessage(" > deleted: " + dto.getClass().getSimpleName()).write();
+                    }
+                } catch (VantarException e) {
+                    if (ui != null) {
+                        ui.addErrorMessage(e).write();
+                    }
                 }
             }
             try {
-                Mongo.Index.create(dto);
-                ui.addMessage(" > created: " + dto.getClass().getSimpleName()).write();
-            } catch (DatabaseException e) {
-                ui.addErrorMessage(e).write();
+                Db.mongo.indexCreate(dto);
+                if (ui != null) {
+                    ui.addMessage(" > created: " + dto.getClass().getSimpleName()).write();
+                }
+            } catch (VantarException e) {
+                if (ui != null) {
+                    ui.addErrorMessage(e).write();
+                }
             }
         }
     }
 
     public static void createIndexSql(WebUi ui, boolean deleteIfExists) {
-        if (!SqlConnection.isUp()) {
-            ui.addMessage(Locale.getString(VantarKey.ADMIN_SERVICE_IS_OFF, DtoDictionary.Dbms.SQL)).finish();
+        if (!Services.isUp(Db.Dbms.SQL)) {
+            if (ui != null) {
+                ui.addMessage(Locale.getString(VantarKey.ADMIN_SERVICE_IS_OFF, Db.Dbms.SQL)).finish();
+            }
             return;
         }
         try (SqlConnection connection = new SqlConnection()) {
             CommonRepoSql repoSql = new CommonRepoSql(connection);
             repoSql.createAllDtoIndexes(deleteIfExists);
-            ui.addMessage(" > created all indexes").write();
-        } catch (DatabaseException e) {
-            ui.addErrorMessage(e);
+            if (ui != null) {
+                ui.addMessage(" > created all indexes").write();
+            }
+        } catch (VantarException e) {
+            if (ui != null) {
+                ui.addErrorMessage(e);
+            }
         }
     }
 }

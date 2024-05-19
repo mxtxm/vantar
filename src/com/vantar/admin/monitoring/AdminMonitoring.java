@@ -3,7 +3,7 @@ package com.vantar.admin.monitoring;
 import com.vantar.admin.database.dbms.status.AdminStatus;
 import com.vantar.admin.index.Admin;
 import com.vantar.common.Settings;
-import com.vantar.database.dto.DtoDictionary;
+import com.vantar.database.common.Db;
 import com.vantar.exception.FinishException;
 import com.vantar.locale.Locale;
 import com.vantar.locale.*;
@@ -46,9 +46,9 @@ public class AdminMonitoring {
         links.put(Locale.getString(VantarKey.ADMIN_CACHE), items);
 
         items = new ArrayList<>(3);
-        items.add(DtoDictionary.Dbms.MONGO + ":/admin/database/mongo/status");
-        items.add(DtoDictionary.Dbms.SQL + ":/admin/database/sql/status");
-        items.add(DtoDictionary.Dbms.ELASTIC + ":/admin/database/elastic/status");
+        items.add(Db.Dbms.MONGO + ":/admin/database/mongo/status");
+        items.add(Db.Dbms.SQL + ":/admin/database/sql/status");
+        items.add(Db.Dbms.ELASTIC + ":/admin/database/elastic/status");
         links.put(Locale.getString(VantarKey.ADMIN_DATABASE), items);
 
         String adminApp = Settings.getAdminApp();

@@ -3,6 +3,7 @@ package com.vantar.admin.database.data.index;
 import com.vantar.admin.advanced.AdminAdvanced;
 import com.vantar.admin.database.dbms.status.AdminStatus;
 import com.vantar.admin.index.Admin;
+import com.vantar.database.common.Db;
 import com.vantar.database.dto.DtoDictionary;
 import com.vantar.exception.FinishException;
 import com.vantar.locale.*;
@@ -27,7 +28,7 @@ public class AdminDataManifest {
                     ServiceLog.log.warn("! {} missing dbms", info.getDtoClassName());
                     return;
                 }
-                if (info.dbms.equals(DtoDictionary.Dbms.NOSTORE)) {
+                if (info.dbms.equals(Db.Dbms.NOSTORE)) {
                     noStores.add(info);
                     return;
                 }

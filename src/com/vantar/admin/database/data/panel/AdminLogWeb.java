@@ -1,11 +1,9 @@
 package com.vantar.admin.database.data.panel;
 
-import com.vantar.business.ModelMongo;
 import com.vantar.common.VantarParam;
-import com.vantar.database.common.ValidationError;
+import com.vantar.database.common.*;
 import com.vantar.database.dto.*;
 import com.vantar.database.nosql.elasticsearch.ElasticSearch;
-import com.vantar.database.nosql.mongo.MongoQuery;
 import com.vantar.database.query.*;
 import com.vantar.database.sql.*;
 import com.vantar.exception.*;
@@ -45,7 +43,7 @@ public class AdminLogWeb {
         } else {
             UserLog.Mini userLog;
             try {
-                userLog = ModelMongo.getById(params, new UserLog.Mini());
+                userLog = Db.modelMongo.getById(params, new UserLog.Mini());
             } catch (VantarException e) {
                 u.ui.addErrorMessage(e).finish();
                 return;
@@ -66,22 +64,22 @@ public class AdminLogWeb {
         PageData data = null;
         try {
             // > > > MONGO
-            if (info.dbms.equals(DtoDictionary.Dbms.MONGO)) {
-                data = MongoQuery.getPage(q, null);
+            if (info.dbms.equals(Db.Dbms.MONGO)) {
+                data = Db.mongo.getPage(q, null);
                 // > > > SQL
-            } else if (info.dbms.equals(DtoDictionary.Dbms.SQL)) {
+            } else if (info.dbms.equals(Db.Dbms.SQL)) {
                 try (SqlConnection connection = new SqlConnection()) {
                     SqlSearch search = new SqlSearch(connection);
                     data = search.getPage(q);
                 }
                 // > > > ELASTIC
-            } else if (info.dbms.equals(DtoDictionary.Dbms.ELASTIC)) {
+            } else if (info.dbms.equals(Db.Dbms.ELASTIC)) {
                 data = ElasticSearch.getPage(q);
             }
 
         } catch (NoContentException ignore) {
 
-        } catch (DatabaseException e) {
+        } catch (VantarException e) {
             u.ui.addErrorMessage(e);
         }
 
@@ -133,7 +131,7 @@ public class AdminLogWeb {
     }
 
     public static UserWebLog getData(Params params) throws VantarException {
-        UserLog.Mini userLog = ModelMongo.getById(params, new UserLog.Mini());
+        UserLog.Mini userLog = Db.modelMongo.getById(params, new UserLog.Mini());
 
         QueryBuilder q = new QueryBuilder(new UserWebLog());
 
@@ -148,7 +146,7 @@ public class AdminLogWeb {
                 .equal("objectId", userLog.objectId);
         }
 
-        List<UserWebLog> data = ModelMongo.getData(q);
+        List<UserWebLog> data = Db.modelMongo.getData(q);
         if (data.size() == 1) {
             return data.get(0);
         }

@@ -3,7 +3,7 @@ package com.vantar.common;
 
 public class VantarParam {
 
-    public static final String VERSION = "4.9.14beta";
+    public static final String VERSION = "4.9.15beta";
 
     // these can be override in Application
     public static String QUEUE_NAME_USER_ACTION_LOG = "user-action-log";

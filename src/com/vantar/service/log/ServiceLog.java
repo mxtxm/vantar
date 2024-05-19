@@ -1,9 +1,9 @@
 package com.vantar.service.log;
 
 import com.vantar.common.VantarParam;
+import com.vantar.database.common.Db;
 import com.vantar.database.dto.*;
 import com.vantar.database.nosql.mongo.*;
-import com.vantar.database.nosql.mongo.Mongo;
 import com.vantar.database.query.*;
 import com.vantar.exception.*;
 import com.vantar.queue.*;
@@ -26,6 +26,7 @@ public class ServiceLog implements Services.Service  {
 
     public static final Logger log = LoggerFactory.getLogger(ServiceLog.class);
 
+    private volatile boolean pause = false;
     private static final int MAX_ERROR_FETCH = 100;
     private static final String DEBUG = "DEBUG";
     private static final String INFO = "INFO";
@@ -37,7 +38,6 @@ public class ServiceLog implements Services.Service  {
     private volatile boolean lastSuccess = true;
     private List<String> logs;
     private final AtomicBoolean isBusy = new AtomicBoolean();
-    private boolean pause = false;
     private Event event;
 
     private ScheduledExecutorService scheduleDelayedLogStore;
@@ -55,6 +55,7 @@ public class ServiceLog implements Services.Service  {
     @Override
     public void start() {
         serviceUp = true;
+        pause = false;
         isBusy.set(false);
         if (!delayedStoreEnabled) {
             return;
@@ -77,6 +78,16 @@ public class ServiceLog implements Services.Service  {
         }
         scheduleDelayedLogStore.shutdown();
         serviceUp = false;
+    }
+
+    @Override
+    public synchronized void pause() {
+        pause = true;
+    }
+
+    @Override
+    public synchronized void resume() {
+        pause = false;
     }
 
     @Override
@@ -103,14 +114,6 @@ public class ServiceLog implements Services.Service  {
             logs = new ArrayList<>(5);
         }
         logs.add(msg);
-    }
-
-    public synchronized void pause() {
-        pause = true;
-    }
-
-    public synchronized void resume() {
-        pause = false;
     }
 
     public ServiceLog setEvent(Event event) {
@@ -169,7 +172,7 @@ public class ServiceLog implements Services.Service  {
             Queue.add(VantarParam.QUEUE_NAME_USER_ACTION_LOG, new Packet(pLog));
         } else {
             try {
-                Mongo.insert(pLog);
+                Db.mongo.insert(pLog);
             } catch (Exception e) {
                 log.error(" ! failed to store log {}", pLog);
                 ServiceLog s = Services.get(ServiceLog.class);
@@ -231,7 +234,7 @@ public class ServiceLog implements Services.Service  {
             try {
                 userLog.time = new DateTime();
                 userLog.timeDay = new DateTime().truncateTime().getAsTimestamp();
-                Mongo.insert(userLog);
+                Db.mongo.insert(userLog);
             } catch (Exception e) {
                 log.error(" ! failed to store log {}", userLog);
                 ServiceLog s = Services.get(ServiceLog.class);
@@ -276,7 +279,7 @@ public class ServiceLog implements Services.Service  {
             try {
                 userLog.time = new DateTime();
                 userLog.timeDay = new DateTime().truncateTime().getAsTimestamp();
-                Mongo.insert(userLog);
+                Db.mongo.insert(userLog);
             } catch (Exception e) {
                 log.error(" ! failed to store log {}", userLog);
                 ServiceLog s = Services.get(ServiceLog.class);
@@ -320,7 +323,7 @@ public class ServiceLog implements Services.Service  {
             try {
                 userLog.time = new DateTime();
                 userLog.timeDay = new DateTime().truncateTime().getAsTimestamp();
-                Mongo.insert(userLog);
+                Db.mongo.insert(userLog);
             } catch (Exception e) {
                 log.error(" ! failed to store log {}", userLog);
                 ServiceLog s = Services.get(ServiceLog.class);
@@ -361,6 +364,9 @@ public class ServiceLog implements Services.Service  {
     }
 
     private void logTaskMongo() throws VantarException {
+        if (pause) {
+            return;
+        }
         List<Packet> packets = Queue.takeAllItems(VantarParam.QUEUE_NAME_USER_ACTION_LOG);
         if (packets.isEmpty()) {
             return;
@@ -392,13 +398,13 @@ public class ServiceLog implements Services.Service  {
         }
 
         if (!webItems.isEmpty()) {
-            Mongo.insert(webItems);
+            Db.mongo.insert(webItems);
         }
         if (!userLogItems.isEmpty()) {
-            Mongo.insert(userLogItems);
+            Db.mongo.insert(userLogItems);
         }
         if (!logItems.isEmpty()) {
-            Mongo.insert(logItems);
+            Db.mongo.insert(logItems);
             if (event != null) {
                 for (Log l : logItems) {
                     try {
@@ -430,7 +436,7 @@ public class ServiceLog implements Services.Service  {
 
         List<String> logs = new ArrayList<>(MAX_ERROR_FETCH + 1);
         try {
-            MongoQuery.getData(q).forEach(dto -> {
+            Db.mongo.getData(q).forEach(dto -> {
                 Log logItem = (Log) dto;
                 logs.add(
                     logItem.createT.toString() + "  " + logItem.level + "\n"
@@ -447,13 +453,13 @@ public class ServiceLog implements Services.Service  {
     public static List<String> getLogTags() {
         try {
             QueryBuilder q = new QueryBuilder(new Log());
-            q.addGroup("tag", Mongo.ID);
+            q.addGroup("tag", DbMongo.ID);
             List<String> result = new ArrayList<>(30);
-            for (Document document : MongoQuery.getAggregate(q)) {
-                result.add((String) document.get(Mongo.ID));
+            for (Document document : Db.mongo.getAggregate(q)) {
+                result.add((String) document.get(DbMongo.ID));
             }
             return result;
-        } catch (DatabaseException e) {
+        } catch (VantarException e) {
             log.error(" !", e);
             return new ArrayList<>(1);
         }
@@ -481,4 +487,3 @@ public class ServiceLog implements Services.Service  {
         void alert(Log logItems);
     }
 }
-

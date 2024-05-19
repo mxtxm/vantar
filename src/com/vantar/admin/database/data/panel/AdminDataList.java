@@ -1,11 +1,9 @@
 package com.vantar.admin.database.data.panel;
 
 import com.vantar.common.VantarParam;
-import com.vantar.database.common.ValidationError;
+import com.vantar.database.common.*;
 import com.vantar.database.dto.*;
 import com.vantar.database.nosql.elasticsearch.ElasticSearch;
-import com.vantar.database.nosql.mongo.Mongo;
-import com.vantar.database.nosql.mongo.*;
 import com.vantar.database.query.*;
 import com.vantar.database.sql.*;
 import com.vantar.exception.*;
@@ -34,9 +32,9 @@ public class AdminDataList {
         Long newSerial = params.getLong("serial-i");
         if (newSerial != null) {
             try {
-                Mongo.Sequence.set(u.dto.getStorage(), newSerial);
+                Db.mongo.autoIncrementSet(u.dto.getStorage(), newSerial);
                 u.ui.addMessage(VantarKey.SUCCESS_UPDATE);
-            } catch (DatabaseException e) {
+            } catch (VantarException e) {
                 u.ui.addErrorMessage(e);
             }
         }
@@ -66,23 +64,23 @@ public class AdminDataList {
             ((DtoBase) u.dto).setIsForList(true);
             try {
                 // > > > MONGO
-                if (info.dbms.equals(DtoDictionary.Dbms.MONGO)) {
-                    data = MongoQuery.getPage(q, null);
-                    lastSerialId = Mongo.Sequence.getCurrentValue(u.dto.getStorage());
+                if (info.dbms.equals(Db.Dbms.MONGO)) {
+                    data = Db.mongo.getPage(q, null);
+                    lastSerialId = Db.mongo.autoIncrementGetCurrentValue(u.dto.getStorage());
                     // > > > SQL
-                } else if (info.dbms.equals(DtoDictionary.Dbms.SQL)) {
+                } else if (info.dbms.equals(Db.Dbms.SQL)) {
                     try (SqlConnection connection = new SqlConnection()) {
                         SqlSearch search = new SqlSearch(connection);
                         data = search.getPage(q);
                     }
                     // > > > ELASTIC
-                } else if (info.dbms.equals(DtoDictionary.Dbms.ELASTIC)) {
+                } else if (info.dbms.equals(Db.Dbms.ELASTIC)) {
                     data = ElasticSearch.getPage(q);
                 }
 
             } catch (NoContentException ignore) {
 
-            } catch (DatabaseException e) {
+            } catch (VantarException e) {
                 u.ui.addErrorMessage(e);
             }
         }

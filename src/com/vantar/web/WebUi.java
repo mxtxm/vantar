@@ -1,8 +1,8 @@
 package com.vantar.web;
 
 import com.vantar.admin.database.data.panel.DataUtil;
-import com.vantar.business.ModelMongo;
 import com.vantar.common.VantarParam;
+import com.vantar.database.common.Db;
 import com.vantar.database.datatype.Location;
 import com.vantar.database.dto.*;
 import com.vantar.database.query.PageData;
@@ -20,7 +20,6 @@ import javax.servlet.http.HttpServletResponse;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.util.*;
-
 
 @SuppressWarnings("unchecked")
 public class WebUi extends WebUiBasics<WebUi> {
@@ -108,9 +107,9 @@ public class WebUi extends WebUiBasics<WebUi> {
                     break;
                 case "index":
                     String url;
-                    if (DtoDictionary.Dbms.MONGO.equals(info.dbms)) {
+                    if (Db.Dbms.MONGO.equals(info.dbms)) {
                         url = "/admin/database/mongo/index/get?" + qString;
-                    } else if (DtoDictionary.Dbms.SQL.equals(info.dbms)) {
+                    } else if (Db.Dbms.SQL.equals(info.dbms)) {
                         url = "/admin/database/sql/index/get?" + qString;
                     } else {
                         continue;
@@ -269,7 +268,7 @@ public class WebUi extends WebUiBasics<WebUi> {
                 Collection<Object> data;
                 try {
                     if (dto.getClass().isAnnotationPresent(Mongo.class)) {
-                        data = ModelMongo.getPropertyList(DtoDictionary.getInstance(depClass), f, params.getLang());
+                        data = Db.modelMongo.getPropertyList(DtoDictionary.getInstance(depClass), f, params.getLang());
                     } else {
                         // todo sql
                         data = new ArrayList<>(1);
@@ -293,7 +292,7 @@ public class WebUi extends WebUiBasics<WebUi> {
                         List<Dto> dtos;
                         try {
                             if (dto.getClass().isAnnotationPresent(Mongo.class)) {
-                                dtos = ModelMongo.getAll(DtoDictionary.getInstance(depClass));
+                                dtos = Db.modelMongo.getAll(DtoDictionary.getInstance(depClass));
                             } else {
                                 // todo sql
                                 dtos = new ArrayList<>(1);

@@ -1,6 +1,6 @@
 package com.vantar.database.dependency;
 
-import com.vantar.business.ModelMongo;
+import com.vantar.database.common.Db;
 import com.vantar.database.dto.*;
 import com.vantar.database.query.QueryBuilder;
 import com.vantar.exception.*;
@@ -94,7 +94,7 @@ public class DataDependencyMongo {
                 continue;
             }
 
-            if (ModelMongo.exists(q)) {
+            if (Db.modelMongo.exists(q)) {
                 throw new InputException(VantarKey.DELETE_DEPENDANT_DATA_ERROR, relation.fkClass.getSimpleName(), col);
             }
         }
@@ -149,7 +149,7 @@ public class DataDependencyMongo {
             }
 
             try {
-                for (Dto dtoDep : ModelMongo.getData(q)) {
+                for (Dto dtoDep : Db.modelMongo.getData(q)) {
                     deleteCascadeRec(dtoDep);
                 }
                 event.delete(dto);
@@ -210,7 +210,7 @@ public class DataDependencyMongo {
             }
 
             try {
-                List<Dto> data = ModelMongo.getData(q);
+                List<Dto> data = Db.modelMongo.getData(q);
                 Dependency d = new Dependency(dto, data.get(0));
                 dependencies.add(d);
                 d.items = new LinkedHashMap<>(data.size(), 1);

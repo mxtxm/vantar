@@ -2,8 +2,9 @@ package com.vantar.database.sql;
 
 import com.vantar.business.CommonRepoSql;
 import com.vantar.common.Settings;
+import com.vantar.database.common.Db;
 import com.vantar.database.dto.*;
-import com.vantar.exception.DatabaseException;
+import com.vantar.exception.*;
 import com.vantar.util.datetime.DateTimeRange;
 import com.vantar.util.file.*;
 import com.vantar.util.string.StringUtil;
@@ -12,11 +13,11 @@ import com.vantar.web.*;
 
 public class SqlBackup {
 
-    public static void dump(String dumpPath, WebUi ui) {
-        dump(dumpPath, null, ui);
+    public static void dump(WebUi ui, String dumpPath) {
+        dump(ui, dumpPath, null);
     }
 
-    public static void dump(String dumpPath, DateTimeRange dateRange, WebUi ui) {
+    public static void dump(WebUi ui, String dumpPath, DateTimeRange dateRange) {
         if (ui != null) {
             ui.addHeading(2, "PostgreSQL " + Settings.sql().getDbDatabase() + " > " + dumpPath).write();
         }
@@ -34,7 +35,7 @@ public class SqlBackup {
         try (SqlConnection connection = new SqlConnection()) {
             CommonRepoSql repo = new CommonRepoSql(connection);
 
-            for (DtoDictionary.Info info : DtoDictionary.getAll(DtoDictionary.Dbms.SQL)) {
+            for (DtoDictionary.Info info : DtoDictionary.getAll(Db.Dbms.SQL)) {
                 long startItemTime = System.currentTimeMillis();
                 Dto dto = info.getDtoInstance();
                 String table = dto.getStorage();
@@ -65,7 +66,7 @@ public class SqlBackup {
                                 dateRange.dateMax.formatter().getDateTime() + "') TO '" + tempDir + table + ".dump';"
                         );
                     }
-                } catch (DatabaseException e) {
+                } catch (VantarException e) {
                     if (ui != null) {
                         ui.addErrorMessage(e);
                     }
@@ -92,7 +93,7 @@ public class SqlBackup {
         }
     }
 
-    public static void restore(String zipPath, boolean deleteData, WebUi ui) {
+    public static void restore(WebUi ui, String zipPath, boolean deleteData) {
         ui.addHeading(2, "PostgreSQL " + zipPath + " > " + Settings.sql().getDbDatabase()).write();
 
         String tmpDir = DirUtil.makeTempDirectory();
@@ -120,7 +121,7 @@ public class SqlBackup {
                     repo.execute("COPY " + table + " FROM '" + dumpPath + "';");
                     long elapsed = (System.currentTimeMillis() - startCollectionTime) / 1000;
                     ui.addKeyValue(table, (elapsed * 10 / 10d) + "s").write();
-                } catch (DatabaseException e) {
+                } catch (VantarException e) {
                     ui.addErrorMessage(e);
                 }
             }

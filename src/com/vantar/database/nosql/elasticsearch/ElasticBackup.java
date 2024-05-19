@@ -1,6 +1,7 @@
 package com.vantar.database.nosql.elasticsearch;
 
 import com.vantar.business.CommonRepoElastic;
+import com.vantar.database.common.Db;
 import com.vantar.database.dto.*;
 import com.vantar.database.query.QueryBuilder;
 import com.vantar.exception.*;
@@ -16,11 +17,11 @@ import java.util.zip.*;
 
 public class ElasticBackup {
 
-    public static void dump(String dumpPath, WebUi ui) {
-        dump(dumpPath, null, ui);
+    public static void dump(WebUi ui, String dumpPath) {
+        dump(ui, dumpPath, null);
     }
 
-    public static void dump(String dumpPath, DateTimeRange dateRange, WebUi ui) {
+    public static void dump(WebUi ui, String dumpPath, DateTimeRange dateRange) {
         FileOutputStream fos;
         try {
             fos = new FileOutputStream(dumpPath);
@@ -42,7 +43,7 @@ public class ElasticBackup {
 
         CommonRepoElastic repo = new CommonRepoElastic();
         try {
-            for (DtoDictionary.Info info : DtoDictionary.getAll(DtoDictionary.Dbms.ELASTIC)) {
+            for (DtoDictionary.Info info : DtoDictionary.getAll(Db.Dbms.ELASTIC)) {
                 long startItemTime = System.currentTimeMillis();
                 Dto dto = info.getDtoInstance();
                 String collection = dto.getStorage();
@@ -84,12 +85,14 @@ public class ElasticBackup {
                         ui.addErrorMessage(e);
                     }
                     continue;
+                } catch (VantarException e) {
+                    e.printStackTrace();
                 }
 
-                for (Dto item : data) {
-                    zos.write((Json.d.toJson(item) + "\n").getBytes());
-                    ++l;
-                }
+//                for (Dto item : data) {
+//                    zos.write((Json.d.toJson(item) + "\n").getBytes());
+//                    ++l;
+//                }
                 long elapsed = (System.currentTimeMillis() - startItemTime) / 1000;
                 if (ui != null) {
                     ui.addKeyValue(collection, l + " records,    " + (elapsed * 10 / 10d) + "s").write();
@@ -123,7 +126,7 @@ public class ElasticBackup {
         }
     }
 
-    public static void restore(String zipPath, boolean deleteData, WebUi ui) {
+    public static void restore(WebUi ui, String zipPath, boolean deleteData) {
         ZipFile zipFile;
         try {
             zipFile = new ZipFile(zipPath);

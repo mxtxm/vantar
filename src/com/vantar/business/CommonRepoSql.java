@@ -1,7 +1,7 @@
 package com.vantar.business;
 
 import com.vantar.common.VantarParam;
-import com.vantar.database.common.ValidationError;
+import com.vantar.database.common.*;
 import com.vantar.database.dto.*;
 import com.vantar.database.nosql.elasticsearch.ElasticSearch;
 import com.vantar.database.query.*;
@@ -18,36 +18,36 @@ public class CommonRepoSql extends SqlExecute {
         this.connection = connection;
     }
 
-    public long insert(Dto dto) throws DatabaseException, VantarException {
+    public long insert(Dto dto) throws VantarException {
         long id = super.insert(dto);
         //ModelCommon.afterDataChange(dto);
         return id;
     }
 
-    public void insert(List<? extends Dto> dtos) throws DatabaseException, VantarException {
+    public void insert(List<? extends Dto> dtos) throws VantarException {
         super.insert(dtos);
         if (!dtos.isEmpty()) {
             //ModelCommon.afterDataChange(dtos.get(0));
         }
     }
 
-    public void update(Dto dto) throws DatabaseException, VantarException {
+    public void update(Dto dto) throws VantarException {
         super.update(dto);
         //ModelCommon.afterDataChange(dto);
     }
 
-    public void update(QueryBuilder q) throws DatabaseException, VantarException {
+    public void update(QueryBuilder q) throws VantarException {
         super.update(q);
         //ModelCommon.afterDataChange(q.getDto());
     }
 
-    public void delete(Dto dto) throws DatabaseException, VantarException {
+    public void delete(Dto dto) throws VantarException {
         super.delete(dto);
         //ModelCommon.afterDataChange(dto);
     }
 
-    public void createAllDtoIndexes(boolean deleteIfExists) throws DatabaseException {
-        for (DtoDictionary.Info info : DtoDictionary.getAll(DtoDictionary.Dbms.SQL)) {
+    public void createAllDtoIndexes(boolean deleteIfExists) throws VantarException {
+        for (DtoDictionary.Info info : DtoDictionary.getAll(Db.Dbms.SQL)) {
             createIndex(info.getDtoInstance(), deleteIfExists);
         }
     }
@@ -67,17 +67,17 @@ public class CommonRepoSql extends SqlExecute {
         return errors;
     }
 
-    public void purge(String table) throws DatabaseException {
+    public void purge(String table) throws VantarException {
         execute("DROP TABLE IF EXISTS " + table + " CASCADE;");
     }
 
-    public void purgeData(String table) throws DatabaseException {
+    public void purgeData(String table) throws VantarException {
         execute("DELETE FROM " + table + " CASCADE;");
     }
 
     // > > > by dto
 
-    public <T extends Dto> T getById(T dto, String... locales) throws NoContentException, DatabaseException {
+    public <T extends Dto> T getById(T dto, String... locales) throws VantarException, DatabaseException {
         SqlSearch search = new SqlSearch(connection);
 
         QueryBuilder q = new QueryBuilder(dto);
@@ -89,7 +89,7 @@ public class CommonRepoSql extends SqlExecute {
         return result.first();
     }
 
-    public <T extends Dto> T getFirst(T dto, String... locales) throws DatabaseException, NoContentException {
+    public <T extends Dto> T getFirst(T dto, String... locales) throws VantarException, NoContentException {
         SqlSearch search = new SqlSearch(connection);
 
         QueryBuilder q = new QueryBuilder(dto);
@@ -101,7 +101,7 @@ public class CommonRepoSql extends SqlExecute {
         return result.first();
     }
 
-    public <T extends Dto> List<T> getData(T dto, String... locales) throws DatabaseException, NoContentException {
+    public <T extends Dto> List<T> getData(T dto, String... locales) throws VantarException, NoContentException {
         SqlSearch search = new SqlSearch(connection);
 
         QueryBuilder q = new QueryBuilder(dto);
@@ -113,7 +113,7 @@ public class CommonRepoSql extends SqlExecute {
         return result.asList();
     }
 
-    public <T extends Dto> List<T> getAll(Dto dto, String... locales) throws NoContentException, DatabaseException {
+    public <T extends Dto> List<T> getAll(Dto dto, String... locales) throws VantarException, DatabaseException {
         QueryResult result = ElasticSearch.getAllData(dto);
         if (ObjectUtil.isNotEmpty(locales)) {
             result.setLocale(locales);
@@ -121,13 +121,13 @@ public class CommonRepoSql extends SqlExecute {
         return result.asList();
     }
 
-    public Map<String, String> getAsKeyValue(Dto dto, String key, String value, String... locales) throws NoContentException, DatabaseException {
+    public Map<String, String> getAsKeyValue(Dto dto, String key, String value, String... locales) throws VantarException, DatabaseException {
         return new SqlSearch(connection).getAllData(dto).setLocale(locales).asKeyValue(key, value);
     }
 
     // > > > by QueryBuilder
 
-    public <T extends Dto> T getFirst(QueryBuilder q, String... locales) throws DatabaseException, NoContentException {
+    public <T extends Dto> T getFirst(QueryBuilder q, String... locales) throws VantarException, NoContentException {
         QueryResult result = new SqlSearch(connection).getData(q);
         if (ObjectUtil.isNotEmpty(locales)) {
             result.setLocale(locales);
@@ -135,7 +135,7 @@ public class CommonRepoSql extends SqlExecute {
         return result.first();
     }
 
-    public <T extends Dto> List<T> getData(QueryBuilder q, String... locales) throws DatabaseException, NoContentException {
+    public <T extends Dto> List<T> getData(QueryBuilder q, String... locales) throws VantarException, NoContentException {
         QueryResult result = new SqlSearch(connection).getData(q);
         if (ObjectUtil.isNotEmpty(locales)) {
             result.setLocale(locales);
@@ -143,7 +143,7 @@ public class CommonRepoSql extends SqlExecute {
         return result.asList();
     }
 
-    public Object search(QueryBuilder q, String... locales) throws DatabaseException, NoContentException {
+    public Object search(QueryBuilder q, String... locales) throws DatabaseException, VantarException {
         if (q.isPagination()) {
             return new SqlSearch(connection).getPage(q, locales);
         } else {

@@ -1,12 +1,9 @@
 package com.vantar.admin.service;
 
 import com.vantar.admin.index.Admin;
-import com.vantar.database.dto.DtoDictionary;
-import com.vantar.database.nosql.elasticsearch.ElasticConnection;
-import com.vantar.database.nosql.mongo.MongoConnection;
-import com.vantar.database.sql.SqlConnection;
+import com.vantar.database.common.Db;
 import com.vantar.exception.FinishException;
-import com.vantar.locale.*;
+import com.vantar.locale.VantarKey;
 import com.vantar.queue.Queue;
 import com.vantar.service.Services;
 import com.vantar.service.log.Beat;
@@ -45,25 +42,22 @@ public class AdminServiceMonitoring {
     }
 
     public static void plotDataSourcesStatus(WebUi ui) {
-        ui.addKeyValue(
-            DtoDictionary.Dbms.MONGO.name() + " ",
-            Services.isDataSourceEnabled(MongoConnection.class) ?
-                (Services.isUp(MongoConnection.class) ? "up" : "down") : "disabled"
-        )
-            .addKeyValue(
-                DtoDictionary.Dbms.SQL.name() + " ",
-                Services.isDataSourceEnabled(SqlConnection.class) ?
-                    (Services.isUp(SqlConnection.class) ? "up" : "down") : "disabled"
-            )
-            .addKeyValue(
-                DtoDictionary.Dbms.ELASTIC.name() + " ",
-                Services.isDataSourceEnabled(ElasticConnection.class) ?
-                    (Services.isUp(ElasticConnection.class) ? "up" : "down") : "disabled"
-            )
+        ui
             .addKeyValue(
                 "RabbitMQ ",
-                Services.isDataSourceEnabled(Queue.class) ?
-                    (Services.isUp(Queue.class) ? "up" : "down") : "disabled"
+                Services.isEnabled(Queue.Engine.QUEUE) ? (Services.isUp(Queue.Engine.QUEUE) ? "up" : "down") : "disabled"
+            )
+            .addKeyValue(
+                Db.Dbms.MONGO.name() + " ",
+                Services.isEnabled(Db.Dbms.MONGO) ? (Services.isUp(Db.Dbms.MONGO) ? "up" : "down") : "disabled"
+            )
+            .addKeyValue(
+                Db.Dbms.SQL.name() + " ",
+                Services.isEnabled(Db.Dbms.SQL) ? (Services.isUp(Db.Dbms.SQL) ? "up" : "down") : "disabled"
+            )
+            .addKeyValue(
+                Db.Dbms.ELASTIC.name() + " ",
+                Services.isEnabled(Db.Dbms.ELASTIC) ? (Services.isUp(Db.Dbms.ELASTIC) ? "up" : "down") : "disabled"
             );
     }
 

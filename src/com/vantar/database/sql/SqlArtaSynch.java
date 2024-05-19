@@ -1,6 +1,7 @@
 package com.vantar.database.sql;
 
 import com.vantar.common.VantarParam;
+import com.vantar.database.common.Db;
 import com.vantar.database.dto.*;
 import com.vantar.exception.DatabaseException;
 import com.vantar.locale.VantarKey;
@@ -33,7 +34,7 @@ public class SqlArtaSynch {
 
     public SqlArtaSynch createFiles() throws DatabaseException {
         createArtaConfig();
-        for (DtoDictionary.Info info : DtoDictionary.getAll(DtoDictionary.Dbms.SQL)) {
+        for (DtoDictionary.Info info : DtoDictionary.getAll(Db.Dbms.SQL)) {
             Dto dto = info.getDtoInstance();
             createArtaModel(dto);
         }
@@ -69,7 +70,7 @@ public class SqlArtaSynch {
                 "build = on\n" +
                 "\n" +
                 "[database:dbo]\n" +
-                "engine = " + SqlConnection.getDbEngine(config) + "\n" +
+                "Engine = " + SqlConnection.getDbEngine(config) + "\n" +
                 "server = " + server[0] + "\n" +
                 "port = " + server[1] + "\n" +
                 "dbname = " + config.getDbDatabase() + "\n" +
@@ -130,7 +131,7 @@ public class SqlArtaSynch {
             if (name.contains("_id")) {
                 String storageName = StringUtil.remove(name, "_id");
                 Dto dtoRelation = null;
-                for (DtoDictionary.Info info : DtoDictionary.getAll(DtoDictionary.Dbms.SQL)) {
+                for (DtoDictionary.Info info : DtoDictionary.getAll(Db.Dbms.SQL)) {
                     Dto dtoRelationCandidate = info.getDtoInstance();
                     if (dtoRelationCandidate.getStorage().equals(storageName)) {
                         dtoRelation = dtoRelationCandidate;

@@ -8,7 +8,8 @@ import com.vantar.database.datatype.Location;
 import com.vantar.database.dto.Date;
 import com.vantar.database.dto.*;
 import com.vantar.database.query.*;
-import com.vantar.exception.DatabaseException;
+import com.vantar.exception.*;
+import com.vantar.service.log.ServiceLog;
 import com.vantar.util.datetime.DateTime;
 import com.vantar.util.object.ObjectUtil;
 import com.vantar.util.string.StringUtil;
@@ -18,7 +19,7 @@ import java.util.*;
 import java.util.regex.Pattern;
 import static com.vantar.database.query.QueryOperator.QUERY;
 
-@SuppressWarnings({"unchecked", "rawtypes"})
+@SuppressWarnings({"rawtypes"})
 public class MongoMapping {
 
     public static Document sort(String[] sort) {
@@ -29,7 +30,7 @@ public class MongoMapping {
         for (String item : sort) {
             String[] parts = StringUtil.splitTrim(item, ':');
             document.append(
-                parts[0].equals(DtoBase.ID) ? Mongo.ID : parts[0],
+                parts[0].equals(DtoBase.ID) ? DbMongo.ID : parts[0],
                 parts.length == 1 ? 1 : (parts[1].equalsIgnoreCase("asc") || parts[1].equals("1") ? 1 : -1)
             );
         }
@@ -40,7 +41,7 @@ public class MongoMapping {
         Document document = new Document();
         for (StorableData info : dto.getStorableData()) {
             if (info.name.equals(VantarParam.ID)) {
-                info.name = Mongo.ID;
+                info.name = DbMongo.ID;
                 if (action.equals(Dto.Action.INSERT)) {
                     info.isNull = false;
                 }
@@ -145,7 +146,7 @@ public class MongoMapping {
         data.forEach((k, v) -> {
             if (k != null && v != null) {
                 document.put(
-                    Mongo.Escape.keyForStore(k.toString()),
+                    DbMongo.escapeKeyForWrite(k.toString()),
                     getValueForDocument(new StorableData(v.getClass(), v, false), action)
                 );
             }
@@ -158,7 +159,7 @@ public class MongoMapping {
         data.forEach((k, v) -> {
             if (k != null && v != null) {
                 document.put(
-                    Mongo.Escape.keyForStore(k),
+                    DbMongo.escapeKeyForWrite(k),
                     getValueForDocument(new StorableData(v.getClass(), v, false), action)
                 );
             }
@@ -192,7 +193,7 @@ public class MongoMapping {
             mongoQuery.skip = q.getSkip();
         }
         if (!q.conditionIsEmpty()) {
-            Document matches = getMongoMatches(q.getCondition(), q.getDto());
+            Document matches = getMongoMatches(q.getCondition(), q.getDto(), mongoQuery.db);
             if (matches != null) {
                 mongoQuery.matches = matches;
             }
@@ -206,9 +207,9 @@ public class MongoMapping {
                         continue;
                     }
                     if (fieldName.equals(VantarParam.ID)) {
-                        group.columns[i] = Mongo.ID;
+                        group.columns[i] = DbMongo.ID;
                     } else if (fieldName.endsWith(".id")) {
-                        group.columns[i] = StringUtil.replace(fieldName, ".id", "." + Mongo.ID);
+                        group.columns[i] = StringUtil.replace(fieldName, ".id", "." + DbMongo.ID);
                     }
                 }
 
@@ -265,7 +266,7 @@ public class MongoMapping {
         }
     }
 
-    public static Document getMongoMatches(QueryCondition qCondition, Dto dto) {
+    public static Document getMongoMatches(QueryCondition qCondition, Dto dto, DbMongo db) {
         if (qCondition == null || qCondition.q.size() == 0) {
             return null;
         }
@@ -273,7 +274,7 @@ public class MongoMapping {
         List<Bson> matches = new ArrayList<>(10);
         for (QueryMatchItem item : qCondition.q) {
             if (item.type == QUERY) {
-                matches.add(getMongoMatches(item.queryValue, dto));
+                matches.add(getMongoMatches(item.queryValue, dto, db));
                 continue;
             }
 
@@ -281,9 +282,9 @@ public class MongoMapping {
             boolean searchInLastListItem = false;
             if (fieldName != null) {
                 if (fieldName.equals(VantarParam.ID)) {
-                    fieldName = Mongo.ID;
+                    fieldName = DbMongo.ID;
                 } else if (fieldName.endsWith(".id")) {
-                    fieldName = StringUtil.replace(fieldName, ".id", "." + Mongo.ID);
+                    fieldName = StringUtil.replace(fieldName, ".id", "." + DbMongo.ID);
                     // todo: is this correct?
                 } else if (fieldName.endsWith(".+id")) {
                     fieldName = StringUtil.replace(fieldName, ".+id", ".id");
@@ -467,7 +468,7 @@ public class MongoMapping {
                 }
 
                 case IN_LIST: {
-                    Document innerMatch = getMongoMatches(item.queryValue, dto);
+                    Document innerMatch = getMongoMatches(item.queryValue, dto, db);
                     if (innerMatch == null || innerMatch.isEmpty()) {
                         continue;
                     }
@@ -482,14 +483,14 @@ public class MongoMapping {
                     }
                     fieldName = parts[0].trim();
                     if (fieldName.equals(VantarParam.ID)) {
-                        fieldName = Mongo.ID;
+                        fieldName = DbMongo.ID;
                     }
-                    String fieldNameInner = parts.length == 2 ? parts[1].trim() : Mongo.ID;
+                    String fieldNameInner = parts.length == 2 ? parts[1].trim() : DbMongo.ID;
                     if (fieldNameInner.equals(VantarParam.ID)) {
-                        fieldNameInner = Mongo.ID;
+                        fieldNameInner = DbMongo.ID;
                     }
 
-                    Document innerMatch = getMongoMatches(item.queryValue, item.dto);
+                    Document innerMatch = getMongoMatches(item.queryValue, item.dto, db);
                     if (innerMatch == null || innerMatch.isEmpty()) {
                         continue;
                     }
@@ -499,9 +500,9 @@ public class MongoMapping {
                     q.columns = new String[] { fieldNameInner };
                     FindIterable<Document> cursor;
                     try {
-                        cursor = q.getResult();
-                    } catch (DatabaseException e) {
-                        Mongo.log.error("!! IN_DTO error {}", item, e);
+                        cursor = db.getResult(q);
+                    } catch (VantarException e) {
+                        ServiceLog.log.error("!! IN_DTO error {}", item, e);
                         continue;
                     }
                     Set<Long> ids = new HashSet<>(100, 1);
@@ -509,7 +510,7 @@ public class MongoMapping {
                         ids.add(document.getLong(fieldNameInner));
                     }
                     if (ids.isEmpty()) {
-                        matches.add(new Document(Mongo.ID, -1));
+                        matches.add(new Document(DbMongo.ID, -1));
                         continue;
                     }
                     matches.add(new Document(fieldName, new Document("$in", ids)));
@@ -532,7 +533,7 @@ public class MongoMapping {
 
         Document document = matches.isEmpty() ? new Document() : new Document(op, matches);
         if (qCondition.inspect) {
-            Mongo.log.info(" > mongo condition dump: {} --> {}", dto.getClass().getSimpleName(), document);
+            ServiceLog.log.info(" > mongo condition dump: {} --> {}", dto.getClass().getSimpleName(), document);
         }
 
         return document;

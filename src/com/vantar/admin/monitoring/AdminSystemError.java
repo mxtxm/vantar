@@ -2,6 +2,7 @@ package com.vantar.admin.monitoring;
 
 import com.vantar.admin.index.Admin;
 import com.vantar.business.*;
+import com.vantar.database.common.Db;
 import com.vantar.database.query.QueryBuilder;
 import com.vantar.exception.*;
 import com.vantar.locale.Locale;
@@ -51,7 +52,7 @@ public class AdminSystemError {
         QueryBuilder q = new QueryBuilder(new Log());
         q.condition().equal("tag", tag);
         try {
-            ModelMongo.delete(new ModelCommon.Settings(q).force(true).logEvent(false).mutex(false));
+            Db.modelMongo.delete(new ModelCommon.Settings(q).force(true).logEvent(false).mutex(false));
             ui.addMessage(VantarKey.SUCCESS_DELETE);
         } catch (VantarException e) {
             ui.addErrorMessage(VantarKey.FAIL_DELETE);

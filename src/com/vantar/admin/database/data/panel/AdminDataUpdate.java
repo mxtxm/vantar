@@ -2,6 +2,7 @@ package com.vantar.admin.database.data.panel;
 
 import com.vantar.business.*;
 import com.vantar.common.VantarParam;
+import com.vantar.database.common.Db;
 import com.vantar.database.dto.*;
 import com.vantar.database.sql.SqlConnection;
 import com.vantar.exception.*;
@@ -29,13 +30,13 @@ public class AdminDataUpdate {
         if (!params.contains("f")) {
             u.dto.setId(params.getLong(VantarParam.ID));
             try {
-                if (info.dbms.equals(DtoDictionary.Dbms.MONGO)) {
-                    u.dto = ModelMongo.getById(u.dto);
-                } else if (info.dbms.equals(DtoDictionary.Dbms.SQL)) {
+                if (info.dbms.equals(Db.Dbms.MONGO)) {
+                    u.dto = Db.modelMongo.getById(u.dto);
+                } else if (info.dbms.equals(Db.Dbms.SQL)) {
                     try (SqlConnection connection = new SqlConnection()) {
                         u.dto = (new CommonRepoSql(connection)).getById(u.dto);
                     }
-                } else if (info.dbms.equals(DtoDictionary.Dbms.ELASTIC)) {
+                } else if (info.dbms.equals(Db.Dbms.ELASTIC)) {
                     u.dto = CommonRepoElastic.getById(u.dto);
                 }
 
@@ -53,12 +54,12 @@ public class AdminDataUpdate {
             event.beforeUpdate(u.dto);
         }
         try {
-            if (info.dbms.equals(DtoDictionary.Dbms.MONGO)) {
-                ModelMongo.update(new ModelCommon.Settings(params, u.dto)
+            if (info.dbms.equals(Db.Dbms.MONGO)) {
+                Db.modelMongo.update(new ModelCommon.Settings(params, u.dto)
                     .isJson("asjson")
                     .setEventAfterWrite(dto -> {
                         if (dto instanceof CommonUser) {
-                            ModelCommon.insertPassword(
+                            Db.modelMongo.insertPassword(
                                 dto,
                                 Json.d.extract(params.getString("asjson"), "password", String.class)
                             );
@@ -66,9 +67,9 @@ public class AdminDataUpdate {
                     })
                 );
 
-            } else if (info.dbms.equals(DtoDictionary.Dbms.SQL)) {
+            } else if (info.dbms.equals(Db.Dbms.SQL)) {
                 CommonModelSql.updateJson(params.getString("asjson"), u.dto);
-            } else if (info.dbms.equals(DtoDictionary.Dbms.ELASTIC)) {
+            } else if (info.dbms.equals(Db.Dbms.ELASTIC)) {
                 CommonModelElastic.updateJson(params.getString("asjson"), u.dto);
             }
             if (event != null) {

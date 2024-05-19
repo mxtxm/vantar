@@ -13,23 +13,23 @@ import java.util.*;
 
 public class CommonRepoElastic extends ElasticWrite {
 
-    public static long insertOne(Dto dto) throws DatabaseException, VantarException {
+    public static long insertOne(Dto dto) throws VantarException {
         long id = ElasticWrite.insertOne(dto);
         //ModelCommon.afterDataChange(dto);
         return id;
     }
 
-    public static void updateOne(Dto dto) throws DatabaseException, VantarException {
+    public static void updateOne(Dto dto) throws VantarException {
         ElasticWrite.updateOne(dto);
         //ModelCommon.afterDataChange(dto);
     }
 
-    public static void upsertOne(Dto dto) throws DatabaseException, VantarException {
+    public static void upsertOne(Dto dto) throws VantarException {
         ElasticWrite.upsertOne(dto);
         //ModelCommon.afterDataChange(dto);
     }
 
-    public static void deleteOne(Dto dto) throws DatabaseException, VantarException {
+    public static void deleteOne(Dto dto) throws VantarException {
         ElasticWrite.deleteOne(dto);
         //ModelCommon.afterDataChange(dto);
     }
@@ -53,7 +53,7 @@ public class CommonRepoElastic extends ElasticWrite {
 
     // > > > by dto
 
-    public static <T extends Dto> T getById(T dto, String... locales) throws NoContentException, DatabaseException {
+    public static <T extends Dto> T getById(T dto, String... locales) throws VantarException {
         QueryBuilder q = new QueryBuilder(dto);
         q.condition().equal(VantarParam.ID, dto.getId());
         QueryResult result = ElasticSearch.getData(q);
@@ -63,7 +63,7 @@ public class CommonRepoElastic extends ElasticWrite {
         return result.first();
     }
 
-    public static <T extends Dto> T getFirst(T dto, String... locales) throws DatabaseException, NoContentException {
+    public static <T extends Dto> T getFirst(T dto, String... locales) throws VantarException {
         QueryBuilder q = new QueryBuilder(dto);
         q.setConditionFromDtoEqualTextMatch(QueryOperator.AND);
         QueryResult result = ElasticSearch.getData(q);
@@ -73,7 +73,7 @@ public class CommonRepoElastic extends ElasticWrite {
         return result.first();
     }
 
-    public static <T extends Dto> List<T> getData(T dto, String... locales) throws DatabaseException, NoContentException {
+    public static <T extends Dto> List<T> getData(T dto, String... locales) throws VantarException {
         QueryBuilder q = new QueryBuilder(dto);
         q.setConditionFromDtoEqualTextMatch(QueryOperator.AND);
         QueryResult result = ElasticSearch.getData(q);
@@ -83,7 +83,7 @@ public class CommonRepoElastic extends ElasticWrite {
         return result.asList();
     }
 
-    public static <T extends Dto> List<T> getAll(Dto dto, String... locales) throws NoContentException, DatabaseException {
+    public static <T extends Dto> List<T> getAll(Dto dto, String... locales) throws VantarException {
         QueryResult result = ElasticSearch.getAllData(dto);
         if (ObjectUtil.isNotEmpty(locales)) {
             result.setLocale(locales);
@@ -91,13 +91,13 @@ public class CommonRepoElastic extends ElasticWrite {
         return result.asList();
     }
 
-    public static Map<String, String> getAsKeyValue(Dto dto, String key, String value, String... locales) throws NoContentException, DatabaseException {
+    public static Map<String, String> getAsKeyValue(Dto dto, String key, String value, String... locales) throws VantarException {
         return ElasticSearch.getAllData(dto).setLocale(locales).asKeyValue(key, value);
     }
 
     // > > > by QueryBuilder
 
-    public static <T extends Dto> T getFirst(QueryBuilder q, String... locales) throws DatabaseException, NoContentException {
+    public static <T extends Dto> T getFirst(QueryBuilder q, String... locales) throws VantarException {
         QueryResult result = ElasticSearch.getData(q);
         if (ObjectUtil.isNotEmpty(locales)) {
             result.setLocale(locales);
@@ -105,7 +105,7 @@ public class CommonRepoElastic extends ElasticWrite {
         return result.first();
     }
 
-    public static <T extends Dto> List<T> getData(QueryBuilder q, String... locales) throws DatabaseException, NoContentException {
+    public static <T extends Dto> List<T> getData(QueryBuilder q, String... locales) throws VantarException {
         QueryResult result = ElasticSearch.getData(q);
         if (ObjectUtil.isNotEmpty(locales)) {
             result.setLocale(locales);
@@ -113,7 +113,7 @@ public class CommonRepoElastic extends ElasticWrite {
         return result.asList();
     }
 
-    public static Object search(QueryBuilder q, String... locales) throws DatabaseException, NoContentException {
+    public static Object search(QueryBuilder q, String... locales) throws VantarException {
         if (q.isPagination()) {
             return ElasticSearch.getPage(q, locales);
         } else {

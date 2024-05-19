@@ -1,10 +1,6 @@
 package com.vantar.admin.test;
 
 import com.vantar.common.*;
-import com.vantar.exception.AuthException;
-import com.vantar.service.Services;
-import com.vantar.service.auth.*;
-import com.vantar.service.log.ServiceLog;
 import com.vantar.util.object.ClassUtil;
 import com.vantar.util.string.StringUtil;
 import com.vantar.web.*;
@@ -20,14 +16,7 @@ public class WebTest {
         String password = Settings.tune.getProperty("test.password");
         String[] urls = StringUtil.split(Settings.tune.getProperty("test.base.urls"), ';');
 
-        CommonUser user = new RootUser();
-        ServiceAuth auth = Services.get(ServiceAuth.class);
-        try {
-            user = auth.forceSignin(user);
-        } catch (AuthException e) {
-            ServiceLog.log.error("!", e);
-        }
-
+        String x = params.getString("x");
 
         StringBuilder html = new StringBuilder(5000);
         html.append("<!DOCTYPE html>\n" +
@@ -63,7 +52,7 @@ public class WebTest {
             "        </p>\n" +
             "\n" +
             "        <p id=\"auth-container\">\n" +
-            "<input id=\"auth\" placeholder=\"auth-token\" value=\"" + user.getToken() + "\"/>" +
+            "<input id=\"auth\" placeholder=\"auth-token\" value=\"" + x + "\"/>" +
             "<input id=\"lang\" placeholder=\"lang\" value=\"en\"/>" +
             "        </p>\n" +
             "        <p id=\"pick-webservice-container\">\n" +

@@ -1,5 +1,6 @@
 package com.vantar.database.dependency;
 
+import com.vantar.database.common.Db;
 import com.vantar.database.dto.*;
 import com.vantar.service.log.ServiceLog;
 import com.vantar.util.json.Json;
@@ -42,7 +43,7 @@ public class ReverseRelationMap {
         relations = new HashMap<>(dtos.size(), 1);
         affectedClasses = new HashMap<>(dtos.size(), 1);
         for (DtoDictionary.Info dtoInfo : DtoDictionary.getAll()) {
-            if (dtoInfo.hidden || DtoDictionary.Dbms.NOSTORE.equals(dtoInfo.dbms)) {
+            if (dtoInfo.hidden || Db.Dbms.NOSTORE.equals(dtoInfo.dbms)) {
                 continue;
             }
             deepSeekDto(dtoInfo.dtoClass);
@@ -52,11 +53,11 @@ public class ReverseRelationMap {
         // cleanup un-wanted items
         relations.entrySet().removeIf(entry -> {
             DtoDictionary.Info info = DtoDictionary.get(entry.getKey());
-            boolean toRemove = info == null || info.hidden || DtoDictionary.Dbms.NOSTORE.equals(info.dbms);
+            boolean toRemove = info == null || info.hidden || Db.Dbms.NOSTORE.equals(info.dbms);
             if (!toRemove && entry.getValue() != null) {
                 entry.getValue().removeIf(relation -> {
                     DtoDictionary.Info infoR = DtoDictionary.get(relation.fkClass);
-                    return infoR == null || infoR.hidden || DtoDictionary.Dbms.NOSTORE.equals(infoR.dbms);
+                    return infoR == null || infoR.hidden || Db.Dbms.NOSTORE.equals(infoR.dbms);
                 });
             }
             return toRemove;

@@ -1,6 +1,7 @@
 package com.vantar.queue;
 
 import com.rabbitmq.client.*;
+import com.vantar.service.Services;
 import org.slf4j.*;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -9,6 +10,11 @@ import java.util.concurrent.TimeoutException;
 
 
 public class Queue {
+
+    public enum Engine implements Services.DataSources  {
+        QUEUE,
+    }
+
 
     private static final Logger log = LoggerFactory.getLogger(Queue.class);
     private static final int MAX_TRIES = 3;

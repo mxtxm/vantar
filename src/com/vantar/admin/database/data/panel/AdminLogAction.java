@@ -2,10 +2,9 @@ package com.vantar.admin.database.data.panel;
 
 import com.vantar.business.*;
 import com.vantar.common.VantarParam;
-import com.vantar.database.common.ValidationError;
+import com.vantar.database.common.*;
 import com.vantar.database.dto.*;
 import com.vantar.database.nosql.elasticsearch.ElasticSearch;
-import com.vantar.database.nosql.mongo.MongoQuery;
 import com.vantar.database.query.*;
 import com.vantar.database.sql.*;
 import com.vantar.exception.*;
@@ -63,7 +62,7 @@ public class AdminLogAction {
         } else if (isTypeD) {
             UserWebLog.Mini webLog;
             try {
-                webLog = ModelMongo.getById(params, new UserWebLog.Mini());
+                webLog = Db.modelMongo.getById(params, new UserWebLog.Mini());
             } catch (VantarException e) {
                 u.ui.addErrorMessage(e).finish();
                 return;
@@ -87,23 +86,23 @@ public class AdminLogAction {
         PageData data = null;
         try {
             // > > > MONGO
-            if (info.dbms.equals(DtoDictionary.Dbms.MONGO)) {
-                data = MongoQuery.getPage(q, null);
+            if (info.dbms.equals(Db.Dbms.MONGO)) {
+                data = Db.mongo.getPage(q, null);
 
             // > > > SQL
-            } else if (info.dbms.equals(DtoDictionary.Dbms.SQL)) {
+            } else if (info.dbms.equals(Db.Dbms.SQL)) {
                 try (SqlConnection connection = new SqlConnection()) {
                     SqlSearch search = new SqlSearch(connection);
                     data = search.getPage(q);
                 }
                 // > > > ELASTIC
-            } else if (info.dbms.equals(DtoDictionary.Dbms.ELASTIC)) {
+            } else if (info.dbms.equals(Db.Dbms.ELASTIC)) {
                 data = ElasticSearch.getPage(q);
             }
 
         } catch (NoContentException ignore) {
 
-        } catch (DatabaseException e) {
+        } catch (VantarException e) {
             u.ui.addErrorMessage(e);
         }
 
@@ -201,7 +200,7 @@ public class AdminLogAction {
         }
 
         try {
-            userLog = ModelMongo.getById(userLog);
+            userLog = Db.modelMongo.getById(userLog);
         } catch (VantarException e) {
             u.ui.addErrorMessage(e).finish();
             return;
@@ -219,11 +218,11 @@ public class AdminLogAction {
     @SuppressWarnings("unchecked")
     private static void revertDto(WebUi ui, UserLog dto) {
         try {
-            UserLog userLog = ModelMongo.getById(dto);
+            UserLog userLog = Db.modelMongo.getById(dto);
             Class<? extends Dto> dtoClass = (Class<? extends Dto>) ClassUtil.getClass(userLog.className);
             Dto dtoUndelete = Json.d.fromJson(Json.d.toJson(userLog.objectX), dtoClass);
 
-            ModelMongo.update(new ModelCommon.Settings(dtoUndelete));
+            Db.modelMongo.update(new ModelCommon.Settings(dtoUndelete));
 
             ui.addMessage(Locale.getString(VantarKey.ADMIN_REVERTED, userLog.classNameSimple, userLog.objectId));
         } catch (VantarException e) {

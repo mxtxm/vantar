@@ -229,7 +229,7 @@ public class Xlsx {
         public void mergeCells(int x1, int y1, int x2, int y2) {
             try {
                 sheet.range(x1, y1, x2, y2).merge();
-            } catch (IllegalArgumentException e) {
+            } catch (Exception e) {
                 log.error("! merge x1={}, y1={}, x2={}, y2={}", x1, y1, x2, y2);
             }
         }
@@ -238,7 +238,7 @@ public class Xlsx {
             try {
                 sheet.rowHeight(rowIndex, h);
             } catch (Exception e) {
-                log.warn(" ! row={}", rowIndex, e);
+                log.warn(" ! row={} {}", rowIndex, e.getMessage());
             }
         }
 
@@ -246,7 +246,7 @@ public class Xlsx {
             try {
                 sheet.width(rowIndex, w);
             } catch (Exception e) {
-                log.warn(" ! row={}", rowIndex, e);
+                log.warn(" ! row={} {}", rowIndex, e.getMessage());
             }
         }
     }

@@ -203,7 +203,7 @@ public class ElasticSearch {
         }
     }
 
-    public static PageData getPage(QueryBuilder q, String... locales) throws NoContentException, DatabaseException {
+    public static PageData getPage(QueryBuilder q, String... locales) throws VantarException {
         long total = q.getTotal();
         if (total == 0) {
             total = count(q);

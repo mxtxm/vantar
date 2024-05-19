@@ -1,6 +1,7 @@
 package com.vantar.admin.database.data.panel;
 
 import com.vantar.business.*;
+import com.vantar.database.common.Db;
 import com.vantar.database.dto.*;
 import com.vantar.exception.*;
 import com.vantar.locale.VantarKey;
@@ -36,8 +37,8 @@ public class AdminDataUpdateProperty {
         }
 
         try {
-            if (info.dbms.equals(DtoDictionary.Dbms.MONGO)) {
-                u.dto = ModelMongo.getById(params, u.dto);
+            if (info.dbms.equals(Db.Dbms.MONGO)) {
+                u.dto = Db.modelMongo.getById(params, u.dto);
                 Field f = u.dto.getField(property);
                 if (f == null) {
                     u.ui.addErrorMessage("Property not found").finish();
@@ -61,11 +62,11 @@ public class AdminDataUpdateProperty {
                     u.dto.setPropertyValue(property, value);
                 }
 
-                ModelMongo.update(new ModelCommon.Settings(u.dto));
+                Db.modelMongo.update(new ModelCommon.Settings(u.dto));
 
-            } else if (info.dbms.equals(DtoDictionary.Dbms.SQL)) {
+            } else if (info.dbms.equals(Db.Dbms.SQL)) {
 
-            } else if (info.dbms.equals(DtoDictionary.Dbms.ELASTIC)) {
+            } else if (info.dbms.equals(Db.Dbms.ELASTIC)) {
 
             }
             u.ui.addMessage(VantarKey.SUCCESS_UPDATE);

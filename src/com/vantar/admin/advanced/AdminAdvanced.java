@@ -1,7 +1,7 @@
 package com.vantar.admin.advanced;
 
 import com.vantar.admin.index.Admin;
-import com.vantar.database.dto.DtoDictionary;
+import com.vantar.database.common.Db;
 import com.vantar.exception.*;
 import com.vantar.locale.*;
 import com.vantar.service.Services;
@@ -17,19 +17,19 @@ public class AdminAdvanced {
 
         // > > >
         ui.beginBox(VantarKey.ADMIN_BACKUP);
-        ui  .beginFloatBox("system-box", DtoDictionary.Dbms.MONGO)
+        ui  .beginFloatBox("system-box", Db.Dbms.MONGO)
             .addHrefBlock(VantarKey.ADMIN_BACKUP_CREATE, "/admin/data/backup/mongo")
             .addHrefBlock(VantarKey.ADMIN_RESTORE, "/admin/data/restore/mongo")
             .addHrefBlock(VantarKey.ADMIN_BACKUP_FILES, "/admin/data/backup/files/mongo")
             .addHrefBlock(VantarKey.ADMIN_BACKUP_UPLOAD, "/admin/data/backup/upload")
             .blockEnd();
-        ui  .beginFloatBox("system-box", DtoDictionary.Dbms.SQL)
+        ui  .beginFloatBox("system-box", Db.Dbms.SQL)
             .addHrefBlock(VantarKey.ADMIN_BACKUP_CREATE, "/admin/data/backup/sql")
             .addHrefBlock(VantarKey.ADMIN_RESTORE, "/admin/data/restore/sql")
             .addHrefBlock(VantarKey.ADMIN_BACKUP_FILES, "/admin/data/backup/files/sql")
             .addHrefBlock(VantarKey.ADMIN_BACKUP_UPLOAD, "/admin/data/backup/upload")
             .blockEnd();
-        ui  .beginFloatBox("system-box", DtoDictionary.Dbms.ELASTIC)
+        ui  .beginFloatBox("system-box", Db.Dbms.ELASTIC)
             .addHrefBlock(VantarKey.ADMIN_BACKUP_CREATE, "/admin/data/backup/elastic")
             .addHrefBlock(VantarKey.ADMIN_RESTORE, "/admin/data/restore/elastic")
             .addHrefBlock(VantarKey.ADMIN_BACKUP_FILES, "/admin/data/backup/files/elastic")
@@ -93,22 +93,36 @@ public class AdminAdvanced {
     }
 
     public static void addDatabaseBoxes(WebUi ui) {
+        if (ui.params.getBoolean("toggle-db", false)) {
+            String dbms = ui.params.getString("db");
+            if ("mongo".equalsIgnoreCase(dbms)) {
+                if (Db.mongo.isTest()) {
+                    Db.mongo.switchToProduction();
+                } else {
+                    Db.mongo.switchToTest();
+                }
+            }
+        }
+
         ui.beginBox(VantarKey.ADMIN_DATABASE);
-        ui  .beginFloatBox("system-box", DtoDictionary.Dbms.MONGO)
+        ui  .beginFloatBox("system-box", Db.Dbms.MONGO)
             .addHrefBlock(VantarKey.ADMIN_DATABASE_STATUS, "/admin/database/mongo/status")
             .addHrefBlock(VantarKey.ADMIN_DATABASE_INDEX, "/admin/database/mongo/index")
             .addHrefBlock(VantarKey.ADMIN_DATABASE_SEQUENCE, "/admin/database/mongo/sequence")
             .addHrefBlock(VantarKey.ADMIN_IMPORT, "/admin/database/mongo/import")
-            .addHrefBlock(VantarKey.ADMIN_DATA_PURGE, "/admin/database/mongo/purge")
-            .blockEnd();
-        ui  .beginFloatBox("system-box", DtoDictionary.Dbms.SQL)
+            .addHrefBlock(VantarKey.ADMIN_DATA_PURGE, "/admin/database/mongo/purge");
+            if (Db.mongo != null) {
+                ui.addHrefBlock(Db.mongo.isTest() ? "Test DB" : "Production DB", "?db=mongo&toggle-db=true");
+            }
+            ui.blockEnd();
+        ui  .beginFloatBox("system-box", Db.Dbms.SQL)
             .addHrefBlock(VantarKey.ADMIN_DATABASE_STATUS, "/admin/database/sql/status")
             .addHrefBlock(VantarKey.ADMIN_DATABASE_INDEX, "/admin/database/sql/index")
             .addHrefBlock(VantarKey.ADMIN_IMPORT, "/admin/database/sql/import")
             .addHrefBlock(VantarKey.ADMIN_DATA_PURGE, "/admin/database/sql/purge")
             .addHrefBlock(VantarKey.ADMIN_DATABASE_SYNCH, "/admin/database/sql/synch")
             .blockEnd();
-        ui  .beginFloatBox("system-box", DtoDictionary.Dbms.ELASTIC)
+        ui  .beginFloatBox("system-box", Db.Dbms.ELASTIC)
             .addHrefBlock(VantarKey.ADMIN_DATABASE_STATUS, "/admin/database/elastic/status")
             .addHrefBlock(VantarKey.ADMIN_IMPORT, "/admin/database/elastic/import")
             .addHrefBlock(VantarKey.ADMIN_DATABASE_INDEX_DEF, "/admin/database/elastic/mapping/get")

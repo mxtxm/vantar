@@ -2,13 +2,12 @@ package com.vantar.admin.database.data.panel;
 
 import com.vantar.admin.index.Admin;
 import com.vantar.common.Settings;
+import com.vantar.database.common.Db;
 import com.vantar.database.dto.*;
-import com.vantar.database.nosql.elasticsearch.ElasticConnection;
-import com.vantar.database.nosql.mongo.MongoConnection;
-import com.vantar.database.sql.SqlConnection;
 import com.vantar.exception.*;
 import com.vantar.locale.Locale;
 import com.vantar.locale.VantarKey;
+import com.vantar.service.Services;
 import com.vantar.service.auth.CommonUser;
 import com.vantar.service.log.ServiceLog;
 import com.vantar.service.log.dto.*;
@@ -36,12 +35,12 @@ public class DataUtil {
         return null;
     }
 
-    protected static boolean isUp(DtoDictionary.Dbms dbms, WebUi ui) {
-        if (dbms.equals(DtoDictionary.Dbms.MONGO) && MongoConnection.isUp()) {
+    protected static boolean isUp(WebUi ui, Db.Dbms dbms) {
+        if (dbms.equals(Db.Dbms.MONGO) && Services.isUp(Db.Dbms.MONGO)) {
             return true;
-        } else if (dbms.equals(DtoDictionary.Dbms.SQL) && SqlConnection.isUp()) {
+        } else if (dbms.equals(Db.Dbms.SQL) && Services.isUp(Db.Dbms.SQL)) {
             return true;
-        } else if (dbms.equals(DtoDictionary.Dbms.ELASTIC) && ElasticConnection.isUp()) {
+        } else if (dbms.equals(Db.Dbms.ELASTIC) && Services.isUp(Db.Dbms.ELASTIC)) {
             return true;
         }
         ui.addMessage(com.vantar.locale.Locale.getString(VantarKey.ADMIN_SERVICE_IS_OFF, dbms));
@@ -61,7 +60,7 @@ public class DataUtil {
         }
         Ui u = new Ui();
         u.ui = Admin.getUiDto(title, params, response, info);
-        if (!DataUtil.isUp(info.dbms, u.ui)) {
+        if (!DataUtil.isUp(u.ui, info.dbms)) {
             u.ui.finish();
             throw new FinishException();
         }
@@ -106,7 +105,7 @@ public class DataUtil {
             response,
             info
         );
-        if (!DataUtil.isUp(info.dbms, u.ui)) {
+        if (!DataUtil.isUp(u.ui, info.dbms)) {
             u.ui.finish();
             throw new FinishException();
         }

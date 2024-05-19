@@ -2,22 +2,22 @@ package com.vantar.admin.database.dbms.synch;
 
 import com.vantar.admin.index.Admin;
 import com.vantar.common.Settings;
-import com.vantar.database.dto.DtoDictionary;
+import com.vantar.database.common.Db;
 import com.vantar.database.nosql.elasticsearch.*;
-import com.vantar.database.nosql.mongo.MongoConnection;
 import com.vantar.database.sql.*;
 import com.vantar.exception.*;
 import com.vantar.locale.*;
+import com.vantar.service.Services;
 import com.vantar.web.*;
 import javax.servlet.http.HttpServletResponse;
 
 
 public class AdminSynch {
 
-    public static void synch(Params params, HttpServletResponse response, DtoDictionary.Dbms dbms) throws FinishException {
+    public static void synch(Params params, HttpServletResponse response, Db.Dbms dbms) throws FinishException {
         WebUi ui = Admin.getUi(VantarKey.ADMIN_DATABASE_SYNCH_TITLE, params, response, true);
-        if (!(DtoDictionary.Dbms.MONGO.equals(dbms) ? MongoConnection.isUp()
-            : (DtoDictionary.Dbms.SQL.equals(dbms) ? SqlConnection.isUp() : ElasticConnection.isUp()))) {
+        if (!(Db.Dbms.MONGO.equals(dbms) ? Services.isUp(Db.Dbms.MONGO)
+            : (Db.Dbms.SQL.equals(dbms) ? Services.isUp(Db.Dbms.SQL) : Services.isUp(Db.Dbms.SQL)))) {
             ui.addMessage(Locale.getString(VantarKey.ADMIN_SERVICE_IS_OFF, dbms)).finish();
             return;
         }
@@ -33,9 +33,9 @@ public class AdminSynch {
             return;
         }
 
-        if (DtoDictionary.Dbms.SQL.equals(dbms)) {
+        if (Db.Dbms.SQL.equals(dbms)) {
             synchSql(ui);
-        } else if (DtoDictionary.Dbms.ELASTIC.equals(dbms)) {
+        } else if (Db.Dbms.ELASTIC.equals(dbms)) {
             synchElastic(ui);
         }
 
@@ -43,7 +43,7 @@ public class AdminSynch {
     }
 
     public static void synchSql(WebUi ui) {
-        if (!SqlConnection.isUp()) {
+        if (!Services.isUp(Db.Dbms.SQL)) {
             return;
         }
 
@@ -51,22 +51,30 @@ public class AdminSynch {
         try {
             synch.cleanup();
             synch.createFiles();
-            ui.addBlock("pre", synch.build()).write();
-        } catch (DatabaseException e) {
-            ui.addErrorMessage(e).write();
+            if (ui != null) {
+                ui.addBlock("pre", synch.build()).write();
+            }
+        } catch (VantarException e) {
+            if (ui != null) {
+                ui.addErrorMessage(e).write();
+            }
         }
     }
 
     public static void synchElastic(WebUi ui) {
-        if (!ElasticConnection.isUp()) {
+        if (!Services.isUp(Db.Dbms.ELASTIC)) {
             return;
         }
 
         try {
             ElasticIndexes.create();
-            ui.addMessage(VantarKey.ADMIN_FINISHED);
-        } catch (DatabaseException e) {
-            ui.addErrorMessage(e);
+            if (ui != null) {
+                ui.addMessage(VantarKey.ADMIN_FINISHED);
+            }
+        } catch (VantarException e) {
+            if (ui != null) {
+                ui.addErrorMessage(e).write();
+            }
         }
     }
 }

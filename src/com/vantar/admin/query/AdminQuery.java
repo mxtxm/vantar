@@ -3,7 +3,7 @@ package com.vantar.admin.query;
 import com.vantar.admin.index.Admin;
 import com.vantar.business.*;
 import com.vantar.common.VantarParam;
-import com.vantar.database.common.ValidationError;
+import com.vantar.database.common.*;
 import com.vantar.database.dto.DtoDictionary;
 import com.vantar.database.query.*;
 import com.vantar.exception.*;
@@ -28,7 +28,7 @@ public class AdminQuery {
         storedQuery.id = ui.params.getLong(VantarParam.ID);
         if (NumberUtil.isIdValid(storedQuery.id)) {
             try {
-                storedQuery = ModelMongo.getById(storedQuery);
+                storedQuery = Db.modelMongo.getById(storedQuery);
             } catch (VantarException e) {
                 ui.addErrorMessage(e).finish();
                 return;
@@ -67,10 +67,10 @@ public class AdminQuery {
         if (params.getString("write-q") != null) {
             try {
                 if (storedQuery.id == null) {
-                    ModelMongo.insert(new ModelCommon.Settings(storedQuery).logEvent(false).mutex(false));
+                    Db.modelMongo.insert(new ModelCommon.Settings(storedQuery).logEvent(false).mutex(false));
                     ui.addMessage(VantarKey.SUCCESS_INSERT);
                 } else {
-                    ModelMongo.update(new ModelCommon.Settings(storedQuery).logEvent(false).mutex(false));
+                    Db.modelMongo.update(new ModelCommon.Settings(storedQuery).logEvent(false).mutex(false));
                     ui.addMessage(VantarKey.SUCCESS_UPDATE);
                 }
             } catch (VantarException e) {
@@ -81,7 +81,7 @@ public class AdminQuery {
         // if delete
         if (params.getString("delete-q") != null && storedQuery.id != null) {
             try {
-                ModelMongo.delete(new ModelCommon.Settings(storedQuery).force(true).logEvent(false).mutex(false));
+                Db.modelMongo.delete(new ModelCommon.Settings(storedQuery).force(true).logEvent(false).mutex(false));
                 ui.addMessage(VantarKey.SUCCESS_DELETE);
             } catch (VantarException e) {
                 ui.addErrorMessage(e);
@@ -118,7 +118,7 @@ public class AdminQuery {
         QueryBuilder q = new QueryBuilder(new StoredQuery());
         q.sort("id:desc");
         try {
-            ModelMongo.forEach(q, dto -> {
+            Db.modelMongo.forEach(q, dto -> {
                 StoredQuery query = (StoredQuery) dto;
                 ui.addHrefBlock(query.title, "/admin/query/index?id=" + query.id);
                 return true;
@@ -157,12 +157,12 @@ public class AdminQuery {
 
             PageData data = null;
             try {
-                if (dtoInfo.dbms.equals(DtoDictionary.Dbms.MONGO)) {
+                if (dtoInfo.dbms.equals(Db.Dbms.MONGO)) {
                     qx.condition().inspect();
-                    data = ModelMongo.search(qx);
-                } else if (dtoInfo.dbms.equals(DtoDictionary.Dbms.SQL)) {
+                    data = Db.modelMongo.search(qx);
+                } else if (dtoInfo.dbms.equals(Db.Dbms.SQL)) {
                     // todo
-                } else if (dtoInfo.dbms.equals(DtoDictionary.Dbms.ELASTIC)) {
+                } else if (dtoInfo.dbms.equals(Db.Dbms.ELASTIC)) {
                     // todo
                 }
             } catch (NoContentException ignore) {
