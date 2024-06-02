@@ -61,7 +61,7 @@ public class AdminDataUpdate {
                         if (dto instanceof CommonUser) {
                             Db.modelMongo.insertPassword(
                                 dto,
-                                Json.d.extract(params.getString("asjson"), "password", String.class)
+                                Json.d.extract(params.getString("asjson"), VantarParam.PASSWORD_FORM, String.class)
                             );
                         }
                     })

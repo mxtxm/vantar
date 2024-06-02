@@ -76,7 +76,8 @@ public class DbMongo implements Closeable {
             isUp = true;
             ServiceLog.log.info(" >> connected to mongo {}", db);
         } catch (Exception e) {
-            ServiceLog.error(this.getClass(), " !! connect to mongo {}", db, e);
+            isUp = false;
+            ServiceLog.log.error(" !! connect to mongo {}", db, e);
         }
     }
 
@@ -362,7 +363,7 @@ public class DbMongo implements Closeable {
             options.ordered(false);
             getDatabase().getCollection(collection).insertMany(documents, options);
         } catch (Exception e) {
-            ServiceLog.error(this.getClass(), "! insert {} <- {}", collection, documents, e);
+            ServiceLog.log.error("! insert {} <- {}", collection, documents, e);
             throw new ServerException(e);
         }
     }
@@ -391,7 +392,8 @@ public class DbMongo implements Closeable {
             options.ordered(false);
             getDatabase().getCollection(dto.getStorage()).insertOne(document);
         } catch (Exception e) {
-            ServiceLog.error(this.getClass(), "! insert {} <- {}", dto.getStorage(), document, e);
+
+            ServiceLog.log.error("! insert {} <- {}", dto.getStorage(), document, e);
             throw new ServerException(e);
         }
 
@@ -431,7 +433,7 @@ public class DbMongo implements Closeable {
             options.ordered(false);
             getDatabase().getCollection(collection).insertMany(documents, options);
         } catch (Exception e) {
-            ServiceLog.error(this.getClass(), "! insert {} <- {}", collection, documents, e);
+            ServiceLog.log.error("! insert {} <- {}", collection, documents, e);
             throw new ServerException(e);
         }
 
@@ -496,7 +498,7 @@ public class DbMongo implements Closeable {
                 }
             }
         } catch (Exception e) {
-            ServiceLog.error(this.getClass(), "! insert {}", dto, e);
+            ServiceLog.log.error("! insert {}", dto, e);
         }
     }
 
@@ -510,7 +512,7 @@ public class DbMongo implements Closeable {
                 .getCollection(collection)
                 .updateOne(new Document(ID, id), new Document("$set", update));
         } catch (Exception e) {
-            ServiceLog.error(this.getClass(), "! update ({}, {}) <- {}", collection, id, update, e);
+            ServiceLog.log.error("! update ({}, {}) <- {}", collection, id, update, e);
             throw new ServerException(e);
         }
     }
@@ -545,7 +547,7 @@ public class DbMongo implements Closeable {
                 collection.updateOne(condition, data);
             }
         } catch (Exception e) {
-            ServiceLog.error(this.getClass(), "! update {} <- {}", collection, dto, e);
+            ServiceLog.log.error("! update {} <- {}", collection, dto, e);
             throw new ServerException(e);
         }
         dto.afterUpdate();
@@ -607,7 +609,7 @@ public class DbMongo implements Closeable {
                 }
             }
         } catch (Exception e) {
-            ServiceLog.error(this.getClass(), "! update {} <- {}", dto.getClass(), dto, e);
+            ServiceLog.log.error("! update {} <- {}", dto.getClass(), dto, e);
         }
     }
 
@@ -636,7 +638,7 @@ public class DbMongo implements Closeable {
             condition.afterDelete();
             return count;
         } catch (Exception e) {
-            ServiceLog.error(this.getClass(), "! delete {}", condition, e);
+            ServiceLog.log.error("! delete {}", condition, e);
             throw new ServerException(e);
         }
     }
@@ -645,7 +647,7 @@ public class DbMongo implements Closeable {
         try {
             return getDatabase().getCollection(collection).deleteMany(query).getDeletedCount();
         } catch (Exception e) {
-            ServiceLog.error(this.getClass(), "! delete {} <- {}", collection, query, e);
+            ServiceLog.log.error("! delete {} <- {}", collection, query, e);
             throw new ServerException(e);
         }
     }
@@ -658,7 +660,7 @@ public class DbMongo implements Closeable {
         try {
             getDatabase().getCollection(collection).drop();
         } catch (Exception e) {
-            ServiceLog.error(this.getClass(), "! deleteAll {} <- {}", collection, e);
+            ServiceLog.log.error("! deleteAll {} <- {}", collection, e);
             throw new ServerException(e);
         }
     }
@@ -711,7 +713,7 @@ public class DbMongo implements Closeable {
                 getDatabase().getCollection(collectionName).updateOne(condition, update);
             }
         } catch (Exception e) {
-            ServiceLog.error(this.getClass(), "! {} ({}) : ({} --add item--> {})", collectionName, condition, fieldName, value, e);
+            ServiceLog.log.error("! {} ({}) : ({} --add item--> {})", collectionName, condition, fieldName, value, e);
             throw new ServerException(VantarKey.FAIL_UPDATE);
         }
     }
@@ -732,7 +734,7 @@ public class DbMongo implements Closeable {
                 getDatabase().getCollection(collectionName).updateOne(condition, update);
             }
         } catch (Exception e) {
-            ServiceLog.error(this.getClass(), "! {} ({}) : ({} --remove item--> {})", collectionName, condition, fieldName, value, e);
+            ServiceLog.log.error("! {} ({}) : ({} --remove item--> {})", collectionName, condition, fieldName, value, e);
             throw new ServerException(VantarKey.FAIL_UPDATE);
         }
     }
@@ -769,8 +771,7 @@ public class DbMongo implements Closeable {
                 getDatabase().getCollection(collectionName).updateOne(condition, new Document("$set", v));
             }
         } catch (Exception e) {
-            ServiceLog.error(this.getClass(), "! {} ({}) : ({} --add k, v--> {},{})", collectionName, condition
-                , fieldName, key, value, e);
+            ServiceLog.log.error("! {} ({}) : ({} --add k, v--> {},{})", collectionName, condition, fieldName, key, value, e);
             throw new ServerException(VantarKey.FAIL_UPDATE);
         }
     }
@@ -793,7 +794,7 @@ public class DbMongo implements Closeable {
                 getDatabase().getCollection(collectionName).updateOne(condition, update);
             }
         } catch (Exception e) {
-            ServiceLog.error(this.getClass(), "! {} ({}) : (--remove k, v--> {})", collectionName, condition, fieldNameKey, e);
+            ServiceLog.log.error("! {} ({}) : (--remove k, v--> {})", collectionName, condition, fieldNameKey, e);
             throw new ServerException(VantarKey.FAIL_UPDATE);
         }
     }
@@ -816,7 +817,7 @@ public class DbMongo implements Closeable {
                 .getCollection(collection)
                 .updateOne(new Document(ID, id), new Document("$unset", fieldsToUnset));
         } catch (Exception e) {
-            ServiceLog.error(this.getClass(), "! exists ({}, {}) <- {}", collection, id, CollectionUtil.join(fields, ','), e);
+            ServiceLog.log.error("! exists ({}, {}) <- {}", collection, id, CollectionUtil.join(fields, ','), e);
             throw new ServerException(e);
         }
     }
@@ -835,7 +836,7 @@ public class DbMongo implements Closeable {
                 options
             );
         } catch (Exception e) {
-            ServiceLog.error(this.getClass(), "! inc ({}, {}, {}, {})", collection, idValue, fields, value, e);
+            ServiceLog.log.error("! inc ({}, {}, {}, {})", collection, idValue, fields, value, e);
             throw new ServerException(e);
         }
     }
@@ -850,7 +851,7 @@ public class DbMongo implements Closeable {
                 options
             );
         } catch (Exception e) {
-            ServiceLog.error(this.getClass(), "! inc ({}, {}, {}, {})", collection, idValue, fieldName, value, e);
+            ServiceLog.log.error("! inc ({}, {}, {}, {})", collection, idValue, fieldName, value, e);
             throw new ServerException(e);
         }
     }
@@ -871,7 +872,7 @@ public class DbMongo implements Closeable {
                 new Document("$inc", new Document(fieldName, value))
             );
         } catch (Exception e) {
-            ServiceLog.error(this.getClass(), "! inc ({}, {})", fieldName, value, e);
+            ServiceLog.log.error("! inc ({}, {})", fieldName, value, e);
             throw new ServerException(e);
         }
     }
@@ -896,7 +897,7 @@ public class DbMongo implements Closeable {
                 new Document("$inc", docs)
             );
         } catch (Exception e) {
-            ServiceLog.error(this.getClass(), "! inc ({}, {})", docs, value, e);
+            ServiceLog.log.error("! inc ({}, {})", docs, value, e);
             throw new ServerException(e);
         }
     }
@@ -917,7 +918,7 @@ public class DbMongo implements Closeable {
             }
             return new MongoQueryResult(find, q.dto, this);
         } catch (Exception e) {
-            ServiceLog.error(this.getClass(), " ! count --> {}", q.dto, e);
+            ServiceLog.log.error(" ! count --> {}", q.dto, e);
             throw new ServerException(e);
         }
     }
@@ -951,7 +952,7 @@ public class DbMongo implements Closeable {
             }
             return find;
         } catch (Exception e) {
-            ServiceLog.error(this.getClass(), " ! query --> {}", q.storage, e);
+            ServiceLog.log.error(" ! query --> {}", q.storage, e);
             throw new ServerException(e);
         }
     }
@@ -991,7 +992,7 @@ public class DbMongo implements Closeable {
         try {
             return getDatabase().getCollection(q.storage).aggregate(query).allowDiskUse(true);
         } catch (Exception e) {
-            ServiceLog.error(this.getClass(), " ! aggr --> {}", q.storage, e);
+            ServiceLog.log.error(" ! aggr --> {}", q.storage, e);
             throw new ServerException(e);
         }
     }
@@ -1024,9 +1025,13 @@ public class DbMongo implements Closeable {
                 this
             );
         } catch (Exception e) {
-            ServiceLog.error(this.getClass(), " ! query --> {}", dto.getClass().getSimpleName(), e);
+            ServiceLog.log.error(" ! query --> {}", dto.getClass().getSimpleName(), e);
             throw new ServerException(e);
         }
+    }
+
+    public PageData getPage(QueryBuilder q, String... locales) throws VantarException {
+        return getPage(q, null, locales);
     }
 
     public PageData getPage(QueryBuilder q, QueryResultBase.Event event, String... locales) throws VantarException {
@@ -1119,7 +1124,7 @@ public class DbMongo implements Closeable {
                 .iterator()
                 .hasNext();
         } catch (Exception e) {
-            ServiceLog.error(this.getClass(), "! isUnique ({}, {})", dto.getClass().getSimpleName(), dto.getId(), e);
+            ServiceLog.log.error(" ! isUnique ({}, {})", dto.getClass().getSimpleName(), dto.getId(), e);
             throw new ServerException(e);
         }
     }
@@ -1151,7 +1156,7 @@ public class DbMongo implements Closeable {
                 .iterator()
                 .hasNext();
         } catch (Exception e) {
-            ServiceLog.error(this.getClass(), "! exists {} <- {}", collection, document, e);
+            ServiceLog.log.error(" ! exists {} <- {}", collection, document, e);
             throw new ServerException(e);
         }
     }
@@ -1165,7 +1170,7 @@ public class DbMongo implements Closeable {
         try {
             return getDatabase().getCollection(collection).estimatedDocumentCount();
         } catch (Exception e) {
-            ServiceLog.error(this.getClass(), "! count <- {}", collection, e);
+            ServiceLog.log.error(" ! count <- {}", collection, e);
             throw new ServerException(e);
         }
     }
@@ -1180,7 +1185,7 @@ public class DbMongo implements Closeable {
                 getDatabase().getCollection(q.storage).estimatedDocumentCount() :
                 getDatabase().getCollection(q.storage).countDocuments(q.matches);
         } catch (Exception e) {
-            ServiceLog.error(this.getClass(), "! count <- {}", q.dto, e);
+            ServiceLog.log.error(" ! count <- {}", q.dto, e);
             throw new ServerException(e);
         }
     }

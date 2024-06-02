@@ -10,9 +10,7 @@ import com.vantar.database.sql.SqlConnection;
 import com.vantar.exception.*;
 import com.vantar.locale.*;
 import com.vantar.locale.Locale;
-import com.vantar.queue.Queue;
 import com.vantar.service.Services;
-import com.vantar.service.log.ServiceLog;
 import com.vantar.util.object.ObjectUtil;
 import com.vantar.util.string.StringUtil;
 import com.vantar.web.*;
@@ -107,7 +105,6 @@ public class AdminPurge {
 
     public static void purgeSql(WebUi ui, Set<String> excludes, Set<String> includes, boolean dropTable) {
         if (!Services.isUp(Db.Dbms.SQL)) {
-            ServiceLog.log.info(">>>>{}", Db.sql);
             return;
         }
 

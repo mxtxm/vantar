@@ -87,7 +87,7 @@ public class AdminLogAction {
         try {
             // > > > MONGO
             if (info.dbms.equals(Db.Dbms.MONGO)) {
-                data = Db.mongo.getPage(q, null);
+                data = Db.mongo.getPage(q);
 
             // > > > SQL
             } else if (info.dbms.equals(Db.Dbms.SQL)) {
@@ -121,7 +121,7 @@ public class AdminLogAction {
         }
         options.event = new WebUi.DtoListOptions.Event() {
             @Override
-            public void checkListFormContent() {
+            public void checkListFormContent(WebUi ui) {
                 if (!isTypeC && !isTypeD) {
                     u.ui.addEmptyLine();
                     u.ui.direction = "ltr".equalsIgnoreCase(u.ui.direction) ? "rtl" : "ltr";

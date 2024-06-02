@@ -3,6 +3,7 @@ package com.vantar.admin.test;
 import com.vantar.admin.documentation.get.WebServiceData;
 import com.vantar.admin.index.Admin;
 import com.vantar.admin.service.AdminService;
+import com.vantar.business.ModelCommon;
 import com.vantar.common.Settings;
 import com.vantar.database.common.Db;
 import com.vantar.exception.*;
@@ -10,6 +11,7 @@ import com.vantar.http.*;
 import com.vantar.locale.VantarKey;
 import com.vantar.service.Services;
 import com.vantar.service.auth.*;
+import com.vantar.service.log.ServiceLog;
 import com.vantar.util.file.*;
 import com.vantar.util.json.Json;
 import com.vantar.util.object.*;
@@ -21,13 +23,32 @@ import javax.servlet.http.HttpServletResponse;
 import java.util.*;
 
 
-public class WebUnitTest {
+public class WebUnitTestCreate {
 
     @SuppressWarnings("unchecked")
     public static void create(Params params, HttpServletResponse response) throws FinishException {
         WebUi ui = Admin.getUi(VantarKey.ADMIN_MENU_TEST, params, response, true);
 
         if (params.contains("f")) {
+
+            // > > > step 4 - store tests
+            if (params.contains("f4")) {
+                WebUnitTestCase testCase = new WebUnitTestCase();
+                testCase.tag = params.getString("tag");
+                testCase.title = params.getString("ti");
+                testCase.order = params.getInteger("or");
+                testCase.tests = Json.d.listFromJson(params.getString("tc"), WebUnitTestCaseItem.class);
+                try {
+                    ResponseMessage r = Db.modelMongo.insert(new ModelCommon.Settings(testCase).mutex(false).logEvent(false));
+                    ui.addMessage(r.message);
+                } catch (VantarException e) {
+                    ui.addErrorMessage(e);
+                }
+                ui.finish();
+                return;
+            }
+            // step 4 - store tests < < <
+
 
             // > > > step 3 - service call JSON
             if (params.contains("f3")) {
@@ -46,14 +67,16 @@ public class WebUnitTest {
 
                 ui  .beginFormPost()
                     .addInput("Tag", "tag")
-                    .addInput("Order", "o")
+                    .addInput("Title", "ti")
+                    .addInput("Order", "or")
                     .addTextArea("Test cases as JSON", "tc", Json.d.toJsonPretty(testCases))
-                    .addHidden("f3", 1)
+                    .addHidden("f4", 1)
                     .addSubmit()
                     .finish();
                 return;
             }
             // step 3 - service call JSON < < <
+
 
             // > > > step 2 - service call JSON
             List<String> paths = params.getStringList("path-check");
@@ -173,11 +196,18 @@ public class WebUnitTest {
                 return;
             }
             item.assertStatusCode = res.getStatusCode();
-            item.assertResponse = res.toString();
+
             item.assertHeaders = new HashMap<>(14, 1);
             for (Header h : res.getHeaders()) {
                 item.assertHeaders.put(h.getName(), h.getValue());
             }
+            item.assertCheckHeaders = false;
+            item.assertHeadersCheckMethod = WebUnitTestCaseItem.AssertCheckMethod.assertInResponse;
+
+            item.assertResponse = res.toString();
+            item.assertResponseObjectClass = res.getClass().getName();
+            item.assertResponseCheckMethod = WebUnitTestCaseItem.AssertCheckMethod.assertInResponse;
+
         } catch (HttpException e) {
             ui.addErrorMessage(item.url + ObjectUtil.toString(e));
         }

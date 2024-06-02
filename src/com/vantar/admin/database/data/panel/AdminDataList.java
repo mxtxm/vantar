@@ -65,7 +65,7 @@ public class AdminDataList {
             try {
                 // > > > MONGO
                 if (info.dbms.equals(Db.Dbms.MONGO)) {
-                    data = Db.mongo.getPage(q, null);
+                    data = Db.mongo.getPage(q);
                     lastSerialId = Db.mongo.autoIncrementGetCurrentValue(u.dto.getStorage());
                     // > > > SQL
                 } else if (info.dbms.equals(Db.Dbms.SQL)) {
@@ -107,7 +107,7 @@ public class AdminDataList {
         }
         options.event = new WebUi.DtoListOptions.Event() {
             @Override
-            public void checkListFormContent() {
+            public void checkListFormContent(WebUi ui) {
                 u.ui.addEmptyLine();
                 u.ui.direction = "ltr".equalsIgnoreCase(u.ui.direction) ? "rtl" : "ltr";
                 u.ui.alignKey = "left".equalsIgnoreCase(u.ui.alignKey) ? "right" : "left";

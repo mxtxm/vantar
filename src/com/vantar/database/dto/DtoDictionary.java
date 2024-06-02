@@ -26,16 +26,18 @@ public class DtoDictionary {
         indexGroup.add(group);
     }
 
-    public static void add(String title, Class<? extends Dto> dtoClass) {
+    public static void add(int order, String title, Class<? extends Dto> dtoClass) {
         Info info = new Info();
+        info.order = order;
         info.hidden = false;
         info.title = title;
         info.dtoClass = dtoClass;
         add(info);
     }
 
-    public static void addHidden(String title, Class<? extends Dto> dtoClass) {
+    public static void addHidden(int order, String title, Class<? extends Dto> dtoClass) {
         Info info = new Info();
+        info.order = order;
         info.hidden = true;
         info.title = title;
         info.dtoClass = dtoClass;
@@ -177,6 +179,7 @@ public class DtoDictionary {
 
     public static class Info {
 
+        public int order;
         public boolean hidden;
         public Db.Dbms dbms;
         public String group;

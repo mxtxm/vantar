@@ -4,7 +4,7 @@ import com.vantar.admin.index.Admin;
 import com.vantar.database.common.Db;
 import com.vantar.exception.FinishException;
 import com.vantar.locale.VantarKey;
-import com.vantar.queue.Queue;
+import com.vantar.queue.common.Que;
 import com.vantar.service.Services;
 import com.vantar.service.log.Beat;
 import com.vantar.util.datetime.DateTimeFormatter;
@@ -44,8 +44,8 @@ public class AdminServiceMonitoring {
     public static void plotDataSourcesStatus(WebUi ui) {
         ui
             .addKeyValue(
-                "RabbitMQ ",
-                Services.isEnabled(Queue.Engine.QUEUE) ? (Services.isUp(Queue.Engine.QUEUE) ? "up" : "down") : "disabled"
+                Que.Engine.RABBIT.name(),
+                Services.isEnabled(Que.Engine.RABBIT) ? (Services.isUp(Que.Engine.RABBIT) ? "up" : "down") : "disabled"
             )
             .addKeyValue(
                 Db.Dbms.MONGO.name() + " ",

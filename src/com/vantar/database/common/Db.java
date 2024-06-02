@@ -14,7 +14,6 @@ public class Db {
         NOSTORE,
     }
 
-
     public static DbMongo mongo;
     public static Object sql;
     public static Object elastic;

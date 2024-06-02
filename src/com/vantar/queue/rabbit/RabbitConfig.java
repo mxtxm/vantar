@@ -1,9 +1,9 @@
-package com.vantar.queue;
+package com.vantar.queue.rabbit;
 
 import org.aeonbits.owner.Config;
 
 
-public interface QueueConfig {
+public interface RabbitConfig {
 
     @Config.Key("rabbitmq.host")
     String getRabbitMqHost();
@@ -28,4 +28,7 @@ public interface QueueConfig {
     @Config.Key("rabbitmq.heartbeat")
     int getRabbitMqHeartbeat();
 
+    @Config.DefaultValue("10000")
+    @Config.Key("rabbitmq.timeout")
+    int getRabbitMqTimeout();
 }

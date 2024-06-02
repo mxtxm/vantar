@@ -44,7 +44,7 @@ public class AdminDataUnDelete {
         try {
             // > > > MONGO
             if (info.dbms.equals(Db.Dbms.MONGO)) {
-                data = Db.mongo.getPage(q, null);
+                data = Db.mongo.getPage(q);
                 // > > > SQL
             } else if (info.dbms.equals(Db.Dbms.SQL)) {
                 try (SqlConnection connection = new SqlConnection()) {
@@ -71,7 +71,7 @@ public class AdminDataUnDelete {
         options.checkListFormUrl = "/admin/data/undelete/many?dto" + dtoName;
         options.event = new WebUi.DtoListOptions.Event() {
             @Override
-            public void checkListFormContent() {
+            public void checkListFormContent(WebUi ui) {
                 u.ui.addEmptyLine();
                 u.ui.direction = "ltr".equalsIgnoreCase(u.ui.direction) ? "rtl" : "ltr";
                 u.ui.alignKey = "left".equalsIgnoreCase(u.ui.alignKey) ? "right" : "left";

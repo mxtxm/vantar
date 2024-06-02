@@ -3,7 +3,8 @@ package com.vantar.service.messaging;
 import com.vantar.admin.setting.AdminSettings;
 import com.vantar.admin.service.AdminService;
 import com.vantar.common.*;
-import com.vantar.queue.*;
+import com.vantar.queue.common.*;
+import com.vantar.queue.rabbit.*;
 import com.vantar.service.Services;
 import com.vantar.service.cache.ServiceDtoCache;
 import com.vantar.service.log.*;
@@ -20,7 +21,7 @@ public class ServiceMessaging {
 
 
     public void start() {
-        if (!Services.isUp(Queue.Engine.QUEUE)) {
+        if (!Services.isUp(Que.Engine.RABBIT)) {
             return;
         }
         serviceOn = true;
@@ -29,12 +30,12 @@ public class ServiceMessaging {
     }
 
     public void stop() {
-        if (!Services.isUp(Queue.Engine.QUEUE)) {
+        if (!Services.isUp(Que.Engine.RABBIT)) {
             return;
         }
         serviceOn = false;
         Beat.set(this.getClass(), "stop");
-        Queue.cancelTake(workerTag);
+        Que.rabbit.cancelTake(workerTag);
     }
 
     public void setEvent(Event event) {
@@ -46,21 +47,19 @@ public class ServiceMessaging {
     }
 
     public void broadcast(int type, Object... message) {
-        if (!Services.isUp(Queue.Engine.QUEUE)) {
+        if (!Services.isUp(Que.Engine.RABBIT)) {
             return;
         }
-        Queue.emmit(VantarParam.QUEUE_NAME_MESSAGE_BROADCAST, new Packet(new Message(message), type));
+        Que.rabbit.emmit(VantarParam.QUEUE_NAME_MESSAGE_BROADCAST, new Packet(new Message(message), type));
         Beat.set(ServiceMessaging.class, "broadcast");
         ServiceLog.log.trace(" > broadcast({})", type);
     }
 
     private void receive() {
-        if (!Services.isUp(Queue.Engine.QUEUE)) {
+        if (!Services.isUp(Que.Engine.RABBIT)) {
             return;
         }
-
         TakeCallback takeCallback = new TakeCallback() {
-
             @Override
             public boolean getItem(Packet packet, int takerId) {
                 if (!serviceOn) {
@@ -126,16 +125,16 @@ public class ServiceMessaging {
 
             @Override
             public void cancel(String queueName, int workerId) {
-                ServiceLog.log.info(" > Queue({}, {}) shutdown", queueName, workerId);
+                ServiceLog.log.info(" > Que({}, {}) shutdown", queueName, workerId);
             }
 
             @Override
             public void shutDown(String queueName, int workerId) {
-                ServiceLog.log.info(" > Queue({}, {}) shutdown", queueName, workerId);
+                ServiceLog.log.info(" > Que({}, {}) shutdown", queueName, workerId);
             }
         };
 
-        workerTag = Queue.receive(VantarParam.QUEUE_NAME_MESSAGE_BROADCAST, takeCallback);
+        workerTag = Que.rabbit.receive(VantarParam.QUEUE_NAME_MESSAGE_BROADCAST, takeCallback);
     }
 
 

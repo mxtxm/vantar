@@ -452,14 +452,14 @@ public class WebUi extends WebUiBasics<WebUi> {
             if (field.isAnnotationPresent(Text.class)) {
                 addTextArea(col, col, value, "small" + (inputClass == null ? "" : (" " + inputClass)));
             } else if (col.contains("password")) {
-                addPassword(col, col, value, "password");
+                addInput(col, col, null, "password");
             } else {
                 addInput(col, col, value, inputClass);
             }
         }
 
         if (dto instanceof CommonUser && !(dto instanceof CommonUserPassword)) {
-            addPassword("password", "password", null, "password");
+            addInput("password", VantarParam.PASSWORD_FORM);
         }
 
         if (!DataUtil.isDtoLog(dto)) {
@@ -653,7 +653,7 @@ public class WebUi extends WebUiBasics<WebUi> {
         } else {
             addDtoList(data, options);
             if (options.event != null) {
-                options.event.checkListFormContent();
+                options.event.checkListFormContent(this);
             }
         }
         if (options.checkListFormUrl != null) {
@@ -777,7 +777,7 @@ public class WebUi extends WebUiBasics<WebUi> {
         public Event event;
 
         public interface Event {
-            void checkListFormContent();
+            void checkListFormContent(WebUi ui);
             List<ColOption> getColOptions(Dto dto);
         }
 

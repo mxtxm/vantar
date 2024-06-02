@@ -5,7 +5,8 @@ import com.vantar.common.*;
 import com.vantar.database.common.Db;
 import com.vantar.database.nosql.mongo.DbMongo;
 import com.vantar.exception.ServiceException;
-import com.vantar.queue.Queue;
+import com.vantar.queue.common.Que;
+import com.vantar.queue.rabbit.Rabbit;
 import com.vantar.service.log.*;
 import com.vantar.service.messaging.ServiceMessaging;
 import com.vantar.service.patch.Patcher;
@@ -19,7 +20,6 @@ public class Services {
     public static final String ID = UUID.randomUUID().toString();
 
     public static ServiceMessaging messaging;
-    public static Object queue;
 
     private static Event event;
     private static Map<Class<?>, Service> upServicesMe;
@@ -116,7 +116,6 @@ public class Services {
         if (event != null) {
             event.afterStart();
         }
-
         Patcher.run();
     }
 
@@ -203,8 +202,8 @@ public class Services {
     }
 
     public static boolean isEnabled(DataSources source) {
-        if (Queue.Engine.QUEUE.equals(source)) {
-            return queue != null;
+        if (Que.Engine.RABBIT.equals(source)) {
+            return Que.rabbit != null;
         }
         if (Db.Dbms.MONGO.equals(source)) {
             return Db.mongo != null;
@@ -219,15 +218,13 @@ public class Services {
     }
 
     public static boolean isUp(DataSources source) {
-        if (Queue.Engine.QUEUE.equals(source)) {
-            return queue != null;
+        if (Que.Engine.RABBIT.equals(source)) {
+            return Que.rabbit != null && Que.rabbit.isUp();
         }
         if (Db.Dbms.MONGO.equals(source)) {
             return Db.mongo != null && Db.mongo.isUp();
         }
         if (Db.Dbms.SQL.equals(source)) {
-            ServiceLog.log.info(">>>>{}", Db.sql != null);
-
             return Db.sql != null;
         }
         if (Db.Dbms.ELASTIC.equals(source)) {
@@ -238,6 +235,14 @@ public class Services {
 
     public static boolean isUp(Class<?> serviceClass) {
         return upServicesMe != null && upServicesMe.containsKey(serviceClass);
+    }
+
+    public static boolean isPaused(Class<?> serviceClass) {
+        if (upServicesMe == null) {
+            return true;
+        }
+        Service s = upServicesMe.get(serviceClass);
+        return s == null || s.isPaused();
     }
 
     @SuppressWarnings("unchecked")
@@ -280,9 +285,8 @@ public class Services {
         String dataSources = Settings.getValue("service.data.sources");
         if (dataSources != null) {
             dataSources = dataSources.toLowerCase();
-            if (dataSources.contains("queue")) {
-                Queue.connect(Settings.queue());
-                queue = "A";
+            if (dataSources.contains("rabbit")) {
+                Que.rabbit = new Rabbit(Settings.rabbit());
             }
             if (dataSources.contains("mongo")) {
                 Db.mongo = new DbMongo(Settings.mongo());
@@ -298,8 +302,8 @@ public class Services {
     }
 
     public static void stopDataSources() {
-        if (queue != null) {
-            Queue.shutdown();
+        if (Que.rabbit != null) {
+            Que.rabbit.shutdown();
         }
         if (Db.mongo != null) {
             Db.mongo.shutdown();
@@ -321,6 +325,7 @@ public class Services {
         void resume();
         boolean isUp();
         boolean isOk();
+        boolean isPaused();
         List<String> getLogs();
     }
 

@@ -72,7 +72,9 @@ public class AdminImportData {
             return;
         }
 
-        for (DtoDictionary.Info info : DtoDictionary.getAll(Db.Dbms.MONGO)) {
+        List<DtoDictionary.Info> items = DtoDictionary.getAll(Db.Dbms.MONGO);
+        items.sort(Comparator.comparingInt(o -> o.order));
+        for (DtoDictionary.Info info : items) {
             Dto dto = info.getDtoInstance();
             if (ObjectUtil.isNotEmpty(excludes) && excludes.contains(info.getDtoClassName())) {
                 continue;
@@ -102,7 +104,9 @@ public class AdminImportData {
             return;
         }
 
-        for (DtoDictionary.Info info : DtoDictionary.getAll(Db.Dbms.SQL)) {
+        List<DtoDictionary.Info> items = DtoDictionary.getAll(Db.Dbms.SQL);
+        items.sort(Comparator.comparingInt(o -> o.order));
+        for (DtoDictionary.Info info : items) {
             Dto dto = info.getDtoInstance();
             if (ObjectUtil.isNotEmpty(excludes) && excludes.contains(info.getDtoClassName())) {
                 continue;
@@ -131,7 +135,9 @@ public class AdminImportData {
             return;
         }
 
-        for (DtoDictionary.Info info : DtoDictionary.getAll(Db.Dbms.ELASTIC)) {
+        List<DtoDictionary.Info> items = DtoDictionary.getAll(Db.Dbms.ELASTIC);
+        items.sort(Comparator.comparingInt(o -> o.order));
+        for (DtoDictionary.Info info : items) {
             Dto dto = info.getDtoInstance();
             if (ObjectUtil.isNotEmpty(excludes) && excludes.contains(info.getDtoClassName())) {
                 continue;

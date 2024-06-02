@@ -5,7 +5,7 @@ import com.vantar.database.nosql.mongo.MongoConfig;
 import com.vantar.database.sql.SqlConfig;
 import com.vantar.exception.DateTimeException;
 import com.vantar.locale.LocaleConfig;
-import com.vantar.queue.QueueConfig;
+import com.vantar.queue.rabbit.RabbitConfig;
 import com.vantar.util.datetime.DateTime;
 import com.vantar.util.string.StringUtil;
 import com.vantar.web.WebConfig;
@@ -114,12 +114,12 @@ public class Settings {
         return null;
     }
 
-    public static QueueConfig queue() {
-        if (config instanceof QueueConfig) {
-            return (QueueConfig) config;
+    public static RabbitConfig rabbit() {
+        if (config instanceof RabbitConfig) {
+            return (RabbitConfig) config;
         }
-        if (tune instanceof QueueConfig) {
-            return (QueueConfig) tune;
+        if (tune instanceof RabbitConfig) {
+            return (RabbitConfig) tune;
         }
         return null;
     }

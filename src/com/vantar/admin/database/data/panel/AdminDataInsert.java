@@ -1,6 +1,7 @@
 package com.vantar.admin.database.data.panel;
 
 import com.vantar.business.*;
+import com.vantar.common.VantarParam;
 import com.vantar.database.common.Db;
 import com.vantar.database.dto.*;
 import com.vantar.exception.*;
@@ -46,7 +47,7 @@ public class AdminDataInsert {
                         if (dto instanceof CommonUser) {
                             Db.modelMongo.insertPassword(
                                 dto,
-                                Json.d.extract(params.getString("asjson"), "password", String.class)
+                                Json.d.extract(params.getString("asjson"), VantarParam.PASSWORD_FORM, String.class)
                             );
                         }
                     })

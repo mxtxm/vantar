@@ -90,6 +90,11 @@ public class ServiceDbArchive implements Services.Service {
     }
 
     @Override
+    public boolean isPaused() {
+        return false;
+    }
+
+    @Override
     public boolean isOk() {
         return serviceUp
             && lastSuccess

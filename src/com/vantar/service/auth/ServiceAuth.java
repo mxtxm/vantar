@@ -106,6 +106,11 @@ public class ServiceAuth extends Permit implements Services.Service {
     }
 
     @Override
+    public boolean isPaused() {
+        return pause;
+    }
+
+    @Override
     public List<String> getLogs() {
         return logs;
     }
@@ -242,7 +247,7 @@ public class ServiceAuth extends Permit implements Services.Service {
     }
 
     public synchronized CommonUser signin(Params params) throws ServerException, AuthException {
-        String username = params.getString(VantarParam.USER_NAME);
+        String username = params.getString(VantarParam.USERNAME);
         String password = params.getString(VantarParam.PASSWORD);
         Map<String, Object> extraData = params.getX("extraData");
         if (StringUtil.isEmpty(username) || StringUtil.isEmpty(password)) {

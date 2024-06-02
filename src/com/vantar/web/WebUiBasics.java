@@ -26,7 +26,7 @@ abstract class WebUiBasics <T extends WebUiBasics<T>> {
     protected final Stack<String> openTags = new Stack<>();
     protected List<String> js;
 
-    protected String authToken;
+    public String authToken;
     protected String lang;
     public String direction;
     public String boxFloat;
@@ -562,9 +562,7 @@ abstract class WebUiBasics <T extends WebUiBasics<T>> {
             sb.append(" onchange=\"").append(options[3]).append("\"");
         }
         sb.append(">\n");
-        if (!isMulti) {
-            sb.append("<option></option>\n");
-        }
+        sb.append("<option></option>\n");
         Object value = options.length > 1 ? options[1] : null;
 
         if (items instanceof Map) {

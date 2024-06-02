@@ -1,4 +1,4 @@
-package com.vantar.queue;
+package com.vantar.queue.rabbit;
 
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
@@ -7,16 +7,16 @@ import com.rabbitmq.client.TopologyRecoveryException;
 import com.rabbitmq.client.impl.StrictExceptionHandler;
 
 
-public class QueueExceptionHandlerBase extends StrictExceptionHandler {
+public class ExceptionHandlerBase extends StrictExceptionHandler {
 
-    private QueueExceptionHandler customHandler;
+    private ExceptionHandler customHandler;
 
 
-    public QueueExceptionHandlerBase() {
+    public ExceptionHandlerBase() {
 
     }
 
-    public QueueExceptionHandlerBase(QueueExceptionHandler customHandler) {
+    public ExceptionHandlerBase(ExceptionHandler customHandler) {
         this.customHandler = customHandler;
     }
 

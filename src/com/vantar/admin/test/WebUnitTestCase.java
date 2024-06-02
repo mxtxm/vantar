@@ -16,10 +16,24 @@ public class WebUnitTestCase extends DtoBase {
     public String title;
     @Required
     public Integer order;
+    public Integer testCount;
 
     @NoList
     public List<WebUnitTestCaseItem> tests;
 
     @CreateTime
     public DateTime createT;
+
+
+    @Override
+    public boolean beforeUpdate() {
+        return beforeInsert();
+    }
+
+    @Override
+    public boolean beforeInsert() {
+        removeNullProperties("testCount");
+        testCount = tests == null ? 0 : tests.size();
+        return true;
+    }
 }

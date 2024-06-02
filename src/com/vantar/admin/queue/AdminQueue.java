@@ -5,7 +5,7 @@ import com.vantar.common.*;
 import com.vantar.exception.FinishException;
 import com.vantar.locale.*;
 import com.vantar.locale.Locale;
-import com.vantar.queue.Queue;
+import com.vantar.queue.common.Que;
 import com.vantar.service.Services;
 import com.vantar.util.string.StringUtil;
 import com.vantar.web.*;
@@ -17,25 +17,25 @@ public class AdminQueue {
 
     public static void status(Params params, HttpServletResponse response) throws FinishException {
         WebUi ui = Admin.getUi(VantarKey.ADMIN_QUEUE_STATUS, params, response, true);
-        if (!Services.isUp(Queue.Engine.QUEUE)) {
-            if (Services.isEnabled(Queue.Engine.QUEUE)) {
-                ui.addMessage(Locale.getString(VantarKey.ADMIN_SERVICE_IS_ENABLED, "RabbitMQ"));
+        if (!Services.isUp(Que.Engine.RABBIT)) {
+            if (Services.isEnabled(Que.Engine.RABBIT)) {
+                ui.addMessage(Locale.getString(VantarKey.ADMIN_SERVICE_IS_ENABLED, Que.Engine.RABBIT.name()));
             } else {
-                ui.addMessage(Locale.getString(VantarKey.ADMIN_SERVICE_IS_DISABLED, "RabbitMQ"));
+                ui.addMessage(Locale.getString(VantarKey.ADMIN_SERVICE_IS_DISABLED, Que.Engine.RABBIT.name()));
             }
-            ui.addMessage(Locale.getString(VantarKey.ADMIN_SERVICE_IS_OFF, "RabbitMQ"));
+            ui.addMessage(Locale.getString(VantarKey.ADMIN_SERVICE_IS_OFF, Que.Engine.RABBIT.name()));
             ui.finish();
             return;
         }
-        ui.addMessage(Locale.getString(VantarKey.ADMIN_SERVICE_IS_ON, "RabbitMQ")).write();
+        ui.addMessage(Locale.getString(VantarKey.ADMIN_SERVICE_IS_ON, Que.Engine.RABBIT.name())).write();
 
-        String[] queues = Queue.connection.getQueues();
+        String[] queues = Que.rabbit.getQueues();
         if (queues == null) {
             ui.addMessage(VantarKey.ADMIN_NO_QUEUE);
         } else {
             for (String q : queues) {
                 String queueName = StringUtil.split(q, VantarParam.SEPARATOR_COMMON)[0];
-                ui.addKeyValue(queueName, Queue.count(queueName) + " items");
+                ui.addKeyValue(queueName, Que.rabbit.count(queueName) + " items");
             }
         }
 
@@ -48,7 +48,7 @@ public class AdminQueue {
 
     public static void purge(Params params, HttpServletResponse response) throws FinishException {
         WebUi ui = Admin.getUi(VantarKey.ADMIN_DELETE_QUEUE, params, response, true);
-        if (!Services.isUp(Queue.Engine.QUEUE)) {
+        if (!Services.isUp(Que.Engine.RABBIT)) {
             ui.addMessage(Locale.getString(VantarKey.ADMIN_SERVICE_IS_OFF, "RabbitMQ")).finish();
             return;
         }
@@ -68,7 +68,7 @@ public class AdminQueue {
 
     public static void purgeSelective(Params params, HttpServletResponse response) throws FinishException {
         WebUi ui = Admin.getUi(VantarKey.ADMIN_DELETE_QUEUE, params, response, true);
-        if (!Services.isUp(Queue.Engine.QUEUE)) {
+        if (!Services.isUp(Que.Engine.RABBIT)) {
             ui.addMessage(Locale.getString(VantarKey.ADMIN_SERVICE_IS_OFF, "RabbitMQ")).finish();
             return;
         }
@@ -79,7 +79,7 @@ public class AdminQueue {
                 .addInput(VantarKey.ADMIN_ATTEMPTS, "tries", 100, null, "ltr")
                 .addHeading(2, VantarKey.ADMIN_INCLUDE);
 
-            for (String queueName : Queue.connection.getQueues()) {
+            for (String queueName : Que.rabbit.getQueues()) {
                 ui.addCheckbox(queueName, queueName);
             }
 
@@ -89,7 +89,7 @@ public class AdminQueue {
         }
 
         Set<String> include = new HashSet<>(10, 1);
-        for (String queueName : Queue.connection.getQueues()) {
+        for (String queueName : Que.rabbit.getQueues()) {
             if (params.isChecked(queueName)) {
                 include.add(queueName);
             }
@@ -99,15 +99,15 @@ public class AdminQueue {
     }
 
     public static void purge(WebUi ui, int delay, int maxTries, Set<String> exclude) {
-        if (!Services.isUp(Queue.Engine.QUEUE)) {
+        if (!Services.isUp(Que.Engine.RABBIT)) {
             return;
         }
 
         if (ui != null) {
-            ui.beginBox("Queue").write();
+            ui.beginBox(Que.Engine.RABBIT.name()).write();
         }
 
-        String[] queues = Queue.connection.getQueues();
+        String[] queues = Que.rabbit.getQueues();
         if (queues == null) {
             if (ui != null) {
                 ui.addMessage("  > " + VantarKey.ADMIN_NO_QUEUE).blockEnd().write();
@@ -121,16 +121,17 @@ public class AdminQueue {
                 continue;
             }
 
-            long count = Queue.count(queueName);
+            long count = Que.rabbit.count(queueName);
             long total = count;
             int tryCount = 1;
             String msg = "";
             while (count > 0 && tryCount++ <= maxTries) {
-                msg = Queue.delete(queueName) ? Locale.getString(VantarKey.SUCCESS_DELETE) : Locale.getString(VantarKey.FAIL_DELETE);
+                msg = Que.rabbit.delete(queueName) ? Locale.getString(VantarKey.SUCCESS_DELETE)
+                    : Locale.getString(VantarKey.FAIL_DELETE);
                 if (ui != null) {
                     ui.sleepMs(delay * 1000);
                 }
-                count = Queue.count(queueName);
+                count = Que.rabbit.count(queueName);
             }
             if (ui != null) {
                 ui.addKeyValue(queueName, msg + ": " + total + " > " + count).write();
@@ -142,22 +143,22 @@ public class AdminQueue {
     }
 
     private static void purgeSelective(WebUi ui, int delay, int maxTries, Set<String> include) {
-        if (!Services.isUp(Queue.Engine.QUEUE)) {
+        if (!Services.isUp(Que.Engine.RABBIT)) {
             return;
         }
 
         ui.beginBox(VantarKey.ADMIN_DELETE_QUEUE).write();
 
         for (String queueName : include) {
-            long count = Queue.count(queueName);
+            long count = Que.rabbit.count(queueName);
             long total = count;
             int tryCount = 1;
             String msg = "";
             while (count > 0 && tryCount++ <= maxTries) {
-                msg = Queue.delete(queueName) ?
+                msg = Que.rabbit.delete(queueName) ?
                     Locale.getString(VantarKey.SUCCESS_DELETE) : Locale.getString(VantarKey.FAIL_DELETE);
                 ui.sleepMs(delay * 1000);
-                count = Queue.count(queueName);
+                count = Que.rabbit.count(queueName);
             }
             ui.addKeyValue(queueName, msg + " : " + total + " > " + count).write();
         }

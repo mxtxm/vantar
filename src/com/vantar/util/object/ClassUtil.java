@@ -1,6 +1,7 @@
 package com.vantar.util.object;
 
 import com.vantar.database.dto.Generics;
+import com.vantar.service.log.ServiceLog;
 import com.vantar.util.collection.*;
 import com.vantar.util.string.StringUtil;
 import com.vantar.web.*;
@@ -11,7 +12,6 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.*;
 import java.net.URL;
 import java.util.*;
-import org.slf4j.*;
 
 /**
  * Class utilities
@@ -437,15 +437,15 @@ public class ClassUtil {
         }
     }
 
-    public static void checkControllers(String module, Logger log) {
-        log.info(" > checking controller classes...");
+    public static void checkControllers(String module) {
+        ServiceLog.log.info(" > checking controller classes...");
         int c = 0;
         int e = 0;
         for (Class<?> controllerClass : ClassUtil.getClasses(module)) {
             ++c;
             WebServlet webServlet = controllerClass.getAnnotation(WebServlet.class);
             if (webServlet == null) {
-                log.error(" ! 'WebServlet' annotation missing from controller {}", controllerClass.getSimpleName());
+                ServiceLog.log.error(" ! 'WebServlet' annotation missing from controller {}", controllerClass.getSimpleName());
                 continue;
             }
 
@@ -461,7 +461,7 @@ public class ClassUtil {
                     }
                     String controllerMethod = methodName.toString();
                     if (!ClassUtil.isClassMethod(controllerClass, controllerMethod, Params.class, HttpServletResponse.class)) {
-                        log.error(" ! missing link --> {}.{}", controllerClass.getName(), controllerMethod);
+                        ServiceLog.log.error(" ! missing link --> {}.{}", controllerClass.getName(), controllerMethod);
                         ++e;
                     }
 
@@ -477,12 +477,12 @@ public class ClassUtil {
                     }
                     String controllerMethod = methodName.toString();
                     if (!ClassUtil.isClassMethod(controllerClass, controllerMethod, Params.class, HttpServletResponse.class)) {
-                        log.error(" ! missing link --> {}.{}", controllerClass.getName(), controllerMethod);
+                        ServiceLog.log.error(" ! missing link --> {}.{}", controllerClass.getName(), controllerMethod);
                         ++e;
                     }
                 }
             }
         }
-        log.info(" < checked {} controller classes. found {} missing links.", c, e);
+        ServiceLog.log.info(" < checked {} controller classes. found {} missing links.", c, e);
     }
 }

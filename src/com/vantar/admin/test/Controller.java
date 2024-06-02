@@ -10,6 +10,8 @@ import javax.servlet.http.HttpServletResponse;
     "/admin/test/web",
 
     "/admin/test/web/unit/create",
+    "/admin/test/web/unit/list",
+    "/admin/test/web/unit/run",
 })
 public class Controller extends RouteToMethod {
 
@@ -22,6 +24,14 @@ public class Controller extends RouteToMethod {
     }
 
     public void testWebUnitCreate(Params params, HttpServletResponse response) throws FinishException {
-        WebUnitTest.create(params, response);
+        WebUnitTestCreate.create(params, response);
+    }
+
+    public void testWebUnitList(Params params, HttpServletResponse response) throws FinishException {
+        WebUnitTestList.list(params, response);
+    }
+
+    public void testWebUnitRun(Params params, HttpServletResponse response) throws FinishException {
+        WebUnitTestRun.run(params, response);
     }
 }

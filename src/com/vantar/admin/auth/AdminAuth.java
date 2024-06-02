@@ -20,10 +20,10 @@ public class AdminAuth {
         ui  .addHeading(1, Settings.config.getProperty("title") + " : " +  Locale.getString(VantarKey.ADMIN_SIGN_IN), "signin")
             .addEmptyLine(5);
 
-        if (params.getString("username") == null) {
+        if (params.getString(VantarParam.USERNAME) == null) {
             ui  .beginFormPost()
                 .addEmptyLine()
-                .addInput(VantarKey.USERNAME, VantarParam.USER_NAME)
+                .addInput(VantarKey.USERNAME, VantarParam.USERNAME)
                 .addPassword(VantarKey.PASSWORD, VantarParam.PASSWORD)
                 .addSubmit(VantarKey.SIGN_IN)
                 .blockEnd();

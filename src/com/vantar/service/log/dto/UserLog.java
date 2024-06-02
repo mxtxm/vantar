@@ -8,11 +8,11 @@ import java.util.*;
 @Elastic
 @Archive("500000R")
 @Index({
-    "_id:-1",
-    "timeDay:1,threadId:1,userId:1,url:1,objectId:1,action:1,_id:-1",
-    "classNameSimple:1,action:1,_id:-1",
-    "userId:1,action:1,url:1,time:-1,_id:-1",
-    "objectX:1"
+    "timeDay:1,threadId:1,userId:1,url:1,objectId:1,action:1,_id:1",
+    "classNameSimple:1,action:1,_id:1",
+    "userId:1,action:1,url:1,time:-1,_id:1",
+    "objectX:1",
+    "tag:1",
 })
 public class UserLog extends DtoBase {
 
@@ -20,6 +20,7 @@ public class UserLog extends DtoBase {
 
     public Long userId;
     public String userName;
+    public String tag;
     public Long timeDay;
     public Long threadId;
     public String action;

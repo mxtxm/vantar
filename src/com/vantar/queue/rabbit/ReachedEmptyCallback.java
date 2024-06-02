@@ -1,4 +1,4 @@
-package com.vantar.queue;
+package com.vantar.queue.rabbit;
 
 
 public interface ReachedEmptyCallback {

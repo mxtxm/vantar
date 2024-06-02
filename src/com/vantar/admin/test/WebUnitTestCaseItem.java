@@ -18,11 +18,23 @@ public class WebUnitTestCaseItem extends DtoBase {
     public Map<String, String> fileUploads;
 
     public Integer assertStatusCode;
-    public String assertResponse;
+
+    public Boolean assertCheckHeaders;
     public Map<String, String> assertHeaders;
-    public Map<String, String> assertInfo;
+    public AssertCheckMethod assertHeadersCheckMethod;
+    public Set<String> assertHeadersInclude;
+    public Set<String> assertHeadersExclude;
+
+    public String assertResponse;
+    public String assertResponseObjectClass;
+    public AssertCheckMethod assertResponseCheckMethod;
+    public Set<String> assertResponseInclude;
+    public Set<String> assertResponseExclude;
 
 
-    public Set<String> stackFieldsAdd;
-    public Set<String> stackFieldsRemove;
+    public enum AssertCheckMethod {
+        exact,
+        assertInResponse,
+        responseInAssert,
+    }
 }

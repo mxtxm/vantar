@@ -11,7 +11,7 @@ import com.vantar.exception.*;
 import com.vantar.database.dto.DtoDictionary;
 import com.vantar.locale.*;
 import com.vantar.locale.Locale;
-import com.vantar.queue.Queue;
+import com.vantar.queue.common.Que;
 import com.vantar.service.Services;
 import com.vantar.service.healthmonitor.ServiceHealthMonitor;
 import com.vantar.service.log.ServiceLog;
@@ -160,12 +160,12 @@ public class AdminService {
             ui  .blockEnd()
                 .write()
                 .sleepMs(delay)
-                .beginBox("Service start")
+                .beginBox("Service resume")
                 .write();
         }
         serviceAction(
             ui,
-            "start",
+            "resume",
             "A",
             delay,
             tries
@@ -233,12 +233,14 @@ public class AdminService {
                 } else if (action.equalsIgnoreCase("pause")) {
                     s.pause();
                     sleep(delay);
+                    addMessage(ui, false, VantarKey.ADMIN_SERVICE_PAUSED);
                     return;
 
                 // > > > RESUME
                 } else if (action.equalsIgnoreCase("resume")) {
                     s.resume();
                     sleep(delay);
+                    addMessage(ui, false, VantarKey.ADMIN_SERVICE_RESUMED);
                     return;
 
                 // > > > START
@@ -312,12 +314,14 @@ public class AdminService {
             } else if (action.equalsIgnoreCase("pause")) {
                 Services.pauseServices();
                 sleep(delay);
+                addMessage(ui, false, VantarKey.ADMIN_SERVICE_PAUSED);
                 return;
 
             // > > > STAND BY
             } else if (action.equalsIgnoreCase("resume")) {
                 Services.resumeServices();
                 sleep(delay);
+                addMessage(ui, false, VantarKey.ADMIN_SERVICE_RESUMED);
                 return;
 
             // > > > START
@@ -446,10 +450,10 @@ public class AdminService {
     private static void getSystemObjects(WebUi ui) {
         ui.beginBox(VantarKey.ADMIN_SYSYEM_OBJECTS);
 
-        if (Queue.connection != null) {
-            String[] queues = Queue.connection.getQueues();
+        if (Services.isUp(Que.Engine.RABBIT)) {
+            String[] queues = Que.rabbit.getQueues();
             if (queues != null) {
-                ui.addKeyValue("RabbitMQ", CollectionUtil.join(queues, "\n"));
+                ui.addKeyValue(Que.Engine.RABBIT.name(), CollectionUtil.join(queues, "\n"));
                 ui.addKeyValue(" ", " ");
             }
         }

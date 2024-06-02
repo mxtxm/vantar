@@ -65,7 +65,7 @@ public class AdminLogWeb {
         try {
             // > > > MONGO
             if (info.dbms.equals(Db.Dbms.MONGO)) {
-                data = Db.mongo.getPage(q, null);
+                data = Db.mongo.getPage(q);
                 // > > > SQL
             } else if (info.dbms.equals(Db.Dbms.SQL)) {
                 try (SqlConnection connection = new SqlConnection()) {
@@ -92,7 +92,7 @@ public class AdminLogWeb {
         options.colOptionCount = 1;
         options.event = new WebUi.DtoListOptions.Event() {
             @Override
-            public void checkListFormContent() {
+            public void checkListFormContent(WebUi ui) {
 
             }
 

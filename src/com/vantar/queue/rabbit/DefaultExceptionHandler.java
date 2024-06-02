@@ -1,14 +1,14 @@
-package com.vantar.queue;
+package com.vantar.queue.rabbit;
 
 import com.rabbitmq.client.*;
 import com.vantar.service.Services;
 import com.vantar.service.log.ServiceLog;
 
 
-public class DefaultQueueExceptionHandler implements QueueExceptionHandler {
+public class DefaultExceptionHandler implements ExceptionHandler {
 
     public void handleReturnListenerException(Channel channel, Throwable e) {
-        ServiceLog.fatal(QueueExceptionHandlerBase.class, "handleReturnListenerException", channel, e);
+        ServiceLog.fatal(ExceptionHandlerBase.class, "handleReturnListenerException", channel, e);
         Services.stopServices();
         Services.startServices();
     }

@@ -1,4 +1,7 @@
-package com.vantar.queue;
+package com.vantar.queue.rabbit;
+
+
+import com.vantar.queue.common.Packet;
 
 
 public interface TakeCallback {

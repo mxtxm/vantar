@@ -1,9 +1,9 @@
 package com.vantar.web;
 
 import com.vantar.database.dto.Dto;
-import com.vantar.locale.LangKey;
-import com.vantar.locale.Locale;
+import com.vantar.locale.*;
 import com.vantar.util.object.ObjectUtil;
+import java.util.Objects;
 
 
 public class ResponseMessage {
@@ -63,7 +63,49 @@ public class ResponseMessage {
         return r;
     }
 
+    @Override
     public String toString() {
         return ObjectUtil.toString(this);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null) {
+            return false;
+        }
+        if (obj == this) {
+            return true;
+        }
+        if (!this.getClass().equals(obj.getClass())) {
+            return false;
+        }
+        ResponseMessage rObj = (ResponseMessage) obj;
+
+        if (this.code != rObj.code) {
+            return false;
+        }
+        if (this.successful != rObj.successful) {
+            return false;
+        }
+        if (!Objects.equals(this.message, rObj.message)) {
+            return false;
+        }
+        if (!Objects.equals(this.value, rObj.value)) {
+            return false;
+        }
+        if (!Objects.equals(this.dto, rObj.dto)) {
+            return false;
+        }
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = getClass().hashCode();
+        hash = 31 * hash + code;
+        hash = 31 * hash + (successful ? 1 : 0);
+        hash = 31 * hash + (value == null ? 0 : value.hashCode());
+        hash = 31 * hash + (dto == null ? 0 : dto.hashCode());
+        return hash;
     }
 }

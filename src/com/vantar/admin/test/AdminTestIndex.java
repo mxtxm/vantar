@@ -16,9 +16,8 @@ public class AdminTestIndex {
             .addHrefBlockNewPage("Run test", "/admin/test/web")
             .blockEnd()
             .beginBox("WEB/API unit test")
-            .addHrefBlockNewPage("List tests", "/admin/test/web/unit/list")
+            .addHrefBlockNewPage("Run/List tests", "/admin/test/web/unit/list")
             .addHrefBlockNewPage("Create tests", "/admin/test/web/unit/create")
-            .addHrefBlockNewPage("Run tests", "/admin/test/web/unit/execute")
             .finish();
     }
 }

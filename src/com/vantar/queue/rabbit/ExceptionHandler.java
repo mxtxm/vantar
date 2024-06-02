@@ -1,4 +1,4 @@
-package com.vantar.queue;
+package com.vantar.queue.rabbit;
 
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
@@ -6,7 +6,7 @@ import com.rabbitmq.client.Consumer;
 import com.rabbitmq.client.TopologyRecoveryException;
 
 
-public interface QueueExceptionHandler {
+public interface ExceptionHandler {
 
     void handleReturnListenerException(Channel channel, Throwable e);
 

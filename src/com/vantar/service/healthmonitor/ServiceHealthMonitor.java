@@ -2,7 +2,7 @@ package com.vantar.service.healthmonitor;
 
 import com.sun.management.OperatingSystemMXBean;
 import com.vantar.database.common.Db;
-import com.vantar.queue.Queue;
+import com.vantar.queue.common.Que;
 import com.vantar.service.Services;
 import com.vantar.service.log.*;
 import com.vantar.util.datetime.DateTimeFormatter;
@@ -79,6 +79,11 @@ public class ServiceHealthMonitor implements Services.Service {
     }
 
     @Override
+    public boolean isPaused() {
+        return pause;
+    }
+
+    @Override
     public List<String> getLogs() {
         return null;
     }
@@ -141,8 +146,8 @@ public class ServiceHealthMonitor implements Services.Service {
         }
 
         // > > > services
-        if (Services.isEnabled(Queue.Engine.QUEUE) && !Services.isUp(Queue.Engine.QUEUE)) {
-            String msg = "SERVICE OFF: Queue";
+        if (Services.isEnabled(Que.Engine.RABBIT) && !Services.isUp(Que.Engine.RABBIT)) {
+            String msg = "SERVICE OFF: Que";
             event.warnServiceFail(msg);
             ServiceLog.error(ServiceHealthMonitor.class, msg);
             lastWasOk = false;
@@ -286,9 +291,9 @@ public class ServiceHealthMonitor implements Services.Service {
         Map<String, Map<String, Boolean>> dataSources = new HashMap<>(5, 1);
         // >
         Map<String, Boolean> queue = new HashMap<>(2, 1);
-        queue.put("Enabled", Services.isEnabled(Queue.Engine.QUEUE));
-        queue.put("Up", Services.isUp(Queue.Engine.QUEUE));
-        dataSources.put("Queue", queue);
+        queue.put("Enabled", Services.isEnabled(Que.Engine.RABBIT));
+        queue.put("Up", Services.isUp(Que.Engine.RABBIT));
+        dataSources.put(Que.Engine.RABBIT.name(), queue);
         // >
         Map<String, Boolean> mongo = new HashMap<>(2, 1);
         mongo.put("Enabled", Services.isEnabled(Db.Dbms.MONGO));

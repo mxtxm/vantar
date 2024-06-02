@@ -55,7 +55,7 @@ public class MongoQueryResult extends QueryResultBase implements QueryResult, Au
 
     }
 
-    public Object peek(String field) throws NoContentException, DatabaseException {
+    public Object peek(String field) throws VantarException {
         try {
             Document data = cursor.first();
             if (data == null) {
@@ -63,23 +63,23 @@ public class MongoQueryResult extends QueryResultBase implements QueryResult, Au
             }
             return data.get(field);
         } catch (MongoException e) {
-            throw new DatabaseException(e);
+            throw new ServerException(e);
         }
     }
 
-    public boolean next() throws DatabaseException {
+    public boolean next() throws ServerException {
         try {
             if (iterator.hasNext()) {
                 mapRecordToDto(iterator.next());
                 return true;
             }
         } catch (MongoException e) {
-            throw new DatabaseException(e);
+            throw new ServerException(e);
         }
         return false;
     }
 
-    public <T extends Dto> T first() throws NoContentException, DatabaseException {
+    public <T extends Dto> T first() throws VantarException {
         try {
             Document data = cursor.first();
             if (data == null) {
@@ -88,11 +88,11 @@ public class MongoQueryResult extends QueryResultBase implements QueryResult, Au
             mapRecordToDto(data);
             return (T) dto;
         } catch (MongoException e) {
-            throw new DatabaseException(e);
+            throw new ServerException(e);
         }
     }
 
-    public Map<String, String> asKeyValue(String keyField, String valueField) throws NoContentException, DatabaseException {
+    public Map<String, String> asKeyValue(String keyField, String valueField) throws VantarException {
         if (keyField.equals(VantarParam.ID)) {
             keyField = DbMongo.ID;
         }
@@ -111,7 +111,7 @@ public class MongoQueryResult extends QueryResultBase implements QueryResult, Au
                 result.put(DbUtil.getKv(k, locale), DbUtil.getKv(document.get(valueField), locale));
             }
         } catch (MongoException e) {
-            throw new DatabaseException(e);
+            throw new ServerException(e);
         }
         if (result.isEmpty()) {
             throw new NoContentException();
@@ -119,7 +119,7 @@ public class MongoQueryResult extends QueryResultBase implements QueryResult, Au
         return result;
     }
 
-    public Map<String, String> asKeyValue(KeyValueData definition) throws NoContentException, DatabaseException, ServerException {
+    public Map<String, String> asKeyValue(KeyValueData definition) throws VantarException {
         String keyField = definition.getKeyField();
         String valueField = definition.getValueField();
         if (keyField.equals(VantarParam.ID)) {

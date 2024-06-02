@@ -3,9 +3,8 @@ package com.vantar.common;
 
 public class VantarParam {
 
-    public static final String VERSION = "4.9.15beta";
+    public static final String VERSION = "4.9.20";
 
-    // these can be override in Application
     public static String QUEUE_NAME_USER_ACTION_LOG = "user-action-log";
     public static String QUEUE_NAME_MESSAGE_BROADCAST = "message";
 
@@ -41,8 +40,9 @@ public class VantarParam {
     public static final String EXCLUDE_PROPERTIES = "__excludeProperties";
     public static final String NULL_PROPERTIES = "__nullProperties";
     public static final String SET_ACTION = "__action";
-    public static final String USER_NAME = "username";
+    public static final String USERNAME = "username";
     public static final String PASSWORD = "password";
+    public static final String PASSWORD_FORM = "password";
 
     public static final String OPERATOR_AND = "and";
     public static final String OPERATOR_OR = "or";
@@ -51,6 +51,5 @@ public class VantarParam {
     public static final String HEADER_AUTH_TOKEN = "X-Auth-Token";
     public static final String HEADER_LANG = "X-Lang";
 
-    //public static final String LOGICAL_DELETED_UNDO = "logicaldeletedundo";
     public static final String COORDINATE = "coordinates";
 }

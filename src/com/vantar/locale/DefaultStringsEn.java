@@ -198,6 +198,8 @@ public class DefaultStringsEn {
         tokens.put(VantarKey.ADMIN_SERVICE_ALL_SERVERS, "On all servers");
         tokens.put(VantarKey.ADMIN_SERVICE_STOPPED, "Service(s) is(are) stopped");
         tokens.put(VantarKey.ADMIN_SERVICE_STARTED, "Service(s) is(are) started");
+        tokens.put(VantarKey.ADMIN_SERVICE_PAUSED, "Service(s) is(are) paused");
+        tokens.put(VantarKey.ADMIN_SERVICE_RESUMED, "Service(s) is(are) resumed");
         tokens.put(VantarKey.ADMIN_SYSYEM_OBJECTS, "System objects");
         tokens.put(VantarKey.ADMIN_DELETE_ALL_CONFIRM, "Confirm delete all?");
 
@@ -279,6 +281,8 @@ public class DefaultStringsEn {
         tokens.put(VantarKey.ADMIN_WEB, "Web");
         tokens.put(VantarKey.ADMIN_MENU_TEST, "Test");
         tokens.put(VantarKey.ADMIN_UPDATE_PROPERTY, "Update property");
+
+        tokens.put(VantarKey.ADMIN_TEST_RUN, "Run tests");
 
     }
 

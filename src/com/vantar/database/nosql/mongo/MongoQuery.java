@@ -3,6 +3,7 @@ package com.vantar.database.nosql.mongo;
 import com.vantar.database.common.Db;
 import com.vantar.database.dto.Dto;
 import com.vantar.database.query.QueryBuilder;
+import com.vantar.service.log.ServiceLog;
 import org.bson.Document;
 import java.util.*;
 
@@ -35,14 +36,17 @@ public class MongoQuery {
         columns = dto.getFieldNamesForQuery();
         this.dto = dto;
         this.db = db;
+        if (db ==null) {
+            ServiceLog.log.error(">>>>>>fuck");
+        }
     }
 
     public MongoQuery(QueryBuilder q, DbMongo db) {
         dto = q.getDto();
         storage = dto.getStorage();
         columns = dto.getFieldNamesForQuery();
-        MongoMapping.queryBuilderToMongoQuery(q, this);
         this.db = db;
+        MongoMapping.queryBuilderToMongoQuery(q, this);
     }
 
     public void setGroup(Document group) {

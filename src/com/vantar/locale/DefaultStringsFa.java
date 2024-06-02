@@ -231,8 +231,10 @@ public class DefaultStringsFa {
         tokens.put(VantarKey.ADMIN_SETTINGS_UPDATE_MSG_SENT, "پیام ویرایش تنظیمات به سرویس های دیگر فرستاده شد");
         tokens.put(VantarKey.ADMIN_SETTINGS_UPDATE_FAILED, "تنظیمات بروز نشدند");
         tokens.put(VantarKey.ADMIN_SERVICE_ALL_SERVERS, "تمامی سرورها");
-        tokens.put(VantarKey.ADMIN_SERVICE_STOPPED, "تمام سرویس ها به درستی خاموش شدند");//"all services are stopped successfully"
-        tokens.put(VantarKey.ADMIN_SERVICE_STARTED, "تمام سرویس ها به درستی روشن شدند");//"all services are started successfully"
+        tokens.put(VantarKey.ADMIN_SERVICE_STOPPED, "تمام سرویس ها به درستی خاموش شدند");
+        tokens.put(VantarKey.ADMIN_SERVICE_STARTED, "تمام سرویس ها به درستی روشن شدند");
+        tokens.put(VantarKey.ADMIN_SERVICE_PAUSED, "تمام سرویس ها غیر فعال شدند");
+        tokens.put(VantarKey.ADMIN_SERVICE_RESUMED, "تمام سرویس ها فعال شدند");
         tokens.put(VantarKey.ADMIN_SYSYEM_OBJECTS, "ابجکت های سیستم");
         tokens.put(VantarKey.ADMIN_DELETE_ALL_CONFIRM, "آیا تمام داده ها حذف شوند؟");
         tokens.put(VantarKey.ADMIN_SORT, "سورت");

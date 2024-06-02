@@ -1,4 +1,4 @@
-package com.vantar.queue;
+package com.vantar.queue.common;
 
 import com.vantar.util.json.*;
 import com.vantar.util.string.StringUtil;

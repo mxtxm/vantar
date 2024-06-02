@@ -6,8 +6,7 @@ import com.vantar.database.dto.*;
 import com.vantar.database.nosql.mongo.*;
 import com.vantar.database.query.*;
 import com.vantar.exception.*;
-import com.vantar.queue.*;
-import com.vantar.queue.Queue;
+import com.vantar.queue.common.*;
 import com.vantar.service.Services;
 import com.vantar.service.auth.*;
 import com.vantar.service.log.dto.*;
@@ -105,6 +104,11 @@ public class ServiceLog implements Services.Service  {
     }
 
     @Override
+    public boolean isPaused() {
+        return pause;
+    }
+
+    @Override
     public List<String> getLogs() {
         return logs;
     }
@@ -123,6 +127,10 @@ public class ServiceLog implements Services.Service  {
 
     private static boolean getDelayedStoreEnabled() {
         if (DELAYED_STORE_ENABLED == null) {
+            if (!Services.isUp(Que.Engine.RABBIT)) {
+                DELAYED_STORE_ENABLED = false;
+                return false;
+            }
             try {
                 DELAYED_STORE_ENABLED = Services.getService(ServiceLog.class).delayedStoreEnabled;
             } catch (ServiceException e) {
@@ -168,8 +176,12 @@ public class ServiceLog implements Services.Service  {
         log.info(tag + " : " + level + " --> " + msg, values);
         Log pLog = new Log(tag, level, msg, values);
 
+        if (Services.isPaused(ServiceLog.class)) {
+            return;
+        }
+
         if (getDelayedStoreEnabled()) {
-            Queue.add(VantarParam.QUEUE_NAME_USER_ACTION_LOG, new Packet(pLog));
+            Que.rabbit.add(VantarParam.QUEUE_NAME_USER_ACTION_LOG, new Packet(pLog));
         } else {
             try {
                 Db.mongo.insert(pLog);
@@ -193,6 +205,10 @@ public class ServiceLog implements Services.Service  {
     }
 
     public static void addAction(String action, Object object) {
+        if (Services.isPaused(ServiceLog.class)) {
+            return;
+        }
+
         UserLog userLog = new UserLog();
         userLog.action = action;
         userLog.threadId = Thread.currentThread().getId() + Params.serverUpCount;
@@ -229,7 +245,7 @@ public class ServiceLog implements Services.Service  {
         }
 
         if (getDelayedStoreEnabled()) {
-            Queue.add(VantarParam.QUEUE_NAME_USER_ACTION_LOG, new Packet(userLog));
+            Que.rabbit.add(VantarParam.QUEUE_NAME_USER_ACTION_LOG, new Packet(userLog));
         } else {
             try {
                 userLog.time = new DateTime();
@@ -247,6 +263,10 @@ public class ServiceLog implements Services.Service  {
     }
 
     public static void addRequest(Params params) {
+        if (Services.isPaused(ServiceLog.class)) {
+            return;
+        }
+
         UserWebLog userLog = new UserWebLog();
         userLog.url = params.request.getRequestURI();
         userLog.action = "REQUEST";
@@ -274,7 +294,7 @@ public class ServiceLog implements Services.Service  {
         }
 
         if (getDelayedStoreEnabled()) {
-            Queue.add(VantarParam.QUEUE_NAME_USER_ACTION_LOG, new Packet(userLog));
+            Que.rabbit.add(VantarParam.QUEUE_NAME_USER_ACTION_LOG, new Packet(userLog));
         } else {
             try {
                 userLog.time = new DateTime();
@@ -292,6 +312,10 @@ public class ServiceLog implements Services.Service  {
     }
 
     public static void addResponse(Object object, HttpServletResponse response) {
+        if (Services.isPaused(ServiceLog.class)) {
+            return;
+        }
+
         UserWebLog userLog = new UserWebLog();
         Params params = Params.getThreadParams();
         if (params != null) {
@@ -318,7 +342,7 @@ public class ServiceLog implements Services.Service  {
         }
 
         if (getDelayedStoreEnabled()) {
-            Queue.add(VantarParam.QUEUE_NAME_USER_ACTION_LOG, new Packet(userLog));
+            Que.rabbit.add(VantarParam.QUEUE_NAME_USER_ACTION_LOG, new Packet(userLog));
         } else {
             try {
                 userLog.time = new DateTime();
@@ -352,7 +376,7 @@ public class ServiceLog implements Services.Service  {
             isBusy.set(true);
             Beat.set(this.getClass(), "timer");
 
-            logTaskMongo();
+            queueToMongo();
 
         } catch (Exception e) {
             log.error(" ! failed to store logs", e);
@@ -363,11 +387,15 @@ public class ServiceLog implements Services.Service  {
         }
     }
 
-    private void logTaskMongo() throws VantarException {
+    private void queueToMongo() throws VantarException {
         if (pause) {
             return;
         }
-        List<Packet> packets = Queue.takeAllItems(VantarParam.QUEUE_NAME_USER_ACTION_LOG);
+        if (!getDelayedStoreEnabled()) {
+            return;
+        }
+
+        List<Packet> packets = Que.rabbit.takeAllItems(VantarParam.QUEUE_NAME_USER_ACTION_LOG);
         if (packets.isEmpty()) {
             return;
         }

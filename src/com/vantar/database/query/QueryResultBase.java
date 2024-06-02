@@ -45,14 +45,14 @@ abstract public class QueryResultBase {
         return (T) dto;
     }
 
-    public <T extends Dto> T getNext() throws DatabaseException, NoContentException {
+    public <T extends Dto> T getNext() throws VantarException {
         if (next()) {
             return (T) dto;
         }
         throw new NoContentException();
     }
 
-    public <T extends Dto> List<T> asList() throws DatabaseException, NoContentException {
+    public <T extends Dto> List<T> asList() throws NoContentException {
         try {
             List<T> data = new ArrayList<>();
             while (next()) {
@@ -78,7 +78,7 @@ abstract public class QueryResultBase {
         }
     }
 
-    public <T extends Dto> Map<Object, T> asMap(String keyField) throws DatabaseException, NoContentException {
+    public <T extends Dto> Map<Object, T> asMap(String keyField) throws VantarException {
         Map<Object, T> data = new HashMap<>(1000);
         try {
             while (next()) {
@@ -154,7 +154,7 @@ abstract public class QueryResultBase {
     }
 
 
-    abstract public boolean next() throws DatabaseException;
+    abstract public boolean next() throws VantarException;
 
 
     abstract public void close();

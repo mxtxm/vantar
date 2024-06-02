@@ -501,7 +501,7 @@ public class MongoMapping {
                     FindIterable<Document> cursor;
                     try {
                         cursor = db.getResult(q);
-                    } catch (VantarException e) {
+                    } catch (Exception e) {
                         ServiceLog.log.error("!! IN_DTO error {}", item, e);
                         continue;
                     }

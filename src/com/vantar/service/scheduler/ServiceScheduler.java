@@ -93,6 +93,11 @@ public class ServiceScheduler implements Services.Service {
     }
 
     @Override
+    public boolean isPaused() {
+        return pause;
+    }
+
+    @Override
     public List<String> getLogs() {
         return logs;
     }
