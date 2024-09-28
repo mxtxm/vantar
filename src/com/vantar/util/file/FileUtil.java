@@ -161,7 +161,7 @@ public class FileUtil {
 
             String currentK = null;
             for (Map.Entry<String, String> entry : properties.entrySet()) {
-                String k = StringUtil.split(entry.getKey(), '.')[0];
+                String k = StringUtil.splitTrim(entry.getKey(), '.')[0];
                 if (currentK == null || !currentK.equals(k)) {
                     writer.println("");
                     writer.println("");

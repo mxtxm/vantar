@@ -36,12 +36,12 @@ public class AdminService {
             || !params.isChecked(WebUi.PARAM_CONFIRM)) {
             ui.beginFormPost()
                 .addSelect(VantarKey.ADMIN_SERVICE, "s", getServiceNames())
-                .addSelect(VantarKey.ADMIN_ACTION, "a", new String[]{"Stop", "Start", "Restart"})
+                .addSelect(VantarKey.ADMIN_ACTION, "a", new String[] {"Stop", "Start", "Restart"})
                 .addInput(VantarKey.ADMIN_DELAY, "delay", 1, null, "ltr")
-                .addInput(VantarKey.ADMIN_ATTEMPTS, "tries", 20, null, "ltr")
+                .addInput(VantarKey.ADMIN_ATTEMPT_COUNT, "tries", 20, null, "ltr")
                 .addCheckbox(VantarKey.ADMIN_SERVICE_ALL_SERVERS, "allServers")
                 .addCheckbox(VantarKey.ADMIN_CONFIRM, WebUi.PARAM_CONFIRM)
-                .addSubmit(VantarKey.ADMIN_SERVICE_START)
+                .addSubmit(VantarKey.ADMIN_SUBMIT)
                 .finish();
             return;
         }
@@ -76,7 +76,7 @@ public class AdminService {
         if (!params.contains("f") || !params.isChecked(WebUi.PARAM_CONFIRM)) {
             ui  .beginFormPost()
                 .addInput(VantarKey.ADMIN_DELAY, "delay", 1, null, "ltr")
-                .addInput(VantarKey.ADMIN_ATTEMPTS, "tries", 20, null, "ltr")
+                .addInput(VantarKey.ADMIN_ATTEMPT_COUNT, "tries", 20, null, "ltr")
                 .addInput(VantarKey.ADMIN_EXCLUDE, "exclude", "", "ltr")
                 .addCheckbox(VantarKey.ADMIN_CONFIRM, WebUi.PARAM_CONFIRM)
                 .addSubmit(VantarKey.ADMIN_SUBMIT)
@@ -448,7 +448,7 @@ public class AdminService {
     }
 
     private static void getSystemObjects(WebUi ui) {
-        ui.beginBox(VantarKey.ADMIN_SYSYEM_OBJECTS);
+        ui.beginBox(VantarKey.ADMIN_SYSTEM_OBJECTS);
 
         if (Services.isUp(Que.Engine.RABBIT)) {
             String[] queues = Que.rabbit.getQueues();

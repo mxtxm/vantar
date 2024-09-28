@@ -32,7 +32,7 @@ public class Params {
 
 
     public static void start() {
-        String path = Settings.config.getProperty("server.up.count.path") + "server.up.count";
+        String path = Settings.config.getProperty("server.up.count.dir") + "server.up.count";
         serverUpCount = StringUtil.toLong(FileUtil.getFileContent(path));
         if (serverUpCount == null) {
             serverUpCount = 0L;
@@ -66,7 +66,7 @@ public class Params {
 
     private Map<String, Object> map;
     private String json;
-    private Set<String> ignoreParams;
+    private Set<String> exclude;
     private boolean typeMisMatch;
 
 
@@ -107,7 +107,7 @@ public class Params {
 
     public void removeParams(String... params) {
         Arrays.asList(params);
-        ignoreParams = new HashSet<>(Arrays.asList(params));
+        exclude = new HashSet<>(Arrays.asList(params));
     }
 
     public synchronized void set(String key, Object value) {
@@ -224,7 +224,7 @@ public class Params {
         Enumeration<String> parameterNames = request.getParameterNames();
         while (parameterNames.hasMoreElements()) {
             String key = parameterNames.nextElement();
-            if (ignoreParams != null && ignoreParams.contains(key)) {
+            if (exclude != null && exclude.contains(key)) {
                 continue;
             }
             String[] values = request.getParameterValues(key);
@@ -301,7 +301,7 @@ public class Params {
     }
 
     public String getParameter(String key) {
-        if (ignoreParams != null && ignoreParams.contains(key)) {
+        if (exclude != null && exclude.contains(key)) {
             return null;
         }
 
@@ -321,7 +321,7 @@ public class Params {
     }
 
     public Object getParameterAsObject(String key) {
-        if (ignoreParams != null && ignoreParams.contains(key)) {
+        if (exclude != null && exclude.contains(key)) {
             return null;
         }
 
@@ -593,7 +593,7 @@ public class Params {
 
     public <T> List<T> getList(String key, Class<T> type, List<T> defaultValue) {
         typeMisMatch = false;
-        if (ignoreParams != null && ignoreParams.contains(key)) {
+        if (exclude != null && exclude.contains(key)) {
             return defaultValue;
         }
         Object object = request == null ? null : getParameterAsObject(key);
@@ -628,7 +628,7 @@ public class Params {
 
     public <T> Set<T> getSet(String key, Class<T> type, Set<T> defaultValue) {
         typeMisMatch = false;
-        if (ignoreParams != null && ignoreParams.contains(key)) {
+        if (exclude != null && exclude.contains(key)) {
             return defaultValue;
         }
         Object object = request == null ? null : getParameterAsObject(key);

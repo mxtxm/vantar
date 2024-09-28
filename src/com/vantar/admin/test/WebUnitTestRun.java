@@ -2,6 +2,7 @@ package com.vantar.admin.test;
 
 import com.vantar.admin.index.Admin;
 import com.vantar.admin.service.AdminService;
+import com.vantar.common.VantarParam;
 import com.vantar.database.common.Db;
 import com.vantar.database.query.QueryBuilder;
 import com.vantar.exception.*;
@@ -72,17 +73,17 @@ public class WebUnitTestRun {
         }
     }
 
-    private static void addCallWebservice(WebUi ui, WebUnitTestCaseItem item) {
-        String url = ui.params.getBaseUrl() + item.url;
-        ui.addHeading(3, item.httpMethod + ": " + url).write();
+    private static void addCallWebservice(WebUi ui, WebUnitTestCaseItem testItem) {
+        String url = ui.params.getBaseUrl() + testItem.url;
+        ui.addHeading(3, testItem.httpMethod + ": " + url).write();
 
         HttpConfig config = new HttpConfig();
-        if (item.headers != null) {
-            Map<String, String> headers = new HashMap<>(item.headers);
+        if (testItem.headers != null) {
+            Map<String, String> headers = new HashMap<>(testItem.headers);
             for (Map.Entry<String, String> e : headers.entrySet()) {
                 String v = e.getValue();
                 if (v.startsWith("THE-SIGNIN-TOKEN")) {
-                    String[] parts = StringUtil.split(v, ':');
+                    String[] parts = StringUtil.splitTrim(v, VantarParam.SEPARATOR_KEY_VAL);
                     if (parts.length > 1) {
                         ServiceAuth auth = Services.get(ServiceAuth.class);
                         try {
@@ -99,76 +100,76 @@ public class WebUnitTestRun {
         HttpConnect connect = new HttpConnect(config);
         try {
             HttpResponse res;
-            if ("POST".equalsIgnoreCase(item.httpMethod)) {
-                res = connect.post(url, item.inputMap);
-            } else if ("POST JSON".equalsIgnoreCase(item.httpMethod)) {
-                res = connect.postJson(url, item.inputMap == null ? item.inputList : item.inputMap);
-            } else if ("GET".equalsIgnoreCase(item.httpMethod)) {
-                res = connect.get(url, item.inputMap);
+            if ("POST".equalsIgnoreCase(testItem.httpMethod)) {
+                res = connect.post(url, testItem.inputMap);
+            } else if ("POST JSON".equalsIgnoreCase(testItem.httpMethod)) {
+                res = connect.postJson(url, testItem.inputMap == null ? testItem.inputList : testItem.inputMap);
+            } else if ("GET".equalsIgnoreCase(testItem.httpMethod)) {
+                res = connect.get(url, testItem.inputMap);
             } else {
                 return;
             }
 
             // > > > compare status code
-            if (item.assertStatusCode != res.getStatusCode()) {
-                ui  .addErrorMessage("FAILED status-code: expected:" + item.assertStatusCode + " got:" + res.getStatusCode())
+            if (testItem.assertStatusCode != res.getStatusCode()) {
+                ui  .addErrorMessage("FAILED status-code: expected:" + testItem.assertStatusCode + " got:" + res.getStatusCode())
                     .write();
                 return;
             }
             // compare status code < < <
 
             // > > > compare headers
-            if (BoolUtil.isTrue(item.assertCheckHeaders)) {
-                if (item.assertHeadersCheckMethod == null) {
-                    item.assertHeadersCheckMethod = WebUnitTestCaseItem.AssertCheckMethod.assertInResponse;
+            if (BoolUtil.isTrue(testItem.assertCheckHeaders)) {
+                if (testItem.assertHeadersCheckMethod == null) {
+                    testItem.assertHeadersCheckMethod = WebUnitTestCaseItem.AssertCheckMethod.assertInResponse;
                 }
-                if (item.assertHeadersCheckMethod == WebUnitTestCaseItem.AssertCheckMethod.assertInResponse) {
+                if (testItem.assertHeadersCheckMethod == WebUnitTestCaseItem.AssertCheckMethod.assertInResponse) {
                     Map<String, String> headers = new HashMap<>(res.getHeaders().length);
                     for (Header h : res.getHeaders()) {
                         headers.put(h.getName(), h.getValue());
                     }
-                    for (Map.Entry<String, String> entry : item.assertHeaders.entrySet()) {
-                        if (ObjectUtil.isNotEmpty(item.assertHeadersExclude) && item.assertHeadersExclude.contains(entry.getKey())) {
+                    for (Map.Entry<String, String> entry : testItem.assertHeaders.entrySet()) {
+                        if (ObjectUtil.isNotEmpty(testItem.assertHeadersExclude) && testItem.assertHeadersExclude.contains(entry.getKey())) {
                             return;
                         }
-                        if (ObjectUtil.isNotEmpty(item.assertHeadersInclude) && !item.assertHeadersInclude.contains(entry.getKey())) {
+                        if (ObjectUtil.isNotEmpty(testItem.assertHeadersInclude) && !testItem.assertHeadersInclude.contains(entry.getKey())) {
                             return;
                         }
                         if (!entry.getValue().equals(headers.get(entry.getKey()))) {
-                            failHeaders(ui, item.assertHeaders, res.getHeaders());
+                            failHeaders(ui, testItem.assertHeaders, res.getHeaders());
                             return;
                         }
                     }
 
-                } else if (item.assertHeadersCheckMethod == WebUnitTestCaseItem.AssertCheckMethod.responseInAssert) {
+                } else if (testItem.assertHeadersCheckMethod == WebUnitTestCaseItem.AssertCheckMethod.responseInAssert) {
                     for (Header h : res.getHeaders()) {
-                        if (ObjectUtil.isNotEmpty(item.assertHeadersExclude) && item.assertHeadersExclude.contains(h.getName())) {
+                        if (ObjectUtil.isNotEmpty(testItem.assertHeadersExclude) && testItem.assertHeadersExclude.contains(h.getName())) {
                             return;
                         }
-                        if (ObjectUtil.isNotEmpty(item.assertHeadersInclude) && !item.assertHeadersInclude.contains(h.getName())) {
+                        if (ObjectUtil.isNotEmpty(testItem.assertHeadersInclude) && !testItem.assertHeadersInclude.contains(h.getName())) {
                             return;
                         }
-                        String value = item.assertHeaders.get(h.getName());
+                        String value = testItem.assertHeaders.get(h.getName());
                         if (!h.getValue().equals(value)) {
-                            failHeaders(ui, item.assertHeaders, res.getHeaders());
+                            failHeaders(ui, testItem.assertHeaders, res.getHeaders());
                             return;
                         }
                     }
 
-                } else if (item.assertHeadersCheckMethod == WebUnitTestCaseItem.AssertCheckMethod.exact) {
-                    if (res.getHeaders().length != item.assertHeaders.size()) {
-                        failHeaders(ui, item.assertHeaders, res.getHeaders());
+                } else if (testItem.assertHeadersCheckMethod == WebUnitTestCaseItem.AssertCheckMethod.exact) {
+                    if (res.getHeaders().length != testItem.assertHeaders.size()) {
+                        failHeaders(ui, testItem.assertHeaders, res.getHeaders());
                         return;
                     }
                     for (Header h : res.getHeaders()) {
-                        if (ObjectUtil.isNotEmpty(item.assertHeadersExclude) && item.assertHeadersExclude.contains(h.getName())) {
+                        if (ObjectUtil.isNotEmpty(testItem.assertHeadersExclude) && testItem.assertHeadersExclude.contains(h.getName())) {
                             return;
                         }
-                        if (ObjectUtil.isNotEmpty(item.assertHeadersInclude) && !item.assertHeadersInclude.contains(h.getName())) {
+                        if (ObjectUtil.isNotEmpty(testItem.assertHeadersInclude) && !testItem.assertHeadersInclude.contains(h.getName())) {
                             return;
                         }
-                        if (!h.getValue().equals(item.assertHeaders.get(h.getName()))) {
-                            failHeaders(ui, item.assertHeaders, res.getHeaders());
+                        if (!h.getValue().equals(testItem.assertHeaders.get(h.getName()))) {
+                            failHeaders(ui, testItem.assertHeaders, res.getHeaders());
                             return;
                         }
                     }
@@ -177,21 +178,45 @@ public class WebUnitTestRun {
             // compare headers < < <
 
             // > > > compare response
-            if (item.assertResponseCheckMethod == null) {
-                item.assertResponseCheckMethod = WebUnitTestCaseItem.AssertCheckMethod.assertInResponse;
+            Class<?> assertResponseClass;
+            try {
+                assertResponseClass = Class.forName(testItem.assertResponseObjectClass);
+            } catch (Exception e) {
+                ui  .addErrorMessage("FAILED response value:")
+                    .addBlock("pre", "expected:\n" + testItem.assertResponse)
+                    .addBlock("pre", "got: error");
+                ui.addErrorMessage(e);
+                return;
             }
-            if (item.assertResponseCheckMethod == WebUnitTestCaseItem.AssertCheckMethod.assertInResponse) {
 
-            } else if (item.assertResponseCheckMethod == WebUnitTestCaseItem.AssertCheckMethod.responseInAssert) {
+            if (testItem.assertResponseCheckMethod == null) {
+                testItem.assertResponseCheckMethod = WebUnitTestCaseItem.AssertCheckMethod.assertInResponse;
+            }
+            if (testItem.assertResponseCheckMethod == WebUnitTestCaseItem.AssertCheckMethod.assertInResponse) {
 
-            } else if (item.assertResponseCheckMethod == WebUnitTestCaseItem.AssertCheckMethod.exact) {
+            } else if (testItem.assertResponseCheckMethod == WebUnitTestCaseItem.AssertCheckMethod.responseInAssert) {
 
+            } else if (testItem.assertResponseCheckMethod == WebUnitTestCaseItem.AssertCheckMethod.exact) {
+                try {
+                    Object resultObj = res.toObject(assertResponseClass);
+                    Object assertObj = Json.d.fromJson(testItem.assertResponse, assertResponseClass);
+                    if (!assertObj.equals(resultObj)) {
+                        ui  .addErrorMessage("FAILED response value:")
+                            .addBlock("pre", "expected:\n" + testItem.assertResponse)
+                            .addBlock("pre", "got:\n" + Json.d.toJsonPretty(resultObj));
+                    }
+                } catch (Exception e) {
+                    ui  .addErrorMessage("FAILED response value:")
+                        .addBlock("pre", "expected:\n" + testItem.assertResponse)
+                        .addBlock("pre", "got: error");
+                    ui.addErrorMessage(e);
+                }
             }
             // compare response < < <
 
             ui.addMessage("PASSED!").write();
         } catch (HttpException e) {
-            ui.addErrorMessage(item.url + ObjectUtil.toString(e)).write();
+            ui.addErrorMessage(testItem.url + ObjectUtil.toString(e)).write();
         }
     }
 

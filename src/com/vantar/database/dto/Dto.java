@@ -26,6 +26,9 @@ public interface Dto {
     void setLang(String lang);
     String getLang();
 
+    void setRunInnerEvents(boolean b);
+    boolean getRunInnerEvents();
+
     boolean hasAnnotation(String property, Class<? extends Annotation> annotation);
     boolean hasAnnotation(Class<? extends Annotation> annotation);
     <T extends Annotation> T getAnnotation(String property, Class<T> annotation);

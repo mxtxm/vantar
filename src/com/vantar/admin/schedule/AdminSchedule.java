@@ -1,6 +1,7 @@
 package com.vantar.admin.schedule;
 
 import com.vantar.admin.index.Admin;
+import com.vantar.common.VantarParam;
 import com.vantar.exception.*;
 import com.vantar.locale.*;
 import com.vantar.service.Services;
@@ -27,7 +28,7 @@ public class AdminSchedule {
         for (ServiceScheduler.ScheduleInfo info : service.getToRuns()) {
             StringBuilder startAtComment = new StringBuilder();
             startAtComment.append(info.startAt).append(" ");
-            int c = StringUtil.countMatches(info.startAt, ':');
+            int c = StringUtil.countMatches(info.startAt, VantarParam.SEPARATOR_KEY_VAL);
             if (c == 1) {
                 startAtComment.append("(H:M)");
             } else if (c == 2) {
@@ -39,7 +40,7 @@ public class AdminSchedule {
             StringBuilder repeatAtComment = new StringBuilder(20);
             repeatAtComment.append(info.repeatAt).append(" ");
             if (info.repeat) {
-                c = StringUtil.countMatches(info.repeatAt, ':');
+                c = StringUtil.countMatches(info.repeatAt, VantarParam.SEPARATOR_KEY_VAL);
                 if (c == 1) {
                     repeatAtComment.append("(H:M)");
                 } else if (c == 2) {
@@ -69,7 +70,7 @@ public class AdminSchedule {
         WebUi ui = Admin.getUi(VantarKey.ADMIN_MENU_SCHEDULE, params, response, true);
         ui.beginBox(classNameMethodName).write();
 
-        String[] cm = StringUtil.split(classNameMethodName, '.');
+        String[] cm = StringUtil.splitTrim(classNameMethodName, '.');
         try {
             Class<?> tClass = Class.forName(ExtraUtils.join(cm, '.', cm.length-1));
             Method method = tClass.getMethod(cm[cm.length-1]);

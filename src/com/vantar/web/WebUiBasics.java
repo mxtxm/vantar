@@ -710,7 +710,7 @@ abstract class WebUiBasics <T extends WebUiBasics<T>> {
         // title
         for (int i = 0, l = titles.length; i < l; ++i) {
             Object t = titles[i];
-            String[] txt = StringUtil.split(
+            String[] txt = StringUtil.splitTrim(
                 escapeWithNtoBr(t instanceof LangKey ? Locale.getString((LangKey) t) : t.toString()),
                 "|"
             );
@@ -801,8 +801,7 @@ abstract class WebUiBasics <T extends WebUiBasics<T>> {
         String content = written ?
             html.toString() :
             "<!DOCTYPE html>\n<head>\n    <meta charset='utf-8'/>\n    <title>"
-                + Locale.getString(VantarKey.ADMIN_ADMIN_PANEL) + "</title>\n" +
-                "    <meta charset=\"UTF-8\">\n" +
+                + Locale.getString(VantarKey.ADMIN_SYSTEM_ADMINISTRATION) + "</title>\n" +
                 "    <meta name=\"description\" content=\"Vantar admin dashboard\">\n" +
                 "    <meta name=\"author\" content=\"Mehdi Torabi\">\n" +
                 "    <link rel='stylesheet' type='text/css' href='/css/vantar.css?v=" +

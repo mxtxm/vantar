@@ -1,18 +1,16 @@
 package com.vantar.locale;
 
 import com.vantar.common.VantarParam;
+import com.vantar.service.log.ServiceLog;
 import com.vantar.util.collection.CollectionUtil;
 import com.vantar.util.string.*;
 import com.vantar.web.Params;
-import org.slf4j.*;
 import java.text.MessageFormat;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 
 public class Locale {
-
-    private static final Logger log = LoggerFactory.getLogger(Locale.class);
 
     protected static String stopWordPath;
     private static String defaultLocale;
@@ -117,7 +115,7 @@ public class Locale {
         try {
             return MessageFormat.format(value, messageParams);
         } catch (Exception e) {
-            log.error(" !! can not replace params in text ('{}', {})\n", value, CollectionUtil.join(messageParams, ", "), e);
+            ServiceLog.error(" ! can not replace params in text ('{}', {})\n", value, CollectionUtil.join(messageParams, ", "), e);
             return "!!!!";
         }
     }
@@ -146,7 +144,7 @@ public class Locale {
         try {
             return MessageFormat.format(value, messageParams);
         } catch (Exception e) {
-            log.error(" !! can not replace params in text ('{}', {})\n", value, CollectionUtil.join(messageParams, ", "), e);
+            ServiceLog.error(" ! can not replace params in text ('{}', {})\n", value, CollectionUtil.join(messageParams, ", "), e);
             return "!!!!";
         }
     }

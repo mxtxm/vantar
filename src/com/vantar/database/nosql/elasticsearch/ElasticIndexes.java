@@ -214,8 +214,8 @@ public class ElasticIndexes {
 
             Analyzer analyzer = field.getAnnotation(Analyzer.class);
             if (analyzer != null) {
-                for (String item : StringUtil.split(analyzer.value(), VantarParam.SEPARATOR_COMMON)) {
-                    String[] keyVal = StringUtil.split(item, VantarParam.SEPARATOR_KEY_VAL);
+                for (String item : StringUtil.splitTrim(analyzer.value(), VantarParam.SEPARATOR_COMMON)) {
+                    String[] keyVal = StringUtil.splitTrim(item, VantarParam.SEPARATOR_KEY_VAL);
                     params.put(keyVal[0], keyVal[1]);
                 }
             }
@@ -239,7 +239,7 @@ public class ElasticIndexes {
                 if (isList) {
                     Map<String, Map<String, String>> props = new HashMap<>();
                     for (String item : StringUtil.split(StringUtil.remove(dataType.value(), "list>>"), VantarParam.SEPARATOR_COMMON)) {
-                        String[] propertyType = StringUtil.split(item, VantarParam.SEPARATOR_KEY_VAL);
+                        String[] propertyType = StringUtil.splitTrim(item, VantarParam.SEPARATOR_KEY_VAL);
                         Map<String, String> attributes = new HashMap<>();
                         attributes.put("type", propertyType[1]);
                         props.put(propertyType[0], attributes);

@@ -42,7 +42,7 @@ public class Packet {
     }
 
     public void setSerializedPacket(String serialized) {
-        String[] parts = StringUtil.split(serialized, '|', 3);
+        String[] parts = StringUtil.splitTrim(serialized, '|', 3);
         if (parts.length < 3) {
             return;
         }

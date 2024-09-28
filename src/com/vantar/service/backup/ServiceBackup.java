@@ -11,6 +11,7 @@ import com.vantar.util.collection.FixedArrayList;
 import com.vantar.util.datetime.*;
 import com.vantar.util.file.*;
 import com.vantar.util.string.StringUtil;
+import org.bson.json.JsonMode;
 import java.util.*;
 import java.util.concurrent.*;
 
@@ -31,9 +32,10 @@ public class ServiceBackup implements Services.Service {
     public Integer startHour;
     public Integer intervalHour;
     public Integer deleteOldFilesAfterDays;
-    public String path;
+    public String dir;
     public String exclude;
     public String include;
+    public Integer bulkActionRecordCount;
     // < < <
 
     // > > > service methods
@@ -135,26 +137,26 @@ public class ServiceBackup implements Services.Service {
         try {
             if (StringUtil.contains(dbms, Db.Dbms.MONGO.toString())) {
                 Beat.set(this.getClass(), "Mongo backup start...");
-                MongoBackup.dump(null, path + "mongo" + tail, null, excludeDtos, includeDtos);
+                MongoBackup.dump(null, dir + "mongo" + tail, null, excludeDtos, includeDtos, JsonMode.EXTENDED);
                 Beat.set(this.getClass(), "Mongo backup");
                 setLogs("success: " + lastRun.formatter().getDateTime() + " mongo");
             }
             if (StringUtil.contains(dbms, Db.Dbms.SQL.toString())) {
                 Beat.set(this.getClass(), "SQL backup start...");
-                SqlBackup.dump(null, path + "sql" + tail, null);
+                SqlBackup.dump(null, dir + "sql" + tail, null);
                 Beat.set(this.getClass(), "SQL backup");
                 setLogs("success: " + lastRun.formatter().getDateTime() + " sql");
             }
             if (StringUtil.contains(dbms, Db.Dbms.ELASTIC.toString())) {
                 Beat.set(this.getClass(), "Elastic backup start...");
-                ElasticBackup.dump(null, path + "elastic" + tail, null);
+                ElasticBackup.dump(null, dir + "elastic" + tail, null);
                 Beat.set(this.getClass(), "Elastic backup");
                 setLogs("success: " + lastRun.formatter().getDateTime() + " elastic");
             }
 
             if (deleteOldFilesAfterDays != null) {
                 DateTime thresholdDate = lastRun.decreaseDays(deleteOldFilesAfterDays);
-                DirUtil.browseByExtension(path, "dump", file -> {
+                DirUtil.browseByExtension(dir, "dump", file -> {
                     String[] parts = StringUtil.split(
                         StringUtil.remove(
                             file.getName(),
@@ -183,8 +185,8 @@ public class ServiceBackup implements Services.Service {
         }
     }
 
-    public String getPath() {
-        return path;
+    public String getDir() {
+        return dir;
     }
 
     public String getLastRun() {

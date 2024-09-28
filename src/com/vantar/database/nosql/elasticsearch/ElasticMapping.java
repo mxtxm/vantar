@@ -40,7 +40,7 @@ class ElasticMapping {
                     for (Dto dtoL : (List<Dto>) value) {
                         Map<String, Object> fields = new HashMap<>();
                         for (String item : fieldsToAdd) {
-                            String fieldName = StringUtil.split(item, VantarParam.SEPARATOR_KEY_VAL)[0];
+                            String fieldName = StringUtil.splitTrim(item, VantarParam.SEPARATOR_KEY_VAL)[0];
                             fields.put(fieldName, dtoL.getPropertyValue(fieldName));
                         }
                         listValues.add(fields);

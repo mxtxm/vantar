@@ -37,7 +37,7 @@ public class AdminDocumentation {
                 links[++i] = tag;
                 links[++i] = "?lang=" + lang + "&tag=" + tag;
             }
-            links[++i] = Locale.getString(VantarKey.ADMIN_WEBSERVICE_INDEX_TITLE);
+            links[++i] = Locale.getString(VantarKey.ADMIN_DOCUMENTATION_WEBSERVICE_INDEX_TITLE);
             links[++i] = "/admin/documentation/webservices/xlsx";
             ui.addHrefs(links);
         }
@@ -103,7 +103,7 @@ public class AdminDocumentation {
     private static Set<String> extractTagsFromFile(String content) {
         Set<String> tags = new HashSet<>(5, 1);
         boolean inBlock = false;
-        for (String line : StringUtil.split(content, '\n')) {
+        for (String line : StringUtil.splitTrim(content, '\n')) {
             line = line.trim();
             if (line.equals("### tags ###")) {
                 inBlock = true;

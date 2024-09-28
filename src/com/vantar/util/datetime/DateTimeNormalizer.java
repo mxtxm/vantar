@@ -96,7 +96,6 @@ public class DateTimeNormalizer {
         "'", "\"", "\u200C", "تاریخ", "\t",
     };
 
-
     public static DateTimeFormatter fromString(String string, String format) throws DateTimeException {
         DateTimeFormatter dateTimeFormatter = new DateTimeFormatter();
         if (string == null) {
@@ -104,6 +103,8 @@ public class DateTimeNormalizer {
             return dateTimeFormatter;
         }
         String dt = string.toLowerCase();
+        dt = StringUtil.removeDuplicate(dt, '-');
+        dt = StringUtil.removeDuplicate(dt, ':');
 
         if (StringUtil.countMatches(dt, '-') == 1 && !dt.contains(" - ")) {
             dt = StringUtil.replace(dt, '-', " - ");
@@ -131,9 +132,9 @@ public class DateTimeNormalizer {
         if (StringUtil.contains(dt, 't') && !StringUtil.contains(dt, "oct")) {
             dateTime = StringUtil.split(dt, 't');
         } else if (dt.contains(" - ")) {
-            dateTime = StringUtil.split(dt, " - ");
+            dateTime = StringUtil.splitTrim(dt, " - ");
         } else if (dt.contains("ساعت")) {
-            dateTime = StringUtil.split(dt, "ساعت");
+            dateTime = StringUtil.splitTrim(dt, "ساعت");
         } else if (StringUtil.countMatches(dt, '-') == 2 && StringUtil.countMatches(dt, ' ') > 1) {
             String[] allParts = StringUtil.split(dt.replaceAll(" +", " "), ' ', 2);
             dateTime = new String[] {allParts[0], allParts[1]};
@@ -215,7 +216,7 @@ public class DateTimeNormalizer {
         timePart = StringUtil.replace(timePart, "+0:0", "z");
         timePart = StringUtil.replace(timePart, "-0:0", "z");
         if (StringUtil.contains(timePart, '-')) {
-            String[] zoneTime = StringUtil.split(timePart, '-', 2);
+            String[] zoneTime = StringUtil.splitTrim(timePart, '-', 2);
             dateTimeFormatter.offset = -getParsedTimeZone(dateTimeFormatter, zoneTime[1]);
             timePart = zoneTime[0];
 
@@ -237,7 +238,7 @@ public class DateTimeNormalizer {
         Integer seconds;
 
         if (containsTimeDelim) {
-            String[] timeParts = StringUtil.split(timePart, ':');
+            String[] timeParts = StringUtil.splitTrim(timePart, ':');
 
             int len = timeParts.length;
             hour = StringUtil.toInteger(timeParts[0]);
@@ -446,7 +447,7 @@ public class DateTimeNormalizer {
         // MONTH-NAME 1 yyyyy (day is removed earlier)
         String[] parts = StringUtil.splitTrim(datePart.replaceAll(" +", " "), ' ');
 
-        if (parts.length != 3) {
+        if (parts == null || parts.length != 3) {
             dateTimeFormatter.addError(VantarKey.INVALID_DATE);
             return;
         }

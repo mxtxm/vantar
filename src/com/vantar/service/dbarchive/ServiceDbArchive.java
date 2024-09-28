@@ -33,7 +33,7 @@ public class ServiceDbArchive implements Services.Service {
     private static String FILE_PATH;
 
     // > > > service params injected from config
-    public String archivePath;
+    public String dir;
     public Integer startHour;
     public Integer intervalHour;
     // < < <

@@ -90,7 +90,7 @@ public class Controller extends RouteToMethod {
         } catch (ServiceException e) {
             return;
         }
-        Response.download(response, backup.getPath() + filename, filename + ".zip");
+        Response.download(response, backup.getDir() + filename, filename + ".zip");
     }
 
     public void dataBackupUpload(Params params, HttpServletResponse response) throws FinishException {

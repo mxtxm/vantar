@@ -27,7 +27,7 @@ public class Admin {
             return;
         }
 
-        WebUi ui = getUi(VantarKey.ADMIN_SYSTEM_ADMIN, params, response, false);
+        WebUi ui = getUi(VantarKey.ADMIN_SYSTEM_ADMINISTRATION, params, response, false);
 
         Map<String, List<String>> shortcuts = new LinkedHashMap<>(14);
 
@@ -35,8 +35,8 @@ public class Admin {
         if (AdminAuth.isRoot(ui)) {
             List<String> defaultLinks = new ArrayList<>(20);
             defaultLinks.add("");
-            defaultLinks.add(Locale.getString(VantarKey.ADMIN_ONLINE_USERS) + ":/admin/users/online");
-            defaultLinks.add(Locale.getString(VantarKey.ADMIN_USERS) + ":/admin/data/list?dto=User");
+            defaultLinks.add(Locale.getString(VantarKey.ADMIN_USER_ONLINE) + ":/admin/users/online");
+            defaultLinks.add(Locale.getString(VantarKey.ADMIN_USER) + ":/admin/data/list?dto=User");
             defaultLinks.add("");
             defaultLinks.add(Locale.getString(VantarKey.ADMIN_SYSTEM_ERRORS) + ":/admin/system/errors/index");
             defaultLinks.add(Locale.getString(VantarKey.ADMIN_SERVICES_STATUS) + ":/admin/service/index");
@@ -62,7 +62,7 @@ public class Admin {
                 if (StringUtil.isEmpty(item)) {
                     continue;
                 }
-                String[] parts = StringUtil.split(item, ':');
+                String[] parts = StringUtil.split(item, VantarParam.SEPARATOR_KEY_VAL);
                 ui.addHrefBlock(parts[0], parts[1]);
             }
             ui.blockEnd();
@@ -100,11 +100,11 @@ public class Admin {
                 ui.blockEnd();
 
                 // services
-                ui.beginBox(VantarKey.ADMIN_RUNNING_SERVICES_DATA_SOURCE);
+                ui.beginBox(VantarKey.ADMIN_SERVICES_RUNNING_DATA_SOURCE);
                 AdminServiceMonitoring.plotDataSourcesStatus(ui);
                 ui.blockEnd();
 
-                ui.beginBox(VantarKey.ADMIN_RUNNING_SERVICES_ME);
+                ui.beginBox(VantarKey.ADMIN_SERVICES_RUNNING_ME);
                 AdminServiceMonitoring.plotServicesStatus(ui);
                 ui.blockEnd();
             }
@@ -122,7 +122,7 @@ public class Admin {
         try {
             ServiceAuth service = Services.getService(ServiceAuth.class);
             if (!service.isRoot(ui.params)) {
-                ui.addErrorMessage(VantarKey.ADMIN_AUTH_TOKEN).finish();
+                ui.addErrorMessage(VantarKey.ADMIN_USER_AUTH_TOKEN).finish();
                 throw new FinishException();
             }
             ui.addMenu(getMenus(ui), getOnlineUserTitle(params));
@@ -147,7 +147,7 @@ public class Admin {
         WebUi ui = new WebUi(params, response);
 
         if (requiresRoot && !AdminAuth.isRoot(ui)) {
-            ui.addErrorMessage(VantarKey.ADMIN_AUTH_TOKEN).finish();
+            ui.addErrorMessage(VantarKey.ADMIN_USER_AUTH_TOKEN).finish();
             throw new FinishException();
         }
 
@@ -167,7 +167,7 @@ public class Admin {
         WebUi ui = new WebUi(params, response);
 
         if (!AdminAuth.isRoot(ui)) {
-            ui.addErrorMessage(VantarKey.ADMIN_AUTH_TOKEN).finish();
+            ui.addErrorMessage(VantarKey.ADMIN_USER_AUTH_TOKEN).finish();
             throw new FinishException();
         }
 

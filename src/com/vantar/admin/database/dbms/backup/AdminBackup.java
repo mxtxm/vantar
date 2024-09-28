@@ -17,6 +17,7 @@ import com.vantar.util.file.*;
 import com.vantar.util.object.ObjectUtil;
 import com.vantar.util.string.StringUtil;
 import com.vantar.web.*;
+import org.bson.json.JsonMode;
 import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.util.*;
@@ -49,12 +50,17 @@ public class AdminBackup {
                 .addInput(
                     VantarKey.ADMIN_BACKUP_FILE_PATH,
                     "df",
-                    backup.getPath() + dbms.toString().toLowerCase() + "-"
+                    backup.getDir() + dbms.toString().toLowerCase() + "-"
                         + (new DateTime().formatter().getDateTimeSimple()) + DUMP_FILE_EXT
                 )
                 .addInputSelectable(VantarKey.ADMIN_EXCLUDE, "ex", dtos, backup.exclude)
-                .addInputSelectable(VantarKey.ADMIN_INCLUDE, "in", dtos, backup.include)
-                .addInput(VantarKey.ADMIN_DATE_FROM, "da")
+                .addInputSelectable(VantarKey.ADMIN_INCLUDE, "in", dtos, backup.include);
+
+            if (dbms.equals(Db.Dbms.MONGO)) {
+                ui.addSelect("JSON mode", "jsonmode", new String[] {"EXTENDED", "RELAXED", "SHELL",});
+            }
+
+            ui  .addInput(VantarKey.ADMIN_DATE_FROM, "da")
                 .addInput(VantarKey.ADMIN_DATE_TO, "db")
                 .addSubmit(VantarKey.ADMIN_BACKUP_CREATE_START)
                 .addHrefBlock("Backup query result", "/admin/data/backup/mongo/q")
@@ -70,12 +76,24 @@ public class AdminBackup {
             dateRange = null;
         }
         if (dbms.equals(Db.Dbms.MONGO)) {
+            JsonMode jsonMode;
+            switch (params.getString("jsonmode", "EXTENDED")) {
+                case "RELAXED":
+                    jsonMode = JsonMode.RELAXED;
+                    break;
+                case "SHELL":
+                    jsonMode = JsonMode.SHELL;
+                    break;
+                default:
+                    jsonMode = JsonMode.EXTENDED;
+            }
             MongoBackup.dump(
                 ui,
                 dbDumpFilename,
                 dateRange,
                 excludes == null ? null : StringUtil.splitToSet(StringUtil.trim(excludes, ','), ','),
-                includes == null ? null : StringUtil.splitToSet(StringUtil.trim(includes, ','), ',')
+                includes == null ? null : StringUtil.splitToSet(StringUtil.trim(includes, ','), ','),
+                jsonMode
             );
         } else if (dbms.equals(Db.Dbms.SQL)) {
             SqlBackup.dump(ui, dbDumpFilename, dateRange);
@@ -107,7 +125,7 @@ public class AdminBackup {
                 .addInput(
                     VantarKey.ADMIN_BACKUP_FILE_PATH,
                     "df",
-                    backup.getPath() + dbms.toString().toLowerCase() + "-dto-query" + DUMP_FILE_EXT
+                    backup.getDir() + dbms.toString().toLowerCase() + "-dto-query" + DUMP_FILE_EXT
                 )
                 .addSelect("DTO", "dc", dtos)
                 .addTextArea(
@@ -180,9 +198,11 @@ public class AdminBackup {
                 dtos.add(i.getDtoClassName());
             }
 
-            List<String> files = new ArrayList<>(100);
             String dbmsName = dbms.toString().toLowerCase();
-            for (String path : DirUtil.getDirectoryFiles(backup.getPath())) {
+            String[] paths = DirUtil.getDirectoryFiles(backup.getDir());
+            List<String> files = new ArrayList<>(paths.length);
+            for (int i = paths.length - 1; i >= 0; --i) {
+                String path = paths[i];
                 if (!StringUtil.contains(path, dbmsName)) {
                     continue;
                 }
@@ -238,7 +258,7 @@ public class AdminBackup {
         List<String> pathsToDelete = params.getStringList("d");
         if (!ObjectUtil.isEmpty(pathsToDelete) && params.isChecked("confirm")) {
             for (String path : pathsToDelete) {
-                String[] parts = StringUtil.split(path, '/');
+                String[] parts = StringUtil.splitTrim(path, '/');
                 String filename = parts[parts.length - 1];
                 File file = new File(path);
                 if (file.delete()) {
@@ -254,11 +274,14 @@ public class AdminBackup {
         ui  .beginFormPost()
             .addEmptyLine();
 
-        for (String path : DirUtil.getDirectoryFiles(backup.getPath())) {
-            if (!path.endsWith(DUMP_FILE_EXT)) {
+        String[] paths = DirUtil.getDirectoryFiles(backup.getDir());
+        String dbmsName = dbms.toString().toLowerCase();
+        for (int i = paths.length - 1; i >= 0; --i) {
+            String path = paths[i];
+            if (!StringUtil.contains(path, dbmsName)) {
                 continue;
             }
-            String[] parts = StringUtil.split(path, '/');
+            String[] parts = StringUtil.splitTrim(path, '/');
             String filename = parts[parts.length - 1];
 
             ui.addBlockNoEscape(
@@ -271,7 +294,7 @@ public class AdminBackup {
         }
 
         ui  .addEmptyLine(2)
-            .addCheckbox(VantarKey.ADMIN_DELETE_DO, "confirm")
+            .addCheckbox(VantarKey.ADMIN_DELETE_CONFIRM, "confirm")
             .addSubmit(VantarKey.ADMIN_DELETE)
             .finish();
     }
@@ -301,7 +324,7 @@ public class AdminBackup {
                 ui.addErrorMessage(Locale.getString(VantarKey.REQUIRED, "file")).finish();
                 return;
             }
-            if (!uploaded.moveTo(backup.getPath(), uploaded.getOriginalFilename())) {
+            if (!uploaded.moveTo(backup.getDir(), uploaded.getOriginalFilename())) {
                 ui.addMessage(VantarKey.FAIL_UPLOAD).finish();
                 return;
             }

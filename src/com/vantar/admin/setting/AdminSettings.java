@@ -85,7 +85,7 @@ public class AdminSettings {
 
             String json = Json.d.toJson(settings);
             if (updateProperties(json, properties, propertiesInterface)) {
-                ui.addMessage(VantarKey.ADMIN_SETTINGS_UPDATED);
+                ui.addMessage(VantarKey.SUCCESS_UPDATE);
                 reloadSettings();
                 ui.addMessage(VantarKey.ADMIN_SETTINGS_LOADED);
                 if (propertiesInterface.equals(Settings.configClass)) {
@@ -93,7 +93,7 @@ public class AdminSettings {
                     ui.addMessage(VantarKey.ADMIN_SETTINGS_UPDATE_MSG_SENT);
                 }
             } else {
-                ui.addErrorMessage(VantarKey.ADMIN_SETTINGS_UPDATE_FAILED);
+                ui.addErrorMessage(VantarKey.FAIL_UPDATE);
             }
         }
 
@@ -118,7 +118,7 @@ public class AdminSettings {
             }
         }
 
-        ui.addSubmit(VantarKey.ADMIN_EDIT).finish();
+        ui.addSubmit(VantarKey.ADMIN_UPDATE).finish();
     }
 
     public static boolean updateProperties(String json, org.aeonbits.owner.Accessible properties, Class<?> propertiesInterface) {
@@ -147,5 +147,30 @@ public class AdminSettings {
             }
         }
         return null;
+    }
+
+    public static SettingParams getSettings() {
+        SettingParams settings = new SettingParams();
+
+        org.aeonbits.owner.Accessible properties;
+
+        properties = Settings.config;
+        for (String item : properties.propertyNames()) {
+            settings.config.put(item, properties.getProperty(item));
+        }
+
+        properties = Settings.tune;
+        for (String item : properties.propertyNames()) {
+            settings.tune.put(item, properties.getProperty(item));
+        }
+
+        return settings;
+    }
+
+
+    public static class SettingParams {
+
+        public Map<String, Object> config = new TreeMap<>();
+        public Map<String, Object> tune = new TreeMap<>();
     }
 }

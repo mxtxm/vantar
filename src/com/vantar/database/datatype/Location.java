@@ -135,7 +135,7 @@ public class Location {
             sb.append("\"altitude\":").append(altitude).append(',');
         }
         if (countryCode != null) {
-            sb.append("\"countryCode\":\"").append(countryCode).append("\"");
+            sb.append("\"countryCode\":\"").append(countryCode).append("\",");
         }
         sb.setLength(sb.length() - 1);
         sb.append('}');
@@ -256,7 +256,7 @@ public class Location {
     }
 
     public static Bound getCountryBoundsByName(String countryName) {
-        String[] parts = StringUtil.split(StringUtil.getBetween(getCountryBoundsAsString(), countryName.toLowerCase(), "\n"), ',');
+        String[] parts = StringUtil.splitTrim(StringUtil.getBetween(getCountryBoundsAsString(), countryName.toLowerCase(), "\n"), ',');
         if (parts.length < 5) {
             return null;
         }

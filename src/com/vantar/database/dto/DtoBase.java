@@ -36,7 +36,16 @@ public abstract class DtoBase implements Dto {
     private transient boolean isAutoIncrement = true;
     private transient String colPrefix;
     private transient boolean isForList = false;
+    private transient boolean runInnerEvents = true;
 
+
+    public void setRunInnerEvents(boolean runInnerEvents) {
+        this.runInnerEvents = runInnerEvents;
+    }
+
+    public boolean getRunInnerEvents() {
+        return runInnerEvents;
+    }
 
     public void autoIncrementOnInsert(boolean isAutoIncrement) {
         this.isAutoIncrement = isAutoIncrement;

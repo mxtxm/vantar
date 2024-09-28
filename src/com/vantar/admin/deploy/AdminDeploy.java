@@ -72,7 +72,7 @@ public class AdminDeploy {
         }
 
         for (String path : DirUtil.getDirectoryFiles(Settings.config.getProperty("deploy.dir"))) {
-            String[] parts = StringUtil.split(path, '/');
+            String[] parts = StringUtil.splitTrim(path, '/');
             String filename = parts[parts.length - 1];
 
             ui.addBlockNoEscape(

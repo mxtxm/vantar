@@ -75,7 +75,7 @@ public class AdminDataUnDelete {
                 u.ui.addEmptyLine();
                 u.ui.direction = "ltr".equalsIgnoreCase(u.ui.direction) ? "rtl" : "ltr";
                 u.ui.alignKey = "left".equalsIgnoreCase(u.ui.alignKey) ? "right" : "left";
-                u.ui.addCheckbox(VantarKey.SELECT_ALL, "delete-select-all");
+                u.ui.addCheckbox(VantarKey.ADMIN_SELECT_ALL, "delete-select-all");
                 u.ui.addCheckbox(VantarKey.ADMIN_CONFIRM, "confirm");
                 u.ui.addSubmit(VantarKey.ADMIN_UNDELETE, "undelete-button", "undelete-button");
                 u.ui.direction = "ltr".equalsIgnoreCase(u.ui.direction) ? "rtl" : "ltr";

@@ -157,7 +157,7 @@ public class ServiceMessaging {
         }
 
         public String[] getArray() {
-            return message == null ? null : StringUtil.split(message, VantarParam.SEPARATOR_COMMON_COMPLEX);
+            return message == null ? null : StringUtil.splitTrim(message, VantarParam.SEPARATOR_COMMON_COMPLEX);
         }
 
         public Integer getInteger() {

@@ -17,7 +17,7 @@ public abstract class ImportCommon {
             if (data.startsWith("[") && data.endsWith("]")) {
                 importJsonList(ui, importCallback, data, dto, presentField);
             } else {
-                String[] dataArray = StringUtil.split(data, '\n');
+                String[] dataArray = StringUtil.splitTrim(data, '\n');
                 if (dataArray.length < 1) {
                     if (ui != null) {
                         ui.write();
@@ -57,9 +57,9 @@ public abstract class ImportCommon {
             String key;
             String value;
             StringBuilder presentValue = new StringBuilder();
-            String[] split = StringUtil.split(row, '\n');
+            String[] split = StringUtil.splitTrim(row, '\n');
             for (int i = 0; i < split.length; ++i) {
-                String[] parts = StringUtil.split(split[i], '=', 2);
+                String[] parts = StringUtil.splitTrim(split[i], '=', 2);
                 key = parts[0].trim();
                 value = parts[1].trim();
 
@@ -98,7 +98,7 @@ public abstract class ImportCommon {
 
     private static void importCsv(WebUi ui, Import importCallback, String[] dataArray, Dto dto, List<String> presentField) {
         String presentValue = "";
-        String[] fields = StringUtil.split(dataArray[0], ',');
+        String[] fields = StringUtil.splitTrim(dataArray[0], ',');
         int fieldCount = fields.length;
         for (int i = 0; i < fieldCount; ++i) {
             fields[i] = fields[i].trim();
@@ -111,7 +111,7 @@ public abstract class ImportCommon {
                 .replace("<U+200C>", "")
                 .trim();
 
-            String[] cols = StringUtil.split(row, ',');
+            String[] cols = StringUtil.splitTrim(row, ',');
 
             if (cols.length != fieldCount) {
                 if (ui == null) {

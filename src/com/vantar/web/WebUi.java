@@ -133,7 +133,7 @@ public class WebUi extends WebUiBasics<WebUi> {
         String qString = "";
         for (String item : showItems) {
             if (item.contains(":")) {
-                String[] parts = StringUtil.split(item, ":");
+                String[] parts = StringUtil.splitTrim(item, ":");
                 params.put(parts[0], parts[1]);
                 continue;
             }
@@ -712,10 +712,11 @@ public class WebUi extends WebUiBasics<WebUi> {
 
                 String value;
                 String hint;
+                String style = null;
                 if (actualValue == null) {
                     value = "-";
                     hint = null;
-                    // datetime
+                // datetime
                 } else if (actualValue instanceof DateTime) {
                     if ("fa".equals(lang)) {
                         value = ((DateTime) actualValue).formatter().getDateTimePersian().getDateTime();
@@ -724,6 +725,13 @@ public class WebUi extends WebUiBasics<WebUi> {
                         value = ((DateTime) actualValue).formatter().getDateTime();
                         hint = ((DateTime) actualValue).formatter().getDateTimePersian().getDateTime();
                     }
+                    style = "width:107px";
+                // location
+                } else if (actualValue instanceof Location) {
+                    Location loc = (Location) actualValue;
+                    value = loc.latitude + ", " + loc.longitude;
+                    hint = (loc.altitude == null ? "" : (loc.altitude + "m")) + " " + (loc.countryCode == null ? "" : loc.countryCode);
+                    style = "width:120px";
                     // lang
                 } else if (field.isAnnotationPresent(Localized.class)) {
                     Map<String, String> l = (Map<String, String>) actualValue;
@@ -734,13 +742,16 @@ public class WebUi extends WebUiBasics<WebUi> {
                         value = l.get(lang);
                         hint = ObjectUtil.toStringViewable(actualValue);
                     }
-                    // anything else
+                // anything else
                 } else {
                     value = ObjectUtil.toStringViewable(actualValue);
                     hint = null;
                 }
 
                 html.append("<td><div");
+                if (style != null) {
+                    html.append(" style='").append(style).append("'");
+                }
                 if (hint != null) {
                     html.append(" title='").append(hint).append("'");
                 }

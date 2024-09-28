@@ -34,7 +34,7 @@ public class AdminSystemError {
         String tag = params.getStringRequired("t");
 
         ui  .addHeading(2, tag)
-            .addHrefBlock(Locale.getString(VantarKey.ADMIN_DELETE_DO), "/admin/system/errors/delete?tag=" + tag)
+            .addHrefBlock(Locale.getString(VantarKey.ADMIN_DELETE_CONFIRM), "/admin/system/errors/delete?tag=" + tag)
             .addEmptyLine();
 
         for (String item : ServiceLog.getStoredLogs(tag)) {
@@ -44,7 +44,7 @@ public class AdminSystemError {
     }
 
     public static void systemErrorsDelete(Params params, HttpServletResponse response) throws FinishException, InputException {
-        WebUi ui = Admin.getUi(VantarKey.ADMIN_ERRORS_DELETE, params, response, true);
+        WebUi ui = Admin.getUi(VantarKey.ADMIN_SYSTEM_ERRORS_DELETE, params, response, true);
         String tag = params.getStringRequired("tag");
 
         ui.addHeading(2, tag);

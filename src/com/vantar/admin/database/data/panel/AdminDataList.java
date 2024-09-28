@@ -111,10 +111,10 @@ public class AdminDataList {
                 u.ui.addEmptyLine();
                 u.ui.direction = "ltr".equalsIgnoreCase(u.ui.direction) ? "rtl" : "ltr";
                 u.ui.alignKey = "left".equalsIgnoreCase(u.ui.alignKey) ? "right" : "left";
-                u.ui.addCheckbox(VantarKey.SELECT_ALL, "delete-select-all");
+                u.ui.addCheckbox(VantarKey.ADMIN_SELECT_ALL, "delete-select-all");
                 u.ui.addCheckbox(VantarKey.ADMIN_CONFIRM, "confirm-delete");
                 u.ui.addCheckbox(VantarKey.ADMIN_DELETE_CASCADE, "cascade");
-                u.ui.addCheckbox(VantarKey.ADMIN_IGNORE_DEPENDENCIES, "ignore-dependencies");
+                u.ui.addCheckbox(VantarKey.ADMIN_DELETE_IGNORE_DEPENDENCIES, "ignore-dependencies");
                 u.ui.addSubmit(VantarKey.ADMIN_DELETE, "delete-button", "delete-button");
                 u.ui.direction = "ltr".equalsIgnoreCase(u.ui.direction) ? "rtl" : "ltr";
                 u.ui.alignKey = "left".equalsIgnoreCase(u.ui.alignKey) ? "right" : "left";
@@ -138,7 +138,7 @@ public class AdminDataList {
 
                 WebUi.DtoListOptions.ColOption update = new WebUi.DtoListOptions.ColOption();
                 update.content = u.ui.getHref(
-                    VantarKey.ADMIN_EDIT,
+                    VantarKey.ADMIN_UPDATE,
                     "/admin/data/update?dto=" + dtoName + "&id=" + dtoX.getId() + userParams, true, false, null
                 );
                 colOptions.add(update);

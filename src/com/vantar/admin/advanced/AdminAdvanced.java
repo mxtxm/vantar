@@ -41,7 +41,7 @@ public class AdminAdvanced {
                 .addMessage("Last run: " + serviceBackup.getLastRun())
                 .addMessage("Next run: " + serviceBackup.getNextRun())
                 .addMessage("Interval: " + serviceBackup.intervalHour + "hours")
-                .addMessage("Path: " + serviceBackup.path)
+                .addMessage("Path: " + serviceBackup.dir)
                 .addHrefBlock("Logs", "/admin/data/backup/logs")
                 .blockEnd();
         } catch (ServiceException ignore) {
@@ -56,7 +56,7 @@ public class AdminAdvanced {
         ui.beginBox(VantarKey.ADMIN_QUEUE);
         ui  .beginFloatBox("system-box", "RabbitMQ")
             .addHrefBlock(VantarKey.ADMIN_QUEUE_STATUS, "/admin/queue/index")
-            .addHrefBlock(VantarKey.ADMIN_DELETE_OPTIONAL, "/admin/queue/purge/selective")
+            .addHrefBlock(VantarKey.ADMIN_QUEUE_SELECTIVE_DELETE, "/admin/queue/purge/selective")
             .addHrefBlock(VantarKey.ADMIN_DATA_PURGE, "/admin/queue/purge")
             .blockEnd();
         ui.blockEnd();
@@ -108,7 +108,7 @@ public class AdminAdvanced {
         ui  .beginFloatBox("system-box", Db.Dbms.MONGO)
             .addHrefBlock(VantarKey.ADMIN_DATABASE_STATUS, "/admin/database/mongo/status")
             .addHrefBlock(VantarKey.ADMIN_DATABASE_INDEX, "/admin/database/mongo/index")
-            .addHrefBlock(VantarKey.ADMIN_DATABASE_SEQUENCE, "/admin/database/mongo/sequence")
+            .addHrefBlock(VantarKey.ADMIN_DATABASE_AUTOINCREMENT, "/admin/database/mongo/sequence")
             .addHrefBlock(VantarKey.ADMIN_IMPORT, "/admin/database/mongo/import")
             .addHrefBlock(VantarKey.ADMIN_DATA_PURGE, "/admin/database/mongo/purge");
             if (Db.mongo != null) {
@@ -125,7 +125,7 @@ public class AdminAdvanced {
         ui  .beginFloatBox("system-box", Db.Dbms.ELASTIC)
             .addHrefBlock(VantarKey.ADMIN_DATABASE_STATUS, "/admin/database/elastic/status")
             .addHrefBlock(VantarKey.ADMIN_IMPORT, "/admin/database/elastic/import")
-            .addHrefBlock(VantarKey.ADMIN_DATABASE_INDEX_DEF, "/admin/database/elastic/mapping/get")
+            .addHrefBlock(VantarKey.ADMIN_ELASTIC_INDEX_DEF, "/admin/database/elastic/mapping/get")
             .addHrefBlock(VantarKey.ADMIN_DATABASE_INDEX_SETTINGS, "/admin/database/elastic/actions")
             .addHrefBlock(VantarKey.ADMIN_DATA_PURGE, "/admin/database/elastic/purge")
             .addHrefBlock(VantarKey.ADMIN_DATABASE_SYNCH, "/admin/database/elastic/synch")

@@ -91,7 +91,7 @@ public class AdminQuery {
 
         // form
         ui.addHeading(2, VantarKey.ADMIN_QUERY_NEW);
-        ui.addHrefBlock(VantarKey.ADMIN_NEW, "/admin/query/index");
+        ui.addHrefBlock(VantarKey.ADMIN_INSERT, "/admin/query/index");
         List<DtoDictionary.Info> dtoList = DtoDictionary.getAll();
         Map<String, String> dtos = new TreeMap<>();
         for (DtoDictionary.Info i : dtoList) {

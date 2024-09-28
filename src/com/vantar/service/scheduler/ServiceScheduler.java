@@ -122,7 +122,7 @@ public class ServiceScheduler implements Services.Service {
             if (classNameOptions.length == 2) {
 
                 // ClassName.Method,hh:mm;              once at hh:mm
-                if (StringUtil.contains(classNameOptions[1], ':')) {
+                if (StringUtil.contains(classNameOptions[1], VantarParam.SEPARATOR_KEY_VAL)) {
                     executor.schedule(
                         getRunnable(classNameOptions[0]),
                         getStartSeconds(classNameOptions[1], classNameOptions[0]),
@@ -143,7 +143,7 @@ public class ServiceScheduler implements Services.Service {
                         startAt,
                         TimeUnit.SECONDS
                     );
-                    ServiceLog.log.info("  -> scheduled({}, s={}) ", classNameOptions[0], startAt);
+                    ServiceLog.log.info("  -> scheduled({}, s={}) ", getClassMethodName(classNameOptions[0]), startAt);
                 }
 
             // ClassName.Method,hh:mm,repeat;       every hh:mm
@@ -156,7 +156,7 @@ public class ServiceScheduler implements Services.Service {
                 );
 
             // ClassName.Method,hh:mm,x(s/m/h);     starting from hh:mm, every x seconds/minutes/hours
-            } else if (StringUtil.contains(classNameOptions[1], ':')) {
+            } else if (StringUtil.contains(classNameOptions[1], VantarParam.SEPARATOR_KEY_VAL)) {
                 int repeatAt = StringUtil.scrapeInteger(classNameOptions[2]);
                 if (StringUtil.contains(classNameOptions[1], 'm')) {
                     repeatAt *= 60;
@@ -190,7 +190,7 @@ public class ServiceScheduler implements Services.Service {
                     repeatAt,
                     TimeUnit.SECONDS
                 );
-                ServiceLog.log.info("  -> scheduled({}, s={} r={}) ", classNameOptions[0], startAt, repeatAt);
+                ServiceLog.log.info("  -> scheduled({}, s={} r={}) ", getClassMethodName(classNameOptions[0]), startAt, repeatAt);
             }
 
             schedules[i++] = executor;
@@ -198,7 +198,7 @@ public class ServiceScheduler implements Services.Service {
     }
 
     private long getStartSeconds(String timeHms, String className) {
-        String[] time = StringUtil.split(timeHms, ':');
+        String[] time = StringUtil.splitTrim(timeHms, VantarParam.SEPARATOR_KEY_VAL);
         DateTime now = new DateTime();
         DateTime next = new DateTime();
         int hn = now.formatter().hour;
@@ -220,8 +220,13 @@ public class ServiceScheduler implements Services.Service {
             next.addMinutes(m - mn);
             next.addSeconds(s - sn);
         }
-        ServiceLog.log.info("  -> scheduled({}, n={}, s={}, r=daily)", className, now, next);
+        ServiceLog.log.info("  -> scheduled({}, n={}, s={}, r=daily)", getClassMethodName(className), now, next);
         return now.diffSeconds(next);
+    }
+
+    private String getClassMethodName(String cm) {
+        String[] parts = StringUtil.split(cm, '.');
+        return parts[parts.length - 2] + "." + parts[parts.length - 1];
     }
 
     private Runnable getRunnable(String classNameMethodName) {
@@ -244,12 +249,12 @@ public class ServiceScheduler implements Services.Service {
     }
 
     public ScheduleInfo[] getToRuns() {
-        String[] parts = StringUtil.split(schedule, VantarParam.SEPARATOR_BLOCK);
+        String[] parts = StringUtil.splitTrim(schedule, VantarParam.SEPARATOR_BLOCK);
         ScheduleInfo[] cms = new ScheduleInfo[parts.length];
 
         int i = 0;
         for (String item : parts) {
-            String[] classNameOptions = StringUtil.split(item, VantarParam.SEPARATOR_COMMON);
+            String[] classNameOptions = StringUtil.splitTrim(item, VantarParam.SEPARATOR_COMMON);
             String[] cm = StringUtil.split(classNameOptions[0], '.');
 
             ScheduleInfo c = new ScheduleInfo();
@@ -267,7 +272,7 @@ public class ServiceScheduler implements Services.Service {
                 c.repeatAt = classNameOptions[1];
                 c.repeat = true;
             // ClassName.Method,hh:mm,x(s/m/h);     starting from hh:mm, every x seconds/minutes/hours
-            } else if (StringUtil.contains(classNameOptions[1], ':')) {
+            } else if (StringUtil.contains(classNameOptions[1], VantarParam.SEPARATOR_KEY_VAL)) {
                 c.startAt = classNameOptions[1];
                 c.repeatAt = classNameOptions[2];
                 c.repeat = true;

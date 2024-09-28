@@ -10,6 +10,8 @@ import javax.servlet.http.HttpServletResponse;
     "/admin/system/settings/reload",
     "/admin/system/settings/edit/config",
     "/admin/system/settings/edit/tune",
+
+    "/admin/system/settings/get",
 })
 public class Controller extends RouteToMethod {
 
@@ -23,5 +25,9 @@ public class Controller extends RouteToMethod {
 
     public void systemSettingsEditTune(Params params, HttpServletResponse response) throws FinishException {
         AdminSettings.settingsEdit(params, response, Settings.tuneClass);
+    }
+
+    public void systemSettingsGet(Params params, HttpServletResponse response) throws FinishException {
+        Response.writeJson(response, AdminSettings.getSettings());
     }
 }

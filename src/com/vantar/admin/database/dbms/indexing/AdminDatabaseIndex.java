@@ -86,7 +86,7 @@ public class AdminDatabaseIndex {
                 .addCheckbox(VantarKey.ADMIN_DATABASE_INDEX_REMOVE, "deleteindex")
                 .addInputSelectable(VantarKey.ADMIN_EXCLUDE, "ex", dtos)
                 .addInputSelectable(VantarKey.ADMIN_INCLUDE, "in", dtos)
-                .addSubmit(VantarKey.ADMIN_DATABASE_INDEX_CREATE_START)
+                .addSubmit(VantarKey.ADMIN_DATABASE_INDEX_CREATE)
                 .finish();
             return;
         }

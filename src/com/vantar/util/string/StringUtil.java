@@ -3,6 +3,7 @@ package com.vantar.util.string;
 import com.vantar.database.datatype.Location;
 import com.vantar.database.dto.Dto;
 import com.vantar.exception.DateTimeException;
+import com.vantar.util.collection.CollectionUtil;
 import com.vantar.util.datetime.DateTime;
 import com.vantar.util.json.Json;
 import com.vantar.util.number.NumberUtil;
@@ -561,6 +562,38 @@ public class StringUtil {
     }
 
     /**
+     * Remove duplicated chars from a string (2024-01-----01, - > 2024-01-01)
+     *
+     * @param string      base
+     * @param removeChars to remove
+     * @return updated string (null if string == null)
+     */
+    public static String removeDuplicate(String string, char... removeChars) {
+        if (isEmpty(string)) {
+            return string;
+        }
+
+        StringBuilder sb = new StringBuilder(string.length());
+        for (int i = 0, l = string.length(); i < l; ++i) {
+            char c = string.charAt(i);
+            for (char x : removeChars) {
+                if (x == c) {
+                    for (l = string.length(); i < l; ++i) {
+                        if (c != string.charAt(i)) {
+                            --i;
+                            break;
+                        }
+                    }
+                    break;
+                }
+            }
+            sb.append(c);
+        }
+        return sb.toString();
+    }
+
+
+    /**
      * Trim(remove) chars and whitespace from left and right side of a string
      *
      * @param string    to trim
@@ -630,6 +663,63 @@ public class StringUtil {
             }
         }
         return i <= 0 ? "" : string.substring(0, i);
+    }
+
+    public static String trim(String string, String... trimStrings) {
+        return string == null ? null : ltrim(rtrim(string, trimStrings), trimStrings);
+    }
+
+    public static String rtrim(String string, String... trimStrings) {
+        if (string == null || string.length() == 0) {
+            return string;
+        }
+
+        List<String> parts = splitToList(string.trim(), ' ');
+        int k = 0;
+        for (int i = parts.size() - 1; i >= 0; --i) {
+            String s = parts.get(i);
+            boolean f = false;
+            for (String ts : trimStrings) {
+                if (ts.equals(s)) {
+                    f = true;
+                    ++k;
+                    break;
+                }
+            }
+            if (!f) {
+                break;
+            }
+        }
+        for (int i = 0; i < k; ++i) {
+            parts.remove(parts.size() - 1);
+        }
+        return CollectionUtil.join(parts, ' ').trim();
+    }
+
+    public static String ltrim(String string, String... trimStrings) {
+        if (string == null || string.length() == 0) {
+            return string;
+        }
+
+        List<String> parts = splitToList(string.trim(), ' ');
+        int k = 0;
+        for (String s : parts) {
+            boolean f = false;
+            for (String ts : trimStrings) {
+                if (ts.equals(s)) {
+                    f = true;
+                    ++k;
+                    break;
+                }
+            }
+            if (!f) {
+                break;
+            }
+        }
+        if (k > 0) {
+            parts.subList(0, k).clear();
+        }
+        return CollectionUtil.join(parts, ' ').trim();
     }
 
     /**

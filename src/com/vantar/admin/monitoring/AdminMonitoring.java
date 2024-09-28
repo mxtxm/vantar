@@ -2,7 +2,7 @@ package com.vantar.admin.monitoring;
 
 import com.vantar.admin.database.dbms.status.AdminStatus;
 import com.vantar.admin.index.Admin;
-import com.vantar.common.Settings;
+import com.vantar.common.*;
 import com.vantar.database.common.Db;
 import com.vantar.exception.FinishException;
 import com.vantar.locale.Locale;
@@ -38,8 +38,8 @@ public class AdminMonitoring {
         links.put(Locale.getString(VantarKey.ADMIN_QUEUE), items);
 
         items = new ArrayList<>(1);
-        items.add(Locale.getString(VantarKey.ADMIN_ONLINE_USERS) + ":/admin/users/online");
-        links.put(Locale.getString(VantarKey.ADMIN_USERS), items);
+        items.add(Locale.getString(VantarKey.ADMIN_USER_ONLINE) + ":/admin/users/online");
+        links.put(Locale.getString(VantarKey.ADMIN_USER), items);
 
         items = new ArrayList<>(1);
         items.add(Locale.getString(VantarKey.ADMIN_CACHE) + ":/admin/database/cache/index");
@@ -65,7 +65,7 @@ public class AdminMonitoring {
         links.forEach((cat, i) -> {
             ui.beginBox(cat);
             for (String item : i) {
-                String[] parts = StringUtil.splitTrim(item, ':');
+                String[] parts = StringUtil.splitTrim(item, VantarParam.SEPARATOR_KEY_VAL);
                 ui.addHrefBlock(parts[0], parts[1]);
             }
             ui.blockEnd();
@@ -83,7 +83,7 @@ public class AdminMonitoring {
             ui.addKeyValue("Warn processor threshold", monitor.warnProcessorThreshold + " times");
             ui.blockEnd();
 
-            ui.beginBox(VantarKey.ADMIN_WEBSERVICE);
+            ui.beginBox(VantarKey.ADMIN_SYSTEM_HEALTH_WEBSERVICE);
             // >
             ui.addHeading(3, "/admin/system/health");
             if (monitor.getOverallSystemHealth()) {
@@ -108,6 +108,7 @@ public class AdminMonitoring {
             // >
             ui.addHeading(3, "/admin/system/log/tags");
             ui.addHeading(3, "/admin/system/log/search");
+            ui.addHeading(3, "/admin/system/settings/get");
             ui.addHrefBlock(VantarKey.ADMIN_SYSTEM_ERRORS, "/admin/system/errors/index");
             // >
             ui.blockEnd();

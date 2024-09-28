@@ -5,6 +5,7 @@ import com.vantar.exception.AuthException;
 import com.vantar.locale.VantarKey;
 import com.vantar.service.Services;
 import com.vantar.service.cache.ServiceDtoCache;
+import com.vantar.service.log.ServiceLog;
 import com.vantar.util.object.ObjectUtil;
 import com.vantar.util.string.StringUtil;
 import com.vantar.web.Params;

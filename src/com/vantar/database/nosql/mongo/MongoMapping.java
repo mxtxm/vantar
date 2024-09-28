@@ -8,7 +8,6 @@ import com.vantar.database.datatype.Location;
 import com.vantar.database.dto.Date;
 import com.vantar.database.dto.*;
 import com.vantar.database.query.*;
-import com.vantar.exception.*;
 import com.vantar.service.log.ServiceLog;
 import com.vantar.util.datetime.DateTime;
 import com.vantar.util.object.ObjectUtil;
@@ -28,7 +27,7 @@ public class MongoMapping {
         }
         Document document = new Document();
         for (String item : sort) {
-            String[] parts = StringUtil.splitTrim(item, ':');
+            String[] parts = StringUtil.splitTrim(item, VantarParam.SEPARATOR_KEY_VAL);
             document.append(
                 parts[0].equals(DtoBase.ID) ? DbMongo.ID : parts[0],
                 parts.length == 1 ? 1 : (parts[1].equalsIgnoreCase("asc") || parts[1].equals("1") ? 1 : -1)
@@ -65,7 +64,6 @@ public class MongoMapping {
         if (info.type.equals(String.class)) {
             return action.equals(Dto.Action.GET) && StringUtil.isNotEmpty((String) info.value) ?
                 new Document("$regex", "(?i)" + Pattern.quote((String) info.value) + ".*") : info.value;
-
         } else if (info.type.equals(DateTime.class)) {
             DateTime dateTime = (DateTime) info.value;
             if (info.hasAnnotation(Timestamp.class)) {
@@ -310,16 +308,10 @@ public class MongoMapping {
                     break;
 
                 case LIKE:
-                    matches.add(new Document(
-                        fieldName,
-                        new Document("$regex", "(?i)" + Pattern.quote(item.stringValue) + ".*")
-                    ));
+                    matches.add(new Document(fieldName, getLikePattern(item.stringValue)));
                     break;
                 case NOT_LIKE:
-                    matches.add(new Document(
-                        fieldName,
-                        new Document("$ne", new Document("$regex", "(?i)" + Pattern.quote(item.stringValue) + ".*"))
-                    ));
+                    matches.add(new Document(fieldName, new Document("$not", getLikePattern(item.stringValue))));
                     break;
 
                 case IN:
@@ -349,10 +341,10 @@ public class MongoMapping {
                         break;
                     }
                     List<Document> textMatches = new ArrayList<>();
-                    String p = Pattern.quote(item.stringValue);
+                    Pattern p = getLikePattern(item.stringValue);
                     dto.getPropertyTypes().forEach((name, tClass) -> {
                         if (tClass.equals(String.class)) {
-                            textMatches.add(new Document(name, new Document("$regex", "(?i)" + p + ".*")));
+                            textMatches.add(new Document(name, p));
                         }
                     });
                     matches.add(new Document("$or", textMatches));
@@ -439,7 +431,7 @@ public class MongoMapping {
                     point.add((Double) numbers[1]);
                     Document geometry = new Document(
                         "$geometry",
-                        new Document("type", "Point").append(VantarParam.COORDINATE, point)
+                        new Document("type", "Point").append("coordinates", point)
                     );
                     if (numbers[2] != null) {
                         geometry.append("$maxDistance", numbers[2]);
@@ -477,7 +469,7 @@ public class MongoMapping {
                 }
 
                 case IN_DTO: {
-                    String[] parts = StringUtil.split(fieldName, ':');
+                    String[] parts = StringUtil.splitTrim(fieldName, VantarParam.SEPARATOR_KEY_VAL);
                     if (parts == null) {
                         break;
                     }
@@ -537,6 +529,19 @@ public class MongoMapping {
         }
 
         return document;
+    }
+
+    private static Pattern getLikePattern(String v) {
+        v = StringUtil.replace(v, '%', '*');
+        if (v.startsWith("{REGEX}")) {
+            v = StringUtil.replace(v, "{REGEX}", "");
+        } else if (v.contains("*") || v.contains("_")) {
+            v = StringUtil.replace(v, "*", ".*");
+            v = StringUtil.replace(v, "_", ".");
+        } else {
+            v = ".*" + Pattern.quote(v) + ".*";
+        }
+        return Pattern.compile(v, Pattern.DOTALL | Pattern.CASE_INSENSITIVE);
     }
 
     private static Document getListLastElementExp(String fieldName, Object value, String op) {

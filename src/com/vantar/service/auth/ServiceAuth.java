@@ -45,7 +45,7 @@ public class ServiceAuth extends Permit implements Services.Service {
     // > > > service params injected from config
     /* parent class: public Integer tokenExpireMin; */
     public Integer tokenCheckIntervalMin;
-    public String backupPath;
+    public String backupDir;
     public Integer signUpVerifyTokenLength = DEFAULT_VERIFY_TOKEN_LENGTH;
     public Integer signInVerifyTokenLength = DEFAULT_VERIFY_TOKEN_LENGTH;
     public Boolean signUpVerifyTokenNumberOnly = DEFAULT_VERIFY_TOKEN_NUMBER_ONLY;
@@ -66,10 +66,10 @@ public class ServiceAuth extends Permit implements Services.Service {
 
     @Override
     public void stop() {
-        if (backupPath != null) {
+        if (backupDir != null) {
             Jackson json = Json.getWithProtected();
             FileUtil.write(
-                backupPath + AUTH_BACKUP_FILENAME,
+                backupDir + AUTH_BACKUP_FILENAME,
                 json.toJson(onlineUsers) + VantarParam.SEPARATOR_BLOCK_COMPLEX +
                     json.toJson(signupVerifyTokens) + VantarParam.SEPARATOR_BLOCK_COMPLEX +
                     json.toJson(oneTimeTokens) + VantarParam.SEPARATOR_BLOCK_COMPLEX +
@@ -158,11 +158,11 @@ public class ServiceAuth extends Permit implements Services.Service {
     }
 
     public ServiceAuth restoreFromBackup() {
-        if (backupPath == null || !FileUtil.exists(backupPath + AUTH_BACKUP_FILENAME)) {
+        if (backupDir == null || !FileUtil.exists(backupDir + AUTH_BACKUP_FILENAME)) {
             return this;
         }
 
-        String contents = FileUtil.getFileContent(backupPath + AUTH_BACKUP_FILENAME);
+        String contents = FileUtil.getFileContent(backupDir + AUTH_BACKUP_FILENAME);
         if (StringUtil.isEmpty(contents)) {
             ServiceLog.log.warn(" ! auth-data NOT restored (no backup)");
             return this;

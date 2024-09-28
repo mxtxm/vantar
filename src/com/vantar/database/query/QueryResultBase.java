@@ -143,11 +143,11 @@ abstract public class QueryResultBase {
                 }
                 dto = dto.getClass().getConstructor().newInstance();
            }
-        } catch (DatabaseException e) {
-            log.error("! data > dto({})", dto, e);
-            throw new ServerException(VantarKey.FAIL_FETCH);
         } catch (NoSuchMethodException | IllegalAccessException | InstantiationException | InvocationTargetException e) {
             log.error("! data > dto({})", dto, e);
+        } catch (Exception e) {
+            log.error("! data > dto({})", dto, e);
+            throw new ServerException(VantarKey.FAIL_FETCH);
         } finally {
             close();
         }
@@ -155,8 +155,6 @@ abstract public class QueryResultBase {
 
 
     abstract public boolean next() throws VantarException;
-
-
     abstract public void close();
 
 

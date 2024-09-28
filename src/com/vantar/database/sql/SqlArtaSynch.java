@@ -62,7 +62,7 @@ public class SqlArtaSynch {
     }
 
     private void createArtaConfig() throws DatabaseException {
-        String[] server = StringUtil.split(config.getDbServer(), VantarParam.SEPARATOR_KEY_VAL);
+        String[] server = StringUtil.splitTrim(config.getDbServer(), VantarParam.SEPARATOR_KEY_VAL);
         String content =
             "[arta]\n" +
                 "temp_path = APP_DIR/_temp\n" +
@@ -113,7 +113,7 @@ public class SqlArtaSynch {
             name = StringUtil.toSnakeCase(name);
 
             if (field.isAnnotationPresent(ManyToManyStore.class)) {
-                String[] parts = StringUtil.split(field.getAnnotation(ManyToManyStore.class).value(), VantarParam.SEPARATOR_NEXT);
+                String[] parts = StringUtil.splitTrim(field.getAnnotation(ManyToManyStore.class).value(), VantarParam.SEPARATOR_NEXT);
                 String table = parts[0];
                 String className = parts[1];
                 createArtaJunctionModel(table, dto.getClass().getSimpleName(), dtoFk, className, name);
@@ -180,7 +180,7 @@ public class SqlArtaSynch {
 
             String limit = field.isAnnotationPresent(Limit.class) ? field.getAnnotation(Limit.class).value() : null;
             if (limit != null) {
-                String[] parts = StringUtil.split(limit, VantarParam.SEPARATOR_COMMON);
+                String[] parts = StringUtil.splitTrim(limit, VantarParam.SEPARATOR_COMMON);
                 if (type.equals(String.class)) {
                     if (parts.length == 2) {
                         Integer min = StringUtil.toInteger(parts[0]);

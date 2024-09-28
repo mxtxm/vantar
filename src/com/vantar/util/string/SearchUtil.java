@@ -45,7 +45,7 @@ public class SearchUtil {
 
             for (String stopWord : stopWords) {
                 if (stopWord.startsWith("{excluderange")) {
-                    String[] parts = StringUtil.split(StringUtil.remove(stopWord, "{excluderange", "}", "(", ")"), VantarParam.SEPARATOR_COMMON);
+                    String[] parts = StringUtil.splitTrim(StringUtil.remove(stopWord, "{excluderange", "}", "(", ")"), VantarParam.SEPARATOR_COMMON);
                     if (parts.length != 2) {
                         continue;
                     }
@@ -60,11 +60,11 @@ public class SearchUtil {
                     }
 
                 } else if (stopWord.startsWith("{includerange")) {
-                    String[] items = StringUtil.split(StringUtil.remove(stopWord, "{includerange", "}"), VantarParam.SEPARATOR_BLOCK);
+                    String[] items = StringUtil.splitTrim(StringUtil.remove(stopWord, "{includerange", "}"), VantarParam.SEPARATOR_BLOCK);
                     MinMax[] minMaxes = new MinMax[items.length];
                     int i = 0;
                     for (String item : items) {
-                        String[] parts = StringUtil.split(StringUtil.remove(item, ')', '('), VantarParam.SEPARATOR_COMMON);
+                        String[] parts = StringUtil.splitTrim(StringUtil.remove(item, ')', '('), VantarParam.SEPARATOR_COMMON);
                         if (parts.length != 2) {
                             continue;
                         }

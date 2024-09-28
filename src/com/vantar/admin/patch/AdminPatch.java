@@ -29,14 +29,14 @@ public class AdminPatch {
             for (PatchHistory patch : patches) {
                 ui  .beginBox(patch.patchClass)
                     .addHrefNewPage(VantarKey.ADMIN_SCHEDULE_RUN, "/admin/patch/run?c=" + patch.patchClass)
-                    .addKeyValue(VantarKey.ADMIN_RUN_TIME, patch.executedTime)
-                    .addKeyValue(VantarKey.ADMIN_FAIL, patch.failCount);
+                    .addKeyValue(VantarKey.ADMIN_PATCH_RUN_TIME, patch.executedTime)
+                    .addKeyValue(VantarKey.FAIL_COUNT, patch.failCount);
                 if (ObjectUtil.isNotEmpty(patch.fail)) {
-                    ui.addKeyValue(VantarKey.ADMIN_FAIL_MSG, patch.fail);
+                    ui.addKeyValue(VantarKey.ADMIN_PATCH_FAIL_MSG, patch.fail);
                 }
-                ui.addKeyValue(VantarKey.ADMIN_SUCCESS, patch.successCount);
+                ui.addKeyValue(VantarKey.SUCCESS_COUNT, patch.successCount);
                 if (ObjectUtil.isNotEmpty(patch.success)) {
-                    ui.addKeyValue(VantarKey.ADMIN_SUCCESS_MSG, patch.success);
+                    ui.addKeyValue(VantarKey.ADMIN_PATCH_SUCCESS_MSG, patch.success);
                 }
                 ui.blockEnd();
             }
@@ -62,14 +62,14 @@ public class AdminPatch {
         PatchHistory patch = Patcher.execPatchManually(ui, classNameMethodName);
         ui.addMessage("finished!").write();
 
-        ui  .addKeyValue(VantarKey.ADMIN_RUN_TIME, new DateTime())
-            .addKeyValue(VantarKey.ADMIN_FAIL, patch.failCount);
+        ui  .addKeyValue(VantarKey.ADMIN_PATCH_RUN_TIME, new DateTime())
+            .addKeyValue(VantarKey.FAIL_COUNT, patch.failCount);
         if (ObjectUtil.isNotEmpty(patch.fail)) {
-            ui.addKeyValue(VantarKey.ADMIN_FAIL_MSG, patch.fail);
+            ui.addKeyValue(VantarKey.ADMIN_PATCH_FAIL_MSG, patch.fail);
         }
-        ui.addKeyValue(VantarKey.ADMIN_SUCCESS, patch.successCount);
+        ui.addKeyValue(VantarKey.SUCCESS_COUNT, patch.successCount);
         if (ObjectUtil.isNotEmpty(patch.success)) {
-            ui.addKeyValue(VantarKey.ADMIN_SUCCESS_MSG, patch.success);
+            ui.addKeyValue(VantarKey.ADMIN_PATCH_SUCCESS_MSG, patch.success);
         }
 
         ui.finish();

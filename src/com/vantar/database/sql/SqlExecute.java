@@ -293,7 +293,7 @@ public class SqlExecute extends SqlQueryHelper {
     // orderId:1;orderId;userId:user_idx;userId,commentId
     public void createIndex(Dto dto, boolean deleteIfExists) throws VantarException {
         for (String item : dto.getIndexes()) {
-            String[] parts = StringUtil.split(item, VantarParam.SEPARATOR_KEY_VAL);
+            String[] parts = StringUtil.splitTrim(item, VantarParam.SEPARATOR_KEY_VAL);
             String cols = parts[0];
             String idxName;
             if (parts.length == 1 || StringUtil.toInteger(parts[1]) != null) {
@@ -313,7 +313,7 @@ public class SqlExecute extends SqlQueryHelper {
 
     public void removeIndex(Dto dto) throws DatabaseException {
         for (String item : dto.getIndexes()) {
-            String[] parts = StringUtil.split(item, VantarParam.SEPARATOR_KEY_VAL);
+            String[] parts = StringUtil.splitTrim(item, VantarParam.SEPARATOR_KEY_VAL);
             String cols = parts[0];
             String idxName;
             if (parts.length == 1) {

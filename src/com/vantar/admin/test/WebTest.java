@@ -14,7 +14,7 @@ public class WebTest {
     public static void show(Params params, HttpServletResponse response) {
         String username = Settings.tune.getProperty("test.user");
         String password = Settings.tune.getProperty("test.password");
-        String[] urls = StringUtil.split(Settings.tune.getProperty("test.base.urls"), ';');
+        String[] urls = StringUtil.splitTrim(Settings.tune.getProperty("test.base.urls"), ';');
 
         String x = params.getString("x");
 

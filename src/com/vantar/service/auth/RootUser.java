@@ -115,6 +115,16 @@ public class RootUser implements CommonUser {
     }
 
     @Override
+    public void setRunInnerEvents(boolean b) {
+
+    }
+
+    @Override
+    public boolean getRunInnerEvents() {
+        return false;
+    }
+
+    @Override
     public boolean hasAnnotation(String property, Class<? extends Annotation> annotation) {
         return false;
     }

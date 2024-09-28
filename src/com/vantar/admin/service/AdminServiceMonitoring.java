@@ -18,19 +18,19 @@ public class AdminServiceMonitoring {
     public static void servicesIndex(Params params, HttpServletResponse response) throws FinishException {
         WebUi ui = Admin.getUi(VantarKey.ADMIN_SERVICES_STATUS, params, response, true);
 
-        ui.beginBox(VantarKey.ADMIN_RUNNING_SERVICES_DATA_SOURCE);
+        ui.beginBox(VantarKey.ADMIN_SERVICES_RUNNING_DATA_SOURCE);
         plotDataSourcesStatus(ui);
         ui.blockEnd();
 
-        ui.beginBox(VantarKey.ADMIN_RUNNING_SERVICES_ME);
+        ui.beginBox(VantarKey.ADMIN_SERVICES_RUNNING_ME);
         plotServicesStatus(ui);
         ui.blockEnd();
 
-        ui.beginBox(VantarKey.ADMIN_RUNNING_SERVICES_OTHER);
+        ui.beginBox(VantarKey.ADMIN_SERVICES_RUNNING_OTHER);
         plotServicesOnOtherServersStatus(ui);
         ui.blockEnd();
 
-        ui.beginBox(VantarKey.ADMIN_RUNNING_SERVICES_LOGS);
+        ui.beginBox(VantarKey.ADMIN_SERVICES_RUNNING_LOGS);
         plotServicesLogs(ui);
         ui.blockEnd();
 

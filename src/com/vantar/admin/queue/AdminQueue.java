@@ -31,23 +31,23 @@ public class AdminQueue {
 
         String[] queues = Que.rabbit.getQueues();
         if (queues == null) {
-            ui.addMessage(VantarKey.ADMIN_NO_QUEUE);
+            ui.addMessage(VantarKey.ADMIN_QUEUE_NO_QUEUE);
         } else {
             for (String q : queues) {
-                String queueName = StringUtil.split(q, VantarParam.SEPARATOR_COMMON)[0];
+                String queueName = StringUtil.splitTrim(q, VantarParam.SEPARATOR_COMMON)[0];
                 ui.addKeyValue(queueName, Que.rabbit.count(queueName) + " items");
             }
         }
 
         ui  .addEmptyLine(3)
-            .addHrefBlock(VantarKey.ADMIN_DELETE_OPTIONAL, "/admin/queue/purge/selective")
+            .addHrefBlock(VantarKey.ADMIN_QUEUE_SELECTIVE_DELETE, "/admin/queue/purge/selective")
             .addHrefBlock(VantarKey.ADMIN_DATA_PURGE, "/admin/queue/purge");
 
         ui.finish();
     }
 
     public static void purge(Params params, HttpServletResponse response) throws FinishException {
-        WebUi ui = Admin.getUi(VantarKey.ADMIN_DELETE_QUEUE, params, response, true);
+        WebUi ui = Admin.getUi(VantarKey.ADMIN_QUEUE_DELETE, params, response, true);
         if (!Services.isUp(Que.Engine.RABBIT)) {
             ui.addMessage(Locale.getString(VantarKey.ADMIN_SERVICE_IS_OFF, "RabbitMQ")).finish();
             return;
@@ -56,7 +56,7 @@ public class AdminQueue {
         if (!params.contains("f")) {
             ui  .beginFormPost()
                 .addInput(VantarKey.ADMIN_DELAY, "delay", 1, null, "ltr")
-                .addInput(VantarKey.ADMIN_ATTEMPTS, "tries", 100, null, "ltr")
+                .addInput(VantarKey.ADMIN_ATTEMPT_COUNT, "tries", 100, null, "ltr")
                 .addInput(VantarKey.ADMIN_EXCLUDE, "exclude", null, null, "ltr")
                 .addSubmit(VantarKey.ADMIN_DELETE)
                 .finish();
@@ -67,7 +67,7 @@ public class AdminQueue {
     }
 
     public static void purgeSelective(Params params, HttpServletResponse response) throws FinishException {
-        WebUi ui = Admin.getUi(VantarKey.ADMIN_DELETE_QUEUE, params, response, true);
+        WebUi ui = Admin.getUi(VantarKey.ADMIN_QUEUE_DELETE, params, response, true);
         if (!Services.isUp(Que.Engine.RABBIT)) {
             ui.addMessage(Locale.getString(VantarKey.ADMIN_SERVICE_IS_OFF, "RabbitMQ")).finish();
             return;
@@ -76,7 +76,7 @@ public class AdminQueue {
         if (!params.contains("f")) {
             ui  .beginFormPost()
                 .addInput(VantarKey.ADMIN_DELAY, "delay", 1, null, "ltr")
-                .addInput(VantarKey.ADMIN_ATTEMPTS, "tries", 100, null, "ltr")
+                .addInput(VantarKey.ADMIN_ATTEMPT_COUNT, "tries", 100, null, "ltr")
                 .addHeading(2, VantarKey.ADMIN_INCLUDE);
 
             for (String queueName : Que.rabbit.getQueues()) {
@@ -110,13 +110,13 @@ public class AdminQueue {
         String[] queues = Que.rabbit.getQueues();
         if (queues == null) {
             if (ui != null) {
-                ui.addMessage("  > " + VantarKey.ADMIN_NO_QUEUE).blockEnd().write();
+                ui.addMessage("  > " + VantarKey.ADMIN_QUEUE_NO_QUEUE).blockEnd().write();
             }
             return;
         }
 
         for (String q : queues) {
-            String queueName = StringUtil.split(q, VantarParam.SEPARATOR_COMMON)[0];
+            String queueName = StringUtil.splitTrim(q, VantarParam.SEPARATOR_COMMON)[0];
             if (exclude != null && exclude.contains(queueName)) {
                 continue;
             }
@@ -147,7 +147,7 @@ public class AdminQueue {
             return;
         }
 
-        ui.beginBox(VantarKey.ADMIN_DELETE_QUEUE).write();
+        ui.beginBox(VantarKey.ADMIN_QUEUE_DELETE).write();
 
         for (String queueName : include) {
             long count = Que.rabbit.count(queueName);

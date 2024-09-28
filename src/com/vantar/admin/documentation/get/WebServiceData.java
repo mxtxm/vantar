@@ -40,7 +40,7 @@ public class WebServiceData {
     }
 
     public Data get(String md, String targetUrl) {
-        String[] lines = StringUtil.split(md, '\n');
+        String[] lines = StringUtil.splitTrim(md, '\n');
         boolean foundWebservice = false;
         for (int j = 0, lineLen = lines.length; j < lineLen; ++j) {
             String line = lines[j];
@@ -63,7 +63,7 @@ public class WebServiceData {
                 String controller = controllers.get(data.url);
                 method = null;
                 if (controller != null) {
-                    String[] parts = StringUtil.split(controller, '>');
+                    String[] parts = StringUtil.splitTrim(controller, '>');
                     Class<?> c = ClassUtil.getClass(parts[0]);
                     if (c != null) {
                         try {
@@ -111,7 +111,7 @@ public class WebServiceData {
                 ++j;
                 data.headers = new HashMap<>(7, 1);
                 String block = StringUtil.remove(getBlock(j, lineLen, lines), '*').trim();
-                for (String item : StringUtil.split(block, '\n')) {
+                for (String item : StringUtil.splitTrim(block, '\n')) {
                     // "type name: description"
                     item = StringUtil.remove(item, '*').trim();
                     String[] parts = StringUtil.split(StringUtil.split(item, ':')[0], ' ');

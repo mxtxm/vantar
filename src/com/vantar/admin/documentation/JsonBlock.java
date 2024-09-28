@@ -122,7 +122,7 @@ public class JsonBlock {
         });
         if (other != null) {
             other.forEach((k, v) -> {
-                String[] typeName = StringUtil.split(StringUtil.remove(k, '*', ':').trim(), " ");
+                String[] typeName = StringUtil.splitTrim(StringUtil.remove(k, '*', ':').trim(), " ");
                 map.put(typeName[1].trim(), DummyValue.getDummyObjectValue(typeName[0].trim()));
             });
         }
@@ -210,7 +210,7 @@ public class JsonBlock {
                 sb.append("&lt;");
                 genericComments = new ArrayList<>(3);
                 for (Class<?> genericType : obj.getPropertyGenericTypes(prop)) {
-                    String[] parts = StringUtil.split(genericType.getName(), '.');
+                    String[] parts = StringUtil.splitTrim(genericType.getName(), '.');
                     String className = parts[parts.length - 1];
                     String name = StringUtil.replace(className, '$', '.');
                     sb.append(name).append(", ");
@@ -298,7 +298,7 @@ public class JsonBlock {
         });
         if (other != null) {
             other.forEach((k, v) -> {
-                String[] typeName = StringUtil.split(StringUtil.remove(k, '*', ':').trim(), " ");
+                String[] typeName = StringUtil.splitTrim(StringUtil.remove(k, '*', ':').trim(), " ");
                 map.put(typeName[1].trim(), DummyValue.getDummyObjectValue(typeName[0].trim()));
             });
         }

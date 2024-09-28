@@ -278,14 +278,14 @@ public class SqlQueryResult extends QueryResultBase implements QueryResult, Auto
                                 if (many.properties.length == 1) {
                                     value = StringUtil.splitToType(resultSet.getString(many.propertyOut), VantarParam.SEPARATOR_BLOCK_COMPLEX, type);
                                 } else {
-                                    String[] valueBundles = StringUtil.split(resultSet.getString(many.className), VantarParam.SEPARATOR_BLOCK_COMPLEX);
+                                    String[] valueBundles = StringUtil.splitTrim(resultSet.getString(many.className), VantarParam.SEPARATOR_BLOCK_COMPLEX);
                                     value = new ArrayList<>(valueBundles.length);
                                     for (String valueBundle : valueBundles) {
                                         Dto dtoItem = (Dto) ClassUtil.getInstance(listType);
                                         if (dtoItem == null) {
                                             continue;
                                         }
-                                        String[] bundles = StringUtil.split(valueBundle, VantarParam.SEPARATOR_COMMON_COMPLEX);
+                                        String[] bundles = StringUtil.splitTrim(valueBundle, VantarParam.SEPARATOR_COMMON_COMPLEX);
                                         for (int i = 0; i < bundles.length; i++) {
                                             dtoItem.setPropertyValue(many.properties[i], bundles[i]);
                                         }

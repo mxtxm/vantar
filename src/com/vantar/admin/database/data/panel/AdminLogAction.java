@@ -33,9 +33,9 @@ public class AdminLogAction {
         boolean isTypeC = "c".equals(type);
         boolean isTypeD = "d".equals(type);
         DataUtil.Ui u = isTypeA ?
-            DataUtil.initDto(VantarKey.ADMIN_ACTION_LOG, "log-action", params, response, info) :
+            DataUtil.initDto(VantarKey.ADMIN_LOG_ACTION, "log-action", params, response, info) :
             DataUtil.initDtoItem(
-                isTypeC ? VantarKey.ADMIN_USER_ACTIVITY : VantarKey.ADMIN_ACTION_LOG,
+                isTypeC ? VantarKey.ADMIN_USER_ACTIVITY : VantarKey.ADMIN_LOG_ACTION,
                 isTypeC ? "log-activity" : "log-action",
                 params,
                 response,

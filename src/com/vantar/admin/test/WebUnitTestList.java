@@ -70,7 +70,7 @@ public class WebUnitTestList {
         ui.addEmptyLine();
         ui.direction = "ltr".equalsIgnoreCase(ui.direction) ? "rtl" : "ltr";
         ui.alignKey = "left".equalsIgnoreCase(ui.alignKey) ? "right" : "left";
-        ui.addCheckbox(VantarKey.SELECT_ALL, "delete-select-all");
+        ui.addCheckbox(VantarKey.ADMIN_SELECT_ALL, "delete-select-all");
         ui.addSubmit(VantarKey.ADMIN_TEST_RUN, "run-button", "run-button");
         ui.direction = "ltr".equalsIgnoreCase(ui.direction) ? "rtl" : "ltr";
         ui.alignKey = "left".equalsIgnoreCase(ui.alignKey) ? "right" : "left";

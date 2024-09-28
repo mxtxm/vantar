@@ -5,7 +5,7 @@ import com.vantar.database.dto.*;
 import com.vantar.exception.DateTimeException;
 import com.vantar.util.bool.BoolUtil;
 import com.vantar.util.collection.CollectionUtil;
-import com.vantar.util.datetime.DateTime;
+import com.vantar.util.datetime.*;
 import com.vantar.util.json.Json;
 import com.vantar.util.number.NumberUtil;
 import com.vantar.util.string.*;
@@ -383,5 +383,64 @@ public class ObjectUtil {
         }
 
         return (T) object;
+    }
+
+    public static boolean deepEqual(Object a, Object b, Set<String> excludes, Set<String> includes) {
+
+
+
+
+
+
+
+
+        //        if (ObjectUtil.isNotEmpty(excludes) && excludes.contains(info.getDtoClassName())) {
+//            continue;
+//        }
+//        if (ObjectUtil.isNotEmpty(includes) && !includes.contains(info.getDtoClassName())) {
+//            continue;
+//        }
+        return false;
+    }
+
+    public static List<Object> flat(Collection<?> cl) {
+        List<Object> list = new ArrayList<>(10000);
+        if (cl == null) {
+            return list;
+        }
+        for (Object item : cl) {
+            if (   item instanceof Number
+                || item instanceof String
+                || item instanceof Boolean
+                || item instanceof Character
+                || item instanceof DateTime
+                || item instanceof DateTimeRange
+                || item instanceof Location
+            ) {
+                list.add(item);
+                continue;
+            }
+            list.add(flat(item));
+        }
+        return list;
+    }
+
+    public static Map<String, Object> flat(Map<?, ?> obj) {
+        Map<String, Object> map = new HashMap<>(10000, 1);
+        if (obj == null) {
+            return map;
+        }
+        for (Map.Entry<?, ?> e : obj.entrySet()) {
+            map.put(e.getKey().toString(), flat(e.getValue()));
+        }
+        return map;
+    }
+
+    public static Map<String, Object> flat(Object obj) {
+        Map<String, Object> map = new HashMap<>(10000, 1);
+        if (obj == null) {
+            return map;
+        }
+        return map;
     }
 }

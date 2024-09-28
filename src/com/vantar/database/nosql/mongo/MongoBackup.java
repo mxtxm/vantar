@@ -2,6 +2,7 @@ package com.vantar.database.nosql.mongo;
 
 import com.mongodb.client.*;
 import com.vantar.admin.database.dbms.indexing.AdminDatabaseIndex;
+import com.vantar.common.VantarParam;
 import com.vantar.database.common.Db;
 import com.vantar.database.dto.*;
 import com.vantar.database.query.QueryBuilder;
@@ -9,6 +10,7 @@ import com.vantar.exception.*;
 import com.vantar.locale.*;
 import com.vantar.locale.Locale;
 import com.vantar.service.Services;
+import com.vantar.service.backup.ServiceBackup;
 import com.vantar.service.log.ServiceLog;
 import com.vantar.util.datetime.*;
 import com.vantar.util.file.FileUtil;
@@ -24,17 +26,18 @@ import java.util.zip.*;
 
 public class MongoBackup {
 
-    private static final int BULK_ACTION_RECORD_COUNT = 1000;
-
-
     public static void dump(WebUi ui, String dumpPath, DateTimeRange dateRange, Collection<String> excludes
-        , Collection<String> includes) {
+        , Collection<String> includes, JsonMode jsonMode) {
 
-        dump(ui, dumpPath, dateRange, excludes, includes, Db.mongo);
+        dump(ui, dumpPath, dateRange, excludes, includes, Db.mongo, jsonMode);
     }
 
     public static void dump(WebUi ui, String dumpPath, DateTimeRange dateRange, Collection<String> excludes
-        , Collection<String> includes, DbMongo db) {
+        , Collection<String> includes, DbMongo db, JsonMode jsonMode) {
+
+        if (jsonMode == null) {
+            jsonMode = JsonMode.EXTENDED;
+        }
 
         MongoDatabase database;
         try {
@@ -98,9 +101,8 @@ public class MongoBackup {
                     }
                 }
                 q.allowDiskUse(true);
-
                 for (Document document : q) {
-                    zip.write((document.toJson(JsonWriterSettings.builder().outputMode(JsonMode.EXTENDED).build()) + "\n").getBytes());
+                    zip.write((document.toJson(JsonWriterSettings.builder().outputMode(jsonMode).build()) + "\n").getBytes());
                     ++l;
                 }
                 long elapsed = (System.currentTimeMillis() - startCollectionTime) / 1000;
@@ -182,6 +184,14 @@ public class MongoBackup {
             return;
         }
 
+        ServiceBackup serviceBackup;
+        try {
+            serviceBackup = Services.getService(ServiceBackup.class);
+        } catch (ServiceException e) {
+            ui.addErrorMessage("ServiceBackup is off").finish();
+            return;
+        }
+
         ServiceLog.log.info("---> RESTORING database");
         ServiceLog logService;
         try {
@@ -193,6 +203,10 @@ public class MongoBackup {
 
         long startTime = System.currentTimeMillis();
         long r = 0;
+        Integer bulkActionRecordCount = serviceBackup.bulkActionRecordCount;
+        if (bulkActionRecordCount == null) {
+            bulkActionRecordCount = 10;
+        }
 
         if (deleteData) {
             ui.addHeading(3, VantarKey.ADMIN_DATA_PURGE).write();
@@ -235,6 +249,7 @@ public class MongoBackup {
                 if (includes != null && !includes.contains(collection)) {
                     continue;
                 }
+                ServiceLog.log.info("   {} -> db", collection);
 
                 String line = null;
                 try (
@@ -242,11 +257,11 @@ public class MongoBackup {
                     BufferedReader reader = new BufferedReader(new InputStreamReader(stream))) {
 
                     int i = 1;
-                    List<Document> documents = new ArrayList<>(BULK_ACTION_RECORD_COUNT);
+                    List<Document> documents = new ArrayList<>(bulkActionRecordCount);
                     while (reader.ready()) {
-                        if (i++ % BULK_ACTION_RECORD_COUNT == 0) {
+                        if (i++ % bulkActionRecordCount == 0) {
                             db.insert(collection, documents);
-                            documents = new ArrayList<>(BULK_ACTION_RECORD_COUNT);
+                            documents = new ArrayList<>(bulkActionRecordCount);
                         }
                         line = reader.readLine();
                         if (toCamelCase) {
@@ -310,7 +325,7 @@ public class MongoBackup {
                 if (c == '"') {
                     isIn = false;
                     char peek = charArray[i+1];
-                    if (peek != ':') {
+                    if (peek != VantarParam.SEPARATOR_KEY_VAL) {
                         buffer.append('"');
                         buffer.append(tokenBuffer);
                         buffer.append('"');

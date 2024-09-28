@@ -52,7 +52,7 @@ public abstract class ModelCommon {
             ServiceDtoCache service;
             try {
                 service = Services.getService(ServiceDtoCache.class);
-                service.update(dtoName);
+                service.update(dtoClass);
             } catch (ServiceException ignore) {
 
             }
@@ -90,7 +90,7 @@ public abstract class ModelCommon {
         if (StringUtil.isEmpty(password)) {
             return;
         }
-        for (DtoDictionary.Info info: DtoDictionary.getAll()) {
+        for (DtoDictionary.Info info : DtoDictionary.getAll()) {
             if (ClassUtil.isInstantiable(info.dtoClass, CommonUserPassword.class)) {
                 if (user.getClass().equals(info.dtoClass)) {
                     break;
@@ -105,6 +105,7 @@ public abstract class ModelCommon {
                     } else {
                         db.insert(userPassword);
                     }
+                    updateDtoCache(info.dtoClass);
                 } catch (VantarException e) {
                     throw new ServerException(VantarKey.FAIL_FETCH);
                 }
@@ -280,6 +281,12 @@ public abstract class ModelCommon {
     }
 
 
+    public interface CompareEvent {
+
+        void compare(Dto before, Dto after) throws VantarException;
+    }
+
+
     public interface QueryEvent extends QueryResultBase.Event {
 
         void beforeQuery(QueryBuilder q) throws VantarException;
@@ -296,6 +303,8 @@ public abstract class ModelCommon {
 
         // insert update delete
         public Params params;
+        // exclude form params
+        public String[] exclude;
         // insert update
         public String key;
         // insert update delete
@@ -308,6 +317,8 @@ public abstract class ModelCommon {
         public WriteEvent eventBeforeWrite;
         // insert update delete --> after db write
         public WriteEvent eventAfterWrite;
+        // update --> before db update
+        public CompareEvent eventCompare;
         // update delete --> after getting full data / before validation
         public ReadEvent eventAfterRead;
         // update delete
@@ -322,6 +333,10 @@ public abstract class ModelCommon {
         public boolean cascade;
         // delete
         public boolean force;
+        // dto insert autoincrement action
+        public boolean autoIncrementOnInsert = true;
+        // update auto increment to the biggest id
+        public boolean updateAutoIncrement = false;
         // update
         public Dto.Action action = Dto.Action.UPDATE_FEW_COLS;
         // delete
@@ -360,6 +375,14 @@ public abstract class ModelCommon {
             force = s;
             return this;
         }
+        public Settings autoIncrementOnInsert(boolean s) {
+            autoIncrementOnInsert = s;
+            return this;
+        }
+        public Settings updateAutoIncrement(boolean s) {
+            updateAutoIncrement = s;
+            return this;
+        }
         public Settings isJson() {
             isJson = true;
             return this;
@@ -383,6 +406,10 @@ public abstract class ModelCommon {
         }
         public Settings setEventAfterRead(ReadEvent event) {
             this.eventAfterRead = event;
+            return this;
+        }
+        public Settings exclude(String... p) {
+            this.exclude = p;
             return this;
         }
 

@@ -17,7 +17,7 @@ public class AdminAuth {
 
     public static void signin(Params params, HttpServletResponse response) throws ServerException {
         WebUi ui = new WebUi(params, response);
-        ui  .addHeading(1, Settings.config.getProperty("title") + " : " +  Locale.getString(VantarKey.ADMIN_SIGN_IN), "signin")
+        ui  .addHeading(1, Settings.config.getProperty("title") + " : " +  Locale.getString(VantarKey.ADMIN_USER_ADMIN_SIGN_IN_TITLE), "signin")
             .addEmptyLine(5);
 
         if (params.getString(VantarParam.USERNAME) == null) {
@@ -60,7 +60,7 @@ public class AdminAuth {
     }
 
     public static void onlineUsers(Params params, HttpServletResponse response) throws FinishException {
-        WebUi ui = Admin.getUi(VantarKey.ADMIN_ONLINE_USERS, params, response, true);
+        WebUi ui = Admin.getUi(VantarKey.ADMIN_USER_ONLINE, params, response, true);
         ServiceAuth auth;
         try {
             auth = Services.getService(ServiceAuth.class);
@@ -74,11 +74,11 @@ public class AdminAuth {
             auth.removeToken(codeToDelete);
         }
 
-        ui  .beginBox(VantarKey.ADMIN_RESET_SIGNIN_FAILS)
-            .addHref(VantarKey.ADMIN_RESET_SIGNIN_FAILS, "/admin/users/signin/fails/reset")
+        ui  .beginBox(VantarKey.ADMIN_USER_RESET_SIGNIN_FAILS)
+            .addHref(VantarKey.ADMIN_USER_RESET_SIGNIN_FAILS, "/admin/users/signin/fails/reset")
             .blockEnd();
 
-        ui  .beginBox(VantarKey.ADMIN_ONLINE_USERS)
+        ui  .beginBox(VantarKey.ADMIN_USER_ONLINE)
             .addText("Token expire time: " + auth.tokenExpireMin + "mins");
         auth.getOnlineUsers().forEach((code, info) -> {
             long idle = -info.lastInteraction.secondsFromNow() / 60;
@@ -99,28 +99,28 @@ public class AdminAuth {
         });
         ui.blockEnd();
 
-        ui  .beginBox(VantarKey.ADMIN_DELETE_TOKEN)
+        ui  .beginBox(VantarKey.ADMIN_USER_DELETE_TOKEN)
             .beginFormPost()
-            .addInput(VantarKey.ADMIN_AUTH_TOKEN, "delete")
-            .addSubmit(VantarKey.ADMIN_DELETE_DO)
+            .addInput(VantarKey.ADMIN_USER_AUTH_TOKEN, "delete")
+            .addSubmit(VantarKey.ADMIN_DELETE_CONFIRM)
             .blockEnd()
             .blockEnd();
 
-        ui.beginBox(VantarKey.ADMIN_SIGNUP_TOKEN_TEMP);
+        ui.beginBox(VantarKey.ADMIN_USER_SIGNUP_TOKEN_TEMP);
         auth.getSignupVerifyTokens().forEach((code, info) -> ui.addKeyValue(
             info.user.getUsername() + " (" + info.user.getId() + ")\n" + getRoleDescription(info.user),
             info.user.getToken() + "  --  " + info.lastInteraction.toString()
         ));
         ui.blockEnd();
 
-        ui.beginBox(VantarKey.ADMIN_SIGNIN_TOKEN_TEMP);
+        ui.beginBox(VantarKey.ADMIN_USER_SIGNIN_TOKEN_TEMP);
         auth.getOneTimeTokens().forEach((code, info) -> ui.addKeyValue(
             info.user.getUsername() + " (" + info.user.getId() + ")\n" + getRoleDescription(info.user),
             info.user.getToken() + "  --  " + info.lastInteraction.toString()
         ));
         ui.blockEnd();
 
-        ui.beginBox(VantarKey.ADMIN_RECOVER_TOKEN_TEMP);
+        ui.beginBox(VantarKey.ADMIN_USER_RECOVER_TOKEN_TEMP);
         auth.getVerifyTokens().forEach((code, info) -> ui.addKeyValue(
             info.user.getUsername() + " (" + info.user.getId() + ")\n" + getRoleDescription(info.user),
             info.user.getToken() + "  --  " + info.lastInteraction.toString()

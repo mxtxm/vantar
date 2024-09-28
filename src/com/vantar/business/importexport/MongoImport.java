@@ -77,10 +77,10 @@ public class MongoImport extends ImportCommon {
         }
 
         if (ui != null) {
-            ui  .addKeyValue(VantarKey.BUSINESS_WRITTEN_COUNT, success)
-                .addKeyValue(VantarKey.BUSINESS_ERROR_COUNT, failed)
-                .addKeyValue(VantarKey.BUSINESS_DUPLICATE_COUNT, duplicate)
-                .addKeyValue(VantarKey.BUSINESS_SERIAL_MAX, max)
+            ui  .addKeyValue(VantarKey.SUCCESS_COUNT, success)
+                .addKeyValue(VantarKey.FAIL_COUNT, failed)
+                .addKeyValue(VantarKey.DUPLICATE_COUNT, duplicate)
+                .addKeyValue(VantarKey.AUTO_INCREMENT_MAX, max)
                 .write();
         }
     }

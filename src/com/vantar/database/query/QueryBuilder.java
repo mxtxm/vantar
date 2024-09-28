@@ -306,7 +306,7 @@ public class QueryBuilder {
                     joins = new ArrayList<>();
                 }
 
-                String[] parts = StringUtil.split(dto.getField(column).getAnnotation(ManyToManyGetData.class).value(), VantarParam.SEPARATOR_NEXT);
+                String[] parts = StringUtil.splitTrim(dto.getField(column).getAnnotation(ManyToManyGetData.class).value(), VantarParam.SEPARATOR_NEXT);
                 String junctionTable = parts[0];
                 String tableRight = parts[1];
 
@@ -318,7 +318,7 @@ public class QueryBuilder {
                     columnsMany = new ArrayList<>();
                 }
 
-                columnsMany.add(new ColumnMany(parts[1], StringUtil.split(parts[2], VantarParam.SEPARATOR_COMMON), column));
+                columnsMany.add(new ColumnMany(parts[1], StringUtil.splitTrim(parts[2], VantarParam.SEPARATOR_COMMON), column));
             } else {
                 if (this.columns == null) {
                     this.columns = new ArrayList<>();

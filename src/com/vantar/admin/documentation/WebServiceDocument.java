@@ -50,7 +50,7 @@ public class WebServiceDocument {
 
         StringBuilder parsed = new StringBuilder(200000);
         StringBuilder block = new StringBuilder(100000);
-        String[] lines = StringUtil.split(md, '\n');
+        String[] lines = StringUtil.splitTrim(md, '\n');
         String prevLine = "";
         for (int i = 0, j = 0, lineLen = lines.length; j < lineLen; j++) {
             String line = lines[j];
@@ -61,7 +61,7 @@ public class WebServiceDocument {
                 controller = controllers.get(url);
                 method = null;
                 if (controller != null) {
-                    String[] parts = StringUtil.split(controller, '>');
+                    String[] parts = StringUtil.splitTrim(controller, '>');
                     Class<?> c = ClassUtil.getClass(parts[0]);
                     if (c != null) {
                         try {
@@ -104,7 +104,7 @@ public class WebServiceDocument {
         // > > > fetch JSON blocks
         StringBuilder sb = new StringBuilder(10000);
         boolean insideJson = false;
-        for (String line : StringUtil.split(md, '\n')) {
+        for (String line : StringUtil.splitTrim(md, '\n')) {
             if (line.equals("{{")) {
                 insideJson = true;
             }

@@ -93,6 +93,10 @@ public class DbMongo implements Closeable {
 
     // > > > database
 
+    public void dropDb(String name) {
+        mongoClient.getDatabase(config.getMongoDatabaseTest()).drop();
+    }
+
     public void switchToTest() {
         database = mongoClient.getDatabase(config.getMongoDatabaseTest());
         isTest = true;
@@ -352,6 +356,16 @@ public class DbMongo implements Closeable {
 
     // > > > insert
 
+    public void insert(String collection, Document document) throws VantarException {
+        document = escapeDocument(document);
+        try {
+            getDatabase().getCollection(collection).insertOne(document);
+        } catch (Exception e) {
+            ServiceLog.log.error("! insert {} <- {}", collection, document, e);
+            throw new ServerException(e);
+        }
+    }
+
     public void insert(String collection, List<Document> documents) throws VantarException {
         if (documents.isEmpty()) {
             return;
@@ -377,7 +391,9 @@ public class DbMongo implements Closeable {
             dto.setId(autoIncrementGetNext(dto));
         }
 
-        runInnerDtoBeforeInsert(dto);
+        if (dto.getRunInnerEvents()) {
+            runInnerDtoBeforeInsert(dto);
+        }
         if (!dto.beforeInsert()) {
             throw new ServerException(VantarKey.CUSTOM_EVENT_ERROR);
         }
@@ -387,9 +403,6 @@ public class DbMongo implements Closeable {
 
         Document document = MongoMapping.asDocument(dto, Dto.Action.INSERT);
         try {
-            InsertManyOptions options = new InsertManyOptions();
-            options.bypassDocumentValidation(true);
-            options.ordered(false);
             getDatabase().getCollection(dto.getStorage()).insertOne(document);
         } catch (Exception e) {
 
@@ -417,7 +430,9 @@ public class DbMongo implements Closeable {
                 dto.setId(autoIncrementGetNext(dto));
             }
 
-            runInnerDtoBeforeInsert(dto);
+            if (dto.getRunInnerEvents()) {
+                runInnerDtoBeforeInsert(dto);
+            }
             if (!dto.beforeInsert()) {
                 throw new ServerException(VantarKey.CUSTOM_EVENT_ERROR);
             }
@@ -533,7 +548,9 @@ public class DbMongo implements Closeable {
         dto.setCreateTime(false);
         dto.setUpdateTime(true);
 
-        runInnerBeforeUpdate(dto);
+        if (dto.getRunInnerEvents()) {
+            runInnerBeforeUpdate(dto);
+        }
         if (!dto.beforeUpdate()) {
             throw new ServerException(VantarKey.CUSTOM_EVENT_ERROR);
         }

@@ -72,7 +72,7 @@ public class DummyValue {
             return g == null ? "[ ]" : getDummyObjectValue(Set.class, null, new Class[] {g});
         }
         if (type.startsWith("map")) {
-            String[] parts = StringUtil.split(StringUtil.remove(type, "map", "<", ">"), ",");
+            String[] parts = StringUtil.splitTrim(StringUtil.remove(type, "map", "<", ">"), ",");
             if (parts == null || parts.length != 2) {
                 return "{ }";
             }

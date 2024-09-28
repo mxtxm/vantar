@@ -22,7 +22,7 @@ public class ModelMongoChecking extends ModelCommon {
                         throw new InputException(VantarKey.UNIQUE, field.getName());
                     }
                 } catch (VantarException e) {
-                    ServiceLog.error(ModelMongoChecking.class, " !! unique dto={} field={}", dto, field.getName(), e);
+                    //ServiceLog.error(ModelMongoChecking.class, " !! unique dto={} field={}", dto, field.getName(), e);
                     throw e;
                 }
                 continue;
@@ -34,7 +34,7 @@ public class ModelMongoChecking extends ModelCommon {
                         throw new InputException(VantarKey.UNIQUE, field.getName());
                     }
                 } catch (VantarException e) {
-                    ServiceLog.error(ModelMongoChecking.class, " !! unique dto={} field={}", dto, field.getName(), e);
+                    //ServiceLog.error(ModelMongoChecking.class, " !! unique dto={} field={}", dto, field.getName(), e);
                     throw e;
                 }
             }
@@ -43,11 +43,11 @@ public class ModelMongoChecking extends ModelCommon {
         if (dto.getClass().isAnnotationPresent(UniqueGroup.class)) {
             for (String group : dto.getClass().getAnnotation(UniqueGroup.class).value()) {
                 try {
-                    if (!db.isUnique(dto, StringUtil.split(group, VantarParam.SEPARATOR_COMMON))) {
+                    if (!db.isUnique(dto, StringUtil.splitTrim(group, VantarParam.SEPARATOR_COMMON))) {
                         throw new InputException(VantarKey.UNIQUE, "(" + group + ")");
                     }
                 } catch (VantarException e) {
-                    ServiceLog.error(ModelMongoChecking.class, " !! unique dto={} field={}", dto, "(" + group + ")", e);
+                    //ServiceLog.error(ModelMongoChecking.class, " !! unique dto={} field={}", dto, "(" + group + ")", e);
                     throw e;
                 }
             }
@@ -253,8 +253,7 @@ public class ModelMongoChecking extends ModelCommon {
                 throw new InputException(VantarKey.MISSING_REFERENCE, name, value);
             }
         } catch (VantarException e) {
-            ServiceLog.error(ModelMongoChecking.class, " !! could not check reference dto={} field={} value={}"
-                , fClass, name, value, e);
+            //ServiceLog.error(ModelMongoChecking.class, " !! could not check reference dto={} field={} value={}", fClass, name, value, e);
             throw e;
         }
     }

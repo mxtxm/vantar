@@ -156,7 +156,7 @@ public class DateTime {
         int sign = StringUtil.contains(offset, '-') ? -1 : 1;
         offset = StringUtil.remove(offset, '-', '+');
 
-        String[] parts = StringUtil.split(offset, ':');
+        String[] parts = StringUtil.splitTrim(offset, ':');
         if (parts.length > 3 || parts.length == 0) {
             return this;
         }

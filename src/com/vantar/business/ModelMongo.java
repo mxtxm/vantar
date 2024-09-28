@@ -19,10 +19,7 @@ import org.bson.Document;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 
-/**
- * params  write methods: +events +validation +mutex +log
- * normal  write methods: +events +validation +mutex +log
- */
+
 public class ModelMongo extends ModelCommon {
 
     public ModelMongo() {
@@ -33,14 +30,21 @@ public class ModelMongo extends ModelCommon {
         this.db = db;
     }
 
-    public long getNextSequence(Dto dto) throws VantarException {
+    public long getNextAutoIncrement(Dto dto) throws VantarException {
         return db.autoIncrementGetNext(dto);
     }
 
+    public long setAutoIncrementToMax(Dto dto) throws VantarException {
+        return db.autoIncrementSetToMax(dto);
+    }
 
     // INSERT > > >
 
     public ResponseMessage insert(Settings settings) throws VantarException {
+        if (!settings.autoIncrementOnInsert) {
+            settings.updateAutoIncrement = true;
+            settings.dto.autoIncrementOnInsert(false);
+        }
         return settings.mutex ?
             (ResponseMessage) mutex(settings.dto, (Dto dto) -> insertX(settings, dto)) :
             insertX(settings, settings.dto);
@@ -50,6 +54,9 @@ public class ModelMongo extends ModelCommon {
         s.action = Dto.Action.INSERT;
 
         if (s.params != null) {
+            if (s.exclude != null) {
+                s.params.removeParams(s.exclude);
+            }
             if (s.isJson) {
                 dto.set(s.key == null ? s.params.getJson() : s.params.getString(s.key), s.action);
             } else {
@@ -67,12 +74,14 @@ public class ModelMongo extends ModelCommon {
         dto.removeNullPropertiesNatural();
         ModelMongoChecking.throwUniqueViolation(dto, db);
         ModelMongoChecking.throwDependencyViolations(dto, db);
-
         if (s.eventBeforeWrite != null) {
             s.eventBeforeWrite.write(dto);
         }
         db.insert(dto);
         ModelCommon.afterDataChange(dto, s);
+        if (s.updateAutoIncrement) {
+            setAutoIncrementToMax(dto);
+        }
 
         return ResponseMessage.success(VantarKey.SUCCESS_INSERT, dto.getId(), dto);
     }
@@ -152,7 +161,12 @@ public class ModelMongo extends ModelCommon {
             s.action = Dto.Action.UPDATE_FEW_COLS;
         }
 
+        Dto dtoBefore = s.eventCompare != null ? dto.getClone() : null;
+
         if (s.params != null) {
+            if (s.exclude != null) {
+                s.params.removeParams(s.exclude);
+            }
             s.action = s.params.getX("action", s.action);
             if (s.isJson) {
                 dto.set(s.key == null ? s.params.getJson() : s.params.getString(s.key), s.action);
@@ -167,16 +181,21 @@ public class ModelMongo extends ModelCommon {
         if (ObjectUtil.isNotEmpty(errors)) {
             throw new InputException(errors);
         }
-
         ModelMongoChecking.throwUniqueViolation(dto, db);
         ModelMongoChecking.throwDependencyViolations(dto, db);
 
         if (s.eventBeforeWrite != null) {
             s.eventBeforeWrite.write(dto);
         }
+        if (s.eventCompare != null) {
+            s.eventCompare.compare(dtoBefore, dto);
+        }
 
         db.update(dto);
         ModelCommon.afterDataChange(dto, s);
+        if (s.updateAutoIncrement) {
+            setAutoIncrementToMax(dto);
+        }
     }
 
     /**
@@ -278,6 +297,9 @@ public class ModelMongo extends ModelCommon {
             new DataDependencyMongo(dto).throwOnFirstDependency();
             s.addDeletedCount(db.delete(dto));
             ModelCommon.afterDataChange(dto, s);
+        }
+        if (s.updateAutoIncrement) {
+            setAutoIncrementToMax(dto);
         }
     }
 

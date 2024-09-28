@@ -1,14 +1,12 @@
 package com.vantar.business;
 
 import com.vantar.business.importexport.ImportCommon;
-import com.vantar.common.VantarParam;
 import com.vantar.database.common.ValidationError;
 import com.vantar.database.dto.Dto;
 import com.vantar.database.nosql.elasticsearch.*;
 import com.vantar.exception.*;
 import com.vantar.locale.Locale;
 import com.vantar.locale.*;
-import com.vantar.util.number.NumberUtil;
 import com.vantar.util.object.*;
 import com.vantar.web.*;
 import org.slf4j.*;
@@ -472,9 +470,9 @@ public class CommonModelElastic extends ModelCommon {
             write.commit();
 
             if (ui != null) {
-                ui  .addKeyValue(VantarKey.BUSINESS_WRITTEN_COUNT, success)
-                    .addKeyValue(VantarKey.BUSINESS_ERROR_COUNT, failed)
-                    .addKeyValue(VantarKey.BUSINESS_DUPLICATE_COUNT, duplicate)
+                ui  .addKeyValue(VantarKey.SUCCESS_COUNT, success)
+                    .addKeyValue(VantarKey.FAIL_COUNT, failed)
+                    .addKeyValue(VantarKey.DUPLICATE_COUNT, duplicate)
                     .write();
             }
 

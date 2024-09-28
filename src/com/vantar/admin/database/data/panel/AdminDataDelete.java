@@ -98,7 +98,7 @@ public class AdminDataDelete {
             u.ui.addEmptyLine()
                 .beginFormPost()
                 .addCheckbox(VantarKey.ADMIN_DELETE_CASCADE, "cascade")
-                .addCheckbox(VantarKey.ADMIN_IGNORE_DEPENDENCIES, "ignore-dependencies")
+                .addCheckbox(VantarKey.ADMIN_DELETE_IGNORE_DEPENDENCIES, "ignore-dependencies")
                 .addCheckbox(VantarKey.ADMIN_CONFIRM, "confirm")
                 .addHidden("dto", info.dtoClass.getSimpleName())
                 .addHidden("id", u.dto.getId())

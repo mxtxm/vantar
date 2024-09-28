@@ -118,8 +118,8 @@ public class DtoManifest {
                             ServiceLog.log.warn("! invalid generics ({}.{})", name, field.getName());
                             continue;
                         }
-                        String[] partsK = StringUtil.split(g[0].getTypeName(), '.');
-                        String[] partsV = StringUtil.split(g[1].getTypeName(), '.');
+                        String[] partsK = StringUtil.splitTrim(g[0].getTypeName(), '.');
+                        String[] partsV = StringUtil.splitTrim(g[1].getTypeName(), '.');
                         d   .append("&lt;")
                             .append(partsK[partsK.length - 1]).append(", ").append(partsV[partsV.length - 1])
                             .append("&gt;");

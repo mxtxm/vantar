@@ -14,8 +14,8 @@ public class XlsxStyledBase {
         context.style.fontName = "Arial";
         context.style.fontSize = 10;
         context.style.bold = false;
-        context.style.color = "#333333";
-        context.style.bgColor = "#ffffff";
+        context.style.color = "333333";
+        context.style.bgColor = "ffffff";
         context.style.borderColor = "777777";
     }
 

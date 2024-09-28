@@ -4,7 +4,7 @@ import com.vantar.admin.documentation.get.WebServiceData;
 import com.vantar.admin.index.Admin;
 import com.vantar.admin.service.AdminService;
 import com.vantar.business.ModelCommon;
-import com.vantar.common.Settings;
+import com.vantar.common.*;
 import com.vantar.database.common.Db;
 import com.vantar.exception.*;
 import com.vantar.http.*;
@@ -169,7 +169,7 @@ public class WebUnitTestCreate {
             for (Map.Entry<String, String> e : headers.entrySet()) {
                 String v = e.getValue();
                 if (v.startsWith("THE-SIGNIN-TOKEN")) {
-                    String[] parts = StringUtil.split(v, ':');
+                    String[] parts = StringUtil.splitTrim(v, VantarParam.SEPARATOR_KEY_VAL);
                     if (parts.length > 1) {
                         ServiceAuth auth = Services.get(ServiceAuth.class);
                         try {
